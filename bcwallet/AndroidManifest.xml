@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+   package="hu.netmind.bitcoin.bcwallet">
+
+   <uses-sdk android:minSdkVersion="3" />
+   <uses-permission android:name="android.permission.INTERNET" />
+
+   <application android:label="@string/bcwallet" android:icon="@drawable/icon">
+   </application>
+
+</manifest>
+
