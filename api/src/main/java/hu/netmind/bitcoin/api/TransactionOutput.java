@@ -19,19 +19,12 @@
 package hu.netmind.bitcoin.api;
 
 /**
- * Implement this interface to listen for balance changes in a wallet.
+ * A single output of one transaction. The output does not directly refer
+ * to a target address, but contains a script which decided how the funds
+ * from the transaction may be used.
  * @author Robert Brautigam
  */
-public interface WalletListener
+public interface TransactionOutput
 {
-   /**
-    * Invoked by the wallet to notify of potential balance changes. The 
-    * <code>getBalance()</code> and <code>getConfirmedBalance()</code>
-    * will reflect the new values during this call. Note: listener
-    * is notified even if no new transactions for the relevant wallet
-    * were registered, merely enough blocks were recorded to change
-    * the confirmed balance.
-    */
-   void balanceUpdate();
 }
 

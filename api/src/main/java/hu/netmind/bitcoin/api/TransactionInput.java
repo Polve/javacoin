@@ -19,19 +19,19 @@
 package hu.netmind.bitcoin.api;
 
 /**
- * Implement this interface to listen for balance changes in a wallet.
+ * A single input definition for a transaction. An input references exactly
+ * one output of a previous transaction (in another Block usually), and provides
+ * all the information necessary to prove to third parties that the claim for
+ * that output is legitimate.
  * @author Robert Brautigam
  */
-public interface WalletListener
+public interface TransactionInput
 {
    /**
-    * Invoked by the wallet to notify of potential balance changes. The 
-    * <code>getBalance()</code> and <code>getConfirmedBalance()</code>
-    * will reflect the new values during this call. Note: listener
-    * is notified even if no new transactions for the relevant wallet
-    * were registered, merely enough blocks were recorded to change
-    * the confirmed balance.
+    * Get the transaction output this input refers to.
+    * @return The output this input claims to use, or null if this is
+    * a "coinbase" (money generated).
     */
-   void balanceUpdate();
+   TransactionOutput getClaimedOutput();
 }
 

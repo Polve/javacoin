@@ -19,19 +19,14 @@
 package hu.netmind.bitcoin.api;
 
 /**
- * Implement this interface to listen for balance changes in a wallet.
+ * Implement this interface to listen for block chain changes.
  * @author Robert Brautigam
  */
-public interface WalletListener
+public interface BlockChainListener
 {
    /**
-    * Invoked by the wallet to notify of potential balance changes. The 
-    * <code>getBalance()</code> and <code>getConfirmedBalance()</code>
-    * will reflect the new values during this call. Note: listener
-    * is notified even if no new transactions for the relevant wallet
-    * were registered, merely enough blocks were recorded to change
-    * the confirmed balance.
+    * Notify of changes in the longest chain.
     */
-   void balanceUpdate();
+   void longestChainUpdate();
 }
 
