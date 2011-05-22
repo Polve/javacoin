@@ -44,7 +44,11 @@ public interface Wallet extends Observable
     * @param to The string representation of the destination address.
     * @param amount The amount to send from this wallet to the destination
     * address. Note: 100,000,000 (one hundred million) of units is considered 1 BTC.
+    * @throws NotEnoughMoneyException If not enough funds could be collected to cover
+    * to amount specified. This can happen when trying to spend money from transactions
+    * not yet in the longest branch.
     */
-   void sendMoney(String to, long amount);
+   void sendMoney(String to, long amount)
+      throws NotEnoughMoneyException;
 }
 
