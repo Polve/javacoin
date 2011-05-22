@@ -31,10 +31,12 @@ import java.util.List;
  * a special "chain" (path) of Blocks called the "longest chain" which all clients
  * must accept as the official chain. Although it's named "longest", it is
  * the chain that required the most work, not necessarily the longest by
- * number of blocks.
+ * number of blocks. <br><i>Note:</i> Implementations are responsible for
+ * keeping the block chain consistent and following the rules of the BitCoin
+ * network.
  * @author Robert Brautigam
  */
-public interface BlockChain
+public interface BlockChain extends Observable
 {
    /**
     * Get the "longest" Block path in this chain. By longest
@@ -43,10 +45,5 @@ public interface BlockChain
     * from the Genesis Block, ending in the most recent Block.
     */
    List<Block> getLongestChain();
-
-   /**
-    * Register a listener to monitor the state of the chain.
-    */
-   void setListener(BlockChainListener listener);
 }
 

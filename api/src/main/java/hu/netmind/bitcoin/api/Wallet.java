@@ -20,31 +20,21 @@ package hu.netmind.bitcoin.api;
 
 /**
  * Wallet is a high level logical construct of the BitCoin infrastructure,
- * providing services to query and handle money transfers.
+ * providing services to query and handle money transfers. The functions
+ * supported by this interface are targeted to normal "consumer" usage,
+ * and therefore are simplified and do not offer all capabilities of the
+ * BitCoin network.
  * @author Robert Brautigam
  */
-public interface Wallet
+public interface Wallet extends Observable
 {
    /**
-    * Get the "confirmed" total balance of this wallet. Confirmed means
-    * that it was accepted by other peers with high probablilty as the
-    * transactions that make up this balance are at least a given
-    * amount of blocks "deep" in the longest block chain. By default
-    * transactions have to be at least 6 blocks deep in the chain to
-    * be considered confirmed (this can be set with accordance to 
-    * double spending risks levels), which means a new transaction has to
-    * wait at least 1 hour to be confirmed.
-    * @return The confirmed balance in this wallet. Note: 100,000,000
-    * (one hundred million) of units is considered 1 BTC.
-    */
-   long getConfirmedBalance();
-
-   /**
-    * Get the current balance as it appears at the moment from the current
-    * longest block chain. This balance does include items which have
-    * not yet made it to the block chain, and might be actually rejected
-    * by the BitCoin network eventually.
-    * @return The total balance in this wallet (inconfirmed balance
+    * Get the current balance of the Wallet. In the BitCoin network "having"
+    * a balance is not black-and-white. The balance actually contains transactions
+    * with different risks associated (risk is that the transaction will acutally
+    * "fail", because of double spending). It is left to the implementation to 
+    * acutally define the risk level associated with this method's return value.
+    * @return The total balance in this wallet (unconfirmed balance
     * included). Note: 100,000,000 (one hundred million) of units is considered 1 BTC.
     */
    long getBalance();
@@ -56,11 +46,5 @@ public interface Wallet
     * address. Note: 100,000,000 (one hundred million) of units is considered 1 BTC.
     */
    void sendMoney(String to, long amount);
-
-   /**
-    * Set a listener to be notified when any of the balance methods would
-    * potentially return different values.
-    */
-   void setListener(WalletListener listener);
 }
 

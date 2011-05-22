@@ -18,15 +18,23 @@
 
 package hu.netmind.bitcoin.api;
 
+import java.util.Observer;
+
 /**
- * Implement this interface to listen for block chain changes.
+ * An interface for services that can be observed. Unfortunately the Java
+ * class of same name is not an interface.
  * @author Robert Brautigam
  */
-public interface BlockChainListener
+public interface Observable
 {
    /**
-    * Notify of changes in the longest chain.
+    * Add an observer to this class.
     */
-   void longestChainUpdate();
+   void addObserver(Observer observer);
+
+   /**
+    * Remove an observer.
+    */
+   void deleteObserver(Observer observer);
 }
 
