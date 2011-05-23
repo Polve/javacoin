@@ -38,6 +38,11 @@ import java.util.List;
  */
 public interface BlockChain extends Observable
 {
+   enum Event
+   {
+      LONGEST_CHAIN_CHANGE
+   };
+
    /**
     * Get the "longest" Block path in this chain. By longest
     * we mean of course the most complex.

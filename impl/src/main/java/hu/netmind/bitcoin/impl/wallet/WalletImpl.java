@@ -21,7 +21,6 @@ package hu.netmind.bitcoin.impl.wallet;
 import java.util.Observable;
 import java.util.Observer;
 import hu.netmind.bitcoin.api.Wallet;
-import hu.netmind.bitcoin.api.BlockChain;
 import hu.netmind.bitcoin.api.Miner;
 import hu.netmind.bitcoin.api.TransactionFactory;
 import hu.netmind.bitcoin.api.Transaction;
@@ -29,38 +28,38 @@ import hu.netmind.bitcoin.api.NotEnoughMoneyException;
 
 /**
  * This implementation of a Wallet supports a plug-in mechanism to
- * configure the exact behaviour of the Wallet.
+ * configure the exact behaviour of the Wallet.<br>
+ * Class is thread-safe (can be used from multiple threads).
  * @author Robert Brautigam
  */
 public class WalletImpl extends Observable implements Wallet
 {
-   private final BlockChain blockChain;                 // The consistent shared block chain
    private final Miner miner;                           // Miner is responsible for taking Transactions
    private final BalanceCalculator balanceCalculator;   // Maintains/calculates the balance
-   private final TransactionFactory transactionFactory; // Organizes send transactions
+   private final TransactionFactory transactionFactory; // Creates transactions
 
    /**
     * Initialize the Wallet with the block chain, key store and all algorithms.
-    * @param blockChain The shared information about accepted transactions in
-    * a block chain.
     * @param keyStore The cryptographical keys the owner of this wallet owns.
     * @param miner Miner that takes care of transactions.
     * @param balanceCalculator The calculator for the total balance.
     */
-   public WalletImpl(BlockChain blockChain, Miner miner,
-         BalanceCalculator balanceCalculator, TransactionFactory transactionFactory)
+   public WalletImpl(Miner miner, BalanceCalculator balanceCalculator,
+         TransactionFactory transactionFactory)
    {
-      this.blockChain=blockChain;
       this.miner=miner;
       this.balanceCalculator=balanceCalculator;
       this.transactionFactory=transactionFactory;
       // Register listener to always call update when the balance might change
-      blockChain.addObserver(new Observer()
+      balanceCalculator.addObserver(new Observer()
             {
                public void update(Observable obserable, Object data)
                {
-                  setChanged(); // It "might" changed something
-                  notifyObservers();
+                  if ( data == BalanceCalculator.Event.BALANCE_CHANGE )
+                  {
+                     setChanged();
+                     notifyObservers(Event.BALANCE_CHANGE);
+                  }
                }
             });
    }

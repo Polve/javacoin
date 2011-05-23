@@ -33,7 +33,6 @@ import java.util.Observer;
 public class WalletTests
 {
    private WalletImpl wallet;
-   private BlockChain blockChain;
    private BalanceCalculator balanceCalculator;
    private TransactionFactory transactionFactory;
    private Miner miner;
@@ -42,28 +41,27 @@ public class WalletTests
    public void setupWallet()
    {
       // Setup mocks
-      blockChain = EasyMock.createMock(BlockChain.class);
       balanceCalculator = EasyMock.createMock(BalanceCalculator.class);
       transactionFactory = EasyMock.createMock(TransactionFactory.class);
       miner = EasyMock.createMock(Miner.class);
       // Create wallet
-      wallet = new WalletImpl(blockChain,miner,balanceCalculator,transactionFactory);
+      wallet = new WalletImpl(miner,balanceCalculator,transactionFactory);
    }
 
    public void testBalanceChangedEvent()
    {
       // Capture the observer the wallet registers to blockchain
       Capture<Observer> observerTrap = new Capture<Observer>();
-      blockChain.addObserver(EasyMock.capture(observerTrap));
-      EasyMock.replay(blockChain);
-      wallet = new WalletImpl(blockChain,miner,balanceCalculator,transactionFactory);
+      balanceCalculator.addObserver(EasyMock.capture(observerTrap));
+      EasyMock.replay(balanceCalculator);
+      wallet = new WalletImpl(miner,balanceCalculator,transactionFactory);
       // Register our own observer in wallet
       Observer walletObserver = EasyMock.createMock(Observer.class);
-      walletObserver.update(wallet,null);
+      walletObserver.update(wallet,Wallet.Event.BALANCE_CHANGE);
       EasyMock.replay(walletObserver);
       wallet.addObserver(walletObserver);
       // Trigger blockchain change
-      observerTrap.getValue().update(null,null);
+      observerTrap.getValue().update(null,BalanceCalculator.Event.BALANCE_CHANGE);
       // Check if wallet passed the event along
       EasyMock.verify(walletObserver);
    }

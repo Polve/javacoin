@@ -28,6 +28,11 @@ package hu.netmind.bitcoin.api;
  */
 public interface Wallet extends Observable
 {
+   enum Event
+   {
+      BALANCE_CHANGE
+   };
+
    /**
     * Get the current balance of the Wallet. In the BitCoin network "having"
     * a balance is not black-and-white. The balance actually contains transactions

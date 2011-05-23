@@ -18,14 +18,22 @@
 
 package hu.netmind.bitcoin.impl.wallet;
 
+import hu.netmind.bitcoin.api.Observable;
+
 /**
  * Calculates the balance of the block chain for a given key set. Implementations
  * can choose the method of calculation, the algorithm of selecting transactions,
- * as well as associated risks, and caching mechanisms.
+ * as well as associated risks, and caching mechanisms. Implementation must be
+ * thread-safe.
  * @author Robert Brautigam
  */
-public interface BalanceCalculator
+public interface BalanceCalculator extends Observable
 {
+   enum Event
+   {
+      BALANCE_CHANGE
+   };
+
    /**
     * Get the balance calculated according to the parameters defined for the
     * implementation.
