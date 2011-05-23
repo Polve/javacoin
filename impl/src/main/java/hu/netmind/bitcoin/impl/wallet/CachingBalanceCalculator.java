@@ -66,7 +66,8 @@ public abstract class CachingBalanceCalculator extends Observable implements Bal
     */
    protected long getBalance(Block block)
    {
-      // TODO
+      // TODO: how do we know the block has the transactions the belong to us? The
+      // block may be compressed, maybe only the foreign transactions are removed?
       return -1;
    }
 
