@@ -50,5 +50,19 @@ public interface BlockChain extends Observable
     * from the Genesis Block, ending in the most recent Block.
     */
    List<Block> getLongestChain();
+
+   /**
+    * Get the list of all transactions from the longest chain.
+    * @return The list of transactions in the order mentioned in the
+    * Blocks.
+    */
+   List<Transaction> getTransactionsFromLongestChain();
+
+   /**
+    * Get the filtered list of transactions from the longest chain.
+    * @param filter The filter to apply to the transactions.
+    * @return The list of transactions after applying the filter.
+    */
+   List<Transaction> getTransactionsFromLongestChain(TransactionFilter filter);
 }
 
