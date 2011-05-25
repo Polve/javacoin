@@ -46,7 +46,8 @@ public interface TransactionFilter extends Comparable<TransactionFilter>
     * in the Block is much more efficient, because otherwise all the
     * transactions need to be potentially downloaded. This method should
     * not access the transactions in the Block at all.
-    * @param block The Block to filter.
+    * @param block The Block to filter. Note that null is a valid value
+    * here if the filter should apply to transactions not yet in a Block.
     * @return True if the block's transactions should go to the filtering
     * second stage. False to reject all of the transactions in a Block right 
     * away.
@@ -60,6 +61,8 @@ public interface TransactionFilter extends Comparable<TransactionFilter>
     * transactions in the Block, but it is guaranteed that if it is somehow
     * pre-filtered, that filter did not take away any results from this filtering.
     * In other words any pre-filter applied was "greater or equal" to this filter.
+    * Note that the transactions might not have a Block associated with them if
+    * they are not yet incorporated into a Block.
     * @param transactions The list of transactions in the Block to filter.
     * @return The list of transactions after the filtering.
     */
