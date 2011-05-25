@@ -44,25 +44,21 @@ public interface BlockChain extends Observable
    };
 
    /**
-    * Get the "longest" Block path in this chain. By longest
-    * we mean of course the most complex.
-    * @return The list of blocks for the longest chain, starting
-    * from the Genesis Block, ending in the most recent Block.
+    * Get a transaction container that represents the longest chain in this
+    * block chain.
+    * @return A transaction container which can be queried and contains only the
+    * blocks and transactions of the longest chain.
     */
-   List<Block> getLongestChain();
+   TransactionContainer getLongestChainTransactionContainer();
 
    /**
-    * Get the list of all transactions from the longest chain.
-    * @return The list of transactions in the order mentioned in the
-    * Blocks.
+    * Get a transaction container representing all the transactions in the block chain.
+    * Note that a single transaction can be incorporated into multiple branches, in
+    * which case that transaction will show up multiple times in the returned container.
+    * @return The container representing all transactions in the block chain, uniqueness
+    * is not guaranteed.
     */
-   List<Transaction> getTransactionsFromLongestChain();
+   TransactionContainer getTransactionContainer();
 
-   /**
-    * Get the filtered list of transactions from the longest chain.
-    * @param filter The filter to apply to the transactions.
-    * @return The list of transactions after applying the filter.
-    */
-   List<Transaction> getTransactionsFromLongestChain(TransactionFilter filter);
 }
 

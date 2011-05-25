@@ -31,7 +31,7 @@ package hu.netmind.bitcoin.api;
  * transactions contain a "transaction fee" the Miner can also claim that.
  * @author Robert Brautigam
  */
-public interface Miner
+public interface Miner extends TransactionContainer
 {
    /**
     * Add a transaction to the pool of "to be processed" transactions.

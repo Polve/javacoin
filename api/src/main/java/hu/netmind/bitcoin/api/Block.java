@@ -39,20 +39,7 @@ import java.util.List;
  * </ul>
  * @author Robert Brautigam
  */
-public interface Block
+public interface Block extends TransactionContainer
 {
-   /**
-    * Get the list of all transactions in this Block.
-    * @return The list of transactions in the order mentioned in the
-    * Block.
-    */
-   List<Transaction> getTransactions();
-
-   /**
-    * Get the filtered list of transactions from this Block.
-    * @param filter The filter to apply to the transactions.
-    * @return The list of transactions after applying the filter.
-    */
-   List<Transaction> getTransactions(TransactionFilter filter);
 }
 
