@@ -20,6 +20,9 @@ package hu.netmind.bitcoin.impl.wallet;
 
 import hu.netmind.bitcoin.api.Block;
 import java.util.Observable;
+import hu.netmind.bitcoin.api.BlockChain;
+import hu.netmind.bitcoin.api.KeyStore;
+import hu.netmind.bitcoin.api.Miner;
 
 /**
  * Provides basic mechanisms to cache pre-calculated values to Block items.
@@ -31,8 +34,13 @@ import java.util.Observable;
  * blocks coming <i>after</i> the cached block (which sometimes make sense actually).
  * @author Robert Brautigam
  */
-public abstract class CachingBalanceCalculator extends Observable implements BalanceCalculator
+public abstract class CachingBalanceCalculator extends UpdatingBalanceCalculator
 {
+   public CachingBalanceCalculator(BlockChain blockChain, KeyStore keyStore, Miner miner)
+   {
+      super(blockChain, keyStore, miner);
+   }
+
    /**
     * Add a cache entry. The entry means that the algorithm determined that
     * the path leading up to the specified block from the genesis block,
