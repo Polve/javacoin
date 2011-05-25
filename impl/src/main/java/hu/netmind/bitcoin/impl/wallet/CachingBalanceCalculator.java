@@ -23,6 +23,9 @@ import java.util.Observable;
 import hu.netmind.bitcoin.api.BlockChain;
 import hu.netmind.bitcoin.api.KeyStore;
 import hu.netmind.bitcoin.api.Miner;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides basic mechanisms to cache pre-calculated values to Block items.
@@ -36,51 +39,44 @@ import hu.netmind.bitcoin.api.Miner;
  */
 public abstract class CachingBalanceCalculator extends UpdatingBalanceCalculator
 {
-   public CachingBalanceCalculator(BlockChain blockChain, KeyStore keyStore, Miner miner)
+   private static final Logger logger = LoggerFactory.getLogger(CachingBalanceCalculator.class);
+
+   private BlockBalanceCache cache;
+
+   public CachingBalanceCalculator(BlockChain blockChain, KeyStore keyStore, Miner miner,
+         BlockBalanceCache cache)
    {
       super(blockChain, keyStore, miner);
+      this.cache=cache;
    }
 
    /**
-    * Add a cache entry. The entry means that the algorithm determined that
-    * the path leading up to the specified block from the genesis block,
-    * including the transactions in the specified block have the specified
-    * amount.
-    * @param block The block up to which the amount is calculated.
-    * @param amount The amount calculated.
+    * To calculate/update the balance this method just tries to calculate
+    * the aggregated transaction value up to the last Block in the longest
+    * chain.
     */
-   private void addEntry(Block block, long amount)
+   protected void updateBalance()
    {
-      // TODO
-   }
-
-   /**
-    * Get the entry for a given block. 
-    * @return 
-    */
-   private long getEntry(Block block)
-   {
-      // TODO
-      return -1;
-   }
-
-   /**
-    * Get the balance up to the specified Block, including the
-    * transactions contained in the given block. If the amount for the
-    * block is already known, it will come from cache. If not, it will
-    * be calculated.
-    * @param block The block up to which to calculate the balance.
-    * @return The amount known from cache or calculated if it's not cached already.
-    */
-   protected long getBalance(Block block)
-   {
-      // TODO: how do we know the block has the transactions the belong to us? The
-      // block may be compressed, maybe only the foreign transactions are removed?
-      // Maybe: the block should decide that, whether all relevant information is there
-      // or not, this means though, that the block has to do the filtering... And it
-      // should remember whether the same filter "expression" or class/object did the
-      // compacting filtering
-      return -1;
+      // This could be implemented really simply with a recursive function,
+      // but we don't want to stress the stack that much. There are hundreds
+      // of thousands of blocks. So this algorithm tries to find the first parent
+      // for which we know the balance from cache, then go forward again and
+      // put the values into the cache.
+      List<Block> chain = getBlockChain().getLongestChain();
+      int index;
+      // Search for newest block for which we know the balance
+      for ( index = chain.size()-1; (index >= 0) && (cache.getEntry(chain.get(index))==null) ; index-- );
+      // Now calculate the newer ones (note index is -1 if no cache entries at all)
+      long balance = 0;
+      if ( index >= 0 )
+         balance = cache.getEntry(chain.get(index));
+      for ( index++ ; index < chain.size() ; index++ )
+      {
+         balance += calculateBalance(chain.get(index));
+         cache.addEntry(chain.get(index),balance);
+      }
+      // Set the new balance
+      setBalance(balance);
    }
 
    /**

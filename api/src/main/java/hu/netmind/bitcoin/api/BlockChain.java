@@ -44,9 +44,10 @@ public interface BlockChain extends Observable
    };
 
    /**
-    * Get the last Block from the longest chain.
+    * Get the longest chain in this block chain. By "longest"
+    * we mean that it has the most difficulty associated with it.
     */
-   Block getLongestChainTail();
+   List<Block> getLongestChain();
 
 }
 

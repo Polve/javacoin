@@ -25,6 +25,10 @@ import org.easymock.EasyMock;
 import org.easymock.Capture;
 import hu.netmind.bitcoin.api.*;
 import java.util.Observer;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * @author Robert Brautigam
@@ -35,6 +39,7 @@ public class BalanceCalculatorTests
    private BlockChain blockChain;
    private KeyStore keyStore;
    private Miner miner;
+   private BlockBalanceCache cache;
 
    @BeforeMethod
    public void setupMocks()
@@ -43,6 +48,7 @@ public class BalanceCalculatorTests
       blockChain = EasyMock.createMock(BlockChain.class);
       keyStore = EasyMock.createMock(KeyStore.class);
       miner = EasyMock.createMock(Miner.class);
+      cache = EasyMock.createMock(BlockBalanceCache.class);
    }
 
    public void testUpdateInit()
@@ -95,6 +101,41 @@ public class BalanceCalculatorTests
       observerTrap.getValue().update(null,null);
       // Check for increased balance because the update was invoked
       Assert.assertEquals(calculator.getBalance(),2);
+   }
+
+   public void testCachingWithNothingCached()
+   {
+      // Create the blocks
+      List<Block> blocks = new ArrayList<Block>();
+      for ( int i=0; i<5; i++ )
+         blocks.add(EasyMock.createMock(Block.class));
+      // Create block chain
+      EasyMock.expect(blockChain.getLongestChain()).andReturn(blocks).anyTimes();
+      blockChain.addObserver((Observer)EasyMock.anyObject());
+      EasyMock.replay(blockChain);
+      // Prepare what calls the cache should receive
+      EasyMock.expect(cache.getEntry((Block) EasyMock.anyObject())).andReturn(null).anyTimes();
+      for ( int i=0; i<5; i++ )
+         cache.addEntry(blocks.get(i),(long) i*5);
+      EasyMock.replay(cache);
+      // Setup the object to test
+      Map<Block,Long> blockBalances = new HashMap<Block,Long>();
+      for ( int i=0; i<5; i++ )
+         blockBalances.put(blocks.get(i),(long) 5); // Each block is worth 5
+      CachingBalanceCalculatorImpl calculator = new CachingBalanceCalculatorImpl(
+            blockChain, keyStore, miner, cache);
+      calculator.setBalanceMap(blockBalances);
+      // Check results
+      Assert.assertEquals(calculator.getBalance(),25);
+      EasyMock.verify(cache);
+   }
+
+   public void testCachingWithLatestCached()
+   {
+   }
+
+   public void testCachingWithMiddleCached()
+   {
    }
 }
 

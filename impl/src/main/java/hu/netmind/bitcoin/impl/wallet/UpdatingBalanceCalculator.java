@@ -46,7 +46,7 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
    private KeyStore keyStore;
    private Miner miner;
 
-   private long currentBalance;
+   private long currentBalance = -1;
 
    /**
     * Construct the balance calculator with the observed objects.
@@ -56,8 +56,6 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
       this.blockChain=blockChain;
       this.keyStore=keyStore;
       this.miner=miner;
-      // Do an initial calculation
-      updateBalance();
       // Register listeners to all
       blockChain.addObserver(new Observer()
             {
@@ -82,6 +80,21 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
             });
    }
 
+   public BlockChain getBlockChain()
+   {
+      return blockChain;
+   }
+
+   public Miner getMiner()
+   {
+      return miner;
+   }
+
+   public KeyStore getKeyStore()
+   {
+      return keyStore;
+   }
+
    private void fireUpdateBalance()
    {
       // First update the balance
@@ -93,8 +106,14 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
    /**
     * Get the currently calculated balance.
     */
-   public long getBalance()
+   public synchronized long getBalance()
    {
+      if ( currentBalance < 0 )
+      {
+         // Initialize balance
+         currentBalance = 0;
+         updateBalance();
+      }
       return currentBalance;
    }
 
@@ -102,7 +121,7 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
     * Set the balance. This method may be called by <code>updateBalance()</code>
     * to set a new balance.
     */
-   protected void setBalance(long balance)
+   protected synchronized void setBalance(long balance)
    {
       this.currentBalance=balance;
       setChanged();
