@@ -44,21 +44,9 @@ public interface BlockChain extends Observable
    };
 
    /**
-    * Get a transaction container that represents the longest chain in this
-    * block chain.
-    * @return A transaction container which can be queried and contains only the
-    * blocks and transactions of the longest chain.
+    * Get the last Block from the longest chain.
     */
-   TransactionContainer getLongestChainTransactionContainer();
-
-   /**
-    * Get a transaction container representing all the transactions in the block chain.
-    * Note that a single transaction can be incorporated into multiple branches, in
-    * which case that transaction will show up multiple times in the returned container.
-    * @return The container representing all transactions in the block chain, uniqueness
-    * is not guaranteed.
-    */
-   TransactionContainer getTransactionContainer();
+   Block getLongestChainTail();
 
 }
 
