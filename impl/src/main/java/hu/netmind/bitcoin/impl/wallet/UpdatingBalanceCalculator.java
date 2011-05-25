@@ -56,6 +56,8 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
       this.blockChain=blockChain;
       this.keyStore=keyStore;
       this.miner=miner;
+      // Do an initial calculation
+      updateBalance();
       // Register listeners to all
       blockChain.addObserver(new Observer()
             {
@@ -78,8 +80,6 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
                   fireUpdateBalance();
                }
             });
-      // Do an initial calculation
-      updateBalance();
    }
 
    private void fireUpdateBalance()
