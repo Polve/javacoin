@@ -28,9 +28,30 @@ package hu.netmind.bitcoin.net;
 public interface Communicator
 {
    /**
+    * Set a "service" flag offered by receivers.
+    * @param flag The value for the service offered.
+    */
+   void setService(int flag);
+
+   /**
+    * Clear a "service" flag no longer offered by receivers.
+    * @param flag The value for the service offered.
+    */
+   void clearService(int flag);
+
+   /**
+    * Set the number of the last block seen. This information
+    * is published through the automatic version information
+    * provided to nodes directly connected.
+    * @param number The number of last node seen.
+    */
+   void setStartHeight(long number);
+
+   /**
     * Send a message to the network. The exact algorithm of
     * distributing the message is up to the implementation. 
     * It can broadcast the message through direct connections,
+    * submit the message to a central trusted node,
     * it can send out emails, or post the message as a haiku to
     * a blog. Either way the only responsibility is to make best
     * effort to distribute.
