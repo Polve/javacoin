@@ -116,7 +116,7 @@ public class BalanceCalculatorTests
       // Prepare what calls the cache should receive
       EasyMock.expect(cache.getEntry((Block) EasyMock.anyObject())).andReturn(null).anyTimes();
       for ( int i=0; i<5; i++ )
-         cache.addEntry(blocks.get(i),(long) i*5);
+         cache.addEntry(blocks.get(i),(long) (i+1)*5);
       EasyMock.replay(cache);
       // Setup the object to test
       Map<Block,Long> blockBalances = new HashMap<Block,Long>();
@@ -132,10 +132,56 @@ public class BalanceCalculatorTests
 
    public void testCachingWithLatestCached()
    {
+      // Create the blocks
+      List<Block> blocks = new ArrayList<Block>();
+      for ( int i=0; i<5; i++ )
+         blocks.add(EasyMock.createMock(Block.class));
+      // Create block chain
+      EasyMock.expect(blockChain.getLongestChain()).andReturn(blocks).anyTimes();
+      blockChain.addObserver((Observer)EasyMock.anyObject());
+      EasyMock.replay(blockChain);
+      // Prepare what calls the cache should receive
+      EasyMock.expect(cache.getEntry(blocks.get(4))).andReturn((long) 25).anyTimes();
+      EasyMock.replay(cache); // No other calls should be made
+      // Setup the object to test
+      Map<Block,Long> blockBalances = new HashMap<Block,Long>();
+      for ( int i=0; i<5; i++ )
+         blockBalances.put(blocks.get(i),(long) 5); // Each block is worth 5
+      CachingBalanceCalculatorImpl calculator = new CachingBalanceCalculatorImpl(
+            blockChain, keyStore, miner, cache);
+      calculator.setBalanceMap(blockBalances);
+      // Check results
+      Assert.assertEquals(calculator.getBalance(),25);
+      EasyMock.verify(cache);
    }
 
    public void testCachingWithMiddleCached()
    {
+      // Create the blocks
+      List<Block> blocks = new ArrayList<Block>();
+      for ( int i=0; i<5; i++ )
+         blocks.add(EasyMock.createMock(Block.class));
+      // Create block chain
+      EasyMock.expect(blockChain.getLongestChain()).andReturn(blocks).anyTimes();
+      blockChain.addObserver((Observer)EasyMock.anyObject());
+      EasyMock.replay(blockChain);
+      // Prepare what calls the cache should receive
+      EasyMock.expect(cache.getEntry(blocks.get(4))).andReturn(null);
+      EasyMock.expect(cache.getEntry(blocks.get(3))).andReturn(null);
+      EasyMock.expect(cache.getEntry(blocks.get(2))).andReturn((long) 15).anyTimes(); // 3rd has cached data
+      cache.addEntry(blocks.get(3),(long) 20);
+      cache.addEntry(blocks.get(4),(long) 25);
+      EasyMock.replay(cache); // No other calls should be made
+      // Setup the object to test
+      Map<Block,Long> blockBalances = new HashMap<Block,Long>();
+      for ( int i=0; i<5; i++ )
+         blockBalances.put(blocks.get(i),(long) 5); // Each block is worth 5
+      CachingBalanceCalculatorImpl calculator = new CachingBalanceCalculatorImpl(
+            blockChain, keyStore, miner, cache);
+      calculator.setBalanceMap(blockBalances);
+      // Check results
+      Assert.assertEquals(calculator.getBalance(),25);
+      EasyMock.verify(cache);
    }
 }
 
