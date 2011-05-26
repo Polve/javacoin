@@ -20,9 +20,9 @@ package hu.netmind.bitcoin.impl.wallet;
 
 import java.util.Observable;
 import java.util.Observer;
-import hu.netmind.bitcoin.api.BlockChain;
-import hu.netmind.bitcoin.api.KeyStore;
-import hu.netmind.bitcoin.api.Miner;
+import hu.netmind.bitcoin.BlockChain;
+import hu.netmind.bitcoin.KeyStore;
+import hu.netmind.bitcoin.Miner;
 
 /**
  * Provides mechanisms to remember the last calculated balance, and listen to 

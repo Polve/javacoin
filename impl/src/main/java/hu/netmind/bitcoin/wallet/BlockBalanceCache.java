@@ -18,27 +18,23 @@
 
 package hu.netmind.bitcoin.impl.wallet;
 
-import hu.netmind.bitcoin.api.Observable;
+import hu.netmind.bitcoin.Block;
 
 /**
- * Calculates the balance of the block chain for a given key set. Implementations
- * can choose the method of calculation, the algorithm of selecting transactions,
- * as well as associated risks, and caching mechanisms. Implementation must be
- * thread-safe.
+ * This cache stores balance values to specific block entries.
  * @author Robert Brautigam
  */
-public interface BalanceCalculator extends Observable
+public interface BlockBalanceCache
 {
-   enum Event
-   {
-      BALANCE_CHANGE
-   };
+   /**
+    * Add an entry into the cache.
+    */
+   void addEntry(Block block, Long balance);
 
    /**
-    * Get the balance calculated according to the parameters defined for the
-    * implementation.
-    * @return The balance as calculated in hundred millionth BTC.
+    * Get a balance for a given block.
+    * @return The balance value or null if it is not in the cache.
     */
-   long getBalance();
+   Long getEntry(Block block);
 }
 

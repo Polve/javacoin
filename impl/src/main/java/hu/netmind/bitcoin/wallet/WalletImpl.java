@@ -20,11 +20,11 @@ package hu.netmind.bitcoin.impl.wallet;
 
 import java.util.Observable;
 import java.util.Observer;
-import hu.netmind.bitcoin.api.Wallet;
-import hu.netmind.bitcoin.api.Miner;
-import hu.netmind.bitcoin.api.TransactionFactory;
-import hu.netmind.bitcoin.api.Transaction;
-import hu.netmind.bitcoin.api.NotEnoughMoneyException;
+import hu.netmind.bitcoin.Wallet;
+import hu.netmind.bitcoin.Miner;
+import hu.netmind.bitcoin.TransactionFactory;
+import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.NotEnoughMoneyException;
 
 /**
  * This implementation of a Wallet supports a plug-in mechanism to

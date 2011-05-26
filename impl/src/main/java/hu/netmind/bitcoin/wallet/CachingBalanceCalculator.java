@@ -18,11 +18,11 @@
 
 package hu.netmind.bitcoin.impl.wallet;
 
-import hu.netmind.bitcoin.api.Block;
+import hu.netmind.bitcoin.Block;
 import java.util.Observable;
-import hu.netmind.bitcoin.api.BlockChain;
-import hu.netmind.bitcoin.api.KeyStore;
-import hu.netmind.bitcoin.api.Miner;
+import hu.netmind.bitcoin.BlockChain;
+import hu.netmind.bitcoin.KeyStore;
+import hu.netmind.bitcoin.Miner;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
