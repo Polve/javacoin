@@ -11,6 +11,7 @@
   <modules>
     <module>api</module>
     <module>impl</module>
+    <module>net</module>
     <module>bcwallet</module>
   </modules>
 
