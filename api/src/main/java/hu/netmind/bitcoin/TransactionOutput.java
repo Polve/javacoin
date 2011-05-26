@@ -16,22 +16,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.api;
+package hu.netmind.bitcoin;
 
 /**
- * A single input definition for a transaction. An input references exactly
- * one output of a previous transaction (in another Block usually), and provides
- * all the information necessary to prove to third parties that the claim for
- * that output is legitimate.
+ * A single output of one transaction. The output does not directly refer
+ * to a target address, but contains a script which decided how the funds
+ * from the transaction may be used.
  * @author Robert Brautigam
  */
-public interface TransactionInput
+public interface TransactionOutput
 {
-   /**
-    * Get the transaction output this input refers to.
-    * @return The output this input claims to use, or null if this is
-    * a "coinbase" (money generated).
-    */
-   TransactionOutput getClaimedOutput();
 }
 

@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.api;
+package hu.netmind.bitcoin;
 
 /**
  * A miner is responsible for creating new blocks into the BlockChain.

@@ -16,23 +16,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.api;
+package hu.netmind.bitcoin;
 
 /**
- * Thrown if the consistency and/or cryptographic validity of any component
- * is found to be compromised, or can not be successfully verified.
- * @author Robert Brautigam
+ * The keystore holds all the private keys of the user/owner. The private
+ * keys are the evidence which transactions belong to the owner, so losing
+ * the keys amount to losing all the money associated with the key. Only this
+ * keystore needs to be backed up, because all the money can be re-calculated
+ * from the keys themselves.
  */
-public class VerificationException extends BitCoinException
+public interface KeyStore extends Observable
 {
-   public VerificationException(String message)
+   enum Event
    {
-      super(message);
-   }
-
-   public VerificationException(String message, Throwable e)
-   {
-      super(message,e);
-   }
+      KEY_ADDED,
+      KEY_REMOVED,
+   };
 }
-

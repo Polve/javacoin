@@ -16,19 +16,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.api;
+package hu.netmind.bitcoin;
+
+import java.util.Observer;
 
 /**
- * Thrown if two filters of same class can not be compared. This means that neither of them
- * return a superset or subset of the other filter, meaning the filtered transactions
- * are just different.
+ * An interface for services that can be observed. Unfortunately the Java
+ * class of same name is not an interface.
  * @author Robert Brautigam
  */
-public class NotComparableException extends RuntimeException
+public interface Observable
 {
-   public NotComparableException(String message)
-   {
-      super(message);
-   }
+   /**
+    * Add an observer to this class.
+    */
+   void addObserver(Observer observer);
+
+   /**
+    * Remove an observer.
+    */
+   void deleteObserver(Observer observer);
 }
 

@@ -16,20 +16,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.api;
+package hu.netmind.bitcoin;
 
 /**
- * The keystore holds all the private keys of the user/owner. The private
- * keys are the evidence which transactions belong to the owner, so losing
- * the keys amount to losing all the money associated with the key. Only this
- * keystore needs to be backed up, because all the money can be re-calculated
- * from the keys themselves.
+ * A single input definition for a transaction. An input references exactly
+ * one output of a previous transaction (in another Block usually), and provides
+ * all the information necessary to prove to third parties that the claim for
+ * that output is legitimate.
+ * @author Robert Brautigam
  */
-public interface KeyStore extends Observable
+public interface TransactionInput
 {
-   enum Event
-   {
-      KEY_ADDED,
-      KEY_REMOVED,
-   };
+   /**
+    * Get the transaction output this input refers to.
+    * @return The output this input claims to use, or null if this is
+    * a "coinbase" (money generated).
+    */
+   TransactionOutput getClaimedOutput();
 }
+

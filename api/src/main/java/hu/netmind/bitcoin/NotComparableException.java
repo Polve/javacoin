@@ -16,15 +16,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.api;
+package hu.netmind.bitcoin;
 
 /**
- * A single output of one transaction. The output does not directly refer
- * to a target address, but contains a script which decided how the funds
- * from the transaction may be used.
+ * Thrown if two filters of same class can not be compared. This means that neither of them
+ * return a superset or subset of the other filter, meaning the filtered transactions
+ * are just different.
  * @author Robert Brautigam
  */
-public interface TransactionOutput
+public class NotComparableException extends RuntimeException
 {
+   public NotComparableException(String message)
+   {
+      super(message);
+   }
 }
 

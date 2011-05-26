@@ -16,24 +16,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.api;
+package hu.netmind.bitcoin;
 
 /**
- * Factory creates all types of transaction objects, including the
- * responsibility of getting the necessary information.
+ * The root of all exceptions coming from this API.
  * @author Robert Brautigam
  */
-public interface TransactionFactory
+public class BitCoinException extends Exception
 {
-   /**
-    * Create a transaction to transfer some amount of money
-    * to the specified target address.
-    * @param to The target address.
-    * @param amount The amount to transfer in 100 millionth BTC.
-    * @throws NotEnoughMoneyException If there is not enough money
-    * to make the transfer.
-    */
-   Transaction createTransaction(String to, long amount)
-      throws NotEnoughMoneyException;
+   public BitCoinException(String message)
+   {
+      super(message);
+   }
+
+   public BitCoinException(String message, Throwable e)
+   {
+      super(message,e);
+   }
 }
 

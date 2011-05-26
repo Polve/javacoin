@@ -16,25 +16,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.api;
-
-import java.util.Observer;
+package hu.netmind.bitcoin;
 
 /**
- * An interface for services that can be observed. Unfortunately the Java
- * class of same name is not an interface.
+ * Thrown if the consistency and/or cryptographic validity of any component
+ * is found to be compromised, or can not be successfully verified.
  * @author Robert Brautigam
  */
-public interface Observable
+public class VerificationException extends BitCoinException
 {
-   /**
-    * Add an observer to this class.
-    */
-   void addObserver(Observer observer);
+   public VerificationException(String message)
+   {
+      super(message);
+   }
 
-   /**
-    * Remove an observer.
-    */
-   void deleteObserver(Observer observer);
+   public VerificationException(String message, Throwable e)
+   {
+      super(message,e);
+   }
 }
 
