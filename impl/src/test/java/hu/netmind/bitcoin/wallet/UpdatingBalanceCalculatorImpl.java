@@ -18,9 +18,9 @@
 
 package hu.netmind.bitcoin.impl.wallet;
 
-import hu.netmind.bitcoin.api.BlockChain;
-import hu.netmind.bitcoin.api.KeyStore;
-import hu.netmind.bitcoin.api.Miner;
+import hu.netmind.bitcoin.BlockChain;
+import hu.netmind.bitcoin.KeyStore;
+import hu.netmind.bitcoin.Miner;
 
 /**
  * This updating calculator increases the balance always by one on each update, 

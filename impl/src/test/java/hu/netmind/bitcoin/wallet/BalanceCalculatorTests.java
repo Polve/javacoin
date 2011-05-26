@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
 import org.easymock.EasyMock;
 import org.easymock.Capture;
-import hu.netmind.bitcoin.api.*;
+import hu.netmind.bitcoin.*;
 import java.util.Observer;
 import java.util.List;
 import java.util.Map;

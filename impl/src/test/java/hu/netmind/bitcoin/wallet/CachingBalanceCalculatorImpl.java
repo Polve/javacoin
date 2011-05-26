@@ -18,11 +18,11 @@
 
 package hu.netmind.bitcoin.impl.wallet;
 
-import hu.netmind.bitcoin.api.Block;
+import hu.netmind.bitcoin.Block;
 import java.util.Map;
-import hu.netmind.bitcoin.api.BlockChain;
-import hu.netmind.bitcoin.api.KeyStore;
-import hu.netmind.bitcoin.api.Miner;
+import hu.netmind.bitcoin.BlockChain;
+import hu.netmind.bitcoin.KeyStore;
+import hu.netmind.bitcoin.Miner;
 
 /**
  * A simple implementation which can be preconfigured with block values for
