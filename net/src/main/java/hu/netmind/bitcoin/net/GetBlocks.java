@@ -18,24 +18,22 @@
 
 package hu.netmind.bitcoin.net;
 
+import java.util.List;
+
 /**
  * @author Robert Brautigam
  */
-public interface InventoryItem
+public interface GetBlocks extends Message
 {
-   static final int TYPE_ERROR = 0;
-   static final int TYPE_TX = 1;
-   static final int TYPE_BLOCK = 2;
+   /**
+    * Get the list of starting hashes for the blocks.
+    */
+   List<byte[]> getHashStarts();
 
    /**
-    * Get the of inventory item.
+    * Get the ending hash. Set to zero to get as much blocks as possible.
     */
-   int getType();
-
-   /**
-    * Get the hash of the item.
-    */
-   byte[] getHash();
+   byte[] getHashStop();
 }
 
 

@@ -18,24 +18,17 @@
 
 package hu.netmind.bitcoin.net;
 
+import java.util.List;
+
 /**
  * @author Robert Brautigam
  */
-public interface InventoryItem
+public interface GetData extends Message
 {
-   static final int TYPE_ERROR = 0;
-   static final int TYPE_TX = 1;
-   static final int TYPE_BLOCK = 2;
-
    /**
-    * Get the of inventory item.
+    * Get the list of inventory items.
     */
-   int getType();
-
-   /**
-    * Get the hash of the item.
-    */
-   byte[] getHash();
+   List<InventoryItem> getInventoryItems();
 }
 
 
