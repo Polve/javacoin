@@ -19,14 +19,51 @@
 package hu.netmind.bitcoin.net.message;
 
 import hu.netmind.bitcoin.net.Message;
+import java.io.IOException;
 
 /**
- * This implementation provides means to serialize and deserialize
- * any BitCoin message.
+ * This is the base class for all messages, provides serialization and
+ * deserialization of the header.
  * @author Robert Brautigam
  */
 public abstract class MessageImpl implements Message
 {
+   private long magic;
+   private String command;
 
+   /**
+    * All messages must provide a constructor to construct
+    * the message by reading from an input stream. Note, each
+    * superclass will read the approriate fields already from the stream.
+    */
+   public MessageImpl(BitCoinInputStream input)
+      throws IOException
+   {
+      magic = input.readUInt32();
+      command = input.readString(12);
+   }
+
+   /**
+    * All messages must provide a constructor also to construct
+    * the message by supplying all attributes.
+    */
+   public MessageImpl(long magic, String command)
+   {
+      this.magic=magic;
+      this.command=command;
+   }
+   
+   /**
+    * All messages must also override this method to serialize
+    * the contents of the message to the BitCoin protocol. Note,
+    * implementations must call the superclass' <code>writeTo()</code>
+    * always first.
+    */
+   void writeTo(BitCoinOutputStream output)
+      throws IOException
+   {
+      output.writeUInt32(magic);
+      output.writeString(command,12);
+   }
 }
 
