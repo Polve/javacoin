@@ -24,7 +24,7 @@ import java.io.IOException;
 /**
  * This is an input stream that supports the various types defined in the
  * BitCoin protocol. This still has to be subclassed to provide the actual
- * <code>read()</code>.
+ * <code>read()</code>. Note: input stream must support the mark mechanism!
  * @author Robert Brautigam
  */
 public abstract class BitCoinInputStream extends InputStream
