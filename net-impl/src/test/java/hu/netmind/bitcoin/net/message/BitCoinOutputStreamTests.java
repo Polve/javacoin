@@ -58,5 +58,76 @@ public class BitCoinOutputStreamTests
       Assert.assertEquals(output.toString(),"FD EC");
    }
 
+   public void testWriteUInt32()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeUInt32(0xfdec1122);
+      Assert.assertEquals(output.toString(),"22 11 EC FD");
+   }
+
+   public void testWriteUInt64()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeUInt64(0xfdec112255667788l);
+      Assert.assertEquals(output.toString(),"88 77 66 55 22 11 EC FD");
+   }
+
+   public void testWriteUIntVar8()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeUIntVar(0xec);
+      Assert.assertEquals(output.toString(),"EC");
+   }
+
+   public void testWriteUIntVar16()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeUIntVar(0xec22);
+      Assert.assertEquals(output.toString(),"FD 22 EC");
+   }
+
+   public void testWriteUIntVar32()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeUIntVar(0xec221100l);
+      Assert.assertEquals(output.toString(),"FE 00 11 22 EC");
+   }
+
+   public void testWriteUIntVar64()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeUIntVar(0xec11223344556677l);
+      Assert.assertEquals(output.toString(),"FF 77 66 55 44 33 22 11 EC");
+   }
+
+   public void testWriteFixStringEmpty()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeString("",8);
+      Assert.assertEquals(output.toString(),"00 00 00 00 00 00 00 00");
+   }
+
+   public void testWriteFixStringNormal()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeString("ABCD",8);
+      Assert.assertEquals(output.toString(),"41 42 43 44 00 00 00 00");
+   }
+
+   public void testWriteFixStringFull()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeString("ABCDEFGH",8);
+      Assert.assertEquals(output.toString(),"41 42 43 44 45 46 47 48");
+   }
 }
 

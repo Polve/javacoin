@@ -73,16 +73,16 @@ public abstract class BitCoinOutputStream extends OutputStream
    public void writeUIntVar(long value)
       throws IOException
    {
-      if ( value < 0xfd )
+      if ( (value>=0) && (value < 0xfd) )
       {
          writeU(value);
       }
-      else if ( value < 0xffff )
+      else if ( (value>=0) && (value <= 0xffff) )
       {
          writeU(0xfd);
          writeUInt16(value);
       }
-      else if ( value < 0xffffffff )
+      else if ( (value>=0) && (value <= 0xffffffffl) )
       {
          writeU(0xfe);
          writeUInt32(value);

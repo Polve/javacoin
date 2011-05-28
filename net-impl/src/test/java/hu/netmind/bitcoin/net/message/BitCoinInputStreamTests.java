@@ -115,7 +115,7 @@ public class BitCoinInputStreamTests
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
             "FE 22 33 44 55");
-      Assert.assertEquals(input.readUIntVar(),0x55443322);
+      Assert.assertEquals(input.readUIntVar(),0x55443322l);
    }
 
    public void testReadUIntVar64()
