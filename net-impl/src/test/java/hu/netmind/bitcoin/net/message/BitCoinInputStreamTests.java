@@ -21,7 +21,6 @@ package hu.netmind.bitcoin.net.message;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
-import java.util.StringTokenizer;
 import java.util.Arrays;
 import java.io.IOException;
 import org.slf4j.Logger;
@@ -35,45 +34,31 @@ public class BitCoinInputStreamTests
 {
    private static final Logger logger = LoggerFactory.getLogger(BitCoinInputStreamTests.class);
 
-   /**
-    * Helper method to convert strings like: "F0 A4 32 05", to
-    * actual byte array for easier testing.
-    */
-   private byte[] toByteArray(String hexString)
-   {
-      StringTokenizer tokenizer = new StringTokenizer(hexString," ");
-      byte[] result = new byte[tokenizer.countTokens()];
-      for ( int i=0; i<result.length; i++ )
-         result[i] = (byte) Integer.valueOf(tokenizer.nextToken(),16).intValue();
-      logger.debug("converted {} to byte array; {}",hexString,Arrays.toString(result));
-      return result;
-   }
-
    public void testReadUMax()
       throws IOException
    {
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(toByteArray("FF"));
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray("FF"));
       Assert.assertEquals(input.readU(),0xFF);
    }
 
    public void testReadUInt16()
       throws IOException
    {
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(toByteArray("FA 43"));
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray("FA 43"));
       Assert.assertEquals(input.readUInt16(),0x43FA);
    }
 
    public void testReadUInt16BE()
       throws IOException
    {
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(toByteArray("43 FA"));
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray("43 FA"));
       Assert.assertEquals(input.readUInt16BE(),0x43FA);
    }
 
    public void testReadUInt32()
       throws IOException
    {
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(toByteArray("FA 43 11 F2"));
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray("FA 43 11 F2"));
       Assert.assertEquals(input.readUInt32(),0xF21143FAl);
    }
 
@@ -81,7 +66,7 @@ public class BitCoinInputStreamTests
       throws IOException
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
-            toByteArray("FA 43 11 F2 32 5F 6E 4F"));
+            HexUtil.toByteArray("FA 43 11 F2 32 5F 6E 4F"));
       Assert.assertEquals(input.readUInt64(),0x4F6E5F32F21143FAl);
    }
 
@@ -89,7 +74,7 @@ public class BitCoinInputStreamTests
       throws IOException
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
-            toByteArray("FA 43 11 F2 32 5F 6E AA"));
+            HexUtil.toByteArray("FA 43 11 F2 32 5F 6E AA"));
       Assert.assertEquals(input.readUInt64(),0xAA6E5F32F21143FAl);
    }
 
@@ -97,7 +82,7 @@ public class BitCoinInputStreamTests
    public void testOverread()
       throws IOException
    {
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(toByteArray("54 21 55"));
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray("54 21 55"));
       input.readUInt32();
    }
 
@@ -113,7 +98,7 @@ public class BitCoinInputStreamTests
       throws IOException
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
-            toByteArray("11 22 33 44"));
+            HexUtil.toByteArray("11 22 33 44"));
       Assert.assertEquals(input.readUIntVar(),0x11);
    }
 
@@ -121,7 +106,7 @@ public class BitCoinInputStreamTests
       throws IOException
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
-            toByteArray("FD 22 33 44"));
+            HexUtil.toByteArray("FD 22 33 44"));
       Assert.assertEquals(input.readUIntVar(),0x3322);
    }
 
@@ -129,7 +114,7 @@ public class BitCoinInputStreamTests
       throws IOException
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
-            toByteArray("FE 22 33 44 55"));
+            HexUtil.toByteArray("FE 22 33 44 55"));
       Assert.assertEquals(input.readUIntVar(),0x55443322);
    }
 
@@ -137,7 +122,7 @@ public class BitCoinInputStreamTests
       throws IOException
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
-            toByteArray("FF 22 33 44 55 66 77 88 99"));
+            HexUtil.toByteArray("FF 22 33 44 55 66 77 88 99"));
       Assert.assertEquals(input.readUIntVar(),0x9988776655443322l);
    }
 
@@ -145,7 +130,7 @@ public class BitCoinInputStreamTests
       throws IOException
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
-            toByteArray("00 00 00 00 00 00 00 00"));
+            HexUtil.toByteArray("00 00 00 00 00 00 00 00"));
       Assert.assertEquals(input.readString(8),"");
    }
 
@@ -153,7 +138,7 @@ public class BitCoinInputStreamTests
       throws IOException
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
-            toByteArray("41 42 43 44 00 00 00 00"));
+            HexUtil.toByteArray("41 42 43 44 00 00 00 00"));
       Assert.assertEquals(input.readString(8),"ABCD");
    }
 
@@ -161,7 +146,7 @@ public class BitCoinInputStreamTests
       throws IOException
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
-            toByteArray("41 42 43 44 45 46 47 48"));
+            HexUtil.toByteArray("41 42 43 44 45 46 47 48"));
       Assert.assertEquals(input.readString(8),"ABCDEFGH");
    }
 
@@ -170,7 +155,7 @@ public class BitCoinInputStreamTests
       throws IOException
    {
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
-            toByteArray("41 42 43 44 00 00 01 00"));
+            HexUtil.toByteArray("41 42 43 44 00 00 01 00"));
       input.readString(8);
    }
 }
