@@ -44,7 +44,10 @@ public abstract class BitCoinInputStream extends InputStream
    public long readU()
       throws IOException
    {
-      return (read() & 0xFFl);
+      int readValue = read();
+      if ( readValue < 0 )
+         throw new IOException("stream ended, can't read more values");
+      return (readValue & 0xFFl);
    }
 
    public long readUInt16()
@@ -83,9 +86,9 @@ public abstract class BitCoinInputStream extends InputStream
       if ( result == 0xff )
          return readUInt64();
       else if ( result == 0xfe )
-         return result + readUInt32();
+         return readUInt32();
       else if ( result == 0xfd )
-         return result + readUInt16();
+         return readUInt16();
       return  result;
    }
 

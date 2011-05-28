@@ -92,5 +92,53 @@ public class BitCoinInputStreamTests
             toByteArray("FA 43 11 F2 32 5F 6E AA"));
       Assert.assertEquals(input.readUInt64(),0xAA6E5F32F21143FAl);
    }
+
+   @Test( expectedExceptions = IOException.class )
+   public void testOverread()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(toByteArray("54 21 55"));
+      input.readUInt32();
+   }
+
+   @Test( expectedExceptions = IOException.class )
+   public void testReadEmpty()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(new byte[] {});
+      input.readUInt16();
+   }
+
+   public void testReadUIntVar8()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
+            toByteArray("11 22 33 44"));
+      Assert.assertEquals(input.readUIntVar(),0x11);
+   }
+
+   public void testReadUIntVar16()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
+            toByteArray("FD 22 33 44"));
+      Assert.assertEquals(input.readUIntVar(),0x3322);
+   }
+
+   public void testReadUIntVar32()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
+            toByteArray("FE 22 33 44 55"));
+      Assert.assertEquals(input.readUIntVar(),0x55443322);
+   }
+
+   public void testReadUIntVar64()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
+            toByteArray("FF 22 33 44 55 66 77 88 99"));
+      Assert.assertEquals(input.readUIntVar(),0x9988776655443322l);
+   }
 }
 
