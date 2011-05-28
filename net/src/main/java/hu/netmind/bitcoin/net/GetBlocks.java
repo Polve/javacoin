@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public interface GetBlocks extends Message
+public interface GetBlocks extends ChecksummedMessage
 {
    /**
     * Get the list of starting hashes for the blocks.

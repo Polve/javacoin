@@ -19,9 +19,14 @@
 package hu.netmind.bitcoin.net;
 
 /**
+ * Most messages also have a checksum.
  * @author Robert Brautigam
  */
-public interface Ping extends ChecksummedMessage
+public interface ChecksummedMessage
 {
+   /**
+    * Get the checksum for the payload.
+    */
+   long getChecksum();
 }
 

@@ -21,7 +21,7 @@ package hu.netmind.bitcoin.net;
 /**
  * @author Robert Brautigam
  */
-public interface GetAddr extends Message
+public interface GetAddr extends ChecksummedMessage
 {
 }
 

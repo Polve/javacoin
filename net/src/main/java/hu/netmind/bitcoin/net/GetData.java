@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public interface GetData extends Message
+public interface GetData extends ChecksummedMessage
 {
    /**
     * Get the list of inventory items.

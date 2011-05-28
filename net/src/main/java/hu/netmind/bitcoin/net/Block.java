@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public interface Block extends Message
+public interface Block extends ChecksummedMessage
 {
    /**
     * Get the block's version information.

@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public interface Headers extends Message
+public interface Headers extends ChecksummedMessage
 {
    /**
     * Get the headers as the block structure in the block message, only

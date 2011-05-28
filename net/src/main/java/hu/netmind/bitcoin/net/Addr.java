@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public interface Addr extends Message
+public interface Addr extends ChecksummedMessage
 {
    /**
     * Get the address entries in this message.

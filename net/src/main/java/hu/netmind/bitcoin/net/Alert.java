@@ -21,7 +21,7 @@ package hu.netmind.bitcoin.net;
 /**
  * @author Robert Brautigam
  */
-public interface Alert extends Message
+public interface Alert extends ChecksummedMessage
 {
    /**
     * Get the message of the alert.
