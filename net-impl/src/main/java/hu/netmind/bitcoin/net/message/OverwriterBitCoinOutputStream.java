@@ -18,6 +18,8 @@
 
 package hu.netmind.bitcoin.net.message;
 
+import java.io.IOException;
+
 /**
  * This output stream is used to overwrite some values in an existing
  * serialized message. This is useful for values that can be computed
@@ -25,5 +27,23 @@ package hu.netmind.bitcoin.net.message;
  * and checksum values.
  * @author Robert Brautigam
  */
-public class
+public class OverwriterBitCoinOutputStream extends BitCoinOutputStream
+{
+   private byte[] byteArray;
+   private int position = 0; 
+
+   public OverwriterBitCoinOutputStream(byte[] byteArray, int offset)
+   {
+      this.byteArray=byteArray;
+      this.position=offset;
+   }
+
+   public void write(int value)
+      throws IOException
+   {
+      if ( position >= byteArray.length )
+         throw new IOException("tried to write past the array length to position "+position);
+      byteArray[position++] = (byte) value;
+   }
+}
 

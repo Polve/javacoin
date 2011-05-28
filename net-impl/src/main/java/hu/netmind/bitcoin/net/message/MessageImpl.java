@@ -108,6 +108,7 @@ public class MessageImpl implements Message
     * always <strong>last</strong>.
     */
    void postWriteTo(byte[] serializedBytes)
+      throws IOException
    {
       // Let's fill out the length now (we couldn't have known that
       // in the preWriteTo method)
