@@ -18,39 +18,26 @@
 
 package hu.netmind.bitcoin.net.message;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.ByteArrayOutputStream;
 
 /**
- * This is a sample implementation of the input stream based on a
- * simple byte array.
+ * This BitCoin output stream implementation uses a byte array backing that can be
+ * view anytime.
  * @author Robert Brautigam
  */
-public class ByteArrayBitCoinInputStream extends BitCoinInputStream
+public class ByteArrayBitCoinOutputStream extends BitCoinOutputStream
 {
-   private static final Logger logger = LoggerFactory.getLogger(ByteArrayBitCoinInputStream.class);
+   private ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-   private byte[] bytes = null;
-   private int pointer = 0;
-
-   public ByteArrayBitCoinInputStream(String hexString)
+   public void write(int value)
    {
-      this.bytes = HexUtil.toByteArray(hexString);
+      output.write(value);
    }
 
-   public ByteArrayBitCoinInputStream(byte[] bytes)
+   public String toString()
    {
-      this.bytes=bytes;
+      return HexUtil.toHexString(output.toByteArray());
    }
 
-   public int read()
-   {
-      logger.debug("read called with pointer: {} / {}",pointer,bytes.length);
-      if ( (bytes==null) || (pointer > bytes.length-1) )
-         return -1;
-      int result = (bytes[pointer++] & 0xff);
-      logger.debug("returning byte: {}",result);
-      return result;
-   }
 }
 

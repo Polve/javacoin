@@ -25,6 +25,9 @@ import java.util.StringTokenizer;
  */
 public class HexUtil
 {
+   private static final String[] HEXCHARS = new String[] { "0", "1", "2", "3", "4", "5",
+      "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" };
+
    /**
     * Helper method to convert strings like: "F0 A4 32 05", to
     * actual byte array for easier testing.
@@ -38,6 +41,21 @@ public class HexUtil
       return result;
    }
 
+   /**
+    * Make the byte array appear as space separated 2 digit hex numbers.
+    */
+   public static String toHexString(byte[] byteArray)
+   {
+      StringBuilder builder = new StringBuilder();
+      for ( int i=0; i < byteArray.length; i++ )
+      {
+         if ( i > 0 )
+            builder.append(" ");
+         builder.append(HEXCHARS[(byteArray[i]>>4)&0xF]);
+         builder.append(HEXCHARS[byteArray[i]&0xF]);
+      }
+      return builder.toString();
+   }
 }
 
 
