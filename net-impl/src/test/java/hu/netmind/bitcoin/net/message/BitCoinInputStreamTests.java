@@ -140,5 +140,38 @@ public class BitCoinInputStreamTests
             toByteArray("FF 22 33 44 55 66 77 88 99"));
       Assert.assertEquals(input.readUIntVar(),0x9988776655443322l);
    }
+
+   public void testReadFixStringEmpty()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
+            toByteArray("00 00 00 00 00 00 00 00"));
+      Assert.assertEquals(input.readString(8),"");
+   }
+
+   public void testReadFixStringNormal()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
+            toByteArray("41 42 43 44 00 00 00 00"));
+      Assert.assertEquals(input.readString(8),"ABCD");
+   }
+
+   public void testReadFixStringFull()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
+            toByteArray("41 42 43 44 45 46 47 48"));
+      Assert.assertEquals(input.readString(8),"ABCDEFGH");
+   }
+
+   @Test ( expectedExceptions = IOException.class )
+   public void testReadFixStringNotPropelyPadded()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
+            toByteArray("41 42 43 44 00 00 01 00"));
+      input.readString(8);
+   }
 }
 
