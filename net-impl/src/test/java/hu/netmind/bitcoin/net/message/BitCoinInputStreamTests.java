@@ -62,6 +62,13 @@ public class BitCoinInputStreamTests
       Assert.assertEquals(input.readUInt32(),0xF21143FAl);
    }
 
+   public void testReadUInt32BE()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream("FA 43 11 F2");
+      Assert.assertEquals(input.readUInt32BE(),0xFA4311F2l);
+   }
+
    public void testReadUInt64Low()
       throws IOException
    {

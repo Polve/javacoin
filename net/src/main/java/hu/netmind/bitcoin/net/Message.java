@@ -24,8 +24,8 @@ package hu.netmind.bitcoin.net;
  */
 public interface Message
 {
-   long MAGIC_MAIN = 0xF9BEB4D9;
-   long MAGIC_TEST = 0xFABFB5DA;
+   long MAGIC_MAIN = 0xF9BEB4D9l;
+   long MAGIC_TEST = 0xFABFB5DAl;
 
    /**
     * Get the "magic" field of the message.

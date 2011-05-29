@@ -57,6 +57,15 @@ public abstract class BitCoinOutputStream extends OutputStream
       write((int) (value>>24));
    }
 
+   public void writeUInt32BE(long value)
+      throws IOException
+   {
+      write((int) (value>>24));
+      write((int) (value>>16));
+      write((int) (value>>8));
+      write((int) value);
+   }
+
    public void writeUInt64(long value)
       throws IOException
    {

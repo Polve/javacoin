@@ -44,7 +44,7 @@ public class MessageMarshaller
       try
       {
          // Read all configured message types
-         ResourceBundle bundle = ResourceBundle.getBundle("hu.netmind.bitcoin.net.message.message-types");
+         ResourceBundle bundle = ResourceBundle.getBundle("message-types");
          Enumeration<String> keys = bundle.getKeys();
          while ( keys.hasMoreElements() )
          {
@@ -87,6 +87,7 @@ public class MessageMarshaller
       Class messageType = messageTypes.get(header.getCommand());
       if ( messageType == null )
         throw new IOException("message type not found for command: "+header.getCommand()); 
+      logger.debug("message type {} found for command {}",messageType,header.getCommand());
       // Search for the construction parameter if there is any
       Object param = null;
       for ( Map.Entry<Class,Object> entry : params.entrySet() )
@@ -97,6 +98,7 @@ public class MessageMarshaller
       {
          MessageImpl message = (MessageImpl) messageType.getConstructor(BitCoinInputStream.class,Object.class).
             newInstance(input,param);
+         logger.debug("deserialized message: {}",message);
          return message;
       } catch ( InvocationTargetException e ) {
          if ( e.getCause() instanceof IOException )

@@ -18,53 +18,35 @@
 
 package hu.netmind.bitcoin.net.message;
 
+import org.testng.Assert;
+import org.testng.annotations.Test;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import hu.netmind.bitcoin.net.*;
 
 /**
- * This is a sample implementation of the input stream based on a
- * simple byte array.
+ * Tests whether messages serialize and deserialize correctly.
  * @author Robert Brautigam
  */
-public class ByteArrayBitCoinInputStream extends BitCoinInputStream
+@Test
+public class MessageTests
 {
-   private static final Logger logger = LoggerFactory.getLogger(ByteArrayBitCoinInputStream.class);
-
-   private byte[] bytes = null;
-   private int pointer = 0;
-   private int mark = 0;
-
-   public boolean markSupported()
+   public void testVerackDeserialize()
+      throws IOException
    {
-      return true;
-   }
-
-   public void mark(int length)
-   {
-      mark = pointer;
-   }
-
-   public void reset()
-   {
-      pointer = mark;
-   }
-
-   public ByteArrayBitCoinInputStream(String hexString)
-   {
-      this.bytes = HexUtil.toByteArray(hexString);
-   }
-
-   public ByteArrayBitCoinInputStream(byte[] bytes)
-   {
-      this.bytes=bytes;
-   }
-
-   public int read()
-   {
-      if ( (bytes==null) || (pointer > bytes.length-1) )
-         return -1;
-      int result = (bytes[pointer++] & 0xff);
-      return result;
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
+            "F9 BE B4 D9 "+
+            "76 65 72 61  63 6B 00 00 00 00 00 00 "+
+            "00 00 00 00");
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      Verack message = (Verack) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"verack");
+      Assert.assertEquals(message.getLength(),0);
    }
 }
 

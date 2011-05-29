@@ -45,7 +45,7 @@ public class MessageImpl implements Message
    MessageImpl(BitCoinInputStream input, Object param)
       throws IOException
    {
-      magic = input.readUInt32();
+      magic = input.readUInt32BE();
       command = input.readString(12);
       length = input.readUInt32();
    }

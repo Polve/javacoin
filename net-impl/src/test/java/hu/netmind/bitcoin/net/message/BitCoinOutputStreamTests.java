@@ -66,6 +66,14 @@ public class BitCoinOutputStreamTests
       Assert.assertEquals(output.toString(),"22 11 EC FD");
    }
 
+   public void testWriteUInt32BE()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeUInt32BE(0xfdec1122);
+      Assert.assertEquals(output.toString(),"FD EC 11 22");
+   }
+
    public void testWriteUInt64()
       throws IOException
    {

@@ -59,6 +59,12 @@ public abstract class BitCoinInputStream extends InputStream
       return (readU()) | (readU()<<8) | (readU()<<16) | (readU()<<24);
    }
 
+   public long readUInt32BE()
+      throws IOException
+   {
+      return (readU()<<24) | (readU()<<16) | (readU()<<8) | (readU());
+   }
+
    /**
     * Read an unsigned long. There is no such thing in Java, so we return a
     * signed long. Check overflow to negative on usage!
