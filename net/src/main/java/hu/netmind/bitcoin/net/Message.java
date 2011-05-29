@@ -36,5 +36,12 @@ public interface Message
     * Get the "command" for this message.
     */
    String getCommand();
+
+   /**
+    * Get the length of the "payload" in bytes. This does not include
+    * the header information which is 24 bytes for all messages except
+    * Version and Verack, which are 20 bytes only (no checksum).
+    */
+   long getLength();
 }
 
