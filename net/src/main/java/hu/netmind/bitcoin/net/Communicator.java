@@ -18,6 +18,8 @@
 
 package hu.netmind.bitcoin.net;
 
+import java.io.IOException;
+
 /**
  * The communicator is the central piece of the network stack, communicating
  * with the bitcoin "network". Note that this interface does not impose any
@@ -57,7 +59,7 @@ public interface Communicator
     * effort to distribute.
     */
    void send(Message message)
-      throws CommunicationException;
+      throws IOException;
 
    /**
     * Register a listener to get messages from "the network".

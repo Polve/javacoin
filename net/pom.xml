@@ -22,12 +22,6 @@
   </build>
 
   <dependencies>
-     <dependency>
-        <groupId>hu.netmind.bitcoin</groupId>
-        <artifactId>bitcoin-api</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-        <type>jar</type>
-     </dependency>
   </dependencies>
 
 </project>
