@@ -39,7 +39,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeU(0xff);
-      Assert.assertEquals(output.toString(),"FF");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"FF");
    }
 
    public void testWriteUInt16()
@@ -47,7 +47,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeUInt16(0xfdec);
-      Assert.assertEquals(output.toString(),"EC FD");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"EC FD");
    }
 
    public void testWriteUInt16BE()
@@ -55,7 +55,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeUInt16BE(0xfdec);
-      Assert.assertEquals(output.toString(),"FD EC");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"FD EC");
    }
 
    public void testWriteUInt32()
@@ -63,7 +63,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeUInt32(0xfdec1122);
-      Assert.assertEquals(output.toString(),"22 11 EC FD");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"22 11 EC FD");
    }
 
    public void testWriteUInt32BE()
@@ -71,7 +71,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeUInt32BE(0xfdec1122);
-      Assert.assertEquals(output.toString(),"FD EC 11 22");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"FD EC 11 22");
    }
 
    public void testWriteUInt64()
@@ -79,7 +79,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeUInt64(0xfdec112255667788l);
-      Assert.assertEquals(output.toString(),"88 77 66 55 22 11 EC FD");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"88 77 66 55 22 11 EC FD");
    }
 
    public void testWriteUIntVar8()
@@ -87,7 +87,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeUIntVar(0xec);
-      Assert.assertEquals(output.toString(),"EC");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"EC");
    }
 
    public void testWriteUIntVar16()
@@ -95,7 +95,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeUIntVar(0xec22);
-      Assert.assertEquals(output.toString(),"FD 22 EC");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"FD 22 EC");
    }
 
    public void testWriteUIntVar32()
@@ -103,7 +103,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeUIntVar(0xec221100l);
-      Assert.assertEquals(output.toString(),"FE 00 11 22 EC");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"FE 00 11 22 EC");
    }
 
    public void testWriteUIntVar64()
@@ -111,7 +111,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeUIntVar(0xec11223344556677l);
-      Assert.assertEquals(output.toString(),"FF 77 66 55 44 33 22 11 EC");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"FF 77 66 55 44 33 22 11 EC");
    }
 
    public void testWriteFixStringEmpty()
@@ -119,7 +119,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeString("",8);
-      Assert.assertEquals(output.toString(),"00 00 00 00 00 00 00 00");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"00 00 00 00 00 00 00 00");
    }
 
    public void testWriteFixStringNormal()
@@ -127,7 +127,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeString("ABCD",8);
-      Assert.assertEquals(output.toString(),"41 42 43 44 00 00 00 00");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"41 42 43 44 00 00 00 00");
    }
 
    public void testWriteFixStringFull()
@@ -135,7 +135,7 @@ public class BitCoinOutputStreamTests
    {
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
       output.writeString("ABCDEFGH",8);
-      Assert.assertEquals(output.toString(),"41 42 43 44 45 46 47 48");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"41 42 43 44 45 46 47 48");
    }
 }
 

@@ -19,10 +19,11 @@
 package hu.netmind.bitcoin.net.message;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 /**
  * This BitCoin output stream implementation uses a byte array backing that can be
- * view anytime.
+ * viewed anytime.
  * @author Robert Brautigam
  */
 public class ByteArrayBitCoinOutputStream extends BitCoinOutputStream
@@ -34,10 +35,15 @@ public class ByteArrayBitCoinOutputStream extends BitCoinOutputStream
       output.write(value);
    }
 
-   public String toString()
+   public byte[] toByteArray()
    {
-      return HexUtil.toHexString(output.toByteArray());
+      return output.toByteArray();
    }
 
+   public void close()
+      throws IOException
+   {
+      output.close();
+   }
 }
 

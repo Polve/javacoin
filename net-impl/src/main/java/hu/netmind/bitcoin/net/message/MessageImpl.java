@@ -95,7 +95,7 @@ public class MessageImpl implements Message
    void preWriteTo(BitCoinOutputStream output)
       throws IOException
    {
-      output.writeUInt32(magic);
+      output.writeUInt32BE(magic);
       output.writeString(command,12);
       output.writeUInt32(0); // We don't know the length yet
    }

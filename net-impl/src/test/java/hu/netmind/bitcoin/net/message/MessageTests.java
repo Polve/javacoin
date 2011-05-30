@@ -48,5 +48,21 @@ public class MessageTests
       Assert.assertEquals(message.getCommand(),"verack");
       Assert.assertEquals(message.getLength(),0);
    }
+
+   public void testVerackSerialize()
+      throws IOException
+   {
+      // Setup a verack message
+      VerackImpl verack = new VerackImpl(Message.MAGIC_MAIN);
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(verack,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+            "F9 BE B4 D9 "+
+            "76 65 72 61 63 6B 00 00 00 00 00 00 "+
+            "00 00 00 00");
+   }
 }
 

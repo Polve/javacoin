@@ -74,7 +74,7 @@ public class MessageMarshaller
     * message arrives.
     * @param input The stream to read the message from.
     */
-   public Message read(BitCoinInputStream input)
+   public MessageImpl read(BitCoinInputStream input)
       throws IOException
    {
       // First read the header from the stream
@@ -110,13 +110,26 @@ public class MessageMarshaller
    }
 
    /**
-    * Serialize a message to a given output stream.
+    * Serialize a message to a given output stream. This method implements a two
+    * phase (two-pass) serialization. In the first pass all known values are written
+    * to the stream, and the values not known will have placeholders. Then a second
+    * pass fills out the values for which the output has to be already present to calculate
+    * (like checksum, length, etc). This also means that this method must needs at least
+    * as much memory as the message itself.
     * @param output The output stream to write to.
     */
-   public void write(Message message, BitCoinOutputStream output)
+   public void write(MessageImpl message, BitCoinOutputStream output)
       throws IOException
    {
-      // TODO
+      // Serialize known values into a byte array stream
+      ByteArrayBitCoinOutputStream byteOutput = new ByteArrayBitCoinOutputStream();
+      message.preWriteTo(byteOutput);
+      byteOutput.close();
+      byte[] byteArray = byteOutput.toByteArray();
+      // Invoke post write to finalize content
+      message.postWriteTo(byteArray);
+      // Copy it to the output
+      output.write(byteArray);
    }
 
 }
