@@ -98,7 +98,10 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
    private void fireUpdateBalance()
    {
       // First update the balance
-      updateBalance();
+      synchronized ( this )
+      {
+         updateBalance();
+      }
       // Then fire the notification to observers
       notifyObservers(Event.BALANCE_CHANGE);
    }
