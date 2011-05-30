@@ -28,7 +28,7 @@ public interface Tx extends Message
    /**
     * The version format for transactions (for this command).
     */
-   int getTxFormatVersion();
+   int getVersion();
 
    /**
     * Get the transaction inputs.
