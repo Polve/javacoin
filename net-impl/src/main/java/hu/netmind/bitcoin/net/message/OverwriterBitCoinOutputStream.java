@@ -32,6 +32,10 @@ public class OverwriterBitCoinOutputStream extends BitCoinOutputStream
    private byte[] byteArray;
    private int position = 0; 
 
+   /**
+    * @param byteArray The array to overwrite content in.
+    * @param offset The offset at which to begin overwriting.
+    */
    public OverwriterBitCoinOutputStream(byte[] byteArray, int offset)
    {
       this.byteArray=byteArray;
