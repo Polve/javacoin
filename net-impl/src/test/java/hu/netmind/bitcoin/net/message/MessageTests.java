@@ -36,10 +36,10 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
             "F9 BE B4 D9 "+
             "76 65 72 61  63 6B 00 00 00 00 00 00 "+
-            "00 00 00 00");
+            "00 00 00 00"));
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       Verack message = (Verack) marshal.read(input);
