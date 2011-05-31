@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import hu.netmind.bitcoin.net.*;
 import java.util.Date;
 import java.util.Calendar;
+import java.net.InetSocketAddress;
+import java.net.InetAddress;
 
 /**
  * Tests whether messages serialize and deserialize correctly.
@@ -106,6 +108,34 @@ public class MessageTests
       Assert.assertEquals(message.getNonce(),0x1357B43A2C209DDDl);
       Assert.assertEquals(message.getSecondaryVersion(),"");
       Assert.assertEquals(message.getStartHeight(),98645);
+   }
+
+   public void testVersionSerialize()
+      throws IOException
+   {
+      // Setup a verack message
+      VersionImpl version = new VersionImpl(Message.MAGIC_MAIN,31900,1,1000l*0x4D1015e6l,
+            new NodeAddressImpl(1,new InetSocketAddress(InetAddress.getByName("10.0.0.1"),56054)),
+            new NodeAddressImpl(1,new InetSocketAddress(InetAddress.getByName("10.0.0.2"),8333)),
+            0x1357B43A2C209DDDl,"",98645);
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(version,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+          "F9 BE B4 D9 "+                                                                   // Main network magic bytes
+          "76 65 72 73 69 6F 6E 00 00 00 00 00 "+                                           // "version" command
+          "55 00 00 00 "+                                                                   // Payload is 85 bytes long
+                                                                                            // No checksum in version message
+          "9C 7C 00 00 "+                                                                   // 31900 (version 0.3.19)
+          "01 00 00 00 00 00 00 00 "+                                                       // 1 (NODE_NETWORK services)
+          "E6 15 10 4D 00 00 00 00 "+                                                       // Mon Dec 20 21:50:14 EST 2010
+          "01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 FF FF 0A 00 00 01 DA F6 "+ // Sender address info - see Network Address
+          "01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 FF FF 0A 00 00 02 20 8D "+ // Recipient address info - see Network Address
+          "DD 9D 20 2C 3A B4 57 13 "+                                                       // Node random unique ID
+          "00 "+                                                                            // "" sub-version string (string is 0 bytes long)
+          "55 81 01 00");                                                                   // Last block sending node has is block #98645
    }
 
 }
