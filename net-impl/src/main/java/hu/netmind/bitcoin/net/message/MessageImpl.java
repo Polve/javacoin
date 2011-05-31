@@ -68,9 +68,14 @@ public class MessageImpl implements Message
    }
 
    /**
-    * Notification when the full message has been deserialized.
+    * Notification when the full message has been deserialized. Call receives
+    * the same paramters as the <code>readFrom()</code> call.
+    * @param input The stream to read this object from.
+    * @param param A message type specific parameter to be used to control the
+    * deserialization process. Original intent is to allow for block pre-filtering,
+    * so that client does not construct potentially large objects in memory.
     */
-   void postReadFrom()
+   void postReadFrom(BitCoinInputStream input, Object param)
    {
    }
 

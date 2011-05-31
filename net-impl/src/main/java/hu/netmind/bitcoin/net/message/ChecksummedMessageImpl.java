@@ -20,6 +20,7 @@ package hu.netmind.bitcoin.net.message;
 
 import hu.netmind.bitcoin.net.ChecksummedMessage;
 import java.io.IOException;
+import java.security.MessageDigest;
 
 /**
  * @author Robert Brautigam
@@ -27,14 +28,30 @@ import java.io.IOException;
 public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMessage
 {
    private long checksum = 0;
+   private long calculatedChecksum = 0;
+   private MessageDigest digest = null;
 
    public ChecksummedMessageImpl(long magic, String command)
+      throws IOException
    {
       super(magic,command);
+      try
+      {
+         digest = MessageDigest.getInstance("SHA-256");
+      } catch ( Exception e ) {
+         throw new IOException("could not initialize SHA-256 digest",e);
+      }
    }
 
    ChecksummedMessageImpl()
+      throws IOException
    {
+      try
+      {
+         digest = MessageDigest.getInstance("SHA-256");
+      } catch ( Exception e ) {
+         throw new IOException("could not initialize SHA-256 digest",e);
+      }
    }
 
    void readFrom(BitCoinInputStream input, Object param)
@@ -43,6 +60,48 @@ public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMe
       super.readFrom(input,param);
       checksum = input.readUInt32();
       // Now let's make sure we keep track of the real checksum
+      input.setListener(new BitCoinInputStream.Listener() {
+               public void update(int value)
+               {
+                  digest.update((byte) value);
+               }
+            });
+   }
+
+   void postReadFrom(BitCoinInputStream input)
+   {
+      // Calculate sha256(sha256(content))
+      input.clearListener();
+      byte[] tmp = digest.digest();
+      digest.reset();
+      byte[] result = digest.digest(tmp);
+      // Calculate first 4 bytes
+      calculatedChecksum = ((long) result[0]) | (((long) result[1])>>8) |
+         (((long) result[2])>>16) | (((long) result[3])>>24);
+   }
+
+   void writeTo(BitCoinOutputStream output)
+      throws IOException
+   {
+      // Write placeholder
+      output.writeUInt32(0);
+   }
+
+   void postWriteTo(byte[] serializedBytes)
+      throws IOException
+   {
+      // Calculate checksum
+      digest.reset();
+      digest.update(serializedBytes,20,serializedBytes.length-20);
+      byte[] tmp = digest.digest();
+      digest.reset();
+      byte[] result = digest.digest(tmp);
+      // Overwrite previous 0 value with first 4 bytes
+      OverwriterBitCoinOutputStream output = new OverwriterBitCoinOutputStream(serializedBytes,20);
+      output.writeU(result[0]);
+      output.writeU(result[1]);
+      output.writeU(result[2]);
+      output.writeU(result[3]);
    }
 
    public long getChecksum()
@@ -52,8 +111,7 @@ public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMe
 
    public boolean verify()
    {
-      // TODO
-      return false;
+      return calculatedChecksum == checksum;
    }
 }
 

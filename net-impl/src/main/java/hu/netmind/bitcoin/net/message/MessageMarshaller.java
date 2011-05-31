@@ -99,6 +99,7 @@ public class MessageMarshaller
       {
          MessageImpl message = (MessageImpl) messageType.newInstance();
          message.readFrom(input,param);
+         message.postReadFrom(input,param);
          logger.debug("deserialized message: {}",message);
          return message;
       } catch ( Exception e ) {
