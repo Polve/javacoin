@@ -20,6 +20,7 @@ package hu.netmind.bitcoin.net.message;
 
 import java.io.InputStream;
 import java.io.IOException;
+import java.util.Observer;
 
 /**
  * This is an input stream that supports the various types defined in the
@@ -29,6 +30,25 @@ import java.io.IOException;
  */
 public abstract class BitCoinInputStream extends InputStream
 {
+   private Listener listener = null;
+
+   /**
+    * Set an observer which will receive each byte read in this stream through
+    * the methods provided by this class.
+    */
+   public void setListener(Listener listener)
+   {
+      this.listener=listener;
+   }
+
+   /**
+    * Clear the observer watching this stream.
+    */
+   public void clearListener()
+   {
+      listener=null;
+   }
+
    /**
     * Read an unsigned byte from the stream as a long.
     */
@@ -38,6 +58,8 @@ public abstract class BitCoinInputStream extends InputStream
       int readValue = read();
       if ( readValue < 0 )
          throw new IOException("stream ended, can't read more values");
+      if ( listener != null )
+         listener.update(readValue);
       return (readValue & 0xFFl);
    }
 
@@ -132,6 +154,11 @@ public abstract class BitCoinInputStream extends InputStream
       for ( int i=0; i<length; i++ )
          result[i]=(byte) readU();
       return result;
+   }
+
+   public interface Listener
+   {
+      void update(int value);
    }
 }
 

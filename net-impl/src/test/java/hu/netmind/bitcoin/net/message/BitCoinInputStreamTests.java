@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
 import java.util.Arrays;
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,6 +180,21 @@ public class BitCoinInputStreamTests
       Assert.assertEquals(result[0] & 0xff, 0x04);
       Assert.assertEquals(result[1] & 0xff, 0xff);
       Assert.assertEquals(result[2] & 0xff, 0xa3);
+   }
+
+   public void testListener()
+      throws IOException
+   {
+      final ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray("04 FF A3"));
+      input.setListener(new BitCoinInputStream.Listener() {
+               public void update(int value)
+               {
+                  byteOutput.write(value);
+               }
+            });
+      byte[] result = input.readBytes(3);
+      Assert.assertEquals(result,byteOutput.toByteArray());
    }
 }
 

@@ -16,23 +16,44 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.net;
+package hu.netmind.bitcoin.net.message;
+
+import hu.netmind.bitcoin.net.ChecksummedMessage;
+import java.io.IOException;
 
 /**
- * Most messages also have a checksum.
  * @author Robert Brautigam
  */
-public interface ChecksummedMessage
+public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMessage
 {
-   /**
-    * Get the checksum for the payload.
-    */
-   long getChecksum();
+   private long checksum = 0;
 
-   /**
-    * Verify the checksum of the message.
-    * @return True if message successfully verified, false otherwise.
-    */
-   boolean verify();
+   public ChecksummedMessageImpl(long magic, String command)
+   {
+      super(magic,command);
+   }
+
+   ChecksummedMessageImpl()
+   {
+   }
+
+   void readFrom(BitCoinInputStream input, Object param)
+      throws IOException
+   {
+      super.readFrom(input,param);
+      checksum = input.readUInt32();
+      // Now let's make sure we keep track of the real checksum
+   }
+
+   public long getChecksum()
+   {
+      return checksum;
+   }
+
+   public boolean verify()
+   {
+      // TODO
+      return false;
+   }
 }
 
