@@ -55,10 +55,10 @@ public class VersionImpl extends MessageImpl implements Version
       super();
    }
 
-   void readFrom(BitCoinInputStream input, Object param)
+   void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
       throws IOException
    {
-      super.readFrom(input,param);
+      super.readFrom(input,version,param);
       version = input.readUInt32();
       services = input.readUInt64();
       timestamp = input.readUInt64()*1000; // We need milliseconds not seconds

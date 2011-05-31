@@ -38,6 +38,7 @@ public class MessageMarshaller
 
    private static Map<String,Class> messageTypes = new HashMap<String,Class>();
    private Map<Class,Object> params = new HashMap<Class,Object>();
+   private long version = -1;
 
    static
    {
@@ -82,7 +83,7 @@ public class MessageMarshaller
          throw new IOException("input stream for deserialization does not support mark");
       input.mark(20);
       MessageImpl header = new MessageImpl();
-      header.readFrom(input,null);
+      header.readFrom(input,version,null);
       input.reset(); // Rewind, so message will read header again
       // Now search for a suitable message
       Class messageType = messageTypes.get(header.getCommand());
@@ -98,8 +99,8 @@ public class MessageMarshaller
       try
       {
          MessageImpl message = (MessageImpl) messageType.newInstance();
-         message.readFrom(input,param);
-         message.postReadFrom(input,param);
+         message.readFrom(input,version,param);
+         message.postReadFrom(input,version,param);
          logger.debug("deserialized message: {}",message);
          return message;
       } catch ( Exception e ) {
@@ -128,6 +129,15 @@ public class MessageMarshaller
       message.postWriteTo(byteArray);
       // Copy it to the output
       output.write(byteArray);
+   }
+
+   public long getVersion()
+   {
+      return version;
+   }
+   public void setVersion(long version)
+   {
+      this.version=version;
    }
 
 }

@@ -36,10 +36,10 @@ public class VerackImpl extends MessageImpl implements Verack
       super();
    }
 
-   void readFrom(BitCoinInputStream input, Object param)
+   void readFrom(BitCoinInputStream input, long version, Object param)
       throws IOException
    {
-      super.readFrom(input,param);
+      super.readFrom(input,version,param);
    }
 }
 

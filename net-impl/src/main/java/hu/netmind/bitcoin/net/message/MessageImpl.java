@@ -55,11 +55,13 @@ public class MessageImpl implements Message
    /**
     * Deserialize the object reading from an input stream.
     * @param input The stream to read this object from.
+    * @param version The protocol version number as communicated by the version command,
+    * if it's known.
     * @param param A message type specific parameter to be used to control the
     * deserialization process. Original intent is to allow for block pre-filtering,
     * so that client does not construct potentially large objects in memory.
     */
-   void readFrom(BitCoinInputStream input, Object param)
+   void readFrom(BitCoinInputStream input, long version, Object param)
       throws IOException
    {
       magic = input.readUInt32BE();
@@ -71,11 +73,13 @@ public class MessageImpl implements Message
     * Notification when the full message has been deserialized. Call receives
     * the same paramters as the <code>readFrom()</code> call.
     * @param input The stream to read this object from.
+    * @param version The protocol version number as communicated by the version command,
+    * if it's known.
     * @param param A message type specific parameter to be used to control the
     * deserialization process. Original intent is to allow for block pre-filtering,
     * so that client does not construct potentially large objects in memory.
     */
-   void postReadFrom(BitCoinInputStream input, Object param)
+   void postReadFrom(BitCoinInputStream input, long version, Object param)
    {
    }
 

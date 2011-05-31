@@ -54,10 +54,10 @@ public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMe
       }
    }
 
-   void readFrom(BitCoinInputStream input, Object param)
+   void readFrom(BitCoinInputStream input, long version, Object param)
       throws IOException
    {
-      super.readFrom(input,param);
+      super.readFrom(input,version,param);
       checksum = input.readUInt32();
       // Now let's make sure we keep track of the real checksum
       input.setListener(new BitCoinInputStream.Listener() {
@@ -68,7 +68,7 @@ public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMe
             });
    }
 
-   void postReadFrom(BitCoinInputStream input)
+   void postReadFrom(BitCoinInputStream input, long version, Object param)
    {
       // Calculate sha256(sha256(content))
       input.clearListener();
