@@ -66,6 +66,11 @@ public class NodeAddressImpl implements NodeAddress
       output.writeUInt16BE(address.getPort());
    }
 
+   public String toString()
+   {
+      return address.toString()+" (services: "+services+")";
+   }
+
    public long getServices()
    {
       return services;
