@@ -38,7 +38,11 @@ public class NodeAddressImpl implements NodeAddress
       this.address=address;
    }
 
-   NodeAddressImpl(BitCoinInputStream input)
+   NodeAddressImpl()
+   {
+   }
+
+   void readFrom(BitCoinInputStream input)
       throws IOException
    {
       services = input.readUInt64();
@@ -47,7 +51,7 @@ public class NodeAddressImpl implements NodeAddress
       address = new InetSocketAddress(addr,(int) port);
    }
 
-   public void writeTo(BitCoinOutputStream output)
+   void writeTo(BitCoinOutputStream output)
       throws IOException
    {
       output.writeUInt64(services);

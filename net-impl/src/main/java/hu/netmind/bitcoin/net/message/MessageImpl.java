@@ -113,8 +113,10 @@ public class MessageImpl implements Message
     * the contents of the message to the BitCoin protocol. Note,
     * implementations must call the superclass' <code>preWriteTo()</code>
     * always <strong>first</strong>.
+    * @param output The output stream to write to.
+    * @param version The protocol version to use.
     */
-   void writeTo(BitCoinOutputStream output)
+   void writeTo(BitCoinOutputStream output, long version)
       throws IOException
    {
       output.writeUInt32BE(magic);
@@ -129,7 +131,7 @@ public class MessageImpl implements Message
     * implements must call the superclass' <code>postWriteTo()</code>
     * always <strong>last</strong>.
     */
-   void postWriteTo(byte[] serializedBytes)
+   void postWriteTo(byte[] serializedBytes, long version)
       throws IOException
    {
       // Let's fill out the length now (we couldn't have known that

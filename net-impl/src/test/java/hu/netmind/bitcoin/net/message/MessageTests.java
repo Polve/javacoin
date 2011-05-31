@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, "MA  02111 "+//1307  USA
  */
 
 package hu.netmind.bitcoin.net.message;
@@ -138,5 +138,35 @@ public class MessageTests
           "55 81 01 00");                                                                   // Last block sending node has is block #98645
    }
 
+   public void testAddrDeserialize()
+      throws IOException
+   {
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+          "F9 BE B4 D9 "+                                     // Main network magic bytes
+          "61 64 64 72 00 00 00 00 00 00 00 00 "+             // "addr"
+          "1F 00 00 00 "+                                     // payload is 31 bytes long
+          "7F 85 39 C2 "+                                     // checksum of payload
+          "01 "+                                              // 1 address in this message
+          "E2 15 10 4D "+                                     // Mon Dec 20 21:50:10 EST 2010 (only when version is >= 31402)
+          "01 00 00 00 00 00 00 00 "+                         // 1 (NODE_NETWORK service - see version message)
+          "00 00 00 00 00 00 00 00 00 00 FF FF 0A 00 00 01 "+ // IPv4: 10.0.0.1, IPv6: ::ffff:10.0.0.1 (IPv4-mapped IPv6 address)
+          "20 8D"));                                          // port 8333
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      marshal.setVersion(39010);
+      Addr message = (Addr) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"addr");
+      Assert.assertEquals(message.getAddressEntries().size(),1);
+      Assert.assertEquals(message.getChecksum(),0xc239857fl);
+      Assert.assertTrue(message.verify(),"message coult not be verified, checksum error");
+      Addr.AddressEntry entry = message.getAddressEntries().get(0);
+      Assert.assertEquals(entry.getTimestamp(),1000*0x4d1015e2l);
+      Assert.assertEquals(entry.getAddress().getServices(),1);
+      Assert.assertEquals(entry.getAddress().getAddress().getPort(),8333);
+      Assert.assertEquals(entry.getAddress().getAddress().getAddress().getHostAddress(),"10.0.0.1");
+   }
 }
 

@@ -64,10 +64,12 @@ public class VersionImpl extends MessageImpl implements Version
       timestamp = input.readUInt64()*1000; // We need milliseconds not seconds
       if ( timestamp < 0 )
          throw new IOException("timestamp for version message is out of supported range");
-      senderAddress = new NodeAddressImpl(input);
+      senderAddress = new NodeAddressImpl();
+      senderAddress.readFrom(input);
       if ( version >= 106 )
       {
-         receiverAddress = new NodeAddressImpl(input);
+         receiverAddress = new NodeAddressImpl();
+         receiverAddress.readFrom(input);
          nonce = input.readUInt64();
          secondaryVersion = input.readString();
          if ( version >= 209 )
@@ -77,10 +79,10 @@ public class VersionImpl extends MessageImpl implements Version
       }
    }
 
-   void writeTo(BitCoinOutputStream output)
+   void writeTo(BitCoinOutputStream output, long protocolVersion)
       throws IOException
    {
-      super.writeTo(output);
+      super.writeTo(output,version);
       output.writeUInt32(version);
       output.writeUInt64(services);
       output.writeUInt64(timestamp/1000); // Convert millis to seconds

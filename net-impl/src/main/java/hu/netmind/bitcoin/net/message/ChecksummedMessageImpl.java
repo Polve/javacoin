@@ -21,12 +21,17 @@ package hu.netmind.bitcoin.net.message;
 import hu.netmind.bitcoin.net.ChecksummedMessage;
 import java.io.IOException;
 import java.security.MessageDigest;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Robert Brautigam
  */
 public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMessage
 {
+   private static final Logger logger = LoggerFactory.getLogger(ChecksummedMessageImpl.class);
+
    private long checksum = 0;
    private long calculatedChecksum = 0;
    private MessageDigest digest = null;
@@ -75,19 +80,20 @@ public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMe
       byte[] tmp = digest.digest();
       digest.reset();
       byte[] result = digest.digest(tmp);
-      // Calculate first 4 bytes
-      calculatedChecksum = ((long) result[0]) | (((long) result[1])>>8) |
-         (((long) result[2])>>16) | (((long) result[3])>>24);
+      // Calculate checksum first 4 bytes
+      calculatedChecksum = (long) ((long) result[0]&0xff) | (((long) result[1]&0xff)<<8) |
+         (((long) result[2]&0xff)<<16) | (((long) result[3]&0xff)<<24);
+      logger.debug("digest checksum: {}",calculatedChecksum);
    }
 
-   void writeTo(BitCoinOutputStream output)
+   void writeTo(BitCoinOutputStream output, long version)
       throws IOException
    {
       // Write placeholder
       output.writeUInt32(0);
    }
 
-   void postWriteTo(byte[] serializedBytes)
+   void postWriteTo(byte[] serializedBytes, long version)
       throws IOException
    {
       // Calculate checksum
@@ -111,6 +117,7 @@ public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMe
 
    public boolean verify()
    {
+      logger.debug("verifying message calculated: {} vs. {}",calculatedChecksum,checksum);
       return calculatedChecksum == checksum;
    }
 }

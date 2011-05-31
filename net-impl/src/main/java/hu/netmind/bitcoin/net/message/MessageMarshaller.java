@@ -122,11 +122,11 @@ public class MessageMarshaller
    {
       // Serialize known values into a byte array stream
       ByteArrayBitCoinOutputStream byteOutput = new ByteArrayBitCoinOutputStream();
-      message.writeTo(byteOutput);
+      message.writeTo(byteOutput,version);
       byteOutput.close();
       byte[] byteArray = byteOutput.toByteArray();
       // Invoke post write to finalize content
-      message.postWriteTo(byteArray);
+      message.postWriteTo(byteArray,version);
       // Copy it to the output
       output.write(byteArray);
    }
