@@ -22,7 +22,7 @@ package hu.netmind.bitcoin.net;
  * Most messages also have a checksum.
  * @author Robert Brautigam
  */
-public interface ChecksummedMessage
+public interface ChecksummedMessage extends Message
 {
    /**
     * Get the checksum for the payload.
