@@ -90,6 +90,16 @@ public abstract class BitCoinInputStream extends InputStream
    }
 
    /**
+    * Read a variable length string.
+    */
+   public String readString()
+      throws IOException
+   {
+      long length = readUIntVar();
+      return readString(length);
+   }
+
+   /**
     * Read a string that is fitted in the given length exactly,
     * with terminating nulls.
     */
@@ -112,5 +122,16 @@ public abstract class BitCoinInputStream extends InputStream
       return builder.toString();
    }
 
+   /**
+    * Read a byte array from stream.
+    */
+   public byte[] readBytes(int length)
+      throws IOException
+   {
+      byte[] result = new byte[length];
+      for ( int i=0; i<length; i++ )
+         result[i]=(byte) readU();
+      return result;
+   }
 }
 

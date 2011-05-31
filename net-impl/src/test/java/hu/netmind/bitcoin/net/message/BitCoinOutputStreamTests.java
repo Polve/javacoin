@@ -137,5 +137,21 @@ public class BitCoinOutputStreamTests
       output.writeString("ABCDEFGH",8);
       Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"41 42 43 44 45 46 47 48");
    }
+
+   public void testWriteVarStringEmpty()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeString("");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"00");
+   }
+   
+   public void testWriteVarStringNormal()
+      throws IOException
+   {
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      output.writeString("ABCD");
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),"04 41 42 43 44");
+   }
 }
 

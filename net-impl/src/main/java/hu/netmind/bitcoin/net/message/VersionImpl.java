@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.net.message;
 
+import hu.netmind.bitcoin.net.NodeAddress;
 import hu.netmind.bitcoin.net.Version;
 import java.io.IOException;
 
@@ -55,7 +56,7 @@ public class VersionImpl extends MessageImpl implements Version
       super(input,param);
       version = input.readUInt32();
       services = input.readUInt64();
-      timestamp = input.readUInt64();
+      timestamp = input.readUInt64()*1000; // We need milliseconds not seconds
       if ( timestamp < 0 )
          throw new IOException("timestamp for version message is out of supported range");
       senderAddress = new NodeAddressImpl(input);
@@ -77,7 +78,7 @@ public class VersionImpl extends MessageImpl implements Version
       super.preWriteTo(output);
       output.writeUInt32(version);
       output.writeUInt64(services);
-      output.writeUInt64(timestamp);
+      output.writeUInt64(timestamp/1000); // Convert millis to seconds
       senderAddress.writeTo(output);
       if ( version >= 106 )
       {
@@ -93,7 +94,7 @@ public class VersionImpl extends MessageImpl implements Version
 
    public String toString()
    {
-      super.toString()+" version: "+version+", services: "+services+
+      return super.toString()+" version: "+version+", services: "+services+
          ", sender: "+senderAddress+", receiver: "+receiverAddress+
          ", secondary version: "+secondaryVersion+", start height: "+startHeight;
    }

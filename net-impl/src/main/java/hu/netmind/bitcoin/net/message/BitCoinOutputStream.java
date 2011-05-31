@@ -104,6 +104,16 @@ public abstract class BitCoinOutputStream extends OutputStream
    }
 
    /**
+    * Write variable length string to stream.
+    */
+   public void writeString(String value)
+      throws IOException
+   {
+      writeUIntVar(value.length());
+      write(value.getBytes());
+   }
+
+   /**
     * Write a string null-padded into the given length.
     */
    public void writeString(String value, long length)

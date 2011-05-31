@@ -155,5 +155,30 @@ public class BitCoinInputStreamTests
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray("41 42 43 44 00 00 01 00"));
       input.readString(8);
    }
+
+   public void testReadVarStringEmpty()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray("00"));
+      Assert.assertEquals(input.readString(),"");
+   }
+
+   public void testReadVarStringNormal()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray("04 41 42 43 44"));
+      Assert.assertEquals(input.readString(),"ABCD");
+   }
+
+   public void testReadByteArray()
+      throws IOException
+   {
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray("04 FF A3"));
+      byte[] result = input.readBytes(3);
+      Assert.assertEquals(result.length, 3);
+      Assert.assertEquals(result[0] & 0xff, 0x04);
+      Assert.assertEquals(result[1] & 0xff, 0xff);
+      Assert.assertEquals(result[2] & 0xff, 0xa3);
+   }
 }
 
