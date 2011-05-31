@@ -35,14 +35,31 @@ public class MessageImpl implements Message
 
    /**
     * All messages must provide a constructor to construct
-    * the message by reading from an input stream. Note, each
-    * superclass will read the approriate fields already from the stream.
+    * the message by supplying all attributes. Note: length of
+    * payload will be automatically calculated.
+    */
+   public MessageImpl(long magic, String command)
+   {
+      this.magic=magic;
+      this.command=command;
+   }
+
+   /**
+    * An empty contructor must always be present to construct an empty
+    * message for the deserialization.
+    */
+   MessageImpl()
+   {
+   }
+
+   /**
+    * Deserialize the object reading from an input stream.
     * @param input The stream to read this object from.
     * @param param A message type specific parameter to be used to control the
     * deserialization process. Original intent is to allow for block pre-filtering,
     * so that client does not construct potentially large objects in memory.
     */
-   MessageImpl(BitCoinInputStream input, Object param)
+   void readFrom(BitCoinInputStream input, Object param)
       throws IOException
    {
       magic = input.readUInt32BE();
@@ -51,14 +68,10 @@ public class MessageImpl implements Message
    }
 
    /**
-    * All messages must provide a constructor to construct
-    * the message by supplying all attributes. Note: length of
-    * payload will be automatically calculated.
+    * Notification when the full message has been deserialized.
     */
-   public MessageImpl(long magic, String command)
+   void postReadFrom()
    {
-      this.magic=magic;
-      this.command=command;
    }
 
    public long getMagic()
@@ -92,7 +105,7 @@ public class MessageImpl implements Message
     * implementations must call the superclass' <code>preWriteTo()</code>
     * always <strong>first</strong>.
     */
-   void preWriteTo(BitCoinOutputStream output)
+   void writeTo(BitCoinOutputStream output)
       throws IOException
    {
       output.writeUInt32BE(magic);
@@ -111,7 +124,7 @@ public class MessageImpl implements Message
       throws IOException
    {
       // Let's fill out the length now (we couldn't have known that
-      // in the preWriteTo method)
+      // in the writeTo method)
       if ( this instanceof ChecksummedMessage )
          length = serializedBytes.length - 24;
       else

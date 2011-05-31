@@ -31,10 +31,15 @@ public class VerackImpl extends MessageImpl implements Verack
       super(magic,"verack");
    }
 
-   public VerackImpl(BitCoinInputStream input, Object param)
+   VerackImpl()
+   {
+      super();
+   }
+
+   void readFrom(BitCoinInputStream input, Object param)
       throws IOException
    {
-      super(input,param);
+      super.readFrom(input,param);
    }
 }
 

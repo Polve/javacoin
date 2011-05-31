@@ -50,10 +50,15 @@ public class VersionImpl extends MessageImpl implements Version
       this.startHeight=startHeight;
    }
 
-   public VersionImpl(BitCoinInputStream input, Object param)
+   VersionImpl()
+   {
+      super();
+   }
+
+   void readFrom(BitCoinInputStream input, Object param)
       throws IOException
    {
-      super(input,param);
+      super.readFrom(input,param);
       version = input.readUInt32();
       services = input.readUInt64();
       timestamp = input.readUInt64()*1000; // We need milliseconds not seconds
@@ -72,10 +77,10 @@ public class VersionImpl extends MessageImpl implements Version
       }
    }
 
-   void preWriteTo(BitCoinOutputStream output)
+   void writeTo(BitCoinOutputStream output)
       throws IOException
    {
-      super.preWriteTo(output);
+      super.writeTo(output);
       output.writeUInt32(version);
       output.writeUInt64(services);
       output.writeUInt64(timestamp/1000); // Convert millis to seconds

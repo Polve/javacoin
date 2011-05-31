@@ -81,7 +81,8 @@ public class MessageMarshaller
       if ( ! input.markSupported() )
          throw new IOException("input stream for deserialization does not support mark");
       input.mark(20);
-      MessageImpl header = new MessageImpl(input,null);
+      MessageImpl header = new MessageImpl();
+      header.readFrom(input,null);
       input.reset(); // Rewind, so message will read header again
       // Now search for a suitable message
       Class messageType = messageTypes.get(header.getCommand());
@@ -96,14 +97,10 @@ public class MessageMarshaller
       // Instantiate message and use the message deserialization in constructor
       try
       {
-         MessageImpl message = (MessageImpl) messageType.getConstructor(BitCoinInputStream.class,Object.class).
-            newInstance(input,param);
+         MessageImpl message = (MessageImpl) messageType.newInstance();
+         message.readFrom(input,param);
          logger.debug("deserialized message: {}",message);
          return message;
-      } catch ( InvocationTargetException e ) {
-         if ( e.getCause() instanceof IOException )
-            throw (IOException) e.getCause();
-         throw new IOException("unexpected exception from the message construction",e);
       } catch ( Exception e ) {
          throw new IOException("unexpected exception from the message construction",e);
       }
@@ -123,7 +120,7 @@ public class MessageMarshaller
    {
       // Serialize known values into a byte array stream
       ByteArrayBitCoinOutputStream byteOutput = new ByteArrayBitCoinOutputStream();
-      message.preWriteTo(byteOutput);
+      message.writeTo(byteOutput);
       byteOutput.close();
       byte[] byteArray = byteOutput.toByteArray();
       // Invoke post write to finalize content
