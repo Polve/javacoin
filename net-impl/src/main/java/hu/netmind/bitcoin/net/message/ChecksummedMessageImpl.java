@@ -75,6 +75,7 @@ public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMe
 
    void postReadFrom(BitCoinInputStream input, long version, Object param)
    {
+      super.postReadFrom(input,version,param);
       // Calculate sha256(sha256(content))
       input.clearListener();
       byte[] tmp = digest.digest();
@@ -89,6 +90,7 @@ public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMe
    void writeTo(BitCoinOutputStream output, long version)
       throws IOException
    {
+      super.writeTo(output,version);
       // Write placeholder
       output.writeUInt32(0);
    }
@@ -96,18 +98,19 @@ public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMe
    void postWriteTo(byte[] serializedBytes, long version)
       throws IOException
    {
+      super.postWriteTo(serializedBytes,version);
       // Calculate checksum
       digest.reset();
-      digest.update(serializedBytes,20,serializedBytes.length-20);
+      digest.update(serializedBytes,24,serializedBytes.length-24);
       byte[] tmp = digest.digest();
       digest.reset();
       byte[] result = digest.digest(tmp);
       // Overwrite previous 0 value with first 4 bytes
       OverwriterBitCoinOutputStream output = new OverwriterBitCoinOutputStream(serializedBytes,20);
-      output.writeU(result[0]);
-      output.writeU(result[1]);
-      output.writeU(result[2]);
-      output.writeU(result[3]);
+      output.writeU(result[0]&0xff);
+      output.writeU(result[1]&0xff);
+      output.writeU(result[2]&0xff);
+      output.writeU(result[3]&0xff);
    }
 
    public long getChecksum()

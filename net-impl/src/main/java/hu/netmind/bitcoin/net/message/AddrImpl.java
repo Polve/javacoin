@@ -95,7 +95,7 @@ public class AddrImpl extends ChecksummedMessageImpl implements Addr
          return address.toString();
       }
 
-      AddressEntryImpl(long timestamp, NodeAddressImpl address)
+      public AddressEntryImpl(long timestamp, NodeAddressImpl address)
       {
          this.timestamp=timestamp;
          this.address=address;

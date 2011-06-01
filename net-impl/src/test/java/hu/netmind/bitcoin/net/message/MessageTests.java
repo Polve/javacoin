@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import hu.netmind.bitcoin.net.*;
 import java.util.Date;
 import java.util.Calendar;
+import java.util.List;
+import java.util.ArrayList;
 import java.net.InetSocketAddress;
 import java.net.InetAddress;
 
@@ -168,5 +170,33 @@ public class MessageTests
       Assert.assertEquals(entry.getAddress().getAddress().getPort(),8333);
       Assert.assertEquals(entry.getAddress().getAddress().getAddress().getHostAddress(),"10.0.0.1");
    }
+
+   public void testAddrSerialize()
+      throws IOException
+   {
+      // Setup a verack message
+      Addr.AddressEntry entry = new AddrImpl.AddressEntryImpl(1000*0x4d1015e2l,
+            new NodeAddressImpl(1,new InetSocketAddress(InetAddress.getByName("10.0.0.1"),8333)));
+      List<Addr.AddressEntry> entries = new ArrayList<Addr.AddressEntry>();
+      entries.add(entry);
+      AddrImpl addr = new AddrImpl(Message.MAGIC_MAIN,entries);
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      marshal.setVersion(39010);
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(addr,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+          "F9 BE B4 D9 "+                                     // Main network magic bytes
+          "61 64 64 72 00 00 00 00 00 00 00 00 "+             // "addr"
+          "1F 00 00 00 "+                                     // payload is 31 bytes long
+          "ED 52 39 9B "+                                     // checksum of payload
+          "01 "+                                              // 1 address in this message
+          "E2 15 10 4D "+                                     // Mon Dec 20 21:50:10 EST 2010 (only when version is >= 31402)
+          "01 00 00 00 00 00 00 00 "+                         // 1 (NODE_NETWORK service - see version message)
+          "00 00 00 00 00 00 00 00 00 00 FF FF 0A 00 00 01 "+ // IPv4: 10.0.0.1, IPv6: ::ffff:10.0.0.1 (IPv4-mapped IPv6 address)
+          "20 8D");                                           // port 8333
+   }
+
 }
 
