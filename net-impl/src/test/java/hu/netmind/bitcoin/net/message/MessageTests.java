@@ -146,7 +146,7 @@ public class MessageTests
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "61 64 64 72 00 00 00 00 00 00 00 00 "+             // "addr"
           "1F 00 00 00 "+                                     // payload is 31 bytes long
-          "7F 85 39 C2 "+                                     // checksum of payload
+          "ED 52 39 9B "+                                     // checksum of payload
           "01 "+                                              // 1 address in this message
           "E2 15 10 4D "+                                     // Mon Dec 20 21:50:10 EST 2010 (only when version is >= 31402)
           "01 00 00 00 00 00 00 00 "+                         // 1 (NODE_NETWORK service - see version message)
@@ -160,7 +160,7 @@ public class MessageTests
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"addr");
       Assert.assertEquals(message.getAddressEntries().size(),1);
-      Assert.assertEquals(message.getChecksum(),0xc239857fl);
+      Assert.assertEquals(message.getChecksum(),0x9b3952edl);
       Assert.assertTrue(message.verify(),"message coult not be verified, checksum error");
       Addr.AddressEntry entry = message.getAddressEntries().get(0);
       Assert.assertEquals(entry.getTimestamp(),1000*0x4d1015e2l);
