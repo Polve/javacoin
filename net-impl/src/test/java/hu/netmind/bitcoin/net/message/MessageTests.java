@@ -365,5 +365,62 @@ public class MessageTests
           "16 17 18 19 1A 1B 1C 1D 1E 1F");
    }
 
+   public void testGetHeadersDeserialize()
+      throws IOException
+   {
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+          "F9 BE B4 D9 "+                                     // Main network magic bytes
+          "67 65 74 68 65 61 64 65 72 73 00 00 "+             // "getheaders"
+          "41 00 00 00 "+                                     // payload 65 bytes long
+          "56 4A 69 A5 "+                                     // checksum
+          "01 "+                                              // 1 start hash
+          "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
+          "00 01 02 03 04 05 06 07 08 09 0A "+                // end hash
+          "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
+          "16 17 18 19 1A 1B 1C 1D 1E 1F"));
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      GetHeaders message = (GetHeaders) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"getheaders");
+      Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
+      Assert.assertEquals(message.getHashStarts().size(),1);
+      Assert.assertEquals(message.getHashStarts().get(0),new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+      Assert.assertEquals(message.getHashStop(),new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+   }
+
+   public void testGetHeadersSerialize()
+      throws IOException
+   {
+      // Setup message
+      List<byte[]> hashStarts = new ArrayList<byte[]>();
+      hashStarts.add(
+            new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+      byte[] hashStop = 
+            new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 };
+      GetHeadersImpl getheaders = new GetHeadersImpl(Message.MAGIC_MAIN,hashStarts,hashStop);
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(getheaders,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+          "F9 BE B4 D9 "+                                     // Main network magic bytes
+          "67 65 74 68 65 61 64 65 72 73 00 00 "+             // "getheaders"
+          "41 00 00 00 "+                                     // payload 65 bytes long
+          "56 4A 69 A5 "+                                     // checksum
+          "01 "+                                              // 1 start hash
+          "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
+          "00 01 02 03 04 05 06 07 08 09 0A "+                // end hash
+          "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
+          "16 17 18 19 1A 1B 1C 1D 1E 1F");
+   }
+
 }
 
