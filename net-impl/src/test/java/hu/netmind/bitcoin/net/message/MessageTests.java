@@ -163,7 +163,7 @@ public class MessageTests
       Assert.assertEquals(message.getCommand(),"addr");
       Assert.assertEquals(message.getAddressEntries().size(),1);
       Assert.assertEquals(message.getChecksum(),0x9b3952edl);
-      Assert.assertTrue(message.verify(),"message coult not be verified, checksum error");
+      Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
       Addr.AddressEntry entry = message.getAddressEntries().get(0);
       Assert.assertEquals(entry.getTimestamp(),1000*0x4d1015e2l);
       Assert.assertEquals(entry.getAddress().getServices(),1);
@@ -196,6 +196,61 @@ public class MessageTests
           "01 00 00 00 00 00 00 00 "+                         // 1 (NODE_NETWORK service - see version message)
           "00 00 00 00 00 00 00 00 00 00 FF FF 0A 00 00 01 "+ // IPv4: 10.0.0.1, IPv6: ::ffff:10.0.0.1 (IPv4-mapped IPv6 address)
           "20 8D");                                           // port 8333
+   }
+
+   public void testInvDeserialize()
+      throws IOException
+   {
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+          "F9 BE B4 D9 "+                                     // Main network magic bytes
+          "69 6E 76 00 00 00 00 00 00 00 00 00 "+             // "inv"
+          "25 00 00 00 "+                                     // payload is 36 bytes long
+          "41 01 8A 30 "+                                     // checksum
+          "01 "+                                              // number of items
+          "01 00 00 00 "+                                     // type 1 (tx)
+          "00 01 02 03 04 05 06 07 08 09 0A "+                // hash of tx
+          "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
+          "16 17 18 19 1A 1B 1C 1D 1E 1F"));
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      Inv message = (Inv) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"inv");
+      Assert.assertEquals(message.getInventoryItems().size(),1);
+      Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
+      InventoryItem item = message.getInventoryItems().get(0);
+      Assert.assertEquals(item.getType(),1);
+      Assert.assertEquals(item.getHash(),new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+   }
+
+   public void testInvSerialize()
+      throws IOException
+   {
+      // Setup an inv message
+      InventoryItemImpl item = new InventoryItemImpl(InventoryItem.TYPE_TX,
+            new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+      List<InventoryItem> items = new ArrayList<InventoryItem>();
+      items.add(item);
+      InvImpl inv = new InvImpl(Message.MAGIC_MAIN,items);
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(inv,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+          "F9 BE B4 D9 "+                                     // Main network magic bytes
+          "69 6E 76 00 00 00 00 00 00 00 00 00 "+             // "inv"
+          "25 00 00 00 "+                                     // payload is 36 bytes long
+          "41 01 8A 30 "+                                     // checksum
+          "01 "+                                              // number of items
+          "01 00 00 00 "+                                     // type 1 (tx)
+          "00 01 02 03 04 05 06 07 08 09 0A "+                // hash of tx
+          "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
+          "16 17 18 19 1A 1B 1C 1D 1E 1F");
    }
 
 }

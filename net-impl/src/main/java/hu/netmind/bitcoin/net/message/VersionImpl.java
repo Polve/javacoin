@@ -58,7 +58,7 @@ public class VersionImpl extends MessageImpl implements Version
    void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
       throws IOException
    {
-      super.readFrom(input,version,param);
+      super.readFrom(input,protocolVersion,param);
       version = input.readUInt32();
       services = input.readUInt64();
       timestamp = input.readUInt64()*1000; // We need milliseconds not seconds
@@ -82,7 +82,7 @@ public class VersionImpl extends MessageImpl implements Version
    void writeTo(BitCoinOutputStream output, long protocolVersion)
       throws IOException
    {
-      super.writeTo(output,version);
+      super.writeTo(output,protocolVersion);
       output.writeUInt32(version);
       output.writeUInt64(services);
       output.writeUInt64(timestamp/1000); // Convert millis to seconds
