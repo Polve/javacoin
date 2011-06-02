@@ -253,5 +253,60 @@ public class MessageTests
           "16 17 18 19 1A 1B 1C 1D 1E 1F");
    }
 
+   public void testGetDataDeserialize()
+      throws IOException
+   {
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+          "F9 BE B4 D9 "+                                     // Main network magic bytes
+          "67 65 74 64 61 74 61 00 00 00 00 00 "+             // "getdata"
+          "25 00 00 00 "+                                     // payload is 36 bytes long
+          "41 01 8A 30 "+                                     // checksum
+          "01 "+                                              // number of items
+          "01 00 00 00 "+                                     // type 1 (tx)
+          "00 01 02 03 04 05 06 07 08 09 0A "+                // hash of tx
+          "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
+          "16 17 18 19 1A 1B 1C 1D 1E 1F"));
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      GetData message = (GetData) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"getdata");
+      Assert.assertEquals(message.getInventoryItems().size(),1);
+      Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
+      InventoryItem item = message.getInventoryItems().get(0);
+      Assert.assertEquals(item.getType(),1);
+      Assert.assertEquals(item.getHash(),new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+   }
+
+   public void testGetDataSerialize()
+      throws IOException
+   {
+      // Setup an inv message
+      InventoryItemImpl item = new InventoryItemImpl(InventoryItem.TYPE_TX,
+            new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+      List<InventoryItem> items = new ArrayList<InventoryItem>();
+      items.add(item);
+      GetDataImpl getdata = new GetDataImpl(Message.MAGIC_MAIN,items);
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(getdata,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+          "F9 BE B4 D9 "+                                     // Main network magic bytes
+          "67 65 74 64 61 74 61 00 00 00 00 00 "+             // "getdata"
+          "25 00 00 00 "+                                     // payload is 36 bytes long
+          "41 01 8A 30 "+                                     // checksum
+          "01 "+                                              // number of items
+          "01 00 00 00 "+                                     // type 1 (tx)
+          "00 01 02 03 04 05 06 07 08 09 0A "+                // hash of tx
+          "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
+          "16 17 18 19 1A 1B 1C 1D 1E 1F");
+   }
+
 }
 
