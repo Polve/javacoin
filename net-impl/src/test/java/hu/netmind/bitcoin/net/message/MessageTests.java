@@ -44,7 +44,7 @@ public class MessageTests
       // Sample taken from bitcoin wiki
       ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
             "F9 BE B4 D9 "+                          // Main network magic bytes
-            "76 65 72 61  63 6B 00 00 00 00 00 00 "+ // "verack" command
+            "76 65 72 61 63 6B 00 00 00 00 00 00 "+ // "verack" command
             "00 00 00 00"));                         // Payload is 0 bytes long
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
@@ -422,5 +422,26 @@ public class MessageTests
           "16 17 18 19 1A 1B 1C 1D 1E 1F");
    }
 
+   public void testReadUnrecognizedCommand()
+      throws IOException
+   {
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+            "F9 BE B4 D9 "+                          // Main network
+            "61 61 61 00 00 00 00 00 00 00 00 00 "+  // "aaa" command (unrecognized)
+            "10 00 00 00 "+                          // payload is 16 bytes
+            "12 34 56 78 "+                          // checksum
+            "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+ // junk payload
+            "F9 BE B4 D9 "+                          // Main network magic bytes
+            "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
+            "00 00 00 00"));                         // Payload is 0 bytes long
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      Verack message = (Verack) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"verack");
+      Assert.assertEquals(message.getLength(),0);
+   }
 }
 

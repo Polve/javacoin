@@ -78,17 +78,40 @@ public class MessageMarshaller
    public MessageImpl read(BitCoinInputStream input)
       throws IOException
    {
-      // First read the header from the stream
+      // First read the header from the stream, repeat this step
+      // until we find a message we recognize
       if ( ! input.markSupported() )
          throw new IOException("input stream for deserialization does not support mark");
-      input.mark(20);
       MessageImpl header = new MessageImpl();
-      header.readFrom(input,version,null);
-      input.reset(); // Rewind, so message will read header again
-      // Now search for a suitable message
-      Class messageType = messageTypes.get(header.getCommand());
-      if ( messageType == null )
-        throw new IOException("message type not found for command: "+header.getCommand()); 
+      Class messageType = null;
+      while ( messageType == null )
+      {
+         input.mark(20);
+         header.readFrom(input,version,null);
+         input.reset(); // Rewind, so message will read header again
+         // Now search for a suitable message
+         messageType = messageTypes.get(header.getCommand());
+         if ( messageType == null )
+         {
+            // Did not recognize, so skip this message altogether
+            long remainingBytes = header.getLength() + 24; // +24 is to skip header
+            while ( remainingBytes > 0 )
+            {
+               if ( remainingBytes >= 4096 )
+               {
+                  // Message is too big, just read a chunk
+                  input.readBytes(4096);
+                  remainingBytes -= 4096;
+               }
+               else
+               {
+                  input.readBytes((int)remainingBytes);
+                  remainingBytes = 0;
+               }
+            }
+            logger.warn("did not find message type for command (skipping message): {}",header.getCommand());
+         }
+      }
       logger.debug("message type {} found for command {}",messageType,header.getCommand());
       // Search for the construction parameter if there is any
       Object param = null;
