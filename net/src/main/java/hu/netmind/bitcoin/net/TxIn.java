@@ -32,7 +32,7 @@ public interface TxIn
     * Get the specific output in the referenced transaction to
     * fully use in this transaction.
     */
-   int getReferencedTxOutIndex();
+   long getReferencedTxOutIndex();
 
    /**
     * Get the signature script for confirming the use of referenced output.
@@ -42,6 +42,6 @@ public interface TxIn
    /**
     * Get the version number for replacement purposes.
     */
-   int getTxVersion();
+   long getTxVersion();
 }
 
