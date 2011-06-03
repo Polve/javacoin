@@ -569,5 +569,162 @@ public class MessageTests
           "00 00 00 00");                                       // lock time
    }
 
+   public void testBlockSerialize()
+      throws IOException
+   {
+      // Setup message
+      TxInImpl in1 = new TxInImpl(
+            HexUtil.toByteArray(
+                "6D BD DB 08 5B 1D 8A F7 51 84 F0 BC 01 FA D5 8D "+   // previous output (outpoint)
+                "12 66 E9 B6 3B 50 88 19 90 E4 B4 0D 6A EE 36 29 "),0,
+            HexUtil.toByteArray(
+                "48 30 45 02 21 00 F3 58 1E 19 72 AE 8A C7 C7 36 "+   // signature script (scriptSig)
+                "7A 7A 25 3B C1 13 52 23 AD B9 A4 68 BB 3A 59 23 "+
+                "3F 45 BC 57 83 80 02 20 59 AF 01 CA 17 D0 0E 41 "+
+                "83 7A 1D 58 E9 7A A3 1B AE 58 4E DE C2 8D 35 BD "+
+                "96 92 36 90 91 3B AE 9A 01 41 04 9C 02 BF C9 7E "+
+                "F2 36 CE 6D 8F E5 D9 40 13 C7 21 E9 15 98 2A CD "+
+                "2B 12 B6 5D 9B 7D 59 E2 0A 84 20 05 F8 FC 4E 02 "+
+                "53 2E 87 3D 37 B9 6F 09 D6 D4 51 1A DA 8F 14 04 "+
+                "2F 46 61 4A 4C 70 C0 F1 4B EF F5 "), 0xffffffffl);
+      TxOutImpl out1 = new TxOutImpl(5000000l,
+            HexUtil.toByteArray(
+                "76 A9 14 1A A0 CD 1C BE A6 E7 45 8A 7A BA D5 12 "+   // pk_script
+                "A9 D9 EA 1A FB 22 5E 88 AC "));
+      TxOutImpl out2 = new TxOutImpl(3354000000l,
+            HexUtil.toByteArray(
+                "76 A9 14 0E AB 5B EA 43 6A 04 84 CF AB 12 48 5E "+   // pk_script
+                "FD A0 B7 8B 4E CC 52 88 AC "));
+      List<TxIn> inputs = new ArrayList<TxIn>();
+      inputs.add(in1);
+      List<TxOut> outputs = new ArrayList<TxOut>();
+      outputs.add(out1);
+      outputs.add(out2);
+      TransactionImpl tx = new TransactionImpl(1,inputs,outputs,0);
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      transactions.add(tx);
+      BlockImpl block = new BlockImpl(Message.MAGIC_MAIN,1,
+            HexUtil.toByteArray(
+               "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
+               "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
+            HexUtil.toByteArray(
+               "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
+               "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
+            123000,22,33,transactions);
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(block,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+          "F9 BE B4 D9 "+                                       // main network magic bytes
+          "62 6C 6F 63 6B 00 00 00 00 00 00 00 "+               // block command
+          "53 01 00 00 "+                                       // payload is 307 bytes long
+          "C9 B3 C1 8B "+                                       // checksum of payload
+          "01 00 00 00 "+                                       // version format of block payload
+          "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+   // previous block hash
+          "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
+          "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+   // root hash of tx
+          "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
+          "7B 00 00 00 "+                                       // timestamp
+          "16 00 00 00 "+                                       // difficulty
+          "21 00 00 00 "+                                       // nonce
+          "01 "+                                                // number of transactions that follow
+          "01 00 00 00 "+                                       // version
+          "01 "+                                                // number of transaction inputs
+          "6D BD DB 08 5B 1D 8A F7 51 84 F0 BC 01 FA D5 8D "+   // previous output (outpoint)
+          "12 66 E9 B6 3B 50 88 19 90 E4 B4 0D 6A EE 36 29 "+
+          "00 00 00 00 "+
+          "8B "+                                                // script is 139 bytes long
+          "48 30 45 02 21 00 F3 58 1E 19 72 AE 8A C7 C7 36 "+   // signature script (scriptSig)
+          "7A 7A 25 3B C1 13 52 23 AD B9 A4 68 BB 3A 59 23 "+
+          "3F 45 BC 57 83 80 02 20 59 AF 01 CA 17 D0 0E 41 "+
+          "83 7A 1D 58 E9 7A A3 1B AE 58 4E DE C2 8D 35 BD "+
+          "96 92 36 90 91 3B AE 9A 01 41 04 9C 02 BF C9 7E "+
+          "F2 36 CE 6D 8F E5 D9 40 13 C7 21 E9 15 98 2A CD "+
+          "2B 12 B6 5D 9B 7D 59 E2 0A 84 20 05 F8 FC 4E 02 "+
+          "53 2E 87 3D 37 B9 6F 09 D6 D4 51 1A DA 8F 14 04 "+
+          "2F 46 61 4A 4C 70 C0 F1 4B EF F5 "+
+          "FF FF FF FF "+                                       // sequence
+          "02 "+                                                // 2 Output Transactions
+          "40 4B 4C 00 00 00 00 00 "+                           // 0.05 BTC (5000000)
+          "19 "+                                                // pk_script is 25 bytes long
+          "76 A9 14 1A A0 CD 1C BE A6 E7 45 8A 7A BA D5 12 "+   // pk_script
+          "A9 D9 EA 1A FB 22 5E 88 AC "+
+          "80 FA E9 C7 00 00 00 00 "+                           // 33.54 BTC (3354000000)
+          "19 "+                                                // pk_script is 25 bytes long
+          "76 A9 14 0E AB 5B EA 43 6A 04 84 CF AB 12 48 5E "+   // pk_script
+          "FD A0 B7 8B 4E CC 52 88 AC "+
+          "00 00 00 00");                                       // lock time
+   }
+
+   public void testBlockDeserialize()
+      throws IOException
+   {
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+          "F9 BE B4 D9 "+                                       // main network magic bytes
+          "62 6C 6F 63 6B 00 00 00 00 00 00 00 "+               // block command
+          "53 01 00 00 "+                                       // payload is 307 bytes long
+          "C9 B3 C1 8B "+                                       // checksum of payload
+          "01 00 00 00 "+                                       // version format of block payload
+          "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+   // previous block hash
+          "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
+          "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+   // root hash of tx
+          "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
+          "7B 00 00 00 "+                                       // timestamp
+          "16 00 00 00 "+                                       // difficulty
+          "21 00 00 00 "+                                       // nonce
+          "01 "+                                                // number of transactions that follow
+          "01 00 00 00 "+                                       // version
+          "01 "+                                                // number of transaction inputs
+          "6D BD DB 08 5B 1D 8A F7 51 84 F0 BC 01 FA D5 8D "+   // previous output (outpoint)
+          "12 66 E9 B6 3B 50 88 19 90 E4 B4 0D 6A EE 36 29 "+
+          "00 00 00 00 "+
+          "8B "+                                                // script is 139 bytes long
+          "48 30 45 02 21 00 F3 58 1E 19 72 AE 8A C7 C7 36 "+   // signature script (scriptSig)
+          "7A 7A 25 3B C1 13 52 23 AD B9 A4 68 BB 3A 59 23 "+
+          "3F 45 BC 57 83 80 02 20 59 AF 01 CA 17 D0 0E 41 "+
+          "83 7A 1D 58 E9 7A A3 1B AE 58 4E DE C2 8D 35 BD "+
+          "96 92 36 90 91 3B AE 9A 01 41 04 9C 02 BF C9 7E "+
+          "F2 36 CE 6D 8F E5 D9 40 13 C7 21 E9 15 98 2A CD "+
+          "2B 12 B6 5D 9B 7D 59 E2 0A 84 20 05 F8 FC 4E 02 "+
+          "53 2E 87 3D 37 B9 6F 09 D6 D4 51 1A DA 8F 14 04 "+
+          "2F 46 61 4A 4C 70 C0 F1 4B EF F5 "+
+          "FF FF FF FF "+                                       // sequence
+          "02 "+                                                // 2 Output Transactions
+          "40 4B 4C 00 00 00 00 00 "+                           // 0.05 BTC (5000000)
+          "19 "+                                                // pk_script is 25 bytes long
+          "76 A9 14 1A A0 CD 1C BE A6 E7 45 8A 7A BA D5 12 "+   // pk_script
+          "A9 D9 EA 1A FB 22 5E 88 AC "+
+          "80 FA E9 C7 00 00 00 00 "+                           // 33.54 BTC (3354000000)
+          "19 "+                                                // pk_script is 25 bytes long
+          "76 A9 14 0E AB 5B EA 43 6A 04 84 CF AB 12 48 5E "+   // pk_script
+          "FD A0 B7 8B 4E CC 52 88 AC "+
+          "00 00 00 00"));                                      // lock time
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      Block message = (Block) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"block");
+      Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
+      Assert.assertEquals(message.getVersion(),1);
+      Assert.assertEquals(message.getTimestamp(),123000);
+      Assert.assertEquals(message.getDifficulty(),22);
+      Assert.assertEquals(message.getNonce(),33);
+      Assert.assertEquals(message.getTransactions().get(0).getVersion(),1);
+      Assert.assertEquals(message.getTransactions().get(0).getLockTime(),0);
+      Assert.assertEquals(message.getTransactions().get(0).getInputs().size(),1);
+      Assert.assertEquals(message.getTransactions().get(0).getInputs().get(0).getReferencedTxOutIndex(),0);
+      Assert.assertEquals(message.getTransactions().get(0).getInputs().get(0).getSequence(),0xffffffffl);
+      Assert.assertEquals(message.getTransactions().get(0).getInputs().get(0).getSignatureScript().length,139);
+      Assert.assertEquals(message.getTransactions().get(0).getOutputs().size(),2);
+      Assert.assertEquals(message.getTransactions().get(0).getOutputs().get(0).getValue(),5000000l);
+      Assert.assertEquals(message.getTransactions().get(0).getOutputs().get(1).getValue(),3354000000l);
+      Assert.assertEquals(message.getTransactions().get(0).getOutputs().get(0).getScript().length,25);
+      Assert.assertEquals(message.getTransactions().get(0).getOutputs().get(1).getScript().length,25);
+   }
+
 }
 

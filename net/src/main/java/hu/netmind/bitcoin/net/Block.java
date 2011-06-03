@@ -28,7 +28,7 @@ public interface Block extends ChecksummedMessage
    /**
     * Get the block's version information.
     */
-   int getVersion();
+   long getVersion();
 
    /**
     * Get the hash of the previous block.
