@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public interface Tx extends Message
+public interface Tx extends ChecksummedMessage
 {
    /**
     * The version format for transactions (for this command).

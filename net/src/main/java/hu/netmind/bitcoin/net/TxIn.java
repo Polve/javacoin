@@ -42,6 +42,6 @@ public interface TxIn
    /**
     * Get the version number for replacement purposes.
     */
-   long getTxVersion();
+   long getSequence();
 }
 
