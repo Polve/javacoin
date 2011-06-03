@@ -63,6 +63,6 @@ public interface Block extends ChecksummedMessage
     * null, in which case this information was just left out (probably a
     * header-only message).
     */
-   List<Tx> getTransactions();
+   List<Transaction> getTransactions();
 }
 

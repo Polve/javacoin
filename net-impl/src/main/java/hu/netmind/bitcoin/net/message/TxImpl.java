@@ -18,9 +18,8 @@
 
 package hu.netmind.bitcoin.net.message;
 
+import hu.netmind.bitcoin.net.Transaction;
 import hu.netmind.bitcoin.net.Tx;
-import hu.netmind.bitcoin.net.TxIn;
-import hu.netmind.bitcoin.net.TxOut;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -30,19 +29,13 @@ import java.util.ArrayList;
  */
 public class TxImpl extends ChecksummedMessageImpl implements Tx
 {
-   private long version;
-   private List<TxIn> inputs;
-   private List<TxOut> outputs;
-   private long lockTime;
+   private TransactionImpl transaction;
 
-   public TxImpl(long magic, long version, List<TxIn> inputs, List<TxOut> outputs, long lockTime)
+   public TxImpl(long magic, TransactionImpl transaction)
       throws IOException
    {
       super(magic,"tx");
-      this.version=version;
-      this.inputs=inputs;
-      this.outputs=outputs;
-      this.lockTime=lockTime;
+      this.transaction=transaction;
    }
 
    TxImpl()
@@ -55,63 +48,25 @@ public class TxImpl extends ChecksummedMessageImpl implements Tx
       throws IOException
    {
       super.readFrom(input,protocolVersion,param);
-      version = input.readUInt32();
-      long inCount = input.readUIntVar();
-      inputs = new ArrayList<TxIn>();
-      for ( long i=0; i<inCount; i++ )
-      {
-         TxInImpl in = new TxInImpl();
-         in.readFrom(input);
-         inputs.add(in);
-      }
-      long outCount = input.readUIntVar();
-      outputs = new ArrayList<TxOut>();
-      for ( long i=0; i<outCount; i++ )
-      {
-         TxOutImpl out = new TxOutImpl();
-         out.readFrom(input);
-         outputs.add(out);
-      }
-      lockTime = input.readUInt32();
+      transaction = new TransactionImpl();
+      transaction.readFrom(input,protocolVersion,param);
    }
 
    void writeTo(BitCoinOutputStream output, long protocolVersion)
       throws IOException
    {
       super.writeTo(output,protocolVersion);
-      output.writeUInt32(version);
-      output.writeUIntVar(inputs.size());
-      for ( TxIn in : inputs )
-         ((TxInImpl)in).writeTo(output);
-      output.writeUIntVar(outputs.size());
-      for ( TxOut out : outputs )
-         ((TxOutImpl)out).writeTo(output);
-      output.writeUInt32(lockTime);
+      transaction.writeTo(output,protocolVersion);
    }
 
    public String toString()
    {
-      return super.toString()+" version: "+version+", inputs: "+inputs+", outputs: "+outputs;
+      return super.toString()+" tx: "+transaction;
    }
 
-   public long getVersion()
+   public Transaction getTransaction()
    {
-      return version;
-   }
-
-   public List<TxIn> getInputs()
-   {
-      return inputs;
-   }
-
-   public List<TxOut> getOutputs()
-   {
-      return outputs;
-   }
-
-   public long getLockTime()
-   {
-      return lockTime;
+      return transaction;
    }
 }
 

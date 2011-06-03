@@ -23,8 +23,27 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public interface Tx extends ChecksummedMessage
+public interface Transaction
 {
-   Transaction getTransaction();
+   /**
+    * The version format for transactions (for this command).
+    */
+   long getVersion();
+
+   /**
+    * Get the transaction inputs.
+    */
+   List<TxIn> getInputs();
+
+   /**
+    * Get the transaction outputs.
+    */
+   List<TxOut> getOutputs();
+
+   /**
+    * Lock time. This is per specification a block number or timestamp at which this 
+    * transaction is locked. It is not specified further, and not used.
+    */
+   long getLockTime();
 }
 
