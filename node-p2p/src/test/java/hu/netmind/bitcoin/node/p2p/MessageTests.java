@@ -794,5 +794,41 @@ public class MessageTests
       Assert.assertEquals(message.getHeaders().get(0).getNonce(),33);
    }
 
+   public void testGetAddrDeserialize()
+      throws IOException
+   {
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+            "F9 BE B4 D9 "+                          // Main network magic bytes
+            "67 65 74 61 64 64 72 00 00 00 00 00 "+  // "getaddr" command
+            "00 00 00 00 "+                          // payload is 0 bytes
+            "5D F6 E0 E2"));                         // checksum is null
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      GetAddrMessage message = (GetAddrMessage) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"getaddr");
+      Assert.assertEquals(message.getLength(),0);
+      Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
+   }
+
+   public void testGetAddSerialize()
+      throws IOException
+   {
+      // Setup a verack message
+      GetAddrMessage getaddr = new GetAddrMessage(Message.MAGIC_MAIN);
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(getaddr,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+            "F9 BE B4 D9 "+                          // Main network magic bytes
+            "67 65 74 61 64 64 72 00 00 00 00 00 "+  // "getaddr" command
+            "00 00 00 00 "+                          // Payload is 0 bytes long
+            "5D F6 E0 E2");                          // no checksum
+   }
+
 }
 
