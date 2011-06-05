@@ -813,7 +813,7 @@ public class MessageTests
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
    }
 
-   public void testGetAddSerialize()
+   public void testGetAddrSerialize()
       throws IOException
    {
       // Setup a verack message
@@ -826,6 +826,42 @@ public class MessageTests
       Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "67 65 74 61 64 64 72 00 00 00 00 00 "+  // "getaddr" command
+            "00 00 00 00 "+                          // Payload is 0 bytes long
+            "5D F6 E0 E2");                          // no checksum
+   }
+
+   public void testPingDeserialize()
+      throws IOException
+   {
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+            "F9 BE B4 D9 "+                          // Main network magic bytes
+            "70 69 6E 67 00 00 00 00 00 00 00 00 "+  // "ping" command
+            "00 00 00 00 "+                          // payload is 0 bytes
+            "5D F6 E0 E2"));                         // checksum is null
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      PingMessage message = (PingMessage) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"ping");
+      Assert.assertEquals(message.getLength(),0);
+      Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
+   }
+
+   public void testPingSerialize()
+      throws IOException
+   {
+      // Setup a verack message
+      PingMessage ping = new PingMessage(Message.MAGIC_MAIN);
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(ping,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+            "F9 BE B4 D9 "+                          // Main network magic bytes
+            "70 69 6E 67 00 00 00 00 00 00 00 00 "+  // "ping" command
             "00 00 00 00 "+                          // Payload is 0 bytes long
             "5D F6 E0 E2");                          // no checksum
    }
