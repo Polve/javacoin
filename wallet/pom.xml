@@ -3,10 +3,10 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>hu.netmind.bitcoin</groupId>
-  <artifactId>bitcoin-impl</artifactId>
+  <artifactId>bitcoin-wallet</artifactId>
   <packaging>jar</packaging>
   <version>1.0.0-SNAPSHOT</version>
-  <name>BitCoin Standard Implementation</name>
+  <name>BitCoin Wallet Implementation</name>
 
   <build>
     <plugins>

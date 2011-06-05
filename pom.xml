@@ -10,7 +10,7 @@
 
   <modules>
     <module>api</module>
-    <module>impl</module>
+    <module>wallet</module>
     <module>net</module>
     <module>net-impl</module>
     <module>bcwallet</module>
