@@ -16,10 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.net.message;
+package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.Transaction;
-import hu.netmind.bitcoin.net.Tx;
+import hu.netmind.bitcoin.net.Inv;
+import hu.netmind.bitcoin.net.InventoryItem;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -27,46 +27,55 @@ import java.util.ArrayList;
 /**
  * @author Robert Brautigam
  */
-public class TxImpl extends ChecksummedMessageImpl implements Tx
+public class InvImpl extends ChecksummedMessageImpl implements Inv
 {
-   private TransactionImpl transaction;
+   private List<InventoryItem> items;
 
-   public TxImpl(long magic, TransactionImpl transaction)
+   public InvImpl(long magic, List<InventoryItem> items)
       throws IOException
    {
-      super(magic,"tx");
-      this.transaction=transaction;
+      super(magic,"inv");
+      this.items=items;
    }
 
-   TxImpl()
+   InvImpl()
       throws IOException
    {
       super();
    }
 
-   void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
+   void readFrom(BitCoinInputStream input, long version, Object param)
       throws IOException
    {
-      super.readFrom(input,protocolVersion,param);
-      transaction = new TransactionImpl();
-      transaction.readFrom(input,protocolVersion,param);
+      super.readFrom(input,version,param);
+      long size = input.readUIntVar();
+      items = new ArrayList<InventoryItem>();
+      for ( long i=0; i<size; i++ )
+      {
+         InventoryItemImpl item = new InventoryItemImpl();
+         item.readFrom(input);
+         items.add(item);
+      }
    }
 
-   void writeTo(BitCoinOutputStream output, long protocolVersion)
+   void writeTo(BitCoinOutputStream output, long version)
       throws IOException
    {
-      super.writeTo(output,protocolVersion);
-      transaction.writeTo(output,protocolVersion);
+      super.writeTo(output,version);
+      output.writeUIntVar(items.size());
+      for ( InventoryItem item : items )
+         ((InventoryItemImpl)item).writeTo(output);
    }
 
    public String toString()
    {
-      return super.toString()+" tx: "+transaction;
+      return super.toString()+" items: "+items;
    }
 
-   public Transaction getTransaction()
+   public List<InventoryItem> getInventoryItems()
    {
-      return transaction;
+      return items;
    }
+
 }
 

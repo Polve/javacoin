@@ -16,44 +16,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.net.message;
+package hu.netmind.bitcoin.node.p2p;
+
+import hu.netmind.bitcoin.net.Verack;
+import java.io.IOException;
 
 /**
- * This is a BitCoin input stream which reads messages from a given byte array.
  * @author Robert Brautigam
  */
-public class ByteArrayBitCoinInputStream extends BitCoinInputStream
+public class VerackImpl extends MessageImpl implements Verack
 {
-   private byte[] bytes = null;
-   private int pointer = 0;
-   private int mark = 0;
-
-   public boolean markSupported()
+   public VerackImpl(long magic)
    {
-      return true;
+      super(magic,"verack");
    }
 
-   public void mark(int length)
+   VerackImpl()
    {
-      mark = pointer;
+      super();
    }
 
-   public void reset()
+   void readFrom(BitCoinInputStream input, long version, Object param)
+      throws IOException
    {
-      pointer = mark;
-   }
-
-   public ByteArrayBitCoinInputStream(byte[] bytes)
-   {
-      this.bytes=bytes;
-   }
-
-   public int read()
-   {
-      if ( (bytes==null) || (pointer > bytes.length-1) )
-         return -1;
-      int result = (bytes[pointer++] & 0xff);
-      return result;
+      super.readFrom(input,version,param);
    }
 }
 

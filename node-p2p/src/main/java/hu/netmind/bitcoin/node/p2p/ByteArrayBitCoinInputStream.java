@@ -16,34 +16,44 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.net.message;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+package hu.netmind.bitcoin.node.p2p;
 
 /**
- * This BitCoin output stream implementation uses a byte array backing that can be
- * viewed anytime.
+ * This is a BitCoin input stream which reads messages from a given byte array.
  * @author Robert Brautigam
  */
-public class ByteArrayBitCoinOutputStream extends BitCoinOutputStream
+public class ByteArrayBitCoinInputStream extends BitCoinInputStream
 {
-   private ByteArrayOutputStream output = new ByteArrayOutputStream();
+   private byte[] bytes = null;
+   private int pointer = 0;
+   private int mark = 0;
 
-   public void write(int value)
+   public boolean markSupported()
    {
-      output.write(value);
+      return true;
    }
 
-   public byte[] toByteArray()
+   public void mark(int length)
    {
-      return output.toByteArray();
+      mark = pointer;
    }
 
-   public void close()
-      throws IOException
+   public void reset()
    {
-      output.close();
+      pointer = mark;
+   }
+
+   public ByteArrayBitCoinInputStream(byte[] bytes)
+   {
+      this.bytes=bytes;
+   }
+
+   public int read()
+   {
+      if ( (bytes==null) || (pointer > bytes.length-1) )
+         return -1;
+      int result = (bytes[pointer++] & 0xff);
+      return result;
    }
 }
 

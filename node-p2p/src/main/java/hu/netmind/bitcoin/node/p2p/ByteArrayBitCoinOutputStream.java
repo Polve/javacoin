@@ -16,38 +16,34 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.net.message;
+package hu.netmind.bitcoin.node.p2p;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- * This output stream is used to overwrite some values in an existing
- * serialized message. This is useful for values that can be computed
- * only after the bulk of the message was already serialized, like length
- * and checksum values.
+ * This BitCoin output stream implementation uses a byte array backing that can be
+ * viewed anytime.
  * @author Robert Brautigam
  */
-public class OverwriterBitCoinOutputStream extends BitCoinOutputStream
+public class ByteArrayBitCoinOutputStream extends BitCoinOutputStream
 {
-   private byte[] byteArray;
-   private int position = 0; 
-
-   /**
-    * @param byteArray The array to overwrite content in.
-    * @param offset The offset at which to begin overwriting.
-    */
-   public OverwriterBitCoinOutputStream(byte[] byteArray, int offset)
-   {
-      this.byteArray=byteArray;
-      this.position=offset;
-   }
+   private ByteArrayOutputStream output = new ByteArrayOutputStream();
 
    public void write(int value)
+   {
+      output.write(value);
+   }
+
+   public byte[] toByteArray()
+   {
+      return output.toByteArray();
+   }
+
+   public void close()
       throws IOException
    {
-      if ( position >= byteArray.length )
-         throw new IOException("tried to write past the array length to position "+position);
-      byteArray[position++] = (byte) value;
+      output.close();
    }
 }
 

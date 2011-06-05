@@ -16,9 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.net.message;
+package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.GetHeaders;
+import hu.netmind.bitcoin.net.GetData;
+import hu.netmind.bitcoin.net.InventoryItem;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -26,20 +27,18 @@ import java.util.ArrayList;
 /**
  * @author Robert Brautigam
  */
-public class GetHeadersImpl extends ChecksummedMessageImpl implements GetHeaders
+public class GetDataImpl extends ChecksummedMessageImpl implements GetData
 {
-   private List<byte[]> hashStarts;
-   private byte[] hashStop;
+   private List<InventoryItem> items;
 
-   public GetHeadersImpl(long magic, List<byte[]> hashStarts, byte[] hashStop)
+   public GetDataImpl(long magic, List<InventoryItem> items)
       throws IOException
    {
-      super(magic,"getheaders");
-      this.hashStarts=hashStarts;
-      this.hashStop=hashStop;
+      super(magic,"getdata");
+      this.items=items;
    }
 
-   GetHeadersImpl()
+   GetDataImpl()
       throws IOException
    {
       super();
@@ -50,35 +49,33 @@ public class GetHeadersImpl extends ChecksummedMessageImpl implements GetHeaders
    {
       super.readFrom(input,version,param);
       long size = input.readUIntVar();
-      hashStarts = new ArrayList<byte[]>();
+      items = new ArrayList<InventoryItem>();
       for ( long i=0; i<size; i++ )
-         hashStarts.add(input.readBytes(32));
-      hashStop = input.readBytes(32);
+      {
+         InventoryItemImpl item = new InventoryItemImpl();
+         item.readFrom(input);
+         items.add(item);
+      }
    }
 
    void writeTo(BitCoinOutputStream output, long version)
       throws IOException
    {
       super.writeTo(output,version);
-      output.writeUIntVar(hashStarts.size());
-      for ( byte[] hash : hashStarts )
-         output.write(hash);
-      output.write(hashStop);
+      output.writeUIntVar(items.size());
+      for ( InventoryItem item : items )
+         ((InventoryItemImpl)item).writeTo(output);
    }
 
    public String toString()
    {
-      return super.toString()+" hash starts: "+hashStarts+", stop: "+hashStop;
+      return super.toString()+" items: "+items;
    }
 
-   public List<byte[]> getHashStarts()
+   public List<InventoryItem> getInventoryItems()
    {
-      return hashStarts;
+      return items;
    }
 
-   public byte[] getHashStop()
-   {
-      return hashStop;
-   }
 }
 

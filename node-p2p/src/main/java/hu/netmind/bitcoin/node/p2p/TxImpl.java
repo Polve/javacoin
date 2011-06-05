@@ -16,57 +16,57 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.net.message;
+package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.InventoryItem;
+import hu.netmind.bitcoin.net.Transaction;
+import hu.netmind.bitcoin.net.Tx;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Robert Brautigam
  */
-public class InventoryItemImpl implements InventoryItem
+public class TxImpl extends ChecksummedMessageImpl implements Tx
 {
-   private int type = TYPE_ERROR;
-   private byte[] hash;
+   private TransactionImpl transaction;
 
-   public InventoryItemImpl(int type, byte[] hash)
-   {
-      this.type=type;
-      this.hash=hash;
-   }
-
-   InventoryItemImpl()
-   {
-   }
-
-   void readFrom(BitCoinInputStream input)
+   public TxImpl(long magic, TransactionImpl transaction)
       throws IOException
    {
-      type = (int) input.readUInt32();
-      hash = input.readBytes(32);
+      super(magic,"tx");
+      this.transaction=transaction;
    }
 
-   void writeTo(BitCoinOutputStream output)
+   TxImpl()
       throws IOException
    {
-      output.writeUInt32(type);
-      output.write(hash);
+      super();
+   }
+
+   void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
+      throws IOException
+   {
+      super.readFrom(input,protocolVersion,param);
+      transaction = new TransactionImpl();
+      transaction.readFrom(input,protocolVersion,param);
+   }
+
+   void writeTo(BitCoinOutputStream output, long protocolVersion)
+      throws IOException
+   {
+      super.writeTo(output,protocolVersion);
+      transaction.writeTo(output,protocolVersion);
    }
 
    public String toString()
    {
-      return type+":"+Arrays.toString(hash);
+      return super.toString()+" tx: "+transaction;
    }
 
-   public int getType()
+   public Transaction getTransaction()
    {
-      return type;
-   }
-
-   public byte[] getHash()
-   {
-      return hash;
+      return transaction;
    }
 }
 

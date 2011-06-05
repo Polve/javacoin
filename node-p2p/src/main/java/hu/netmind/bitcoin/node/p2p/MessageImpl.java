@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.net.message;
+package hu.netmind.bitcoin.node.p2p;
 
 import hu.netmind.bitcoin.net.Message;
 import hu.netmind.bitcoin.net.ChecksummedMessage;
