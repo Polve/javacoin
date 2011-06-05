@@ -727,5 +727,72 @@ public class MessageTests
       Assert.assertEquals(message.getTransactions().get(0).getOutputs().get(1).getScript().length,25);
    }
 
+   public void testHeadersSerialize()
+      throws IOException
+   {
+      // Setup message
+      BlockHeader header = new BlockHeader(1,
+            HexUtil.toByteArray(
+               "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
+               "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
+            HexUtil.toByteArray(
+               "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
+               "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
+            123000,22,33);
+      List<BlockHeader> headers = new ArrayList<BlockHeader>();
+      headers.add(header);
+      HeadersMessage headersMessage = new HeadersMessage(Message.MAGIC_MAIN,headers);
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(headersMessage,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+          "F9 BE B4 D9 "+                                       // main network magic bytes
+          "68 65 61 64 65 72 73 00 00 00 00 00 "+               // "headers" command
+          "51 00 00 00 "+                                       // payload is 81 bytes long
+          "9A F3 1C 8F "+                                       // checksum of payload
+          "01 "+                                                // 1 header only in this message
+          "01 00 00 00 "+                                       // version format of block payload
+          "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+   // previous block hash
+          "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
+          "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+   // root hash of tx
+          "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
+          "7B 00 00 00 "+                                       // timestamp
+          "16 00 00 00 "+                                       // difficulty
+          "21 00 00 00");                                       // nonce
+   }
+
+   public void testHeadersDeserialize()
+      throws IOException
+   {
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+          "F9 BE B4 D9 "+                                       // main network magic bytes
+          "68 65 61 64 65 72 73 00 00 00 00 00 "+               // "headers" command
+          "51 00 00 00 "+                                       // payload is 81 bytes long
+          "9A F3 1C 8F "+                                       // checksum of payload
+          "01 "+                                                // 1 header only in this message
+          "01 00 00 00 "+                                       // version format of block payload
+          "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+   // previous block hash
+          "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
+          "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+   // root hash of tx
+          "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
+          "7B 00 00 00 "+                                       // timestamp
+          "16 00 00 00 "+                                       // difficulty
+          "21 00 00 00"));                                      // nonce
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      HeadersMessage message = (HeadersMessage) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"headers");
+      Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
+      Assert.assertEquals(message.getHeaders().get(0).getVersion(),1);
+      Assert.assertEquals(message.getHeaders().get(0).getTimestamp(),123000);
+      Assert.assertEquals(message.getHeaders().get(0).getDifficulty(),22);
+      Assert.assertEquals(message.getHeaders().get(0).getNonce(),33);
+   }
+
 }
 
