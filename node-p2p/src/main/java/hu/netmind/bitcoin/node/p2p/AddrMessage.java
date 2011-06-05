@@ -26,18 +26,18 @@ import java.io.IOException;
 /**
  * @author Robert Brautigam
  */
-public class AddrImpl extends ChecksummedMessageImpl implements Addr
+public class AddrMessage extends ChecksummedMessage
 {
    private List<AddressEntry> addressEntries;
 
-   public AddrImpl(long magic, List<AddressEntry> addressEntries)
+   public AddrMessage(long magic, List<AddressEntry> addressEntries)
       throws IOException
    {
       super(magic,"addr");
       this.addressEntries=addressEntries;
    }
 
-   AddrImpl()
+   AddrMessage()
       throws IOException
    {
       super();
@@ -54,9 +54,9 @@ public class AddrImpl extends ChecksummedMessageImpl implements Addr
          long timestamp = 0;
          if ( version >= 31402 )
             timestamp = input.readUInt32()*1000;
-         NodeAddressImpl address = new NodeAddressImpl();
+         NodeAddress address = new NodeAddress();
          address.readFrom(input);
-         addressEntries.add(new AddressEntryImpl(timestamp,address));
+         addressEntries.add(new AddressEntry(timestamp,address));
       }
    }
 
@@ -71,7 +71,7 @@ public class AddrImpl extends ChecksummedMessageImpl implements Addr
       {
          if ( version >= 31402 )
             output.writeUInt32(entry.getTimestamp()/1000);
-         ((NodeAddressImpl)entry.getAddress()).writeTo(output);
+         entry.getAddress().writeTo(output);
       }
    }
 
@@ -85,17 +85,17 @@ public class AddrImpl extends ChecksummedMessageImpl implements Addr
       return super.toString()+", addresses: "+addressEntries;
    }
 
-   public static class AddressEntryImpl implements AddressEntry
+   public static class AddressEntry
    {
       private long timestamp;
-      private NodeAddressImpl address;
+      private NodeAddress address;
 
       public String toString()
       {
          return address.toString();
       }
 
-      public AddressEntryImpl(long timestamp, NodeAddressImpl address)
+      public AddressEntry(long timestamp, NodeAddress address)
       {
          this.timestamp=timestamp;
          this.address=address;
@@ -106,7 +106,7 @@ public class AddrImpl extends ChecksummedMessageImpl implements Addr
          return timestamp;
       }
 
-      public NodeAddressImpl getAddress()
+      public NodeAddress getAddress()
       {
          return address;
       }

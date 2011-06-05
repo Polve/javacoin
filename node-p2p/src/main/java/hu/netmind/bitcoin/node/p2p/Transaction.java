@@ -28,14 +28,14 @@ import java.util.ArrayList;
 /**
  * @author Robert Brautigam
  */
-public class TransactionImpl implements Transaction
+public class Transaction
 {
    private long version;
    private List<TxIn> inputs;
    private List<TxOut> outputs;
    private long lockTime;
 
-   public TransactionImpl(long version, List<TxIn> inputs, List<TxOut> outputs, long lockTime)
+   public Transaction(long version, List<TxIn> inputs, List<TxOut> outputs, long lockTime)
    {
       this.version=version;
       this.inputs=inputs;
@@ -43,7 +43,7 @@ public class TransactionImpl implements Transaction
       this.lockTime=lockTime;
    }
 
-   TransactionImpl()
+   Transaction()
    {
    }
 
@@ -55,7 +55,7 @@ public class TransactionImpl implements Transaction
       inputs = new ArrayList<TxIn>();
       for ( long i=0; i<inCount; i++ )
       {
-         TxInImpl in = new TxInImpl();
+         TxIn in = new TxIn();
          in.readFrom(input);
          inputs.add(in);
       }
@@ -63,7 +63,7 @@ public class TransactionImpl implements Transaction
       outputs = new ArrayList<TxOut>();
       for ( long i=0; i<outCount; i++ )
       {
-         TxOutImpl out = new TxOutImpl();
+         TxOut out = new TxOut();
          out.readFrom(input);
          outputs.add(out);
       }
@@ -76,10 +76,10 @@ public class TransactionImpl implements Transaction
       output.writeUInt32(version);
       output.writeUIntVar(inputs.size());
       for ( TxIn in : inputs )
-         ((TxInImpl)in).writeTo(output);
+         in.writeTo(output);
       output.writeUIntVar(outputs.size());
       for ( TxOut out : outputs )
-         ((TxOutImpl)out).writeTo(output);
+         out.writeTo(output);
       output.writeUInt32(lockTime);
    }
 

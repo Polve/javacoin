@@ -25,18 +25,18 @@ import java.util.Arrays;
 /**
  * @author Robert Brautigam
  */
-public class TxOutImpl implements TxOut
+public class TxOut implements TxOut
 {
    private long value;
    private byte[] script;
 
-   public TxOutImpl(long value, byte[] script)
+   public TxOut(long value, byte[] script)
    {
       this.value=value;
       this.script=script;
    }
 
-   TxOutImpl()
+   TxOut()
    {
    }
 

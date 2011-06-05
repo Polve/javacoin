@@ -27,7 +27,7 @@ import java.io.IOException;
  * deserialization of the header.
  * @author Robert Brautigam
  */
-public class MessageImpl implements Message
+public class Message
 {
    private long magic;
    private String command;

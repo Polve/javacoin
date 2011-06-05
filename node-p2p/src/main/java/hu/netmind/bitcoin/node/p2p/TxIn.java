@@ -25,14 +25,14 @@ import java.util.Arrays;
 /**
  * @author Robert Brautigam
  */
-public class TxInImpl implements TxIn
+public class TxIn implements TxIn
 {
    private byte[] referencedTxHash;
    private long referencedTxOutIndex;
    private byte[] signatureScript;
    private long sequence;
 
-   public TxInImpl(byte[] referencedTxHash, long referencedTxOutIndex,
+   public TxIn(byte[] referencedTxHash, long referencedTxOutIndex,
          byte[] signatureScript, long sequence)
    {
       this.referencedTxHash=referencedTxHash;
@@ -41,7 +41,7 @@ public class TxInImpl implements TxIn
       this.sequence=sequence;
    }
 
-   TxInImpl()
+   TxIn()
    {
    }
 

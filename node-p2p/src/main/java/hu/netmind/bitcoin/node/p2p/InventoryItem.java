@@ -18,55 +18,62 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.Transaction;
-import hu.netmind.bitcoin.net.Tx;
+import hu.netmind.bitcoin.net.InventoryItem;
 import java.io.IOException;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author Robert Brautigam
  */
-public class TxImpl extends ChecksummedMessageImpl implements Tx
+public class InventoryItem
 {
-   private TransactionImpl transaction;
-
-   public TxImpl(long magic, TransactionImpl transaction)
-      throws IOException
+   public static final enum Type
    {
-      super(magic,"tx");
-      this.transaction=transaction;
+      TYPE_ERROR,
+      TYPE_TX,
+      TYPE_BLOCK,
+   };
+
+   private int type = TYPE_ERROR;
+   private byte[] hash;
+
+   public InventoryItem(int type, byte[] hash)
+   {
+      this.type=type;
+      this.hash=hash;
    }
 
-   TxImpl()
-      throws IOException
+   InventoryItem()
    {
-      super();
    }
 
-   void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
+   void readFrom(BitCoinInputStream input)
       throws IOException
    {
-      super.readFrom(input,protocolVersion,param);
-      transaction = new TransactionImpl();
-      transaction.readFrom(input,protocolVersion,param);
+      type = (int) input.readUInt32();
+      hash = input.readBytes(32);
    }
 
-   void writeTo(BitCoinOutputStream output, long protocolVersion)
+   void writeTo(BitCoinOutputStream output)
       throws IOException
    {
-      super.writeTo(output,protocolVersion);
-      transaction.writeTo(output,protocolVersion);
+      output.writeUInt32(type);
+      output.write(hash);
    }
 
    public String toString()
    {
-      return super.toString()+" tx: "+transaction;
+      return type+":"+Arrays.toString(hash);
    }
 
-   public Transaction getTransaction()
+   public int getType()
    {
-      return transaction;
+      return type;
+   }
+
+   public byte[] getHash()
+   {
+      return hash;
    }
 }
 

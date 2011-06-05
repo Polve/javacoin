@@ -18,7 +18,8 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.GetHeaders;
+import hu.netmind.bitcoin.net.Transaction;
+import hu.netmind.bitcoin.net.Tx;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -26,59 +27,46 @@ import java.util.ArrayList;
 /**
  * @author Robert Brautigam
  */
-public class GetHeadersImpl extends ChecksummedMessageImpl implements GetHeaders
+public class TxMessage extends ChecksummedMessage
 {
-   private List<byte[]> hashStarts;
-   private byte[] hashStop;
+   private Transaction transaction;
 
-   public GetHeadersImpl(long magic, List<byte[]> hashStarts, byte[] hashStop)
+   public TxMessage(long magic, Transaction transaction)
       throws IOException
    {
-      super(magic,"getheaders");
-      this.hashStarts=hashStarts;
-      this.hashStop=hashStop;
+      super(magic,"tx");
+      this.transaction=transaction;
    }
 
-   GetHeadersImpl()
+   TxMessage()
       throws IOException
    {
       super();
    }
 
-   void readFrom(BitCoinInputStream input, long version, Object param)
+   void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
       throws IOException
    {
-      super.readFrom(input,version,param);
-      long size = input.readUIntVar();
-      hashStarts = new ArrayList<byte[]>();
-      for ( long i=0; i<size; i++ )
-         hashStarts.add(input.readBytes(32));
-      hashStop = input.readBytes(32);
+      super.readFrom(input,protocolVersion,param);
+      transaction = new Transaction();
+      transaction.readFrom(input,protocolVersion,param);
    }
 
-   void writeTo(BitCoinOutputStream output, long version)
+   void writeTo(BitCoinOutputStream output, long protocolVersion)
       throws IOException
    {
-      super.writeTo(output,version);
-      output.writeUIntVar(hashStarts.size());
-      for ( byte[] hash : hashStarts )
-         output.write(hash);
-      output.write(hashStop);
+      super.writeTo(output,protocolVersion);
+      transaction.writeTo(output,protocolVersion);
    }
 
    public String toString()
    {
-      return super.toString()+" hash starts: "+hashStarts+", stop: "+hashStop;
+      return super.toString()+" tx: "+transaction;
    }
 
-   public List<byte[]> getHashStarts()
+   public Transaction getTransaction()
    {
-      return hashStarts;
-   }
-
-   public byte[] getHashStop()
-   {
-      return hashStop;
+      return transaction;
    }
 }
 

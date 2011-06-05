@@ -28,15 +28,15 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Robert Brautigam
  */
-public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMessage
+public abstract class ChecksummedMessage extends Message
 {
-   private static final Logger logger = LoggerFactory.getLogger(ChecksummedMessageImpl.class);
+   private static final Logger logger = LoggerFactory.getLogger(ChecksummedMessage.class);
 
    private long checksum = 0;
    private long calculatedChecksum = 0;
    private MessageDigest digest = null;
 
-   public ChecksummedMessageImpl(long magic, String command)
+   public ChecksummedMessage(long magic, String command)
       throws IOException
    {
       super(magic,command);
@@ -48,7 +48,7 @@ public class ChecksummedMessageImpl extends MessageImpl implements ChecksummedMe
       }
    }
 
-   ChecksummedMessageImpl()
+   ChecksummedMessage()
       throws IOException
    {
       try

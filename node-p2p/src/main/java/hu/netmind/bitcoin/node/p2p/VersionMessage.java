@@ -25,19 +25,19 @@ import java.io.IOException;
 /**
  * @author Robert Brautigam
  */
-public class VersionImpl extends MessageImpl implements Version
+public class VersionMessage extends Message
 {
    private long version;
    private long services;
    private long timestamp;
-   private NodeAddressImpl senderAddress;
-   private NodeAddressImpl receiverAddress;
+   private NodeAddress senderAddress;
+   private NodeAddress receiverAddress;
    private long nonce;
    private String secondaryVersion;
    private long startHeight;
 
-   public VersionImpl(long magic, long version, long services, long timestamp,
-         NodeAddressImpl senderAddress, NodeAddressImpl receiverAddress, long nonce, String secondaryVersion, long startHeight)
+   public VersionMessage(long magic, long version, long services, long timestamp,
+         NodeAddress senderAddress, NodeAddress receiverAddress, long nonce, String secondaryVersion, long startHeight)
    {
       super(magic,"version");
       this.version=version;
@@ -50,7 +50,7 @@ public class VersionImpl extends MessageImpl implements Version
       this.startHeight=startHeight;
    }
 
-   VersionImpl()
+   VersionMessage()
    {
       super();
    }
@@ -64,11 +64,11 @@ public class VersionImpl extends MessageImpl implements Version
       timestamp = input.readUInt64()*1000; // We need milliseconds not seconds
       if ( timestamp < 0 )
          throw new IOException("timestamp for version message is out of supported range");
-      senderAddress = new NodeAddressImpl();
+      senderAddress = new NodeAddress();
       senderAddress.readFrom(input);
       if ( version >= 106 )
       {
-         receiverAddress = new NodeAddressImpl();
+         receiverAddress = new NodeAddress();
          receiverAddress.readFrom(input);
          nonce = input.readUInt64();
          secondaryVersion = input.readString();

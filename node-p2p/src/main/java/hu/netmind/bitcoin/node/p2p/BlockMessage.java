@@ -28,7 +28,7 @@ import java.util.Arrays;
 /**
  * @author Robert Brautigam
  */
-public class BlockImpl extends ChecksummedMessageImpl implements Block
+public class BlockMessage extends ChecksummedMessage
 {
    private long version;
    private byte[] prevBlock;
@@ -38,7 +38,7 @@ public class BlockImpl extends ChecksummedMessageImpl implements Block
    private long nonce;
    private List<Transaction> transactions;
 
-   public BlockImpl(long magic, long version, byte[] prevBlock, byte[] rootHash, long timestamp,
+   public BlockMessage(long magic, long version, byte[] prevBlock, byte[] rootHash, long timestamp,
          long difficulty, long nonce, List<Transaction> transactions)
       throws IOException
    {
@@ -52,7 +52,7 @@ public class BlockImpl extends ChecksummedMessageImpl implements Block
       this.transactions=transactions;
    }
 
-   BlockImpl()
+   BlockMessage()
       throws IOException
    {
       super();
@@ -74,7 +74,7 @@ public class BlockImpl extends ChecksummedMessageImpl implements Block
       transactions = new ArrayList<Transaction>();
       for ( long i = 0; i<txCount; i++ )
       {
-         TransactionImpl transaction = new TransactionImpl();
+         Transaction transaction = new Transaction();
          transaction.readFrom(input,protocolVersion,param);
          transactions.add(transaction);
       }
@@ -92,7 +92,7 @@ public class BlockImpl extends ChecksummedMessageImpl implements Block
       output.writeUInt32(nonce);
       output.writeUIntVar(transactions.size());
       for ( Transaction transaction : transactions )
-         ((TransactionImpl) transaction).writeTo(output,protocolVersion);
+         transaction.writeTo(output,protocolVersion);
    }
 
    public String toString()

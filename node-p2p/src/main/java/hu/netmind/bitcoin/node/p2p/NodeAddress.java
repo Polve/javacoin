@@ -27,18 +27,18 @@ import java.net.InetAddress;
 /**
  * @author Robert Brautigam
  */
-public class NodeAddressImpl implements NodeAddress
+public class NodeAddress implements NodeAddress
 {
    private long services;
    private InetSocketAddress address;
 
-   public NodeAddressImpl(long services, InetSocketAddress address)
+   public NodeAddress(long services, InetSocketAddress address)
    {
       this.services=services;
       this.address=address;
    }
 
-   NodeAddressImpl()
+   NodeAddress()
    {
    }
 

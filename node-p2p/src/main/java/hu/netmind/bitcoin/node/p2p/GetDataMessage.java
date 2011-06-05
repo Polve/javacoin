@@ -18,20 +18,28 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.Verack;
+import hu.netmind.bitcoin.net.GetData;
+import hu.netmind.bitcoin.net.InventoryItem;
 import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Robert Brautigam
  */
-public class VerackImpl extends MessageImpl implements Verack
+public class GetDataMessage extends ChecksummedMessage
 {
-   public VerackImpl(long magic)
+   private List<InventoryItem> items;
+
+   public GetDataMessage(long magic, List<InventoryItem> items)
+      throws IOException
    {
-      super(magic,"verack");
+      super(magic,"getdata");
+      this.items=items;
    }
 
-   VerackImpl()
+   GetDataMessage()
+      throws IOException
    {
       super();
    }
@@ -40,6 +48,34 @@ public class VerackImpl extends MessageImpl implements Verack
       throws IOException
    {
       super.readFrom(input,version,param);
+      long size = input.readUIntVar();
+      items = new ArrayList<InventoryItem>();
+      for ( long i=0; i<size; i++ )
+      {
+         InventoryItem item = new InventoryItem();
+         item.readFrom(input);
+         items.add(item);
+      }
    }
+
+   void writeTo(BitCoinOutputStream output, long version)
+      throws IOException
+   {
+      super.writeTo(output,version);
+      output.writeUIntVar(items.size());
+      for ( InventoryItem item : items )
+         item.writeTo(output);
+   }
+
+   public String toString()
+   {
+      return super.toString()+" items: "+items;
+   }
+
+   public List<InventoryItem> getInventoryItems()
+   {
+      return items;
+   }
+
 }
 

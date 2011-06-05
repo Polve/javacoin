@@ -18,55 +18,28 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.InventoryItem;
+import hu.netmind.bitcoin.net.Verack;
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * @author Robert Brautigam
  */
-public class InventoryItemImpl implements InventoryItem
+public class VerackMessage extends Message
 {
-   private int type = TYPE_ERROR;
-   private byte[] hash;
-
-   public InventoryItemImpl(int type, byte[] hash)
+   public VerackMessage(long magic)
    {
-      this.type=type;
-      this.hash=hash;
+      super(magic,"verack");
    }
 
-   InventoryItemImpl()
+   VerackMessage()
    {
+      super();
    }
 
-   void readFrom(BitCoinInputStream input)
+   void readFrom(BitCoinInputStream input, long version, Object param)
       throws IOException
    {
-      type = (int) input.readUInt32();
-      hash = input.readBytes(32);
-   }
-
-   void writeTo(BitCoinOutputStream output)
-      throws IOException
-   {
-      output.writeUInt32(type);
-      output.write(hash);
-   }
-
-   public String toString()
-   {
-      return type+":"+Arrays.toString(hash);
-   }
-
-   public int getType()
-   {
-      return type;
-   }
-
-   public byte[] getHash()
-   {
-      return hash;
+      super.readFrom(input,version,param);
    }
 }
 
