@@ -866,5 +866,51 @@ public class MessageTests
             "5D F6 E0 E2");                          // no checksum
    }
 
+   public void testAlertDeserialize()
+      throws IOException
+   {
+      // Sample taken from bitcoin wiki
+      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+            "F9 BE B4 D9 "+                          // Main network magic bytes
+            "61 6C 65 72 74 00 00 00 00 00 00 00 "+  // "alert" command
+            "0A 00 00 00 "+                          // Payload is 10 bytes long
+            "0C 01 65 42 "+                          // checksum
+            "06 "+                                   // length of message
+            "41 6C 65 72 74 21 "+                    // message "Alert!"
+            "02 "+                                   // length of signature
+            "4D 65"));                               // signature "Me"
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      AlertMessage message = (AlertMessage) marshal.read(input);
+      // Check
+      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getCommand(),"alert");
+      Assert.assertEquals(message.getLength(),10);
+      Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
+      Assert.assertEquals(message.getMessage(),"Alert!");
+      Assert.assertEquals(message.getSignature(),"Me");
+   }
+
+   public void testAlertSerialize()
+      throws IOException
+   {
+      // Setup the message
+      AlertMessage alert = new AlertMessage(Message.MAGIC_MAIN,"Alert!","Me");
+      // Serialize it
+      MessageMarshaller marshal = new MessageMarshaller();
+      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      marshal.write(alert,output);
+      // Check output
+      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+            "F9 BE B4 D9 "+                          // Main network magic bytes
+            "61 6C 65 72 74 00 00 00 00 00 00 00 "+  // "alert" command
+            "0A 00 00 00 "+                          // Payload is 10 bytes long
+            "0C 01 65 42 "+                          // checksum
+            "06 "+                                   // length of message
+            "41 6C 65 72 74 21 "+                    // message "Alert!"
+            "02 "+                                   // length of signature
+            "4D 65");                                // signature "Me"
+   }
+
 }
 

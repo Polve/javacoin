@@ -133,7 +133,7 @@ public abstract class BitCoinInputStream extends InputStream
       int readChar;
       for ( int i=0; i<length; i++ )
       {
-         readChar = read();
+         readChar = (int) readU();
          if ( (nullReached) && (readChar!=0) )
             throw new IOException("reading fixed length string ("+builder.toString()+") was not properly null padded");
          if ( readChar == 0 )
