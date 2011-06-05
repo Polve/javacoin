@@ -3,10 +3,10 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>hu.netmind.bitcoin</groupId>
-  <artifactId>bitcoin-net-p2p</artifactId>
+  <artifactId>bitcoin-node-p2p</artifactId>
   <packaging>jar</packaging>
   <version>1.0.0-SNAPSHOT</version>
-  <name>BitCoin Network P2P Implementation</name>
+  <name>BitCoin Network Node P2P Implementation</name>
 
   <build>
     <plugins>
@@ -48,7 +48,7 @@
   <dependencies>
      <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
-        <artifactId>bitcoin-net</artifactId>
+        <artifactId>bitcoin-api</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <type>jar</type>
      </dependency>

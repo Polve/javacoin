@@ -11,8 +11,7 @@
   <modules>
     <module>api</module>
     <module>wallet</module>
-    <module>net</module>
-    <module>net-p2p</module>
+    <module>node-p2p</module>
     <module>bcwallet</module>
   </modules>
 
