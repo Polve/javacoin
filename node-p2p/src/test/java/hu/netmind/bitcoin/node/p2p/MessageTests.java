@@ -602,14 +602,16 @@ public class MessageTests
       Transaction tx = new Transaction(1,inputs,outputs,0);
       List<Transaction> transactions = new ArrayList<Transaction>();
       transactions.add(tx);
-      BlockMessage block = new BlockMessage(Message.MAGIC_MAIN,1,
+      BlockMessage block = new BlockMessage(Message.MAGIC_MAIN,
+            new BlockHeader(1,
             HexUtil.toByteArray(
                "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
                "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
             HexUtil.toByteArray(
                "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
                "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
-            123000,22,33,transactions);
+            123000,22,33),
+            transactions);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
@@ -708,10 +710,10 @@ public class MessageTests
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"block");
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
-      Assert.assertEquals(message.getVersion(),1);
-      Assert.assertEquals(message.getTimestamp(),123000);
-      Assert.assertEquals(message.getDifficulty(),22);
-      Assert.assertEquals(message.getNonce(),33);
+      Assert.assertEquals(message.getHeader().getVersion(),1);
+      Assert.assertEquals(message.getHeader().getTimestamp(),123000);
+      Assert.assertEquals(message.getHeader().getDifficulty(),22);
+      Assert.assertEquals(message.getHeader().getNonce(),33);
       Assert.assertEquals(message.getTransactions().get(0).getVersion(),1);
       Assert.assertEquals(message.getTransactions().get(0).getLockTime(),0);
       Assert.assertEquals(message.getTransactions().get(0).getInputs().size(),1);

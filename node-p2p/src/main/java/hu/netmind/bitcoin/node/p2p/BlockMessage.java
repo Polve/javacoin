@@ -28,25 +28,14 @@ import java.util.Arrays;
  */
 public class BlockMessage extends ChecksummedMessage
 {
-   private long version;
-   private byte[] prevBlock;
-   private byte[] rootHash;
-   private long timestamp;
-   private long difficulty;
-   private long nonce;
+   private BlockHeader header;
    private List<Transaction> transactions;
 
-   public BlockMessage(long magic, long version, byte[] prevBlock, byte[] rootHash, long timestamp,
-         long difficulty, long nonce, List<Transaction> transactions)
+   public BlockMessage(long magic, BlockHeader header, List<Transaction> transactions)
       throws IOException
    {
       super(magic,"block");
-      this.version=version;
-      this.prevBlock=prevBlock;
-      this.rootHash=rootHash;
-      this.timestamp=timestamp;
-      this.difficulty=difficulty;
-      this.nonce=nonce;
+      this.header=header;
       this.transactions=transactions;
    }
 
@@ -60,12 +49,8 @@ public class BlockMessage extends ChecksummedMessage
       throws IOException
    {
       super.readFrom(input,protocolVersion,param);
-      version = input.readUInt32();
-      prevBlock = input.readBytes(32);
-      rootHash = input.readBytes(32);
-      timestamp = input.readUInt32()*1000;
-      difficulty = input.readUInt32();
-      nonce = input.readUInt32();
+      header = new BlockHeader();
+      header.readFrom(input,protocolVersion,param);
       long txCount = input.readUIntVar();
       if ( (txCount<0) || (txCount>=Integer.MAX_VALUE) )
          throw new IOException("too many transactions in the block: "+txCount);
@@ -82,12 +67,7 @@ public class BlockMessage extends ChecksummedMessage
       throws IOException
    {
       super.writeTo(output,protocolVersion);
-      output.writeUInt32(version);
-      output.write(prevBlock);
-      output.write(rootHash);
-      output.writeUInt32(timestamp/1000);
-      output.writeUInt32(difficulty);
-      output.writeUInt32(nonce);
+      header.writeTo(output,protocolVersion);
       output.writeUIntVar(transactions.size());
       for ( Transaction transaction : transactions )
          transaction.writeTo(output,protocolVersion);
@@ -95,39 +75,12 @@ public class BlockMessage extends ChecksummedMessage
 
    public String toString()
    {
-      return super.toString()+" version: "+version+", prevBlock: "+Arrays.toString(prevBlock)+
-         ", root hash: "+Arrays.toString(rootHash)+", timestamp: "+timestamp+", difficulty: "+difficulty+
-         ", nonce: "+nonce+", transactions: "+transactions;
+      return super.toString()+" "+header.toString()+", transactions: "+transactions;
    }
 
-   public long getVersion()
+   public BlockHeader getHeader()
    {
-      return version;
-   }
-
-   public byte[] getPrevBlock()
-   {
-      return prevBlock;
-   }
-
-   public byte[] getRootHash()
-   {
-      return rootHash;
-   }
-
-   public long getTimestamp()
-   {
-      return timestamp;
-   }
-
-   public long getDifficulty()
-   {
-      return difficulty;
-   }
-
-   public long getNonce()
-   {
-      return nonce;
+      return header;
    }
 
    public List<Transaction> getTransactions()
