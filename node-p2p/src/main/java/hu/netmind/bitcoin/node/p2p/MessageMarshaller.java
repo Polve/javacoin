@@ -113,10 +113,7 @@ public class MessageMarshaller
       }
       logger.debug("message type {} found for command {}",messageType,header.getCommand());
       // Search for the construction parameter if there is any
-      Object param = null;
-      for ( Map.Entry<Class,Object> entry : params.entrySet() )
-         if ( entry.getKey().isAssignableFrom(messageType) )
-            param = entry.getValue();
+      Object param = params.get(messageType);
       // Instantiate message and use the message deserialization in constructor
       try
       {
