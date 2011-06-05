@@ -18,7 +18,6 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.GetHeaders;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;

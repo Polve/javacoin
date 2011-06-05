@@ -16,14 +16,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, "MA  02111 "+//1307  USA
  */
 
-package hu.netmind.bitcoin.net.message;
+package hu.netmind.bitcoin.node.p2p;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import hu.netmind.bitcoin.net.*;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.List;
@@ -48,7 +47,7 @@ public class MessageTests
             "00 00 00 00"));                         // Payload is 0 bytes long
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
-      Verack message = (Verack) marshal.read(input);
+      VerackMessage message = (VerackMessage) marshal.read(input);
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"verack");
@@ -59,7 +58,7 @@ public class MessageTests
       throws IOException
    {
       // Setup a verack message
-      VerackImpl verack = new VerackImpl(Message.MAGIC_MAIN);
+      VerackMessage verack = new VerackMessage(Message.MAGIC_MAIN);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
@@ -90,7 +89,7 @@ public class MessageTests
           "55 81 01 00 "));                                                                 // Last block sending node has is block #98645
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
-      Version message = (Version) marshal.read(input);
+      VersionMessage message = (VersionMessage) marshal.read(input);
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"version");
@@ -116,9 +115,9 @@ public class MessageTests
       throws IOException
    {
       // Setup a verack message
-      VersionImpl version = new VersionImpl(Message.MAGIC_MAIN,31900,1,1000l*0x4D1015e6l,
-            new NodeAddressImpl(1,new InetSocketAddress(InetAddress.getByName("10.0.0.1"),56054)),
-            new NodeAddressImpl(1,new InetSocketAddress(InetAddress.getByName("10.0.0.2"),8333)),
+      VersionMessage version = new VersionMessage(Message.MAGIC_MAIN,31900,1,1000l*0x4D1015e6l,
+            new NodeAddress(1,new InetSocketAddress(InetAddress.getByName("10.0.0.1"),56054)),
+            new NodeAddress(1,new InetSocketAddress(InetAddress.getByName("10.0.0.2"),8333)),
             0x1357B43A2C209DDDl,"",98645);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
@@ -157,14 +156,14 @@ public class MessageTests
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       marshal.setVersion(39010);
-      Addr message = (Addr) marshal.read(input);
+      AddrMessage message = (AddrMessage) marshal.read(input);
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"addr");
       Assert.assertEquals(message.getAddressEntries().size(),1);
       Assert.assertEquals(message.getChecksum(),0x9b3952edl);
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
-      Addr.AddressEntry entry = message.getAddressEntries().get(0);
+      AddrMessage.AddressEntry entry = message.getAddressEntries().get(0);
       Assert.assertEquals(entry.getTimestamp(),1000*0x4d1015e2l);
       Assert.assertEquals(entry.getAddress().getServices(),1);
       Assert.assertEquals(entry.getAddress().getAddress().getPort(),8333);
@@ -175,11 +174,11 @@ public class MessageTests
       throws IOException
    {
       // Setup a verack message
-      Addr.AddressEntry entry = new AddrImpl.AddressEntryImpl(1000*0x4d1015e2l,
-            new NodeAddressImpl(1,new InetSocketAddress(InetAddress.getByName("10.0.0.1"),8333)));
-      List<Addr.AddressEntry> entries = new ArrayList<Addr.AddressEntry>();
+      AddrMessage.AddressEntry entry = new AddrMessage.AddressEntry(1000*0x4d1015e2l,
+            new NodeAddress(1,new InetSocketAddress(InetAddress.getByName("10.0.0.1"),8333)));
+      List<AddrMessage.AddressEntry> entries = new ArrayList<AddrMessage.AddressEntry>();
       entries.add(entry);
-      AddrImpl addr = new AddrImpl(Message.MAGIC_MAIN,entries);
+      AddrMessage addr = new AddrMessage(Message.MAGIC_MAIN,entries);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       marshal.setVersion(39010);
@@ -214,7 +213,7 @@ public class MessageTests
           "16 17 18 19 1A 1B 1C 1D 1E 1F"));
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
-      Inv message = (Inv) marshal.read(input);
+      InvMessage message = (InvMessage) marshal.read(input);
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"inv");
@@ -230,12 +229,12 @@ public class MessageTests
       throws IOException
    {
       // Setup an inv message
-      InventoryItemImpl item = new InventoryItemImpl(InventoryItem.TYPE_TX,
+      InventoryItem item = new InventoryItem(InventoryItem.TYPE_TX,
             new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
                          18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
       List<InventoryItem> items = new ArrayList<InventoryItem>();
       items.add(item);
-      InvImpl inv = new InvImpl(Message.MAGIC_MAIN,items);
+      InvMessage inv = new InvMessage(Message.MAGIC_MAIN,items);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
@@ -269,7 +268,7 @@ public class MessageTests
           "16 17 18 19 1A 1B 1C 1D 1E 1F"));
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
-      GetData message = (GetData) marshal.read(input);
+      GetDataMessage message = (GetDataMessage) marshal.read(input);
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"getdata");
@@ -285,12 +284,12 @@ public class MessageTests
       throws IOException
    {
       // Setup message
-      InventoryItemImpl item = new InventoryItemImpl(InventoryItem.TYPE_TX,
+      InventoryItem item = new InventoryItem(InventoryItem.TYPE_TX,
             new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
                          18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
       List<InventoryItem> items = new ArrayList<InventoryItem>();
       items.add(item);
-      GetDataImpl getdata = new GetDataImpl(Message.MAGIC_MAIN,items);
+      GetDataMessage getdata = new GetDataMessage(Message.MAGIC_MAIN,items);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
@@ -324,7 +323,7 @@ public class MessageTests
           "16 17 18 19 1A 1B 1C 1D 1E 1F"));
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
-      GetBlocks message = (GetBlocks) marshal.read(input);
+      GetBlocksMessage message = (GetBlocksMessage) marshal.read(input);
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"getblocks");
@@ -347,7 +346,7 @@ public class MessageTests
       byte[] hashStop = 
             new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
                          18,19,20,21,22,23,24,25,26,27,28,29,30,31 };
-      GetBlocksImpl getblocks = new GetBlocksImpl(Message.MAGIC_MAIN,hashStarts,hashStop);
+      GetBlocksMessage getblocks = new GetBlocksMessage(Message.MAGIC_MAIN,hashStarts,hashStop);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
@@ -381,7 +380,7 @@ public class MessageTests
           "16 17 18 19 1A 1B 1C 1D 1E 1F"));
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
-      GetHeaders message = (GetHeaders) marshal.read(input);
+      GetHeadersMessage message = (GetHeadersMessage) marshal.read(input);
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"getheaders");
@@ -404,7 +403,7 @@ public class MessageTests
       byte[] hashStop = 
             new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
                          18,19,20,21,22,23,24,25,26,27,28,29,30,31 };
-      GetHeadersImpl getheaders = new GetHeadersImpl(Message.MAGIC_MAIN,hashStarts,hashStop);
+      GetHeadersMessage getheaders = new GetHeadersMessage(Message.MAGIC_MAIN,hashStarts,hashStop);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
@@ -437,7 +436,7 @@ public class MessageTests
             "00 00 00 00"));                         // Payload is 0 bytes long
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
-      Verack message = (Verack) marshal.read(input);
+      VerackMessage message = (VerackMessage) marshal.read(input);
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"verack");
@@ -481,7 +480,7 @@ public class MessageTests
           "00 00 00 00 "));                                     // lock time
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
-      Tx message = (Tx) marshal.read(input);
+      TxMessage message = (TxMessage) marshal.read(input);
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"tx");
@@ -503,7 +502,7 @@ public class MessageTests
       throws IOException
    {
       // Setup message
-      TxInImpl in1 = new TxInImpl(
+      TxIn in1 = new TxIn(
             HexUtil.toByteArray(
                 "6D BD DB 08 5B 1D 8A F7 51 84 F0 BC 01 FA D5 8D "+   // previous output (outpoint)
                 "12 66 E9 B6 3B 50 88 19 90 E4 B4 0D 6A EE 36 29 "),0,
@@ -517,11 +516,11 @@ public class MessageTests
                 "2B 12 B6 5D 9B 7D 59 E2 0A 84 20 05 F8 FC 4E 02 "+
                 "53 2E 87 3D 37 B9 6F 09 D6 D4 51 1A DA 8F 14 04 "+
                 "2F 46 61 4A 4C 70 C0 F1 4B EF F5 "), 0xffffffffl);
-      TxOutImpl out1 = new TxOutImpl(5000000l,
+      TxOut out1 = new TxOut(5000000l,
             HexUtil.toByteArray(
                 "76 A9 14 1A A0 CD 1C BE A6 E7 45 8A 7A BA D5 12 "+   // pk_script
                 "A9 D9 EA 1A FB 22 5E 88 AC "));
-      TxOutImpl out2 = new TxOutImpl(3354000000l,
+      TxOut out2 = new TxOut(3354000000l,
             HexUtil.toByteArray(
                 "76 A9 14 0E AB 5B EA 43 6A 04 84 CF AB 12 48 5E "+   // pk_script
                 "FD A0 B7 8B 4E CC 52 88 AC "));
@@ -530,7 +529,7 @@ public class MessageTests
       List<TxOut> outputs = new ArrayList<TxOut>();
       outputs.add(out1);
       outputs.add(out2);
-      TxImpl tx = new TxImpl(Message.MAGIC_MAIN,new TransactionImpl(1,inputs,outputs,0));
+      TxMessage tx = new TxMessage(Message.MAGIC_MAIN,new Transaction(1,inputs,outputs,0));
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
@@ -573,7 +572,7 @@ public class MessageTests
       throws IOException
    {
       // Setup message
-      TxInImpl in1 = new TxInImpl(
+      TxIn in1 = new TxIn(
             HexUtil.toByteArray(
                 "6D BD DB 08 5B 1D 8A F7 51 84 F0 BC 01 FA D5 8D "+   // previous output (outpoint)
                 "12 66 E9 B6 3B 50 88 19 90 E4 B4 0D 6A EE 36 29 "),0,
@@ -587,11 +586,11 @@ public class MessageTests
                 "2B 12 B6 5D 9B 7D 59 E2 0A 84 20 05 F8 FC 4E 02 "+
                 "53 2E 87 3D 37 B9 6F 09 D6 D4 51 1A DA 8F 14 04 "+
                 "2F 46 61 4A 4C 70 C0 F1 4B EF F5 "), 0xffffffffl);
-      TxOutImpl out1 = new TxOutImpl(5000000l,
+      TxOut out1 = new TxOut(5000000l,
             HexUtil.toByteArray(
                 "76 A9 14 1A A0 CD 1C BE A6 E7 45 8A 7A BA D5 12 "+   // pk_script
                 "A9 D9 EA 1A FB 22 5E 88 AC "));
-      TxOutImpl out2 = new TxOutImpl(3354000000l,
+      TxOut out2 = new TxOut(3354000000l,
             HexUtil.toByteArray(
                 "76 A9 14 0E AB 5B EA 43 6A 04 84 CF AB 12 48 5E "+   // pk_script
                 "FD A0 B7 8B 4E CC 52 88 AC "));
@@ -600,10 +599,10 @@ public class MessageTests
       List<TxOut> outputs = new ArrayList<TxOut>();
       outputs.add(out1);
       outputs.add(out2);
-      TransactionImpl tx = new TransactionImpl(1,inputs,outputs,0);
+      Transaction tx = new Transaction(1,inputs,outputs,0);
       List<Transaction> transactions = new ArrayList<Transaction>();
       transactions.add(tx);
-      BlockImpl block = new BlockImpl(Message.MAGIC_MAIN,1,
+      BlockMessage block = new BlockMessage(Message.MAGIC_MAIN,1,
             HexUtil.toByteArray(
                "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
                "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
@@ -704,7 +703,7 @@ public class MessageTests
           "00 00 00 00"));                                      // lock time
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
-      Block message = (Block) marshal.read(input);
+      BlockMessage message = (BlockMessage) marshal.read(input);
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"block");

@@ -18,8 +18,6 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.Transaction;
-import hu.netmind.bitcoin.net.Tx;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;

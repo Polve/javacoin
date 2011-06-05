@@ -18,7 +18,6 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.Verack;
 import java.io.IOException;
 
 /**

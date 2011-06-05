@@ -18,7 +18,6 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.ChecksummedMessage;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.Arrays;

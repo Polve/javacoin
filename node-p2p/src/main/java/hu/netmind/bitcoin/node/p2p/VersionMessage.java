@@ -18,8 +18,6 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.NodeAddress;
-import hu.netmind.bitcoin.net.Version;
 import java.io.IOException;
 
 /**

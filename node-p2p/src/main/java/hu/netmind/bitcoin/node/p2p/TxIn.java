@@ -18,14 +18,13 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.TxIn;
 import java.io.IOException;
 import java.util.Arrays;
 
 /**
  * @author Robert Brautigam
  */
-public class TxIn implements TxIn
+public class TxIn
 {
    private byte[] referencedTxHash;
    private long referencedTxOutIndex;

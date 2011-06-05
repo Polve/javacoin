@@ -18,8 +18,6 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.Message;
-import hu.netmind.bitcoin.net.ChecksummedMessage;
 import java.io.IOException;
 
 /**
@@ -29,6 +27,9 @@ import java.io.IOException;
  */
 public class Message
 {
+   public static final long MAGIC_MAIN = 0xF9BEB4D9l;
+   public static final long MAGIC_TEST = 0xFABFB5DAl;
+
    private long magic;
    private String command;
    private long length = -1;
@@ -38,7 +39,7 @@ public class Message
     * the message by supplying all attributes. Note: length of
     * payload will be automatically calculated.
     */
-   public MessageImpl(long magic, String command)
+   public Message(long magic, String command)
    {
       this.magic=magic;
       this.command=command;
@@ -48,7 +49,7 @@ public class Message
     * An empty contructor must always be present to construct an empty
     * message for the deserialization.
     */
-   MessageImpl()
+   Message()
    {
    }
 

@@ -18,7 +18,6 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.NodeAddress;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.io.IOException;
@@ -27,7 +26,7 @@ import java.net.InetAddress;
 /**
  * @author Robert Brautigam
  */
-public class NodeAddress implements NodeAddress
+public class NodeAddress
 {
    private long services;
    private InetSocketAddress address;

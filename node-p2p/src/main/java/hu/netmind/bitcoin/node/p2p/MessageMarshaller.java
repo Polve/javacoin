@@ -18,7 +18,6 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.net.Message;
 import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
@@ -75,14 +74,14 @@ public class MessageMarshaller
     * message arrives.
     * @param input The stream to read the message from.
     */
-   public MessageImpl read(BitCoinInputStream input)
+   public Message read(BitCoinInputStream input)
       throws IOException
    {
       // First read the header from the stream, repeat this step
       // until we find a message we recognize
       if ( ! input.markSupported() )
          throw new IOException("input stream for deserialization does not support mark");
-      MessageImpl header = new MessageImpl();
+      Message header = new Message();
       Class messageType = null;
       while ( messageType == null )
       {
@@ -121,7 +120,7 @@ public class MessageMarshaller
       // Instantiate message and use the message deserialization in constructor
       try
       {
-         MessageImpl message = (MessageImpl) messageType.newInstance();
+         Message message = (Message) messageType.newInstance();
          message.readFrom(input,version,param);
          message.postReadFrom(input,version,param);
          logger.debug("deserialized message: {}",message);
@@ -140,7 +139,7 @@ public class MessageMarshaller
     * as much memory as the message itself.
     * @param output The output stream to write to.
     */
-   public void write(MessageImpl message, BitCoinOutputStream output)
+   public void write(Message message, BitCoinOutputStream output)
       throws IOException
    {
       // Serialize known values into a byte array stream
