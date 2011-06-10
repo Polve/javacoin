@@ -22,6 +22,7 @@ import java.net.ServerSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ResourceBundle;
+import java.net.InetSocketAddress;
 
 /**
  * A network node which keeps the communication to other nodes in the p2p
@@ -35,17 +36,20 @@ public class Node
 {
    private static final Logger logger = LoggerFactory.getLogger(Node.class);
 
-   private static int defaultSoTimeout = 30000; // 30 sec
+   private static int defaultSoTimeout = 30000; // 30 secs
    private static int defaultPort = 8333;
    private static int defaultMaxConnections = 5;
+   private static int defaultMinConnections = 3;
+   private static int defaultConnectTimeout = 10000; // 10 secs
 
    private int port = defaultPort;
    private int soTimeout = defaultSoTimeout;
    private int maxConnections = defaultMaxConnections;
+   private int minConnections = defaultMinConnections;
+   private int connectTimeout = defaultConnectTimeout;
    private boolean running = false;
    
-   private NodeBootstrapper bootstrapper;
-   private AddressStorage addressStorage;
+   private AddressSource addressSource;
    private List<MessageHandler> handlers = new ArrayList<MessageHandler>();
 
    private List<NodeWorker> workers = new ArrayList<NodeWorker>();
@@ -89,7 +93,61 @@ public class Node
     */
    private void bootstrapWorkers()
    {
-      // TODO
+      logger.debug("bootstrapping workers...");
+      List<InetSocketAddress> addresses = addressSource.getAddresses();
+      synchronized ( workers )
+      {
+         for ( InetSocketAddress address : addresses )
+         {
+            // If enough nodes are there, stop
+            if ( workers.size() >= minConnections )
+               return;
+            // Connect
+            try
+            {
+               Socket socket = new Socket();
+               socket.connect(address,connectTimeout);
+               addWorker(socket);
+               logger.debug("worker added for address {}",address);
+            } catch ( IOException e ) {
+               logger.error("error connecting to address: {}",address);
+            }
+         }
+      }
+   }
+
+   /**
+    * Add a worker node. If the maximum allowed worker count is already reached,
+    * method will do nothing.
+    * @return True if worker is added, false if for some reason worker was not created.
+    */
+   private boolean addWorker(Socket socket)
+   {
+      logger.debug("adding worker for socket: {}",socket);
+      synchronized ( workers )
+      {
+         if ( workers.size() < maxConnections )
+         {
+            // See whether there is a worker for the same address
+            for ( NodeWorker worker : workers )
+               if ( worker.getAddress().eqausl(socket.getRemoteSocketAddress()) )
+               {
+                  logger.debug("node already connected to address, will not connect again");
+                  return false;
+               }
+            // Establish worker
+            logger.debug("setting up worker to: {}",socket);
+            NodeWorker worker = new NodeWorker(socket);
+            workers.add(worker);
+            Thread workerThread = new Thread(worker,"BitCoin Node Connection");
+            workerThread.setDaemon(true);
+            workerThread.start();
+            return true;
+         } else {
+            logger.debug("not creating worker because maximum number of connections reached ({})",maxConnections);
+         }
+         return false;
+      }                  
    }
 
    /**
@@ -109,10 +167,11 @@ public class Node
       public void run()
       {
          logger.info("starting node listener on port: "+port);
+         ServerSocket serverSocket;
          try
          {
             // Establish server socket
-            ServerSocket serverSocket = new ServerSocket(port);
+            serverSocket = new ServerSocket(port);
             socket.setSoTimeout(SO_TIMEOUT);
             // Wait for new connections
             while ( running )
@@ -122,34 +181,47 @@ public class Node
                {
                   socket = serverSocket.accept();
                   // Socket arrived, so setup worker node
-                  synchronized ( workers )
-                  {
-                     if ( workers.size() < maxConnections )
-                     {
-                        logger.debug("received incoming connection: {}",socket);
-                        NodeWorker worker = new NodeWorker(socket);
-                        workers.add(worker);
-                        Thread workerThread = new Thread(worker,"BitCoin Node Connection");
-                        workerThread.setDaemon(true);
-                        workerThread.start();
-                     } else {
-                        logger.debug("dropping incoming connection, because maximum number of connections reached ({})",maxConnections);
-                     }
-                  }                  
+                  if ( ! addWorker(socket) )
+                     socket.close();
                } catch ( SocketTimeoutException e ) {
                   // Normal for it to time out, this is so that we can
                   // check the exit criteria, and also to check on workers.
                   // If there are no workers, bootstrap again.
                   synchronized ( workers )
                   {
-                     if ( workers.isEmpty() )
+                     if ( workers.size() < minConnections )
                         bootstrapWorkers();
                   }
                }
             }
          } catch ( Exception e ) {
             logger.error("node listener exiting because of an exception",e);
+         } finally {
+            // Close server
+            serverSocket.close();
          }
+      }
+   }
+
+   /**
+    * A worker is responsible for handling a single connection to another node.
+    */
+   private class NodeWorker
+   {
+      private Socket socket;
+
+      private NodeWorker(Socket socket)
+      {
+         this.socket=socket;
+      }
+
+      private InetSocketAddress getAddress()
+      {
+         return socket.getRemoteSocketAddress();
+      }
+
+      public void run()
+      {
       }
    }
 
@@ -222,6 +294,8 @@ public class Node
          defaultSoTimeout = Integer.parseInt(bundle.getString("node.so_timeout"));
          defaultPort = Integer.parseInt(bundle.getString("node.default_port"));
          defaultMaxConnections = Integer.parseInt(bundle.getString("node.max_connections"));
+         defaultMinConnections = Integer.parseInt(bundle.getString("node.min_connections"));
+         defaultConnectTimeout = Integer.parseInt(bundle.getString("node.connect_timeout"));
       } catch ( Exception e ) {
          logger.error("can not read default configuration for node, will go with hardcoded values",e);
       }
