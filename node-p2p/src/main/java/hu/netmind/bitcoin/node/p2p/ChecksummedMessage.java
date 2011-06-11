@@ -105,7 +105,8 @@ public abstract class ChecksummedMessage extends Message
       digest.reset();
       byte[] result = digest.digest(tmp);
       // Overwrite previous 0 value with first 4 bytes
-      OverwriterBitCoinOutputStream output = new OverwriterBitCoinOutputStream(serializedBytes,20);
+      BitCoinOutputStream output = new BitCoinOutputStream(
+            new OverwriterByteArrayOutputStream(serializedBytes,20));
       output.writeU(result[0]&0xff);
       output.writeU(result[1]&0xff);
       output.writeU(result[2]&0xff);

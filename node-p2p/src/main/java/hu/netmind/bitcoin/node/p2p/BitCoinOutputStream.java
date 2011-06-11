@@ -26,8 +26,36 @@ import java.io.IOException;
  * protocol.
  * @author Robert Brautigam
  */
-public abstract class BitCoinOutputStream extends OutputStream
+public class BitCoinOutputStream extends OutputStream
 {
+   private OutputStream output;
+
+   /**
+    * Construct this output with an underlying output.
+    */
+   public BitCoinOutputStream(OutputStream output)
+   {
+      this.output=output;
+   }
+
+   /**
+    * Forward to underlying stream.
+    */
+   public void write(int value)
+      throws IOException
+   {
+      output.write(value);
+   }
+
+   /**
+    * Forward to underlying stream.
+    */
+   public void close()
+      throws IOException
+   {
+      output.close();
+   }
+
    public void writeU(long value)
       throws IOException
    {

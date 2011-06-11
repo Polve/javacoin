@@ -19,6 +19,7 @@
 package hu.netmind.bitcoin.node.p2p;
 
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ResourceBundle;
@@ -140,10 +141,11 @@ public class MessageMarshaller
       throws IOException
    {
       // Serialize known values into a byte array stream
-      ByteArrayBitCoinOutputStream byteOutput = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteArrayOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream byteOutput = new BitCoinOutputStream(byteArrayOutput);
       message.writeTo(byteOutput,version);
       byteOutput.close();
-      byte[] byteArray = byteOutput.toByteArray();
+      byte[] byteArray = byteArrayOutput.toByteArray();
       // Invoke post write to finalize content
       message.postWriteTo(byteArray,version);
       // Copy it to the output

@@ -19,41 +19,18 @@
 package hu.netmind.bitcoin.node.p2p;
 
 /**
- * This is a BitCoin input stream which reads messages from a given byte array.
+ * Implement and register this interface to a Node to receive messages
+ * from the bitcoin network.
  * @author Robert Brautigam
  */
-public class ByteArrayBitCoinInputStream extends BitCoinInputStream
+public interface MessageHandler
 {
-   private byte[] bytes = null;
-   private int pointer = 0;
-   private int mark = 0;
-
-   public boolean markSupported()
-   {
-      return true;
-   }
-
-   public void mark(int length)
-   {
-      mark = pointer;
-   }
-
-   public void reset()
-   {
-      pointer = mark;
-   }
-
-   public ByteArrayBitCoinInputStream(byte[] bytes)
-   {
-      this.bytes=bytes;
-   }
-
-   public int read()
-   {
-      if ( (bytes==null) || (pointer > bytes.length-1) )
-         return -1;
-      int result = (bytes[pointer++] & 0xff);
-      return result;
-   }
+   /**
+    * Handle a message from the network. There is a possibility
+    * to reply to the incoming message by returning a message.
+    * @return A message to reply to only the source node for the
+    * incoming message, or null if no reply is needed.
+    */
+   Message handle(Message message);
 }
 

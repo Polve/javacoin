@@ -19,6 +19,7 @@
 package hu.netmind.bitcoin.node.p2p;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * This is the base class for all messages, provides serialization and
@@ -142,7 +143,8 @@ public class Message
       else
          length = serializedBytes.length - 20;
       // Overwrite previous 0 value
-      OverwriterBitCoinOutputStream output = new OverwriterBitCoinOutputStream(serializedBytes,16);
+      BitCoinOutputStream output = new BitCoinOutputStream(
+            new OverwriterByteArrayOutputStream(serializedBytes,16));
       output.writeUInt32(length);
    }
 
@@ -154,6 +156,30 @@ public class Message
    public String toString()
    {
       return "BitCoin command "+command+" ("+Long.toHexString(magic)+")";
+   }
+
+   protected static class OverwriterByteArrayOutputStream extends OutputStream
+   {
+      private byte[] byteArray;
+      private int position = 0; 
+
+      /**
+       * @param byteArray The array to overwrite content in.
+       * @param offset The offset at which to begin overwriting.
+       */
+      public OverwriterByteArrayOutputStream(byte[] byteArray, int offset)
+      {
+         this.byteArray=byteArray;
+         this.position=offset;
+      }
+
+      public void write(int value)
+         throws IOException
+      {
+         if ( position >= byteArray.length )
+            throw new IOException("tried to write past the array length to position "+position);
+         byteArray[position++] = (byte) value;
+      }
    }
 }
 

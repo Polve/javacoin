@@ -28,25 +28,70 @@ import java.util.Observer;
  * <code>read()</code>. Note: input stream must support the mark mechanism!
  * @author Robert Brautigam
  */
-public abstract class BitCoinInputStream extends InputStream
+public class BitCoinInputStream extends InputStream
 {
    private Listener listener = null;
+   private InputStream input;
 
    /**
-    * Set an observer which will receive each byte read in this stream through
-    * the methods provided by this class.
+    * Create this bitcoin input stream using another input stream to read bytes from.
     */
+   public BitCoinInputStream(InputStream input)
+   {
+      this.input=input;
+   }
+
    public void setListener(Listener listener)
    {
       this.listener=listener;
    }
 
-   /**
-    * Clear the observer watching this stream.
-    */
    public void clearListener()
    {
-      listener=null;
+      listener = null;
+   }
+
+   /**
+    * Implement read by forwarding the request to the underlying stream.
+    */
+   public int read()
+      throws IOException
+   {
+      return input.read();
+   }
+
+   /**
+    * Forward to underlying stream.
+    */
+   public boolean markSupported()
+   {
+      return input.markSupported();
+   }
+
+   /**
+    * Forward to underlying stream.
+    */
+   public void mark(int readLimit)
+   {
+      input.mark(readLimit);
+   }
+
+   /**
+    * Forward to underlying stream.
+    */
+   public void reset()
+      throws IOException
+   {
+      input.reset();
+   }
+
+   /**
+    * Forward to underlying stream.
+    */
+   public void close()
+      throws IOException
+   {
+      input.close();
    }
 
    /**
@@ -160,5 +205,6 @@ public abstract class BitCoinInputStream extends InputStream
    {
       void update(int value);
    }
+
 }
 

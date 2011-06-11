@@ -19,10 +19,16 @@
 package hu.netmind.bitcoin.node.p2p;
 
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ResourceBundle;
 import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * A network node which keeps the communication to other nodes in the p2p
@@ -49,6 +55,7 @@ public class Node
    private int connectTimeout = defaultConnectTimeout;
    private boolean running = false;
    
+   private MessageMarshaller marshaller = new MessageMarshaller();
    private AddressSource addressSource;
    private List<MessageHandler> handlers = new ArrayList<MessageHandler>();
 
@@ -81,7 +88,7 @@ public class Node
          return;
       running=true;
       // Start listening
-      Thread thread = new Thead(new NodeListener(),"BitCoin Node Listener");
+      Thread thread = new Thread(new NodeListener(),"BitCoin Node Listener");
       thread.setDaemon(true);
       thread.start();
       // Add initial workers to the node
@@ -122,6 +129,7 @@ public class Node
     * @return True if worker is added, false if for some reason worker was not created.
     */
    private boolean addWorker(Socket socket)
+      throws IOException
    {
       logger.debug("adding worker for socket: {}",socket);
       synchronized ( workers )
@@ -130,7 +138,7 @@ public class Node
          {
             // See whether there is a worker for the same address
             for ( NodeWorker worker : workers )
-               if ( worker.getAddress().eqausl(socket.getRemoteSocketAddress()) )
+               if ( worker.getAddress().equals(socket.getRemoteSocketAddress()) )
                {
                   logger.debug("node already connected to address, will not connect again");
                   return false;
@@ -156,6 +164,34 @@ public class Node
    public void stop()
    {
       running = false; // Non-invasive way to stop, but it won't be immediate
+      // Stop also all worker nodes
+      synchronized ( workers )
+      {
+         for ( NodeWorker worker : workers )
+            worker.stop();
+      }
+   }
+
+   /**
+    * Broadcast a message to all nodes this node is in contact with. In case of
+    * errors from a node the message will still be tried for other nodes, but
+    * there is no guarantee that any node recieved this message.
+    */
+   public void broadcast(Message message)
+   {
+      logger.debug("broadcasting message: {}",message);
+      synchronized ( workers )
+      {
+         for ( NodeWorker worker : workers )
+         {
+            try
+            {
+               worker.send(message);
+            } catch ( IOException e ) {
+               logger.error("could not broadcast message to node with socket: {}",worker.getAddress(),e);
+            }
+         }
+      }
    }
 
    /**
@@ -167,12 +203,12 @@ public class Node
       public void run()
       {
          logger.info("starting node listener on port: "+port);
-         ServerSocket serverSocket;
+         ServerSocket serverSocket = null;
          try
          {
             // Establish server socket
             serverSocket = new ServerSocket(port);
-            socket.setSoTimeout(SO_TIMEOUT);
+            serverSocket.setSoTimeout(soTimeout);
             // Wait for new connections
             while ( running )
             {
@@ -181,7 +217,7 @@ public class Node
                {
                   socket = serverSocket.accept();
                   // Socket arrived, so setup worker node
-                  if ( ! addWorker(socket) )
+                  if ( (!running) || (! addWorker(socket)) )
                      socket.close();
                } catch ( SocketTimeoutException e ) {
                   // Normal for it to time out, this is so that we can
@@ -192,13 +228,27 @@ public class Node
                      if ( workers.size() < minConnections )
                         bootstrapWorkers();
                   }
+               } catch ( IOException e ) {
+                  logger.error("could not add worker for socket {}",socket);
+                  try
+                  {
+                     socket.close();
+                  } catch ( IOException ioe ) {
+                     logger.error("could not close socket {}",socket,ioe);
+                  }
                }
             }
          } catch ( Exception e ) {
             logger.error("node listener exiting because of an exception",e);
          } finally {
             // Close server
-            serverSocket.close();
+            try
+            {
+               if ( serverSocket != null )
+                  serverSocket.close();
+            } catch ( IOException e ) {
+               logger.error("error while closing server socket",e);
+            }
          }
       }
    }
@@ -206,22 +256,83 @@ public class Node
    /**
     * A worker is responsible for handling a single connection to another node.
     */
-   private class NodeWorker
+   private class NodeWorker implements Runnable
    {
       private Socket socket;
+      private BitCoinInputStream input;
+      private BitCoinOutputStream output;
+      private boolean running;
 
       private NodeWorker(Socket socket)
+         throws IOException
       {
+         input = new BitCoinInputStream(socket.getInputStream());
+         output = new BitCoinOutputStream(socket.getOutputStream());
          this.socket=socket;
+         this.running = true;
       }
 
-      private InetSocketAddress getAddress()
+      public void stop()
+      {
+         // Stop running
+         running = false;
+         // Remove from workers
+         synchronized ( workers )
+         {
+            workers.remove(this);
+         }
+         // Close socket
+         try
+         {
+            socket.close();
+         } catch ( IOException e ) {
+            logger.error("error closing socket {}",socket,e);
+         }
+      }
+
+      private SocketAddress getAddress()
       {
          return socket.getRemoteSocketAddress();
       }
 
+      public synchronized void send(Message message)
+         throws IOException
+      {
+         marshaller.write(message,output);
+         logger.debug("sent message {}, to socket {}",message,socket);
+      }
+
       public void run()
       {
+         try
+         {
+            // Wait for arriving messages
+            boolean replied = false;
+            while ( running )
+            {
+               // Get message from stream
+               Message message = marshaller.read(input);
+               // Pass to handlers
+               replied = false;
+               for ( MessageHandler handler : handlers )
+               {
+                  logger.debug("received message {}, from socket {}",message,socket);
+                  Message reply = handler.handle(message);
+                  if ( (!replied) && (reply != null) )
+                  {
+                     send(reply);
+                     replied = true; // Only reply once, but ask all handlers nontheless
+                  }
+               }
+            }
+         } catch ( IOException e ) {
+            if ( running )
+               logger.error("error while node communication with socket {}",socket,e);
+            else
+               logger.debug("error from reading, but probably calling stop() on worker on socket {}",socket);
+         } finally {
+            stop(); // Stop worker properly
+         }
       }
    }
 
@@ -252,38 +363,35 @@ public class Node
       this.maxConnections=maxConnections;
    }
 
-   public AddressStorage getAddressStorage()
+   public AddressSource getAddressSource()
    {
-      return addressStorage;
+      return addressSource;
    }
-   public void setAddressStorage(AddressStorage addressStorage)
+   public void setAddressSource(AddressSource addressSource)
    {
-      this.addressStorage=addressStorage;
+      this.addressSource=addressSource;
    }
 
+   /**
+    * Add another message handler for the node. Note: this is only legal before
+    * the node is started.
+    */
    public void addHandler(MessageHandler handler)
    {
-      synchronized ( handlers )
-      {
-         handlers.add(handler);
-      }
+      if ( running )
+         throw new IllegalStateException("can not set handlers after the node is already started");
+      handlers.add(handler);
    }
 
+   /**
+    * Remove another message handler for the node. Note: this is only legal before
+    * the node is started.
+    */
    public void removeHandler(MessageHandler handler)
    {
-      synchronized ( handlers )
-      {
-         handlers.remove(handler);
-      }
-   }
-
-   public NodeBootstrapper getBootstrapper()
-   {
-      return bootstrapper;
-   }
-   public void setBootstrapper(NodeBootstrapper bootstrapper)
-   {
-      this.bootstrapper=bootstrapper;
+      if ( running )
+         throw new IllegalStateException("can not remove handlers after the node is already started");
+      handlers.remove(handler);
    }
 
    static
