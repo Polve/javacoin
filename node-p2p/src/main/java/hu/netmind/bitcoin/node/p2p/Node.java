@@ -53,7 +53,9 @@ public class Node
    private int maxConnections = defaultMaxConnections;
    private int minConnections = defaultMinConnections;
    private int connectTimeout = defaultConnectTimeout;
+
    private boolean running = false;
+   private Thread nodeThread = null;
    
    private MessageMarshaller marshaller = new MessageMarshaller();
    private AddressSource addressSource;
@@ -88,9 +90,9 @@ public class Node
          return;
       running=true;
       // Start listening
-      Thread thread = new Thread(new NodeListener(),"BitCoin Node Listener");
-      thread.setDaemon(true);
-      thread.start();
+      nodeThread = new Thread(new NodeListener(),"BitCoin Node Listener");
+      nodeThread.setDaemon(true);
+      nodeThread.start();
       // Add initial workers to the node
       bootstrapWorkers();
    }
@@ -101,6 +103,11 @@ public class Node
    private void bootstrapWorkers()
    {
       logger.debug("bootstrapping workers...");
+      if ( addressSource == null )
+      {
+         logger.warn("no address source setup for node, no nodes will be connected");
+         return; // No address source
+      }
       List<InetSocketAddress> addresses = addressSource.getAddresses();
       synchronized ( workers )
       {
@@ -159,7 +166,8 @@ public class Node
    }
 
    /**
-    * Stop listening to messages, close all connections with other nodes.
+    * Stop listening to messages, close all connections with other nodes. This
+    * method is synchronous, it returns after the node is completely closed.
     */
    public void stop()
    {
@@ -169,6 +177,14 @@ public class Node
       {
          for ( NodeWorker worker : workers )
             worker.stop();
+      }
+      // Interrupt thread
+      try
+      {
+         nodeThread.interrupt();
+         nodeThread.join();
+      } catch ( InterruptedException e ) {
+         logger.error("interrupted while waiting for node to stop, node might not be stopped",e);
       }
    }
 
@@ -250,6 +266,7 @@ public class Node
                logger.error("error while closing server socket",e);
             }
          }
+         logger.info("node stopped for port: {}",port);
       }
    }
 
