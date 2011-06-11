@@ -21,6 +21,8 @@ package hu.netmind.bitcoin.node.p2p;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Date;
@@ -41,10 +43,10 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
             "F9 BE B4 D9 "+                          // Main network magic bytes
-            "76 65 72 61 63 6B 00 00 00 00 00 00 "+ // "verack" command
-            "00 00 00 00"));                         // Payload is 0 bytes long
+            "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
+            "00 00 00 00")));                        // Payload is 0 bytes long
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       VerackMessage message = (VerackMessage) marshal.read(input);
@@ -61,10 +63,11 @@ public class MessageTests
       VerackMessage verack = new VerackMessage(Message.MAGIC_MAIN);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(verack,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
             "00 00 00 00");                          // Payload is 0 bytes long
@@ -74,7 +77,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
           "F9 BE B4 D9 "+                                                                   // Main network magic bytes
           "76 65 72 73 69 6F 6E 00 00 00 00 00 "+                                           // "version" command
           "55 00 00 00 "+                                                                   // Payload is 85 bytes long
@@ -86,7 +89,7 @@ public class MessageTests
           "01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 FF FF 0A 00 00 02 20 8D "+ // Recipient address info - see Network Address
           "DD 9D 20 2C 3A B4 57 13 "+                                                       // Node random unique ID
           "00 "+                                                                            // "" sub-version string (string is 0 bytes long)
-          "55 81 01 00 "));                                                                 // Last block sending node has is block #98645
+          "55 81 01 00 ")));                                                                // Last block sending node has is block #98645
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       VersionMessage message = (VersionMessage) marshal.read(input);
@@ -121,10 +124,11 @@ public class MessageTests
             0x1357B43A2C209DDDl,"",98645);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(version,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
           "F9 BE B4 D9 "+                                                                   // Main network magic bytes
           "76 65 72 73 69 6F 6E 00 00 00 00 00 "+                                           // "version" command
           "55 00 00 00 "+                                                                   // Payload is 85 bytes long
@@ -143,7 +147,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "61 64 64 72 00 00 00 00 00 00 00 00 "+             // "addr"
           "1F 00 00 00 "+                                     // payload is 31 bytes long
@@ -152,7 +156,7 @@ public class MessageTests
           "E2 15 10 4D "+                                     // Mon Dec 20 21:50:10 EST 2010 (only when version is >= 31402)
           "01 00 00 00 00 00 00 00 "+                         // 1 (NODE_NETWORK service - see version message)
           "00 00 00 00 00 00 00 00 00 00 FF FF 0A 00 00 01 "+ // IPv4: 10.0.0.1, IPv6: ::ffff:10.0.0.1 (IPv4-mapped IPv6 address)
-          "20 8D"));                                          // port 8333
+          "20 8D")));                                         // port 8333
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       marshal.setVersion(39010);
@@ -182,10 +186,11 @@ public class MessageTests
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       marshal.setVersion(39010);
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(addr,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "61 64 64 72 00 00 00 00 00 00 00 00 "+             // "addr"
           "1F 00 00 00 "+                                     // payload is 31 bytes long
@@ -201,7 +206,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "69 6E 76 00 00 00 00 00 00 00 00 00 "+             // "inv"
           "25 00 00 00 "+                                     // payload is 36 bytes long
@@ -210,7 +215,7 @@ public class MessageTests
           "01 00 00 00 "+                                     // type 1 (tx)
           "00 01 02 03 04 05 06 07 08 09 0A "+                // hash of tx
           "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
-          "16 17 18 19 1A 1B 1C 1D 1E 1F"));
+          "16 17 18 19 1A 1B 1C 1D 1E 1F")));
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       InvMessage message = (InvMessage) marshal.read(input);
@@ -237,10 +242,11 @@ public class MessageTests
       InvMessage inv = new InvMessage(Message.MAGIC_MAIN,items);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(inv,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "69 6E 76 00 00 00 00 00 00 00 00 00 "+             // "inv"
           "25 00 00 00 "+                                     // payload is 36 bytes long
@@ -256,7 +262,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "67 65 74 64 61 74 61 00 00 00 00 00 "+             // "getdata"
           "25 00 00 00 "+                                     // payload is 36 bytes long
@@ -265,7 +271,7 @@ public class MessageTests
           "01 00 00 00 "+                                     // type 1 (tx)
           "00 01 02 03 04 05 06 07 08 09 0A "+                // hash of tx
           "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
-          "16 17 18 19 1A 1B 1C 1D 1E 1F"));
+          "16 17 18 19 1A 1B 1C 1D 1E 1F")));
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       GetDataMessage message = (GetDataMessage) marshal.read(input);
@@ -292,10 +298,11 @@ public class MessageTests
       GetDataMessage getdata = new GetDataMessage(Message.MAGIC_MAIN,items);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(getdata,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "67 65 74 64 61 74 61 00 00 00 00 00 "+             // "getdata"
           "25 00 00 00 "+                                     // payload is 36 bytes long
@@ -311,7 +318,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "67 65 74 62 6C 6F 63 6B 73 00 00 00 "+             // "getblocks"
           "41 00 00 00 "+                                     // payload 65 bytes long
@@ -320,7 +327,7 @@ public class MessageTests
           "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
           "00 01 02 03 04 05 06 07 08 09 0A "+                // end hash
           "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
-          "16 17 18 19 1A 1B 1C 1D 1E 1F"));
+          "16 17 18 19 1A 1B 1C 1D 1E 1F")));
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       GetBlocksMessage message = (GetBlocksMessage) marshal.read(input);
@@ -349,10 +356,11 @@ public class MessageTests
       GetBlocksMessage getblocks = new GetBlocksMessage(Message.MAGIC_MAIN,hashStarts,hashStop);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(getblocks,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "67 65 74 62 6C 6F 63 6B 73 00 00 00 "+             // "getblocks"
           "41 00 00 00 "+                                     // payload 65 bytes long
@@ -368,7 +376,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "67 65 74 68 65 61 64 65 72 73 00 00 "+             // "getheaders"
           "41 00 00 00 "+                                     // payload 65 bytes long
@@ -377,7 +385,7 @@ public class MessageTests
           "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
           "00 01 02 03 04 05 06 07 08 09 0A "+                // end hash
           "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
-          "16 17 18 19 1A 1B 1C 1D 1E 1F"));
+          "16 17 18 19 1A 1B 1C 1D 1E 1F")));
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       GetHeadersMessage message = (GetHeadersMessage) marshal.read(input);
@@ -406,10 +414,11 @@ public class MessageTests
       GetHeadersMessage getheaders = new GetHeadersMessage(Message.MAGIC_MAIN,hashStarts,hashStop);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(getheaders,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "67 65 74 68 65 61 64 65 72 73 00 00 "+             // "getheaders"
           "41 00 00 00 "+                                     // payload 65 bytes long
@@ -425,7 +434,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
             "F9 BE B4 D9 "+                          // Main network
             "61 61 61 00 00 00 00 00 00 00 00 00 "+  // "aaa" command (unrecognized)
             "10 00 00 00 "+                          // payload is 16 bytes
@@ -433,7 +442,7 @@ public class MessageTests
             "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+ // junk payload
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
-            "00 00 00 00"));                         // Payload is 0 bytes long
+            "00 00 00 00")));                        // Payload is 0 bytes long
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       VerackMessage message = (VerackMessage) marshal.read(input);
@@ -447,7 +456,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
           "F9 BE B4 D9 "+                                       // main network magic bytes
           "74 78 00 00 00 00 00 00 00 00 00 00 "+               // "tx" command
           "02 01 00 00 "+                                       // payload is 258 bytes long
@@ -477,7 +486,7 @@ public class MessageTests
           "19 "+                                                // pk_script is 25 bytes long
           "76 A9 14 0E AB 5B EA 43 6A 04 84 CF AB 12 48 5E "+   // pk_script
           "FD A0 B7 8B 4E CC 52 88 AC "+
-          "00 00 00 00 "));                                     // lock time
+          "00 00 00 00 ")));                                    // lock time
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       TxMessage message = (TxMessage) marshal.read(input);
@@ -532,10 +541,11 @@ public class MessageTests
       TxMessage tx = new TxMessage(Message.MAGIC_MAIN,new Transaction(1,inputs,outputs,0));
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(tx,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
           "F9 BE B4 D9 "+                                       // main network magic bytes
           "74 78 00 00 00 00 00 00 00 00 00 00 "+               // "tx" command
           "02 01 00 00 "+                                       // payload is 258 bytes long
@@ -614,10 +624,11 @@ public class MessageTests
             transactions);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(block,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
           "F9 BE B4 D9 "+                                       // main network magic bytes
           "62 6C 6F 63 6B 00 00 00 00 00 00 00 "+               // block command
           "53 01 00 00 "+                                       // payload is 307 bytes long
@@ -663,7 +674,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
           "F9 BE B4 D9 "+                                       // main network magic bytes
           "62 6C 6F 63 6B 00 00 00 00 00 00 00 "+               // block command
           "53 01 00 00 "+                                       // payload is 307 bytes long
@@ -702,7 +713,7 @@ public class MessageTests
           "19 "+                                                // pk_script is 25 bytes long
           "76 A9 14 0E AB 5B EA 43 6A 04 84 CF AB 12 48 5E "+   // pk_script
           "FD A0 B7 8B 4E CC 52 88 AC "+
-          "00 00 00 00"));                                      // lock time
+          "00 00 00 00")));                                     // lock time
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       BlockMessage message = (BlockMessage) marshal.read(input);
@@ -744,10 +755,11 @@ public class MessageTests
       HeadersMessage headersMessage = new HeadersMessage(Message.MAGIC_MAIN,headers);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(headersMessage,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
           "F9 BE B4 D9 "+                                       // main network magic bytes
           "68 65 61 64 65 72 73 00 00 00 00 00 "+               // "headers" command
           "51 00 00 00 "+                                       // payload is 81 bytes long
@@ -767,7 +779,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
           "F9 BE B4 D9 "+                                       // main network magic bytes
           "68 65 61 64 65 72 73 00 00 00 00 00 "+               // "headers" command
           "51 00 00 00 "+                                       // payload is 81 bytes long
@@ -780,7 +792,7 @@ public class MessageTests
           "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
           "7B 00 00 00 "+                                       // timestamp
           "16 00 00 00 "+                                       // difficulty
-          "21 00 00 00"));                                      // nonce
+          "21 00 00 00")));                                     // nonce
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       HeadersMessage message = (HeadersMessage) marshal.read(input);
@@ -798,11 +810,11 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "67 65 74 61 64 64 72 00 00 00 00 00 "+  // "getaddr" command
             "00 00 00 00 "+                          // payload is 0 bytes
-            "5D F6 E0 E2"));                         // checksum is null
+            "5D F6 E0 E2")));                        // checksum is null
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       GetAddrMessage message = (GetAddrMessage) marshal.read(input);
@@ -820,10 +832,11 @@ public class MessageTests
       GetAddrMessage getaddr = new GetAddrMessage(Message.MAGIC_MAIN);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(getaddr,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "67 65 74 61 64 64 72 00 00 00 00 00 "+  // "getaddr" command
             "00 00 00 00 "+                          // Payload is 0 bytes long
@@ -834,11 +847,11 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "70 69 6E 67 00 00 00 00 00 00 00 00 "+  // "ping" command
             "00 00 00 00 "+                          // payload is 0 bytes
-            "5D F6 E0 E2"));                         // checksum is null
+            "5D F6 E0 E2")));                        // checksum is null
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       PingMessage message = (PingMessage) marshal.read(input);
@@ -856,10 +869,11 @@ public class MessageTests
       PingMessage ping = new PingMessage(Message.MAGIC_MAIN);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(ping,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "70 69 6E 67 00 00 00 00 00 00 00 00 "+  // "ping" command
             "00 00 00 00 "+                          // Payload is 0 bytes long
@@ -870,7 +884,7 @@ public class MessageTests
       throws IOException
    {
       // Sample taken from bitcoin wiki
-      ByteArrayBitCoinInputStream input = new ByteArrayBitCoinInputStream(HexUtil.toByteArray(
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "61 6C 65 72 74 00 00 00 00 00 00 00 "+  // "alert" command
             "0A 00 00 00 "+                          // Payload is 10 bytes long
@@ -878,7 +892,7 @@ public class MessageTests
             "06 "+                                   // length of message
             "41 6C 65 72 74 21 "+                    // message "Alert!"
             "02 "+                                   // length of signature
-            "4D 65"));                               // signature "Me"
+            "4D 65")));                              // signature "Me"
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       AlertMessage message = (AlertMessage) marshal.read(input);
@@ -898,10 +912,11 @@ public class MessageTests
       AlertMessage alert = new AlertMessage(Message.MAGIC_MAIN,"Alert!","Me");
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
-      ByteArrayBitCoinOutputStream output = new ByteArrayBitCoinOutputStream();
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(alert,output);
       // Check output
-      Assert.assertEquals(HexUtil.toHexString(output.toByteArray()),
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "61 6C 65 72 74 00 00 00 00 00 00 00 "+  // "alert" command
             "0A 00 00 00 "+                          // Payload is 10 bytes long
