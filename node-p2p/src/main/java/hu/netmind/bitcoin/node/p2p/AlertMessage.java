@@ -60,7 +60,7 @@ public class AlertMessage extends ChecksummedMessage
 
    public String toString()
    {
-      return super.toString()+" message: "+message+", signature: "+message;
+      return super.toString()+" message: "+message+", signature: "+signature;
    }
 
    public String getMessage()

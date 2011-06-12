@@ -23,6 +23,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.io.IOException;
+import java.io.BufferedInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ResourceBundle;
@@ -337,7 +338,7 @@ public class Node
       private NodeWorker(Socket socket)
          throws IOException
       {
-         input = new BitCoinInputStream(socket.getInputStream());
+         input = new BitCoinInputStream(new BufferedInputStream(socket.getInputStream()));
          output = new BitCoinOutputStream(socket.getOutputStream());
          this.socket=socket;
          this.running = true;
@@ -390,10 +391,13 @@ public class Node
       public synchronized void send(Message message)
          throws IOException
       {
-         if ( ! running )
+         logger.debug("sending message {}, to socket {}",message,socket);
+         if ( running )
          {
             marshaller.write(message,output);
-            logger.debug("sent message {}, to socket {}",message,socket);
+            logger.debug("message sent");
+         } else {
+            logger.debug("not sent, not running");
          }
       }
 
@@ -407,11 +411,11 @@ public class Node
             {
                // Get message from stream
                Message message = marshaller.read(input);
+               logger.debug("received message {}, from socket {}",message,socket);
                // Pass to handlers
                replied = false;
                for ( MessageHandler handler : handlers )
                {
-                  logger.debug("received message {}, from socket {}",message,socket);
                   Message reply = handler.handle(message);
                   if ( (!replied) && (reply != null) )
                   {

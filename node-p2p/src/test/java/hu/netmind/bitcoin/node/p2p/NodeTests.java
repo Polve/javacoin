@@ -22,6 +22,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.annotations.AfterMethod;
 import java.io.IOException;
+import java.io.BufferedInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.easymock.EasyMock;
@@ -139,16 +140,54 @@ public class NodeTests
       Assert.assertTrue(dummyNode.isAccepted());
    }
 
+   public void testCommunicationConcept()
+      throws IOException
+   {
+      DummyNode dummyNode = createDummyNode();
+      // Create bootstrapper
+      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      addresses.add(dummyNode.getAddress());
+      AddressSource source = EasyMock.createMock(AddressSource.class);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.replay(source);
+      // Create node
+      Node node = createNode();
+      node.setAddressSource(source);
+      // Create a repeater handler
+      node.addHandler(new MessageHandler() {
+               public Message handle(Message message)
+               {
+                  // Send right back
+                  return message;
+               }
+            });
+      // Start node
+      node.start();
+      // Accept the connection from node
+      dummyNode.accept();
+      // Send a message to node
+      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message","Signature"));
+      // Get the repeated message right back
+      AlertMessage answer = (AlertMessage) dummyNode.read();
+      // Check
+      Assert.assertEquals(answer.getMessage(),"Message");
+      Assert.assertEquals(answer.getSignature(),"Signature");
+   }
+
    private class DummyNode 
    {
       private ServerSocket serverSocket;
       private Socket socket = null;
+      private MessageMarshaller marshaller;
+      private BitCoinInputStream input;
+      private BitCoinOutputStream output;
 
       public DummyNode()
          throws IOException
       {
          serverSocket = new ServerSocket(0);
          serverSocket.setSoTimeout(500); // Wait for incoming for 0.5 sec
+         marshaller = new MessageMarshaller();
       }
 
       public InetSocketAddress getAddress()
@@ -169,10 +208,24 @@ public class NodeTests
             socket.close();
       }
 
+      public Message read()
+         throws IOException
+      {
+         return marshaller.read(input);
+      }
+
+      public void send(Message message)
+         throws IOException
+      {
+         marshaller.write(message,output);
+      }
+
       public void accept()
          throws IOException
       {
          socket = serverSocket.accept();
+         input = new BitCoinInputStream(new BufferedInputStream(socket.getInputStream()));
+         output = new BitCoinOutputStream(socket.getOutputStream());
       }
    }
 }
