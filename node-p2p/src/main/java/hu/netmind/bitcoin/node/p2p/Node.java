@@ -122,8 +122,10 @@ public class Node
             {
                Socket socket = new Socket();
                socket.connect(address,connectTimeout);
-               addWorker(socket);
-               logger.debug("worker added for address {}",address);
+               if ( ! addWorker(socket) )
+                  socket.close();
+               else
+                  logger.debug("worker added for address {}",address);
             } catch ( IOException e ) {
                logger.error("error connecting to address: {}",address);
             }
@@ -249,7 +251,7 @@ public class Node
       {
          try
          {
-            if ( !serverSocket.isClosed() )
+            if ( (serverSocket!=null) && (!serverSocket.isClosed()) )
                serverSocket.close();
          } catch ( IOException e ) {
             logger.error("error closing server socket",e);
@@ -277,11 +279,11 @@ public class Node
                try
                {
                   socket = serverSocket.accept();
+                  // Do some cleanup, remove stopped workers
+                  cleanupWorkers();
                   // Socket arrived, so setup worker node
                   if ( (!running) || (! addWorker(socket)) )
                      socket.close();
-                  // Do some cleanup, remove stopped workers
-                  cleanupWorkers();
                } catch ( SocketTimeoutException e ) {
                   // Normal for it to time out, this is so that we can
                   // check the exit criteria, and also to check on workers.

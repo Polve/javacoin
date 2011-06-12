@@ -29,6 +29,7 @@ import org.easymock.EasyMock;
 import java.net.InetSocketAddress;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.Map;
@@ -53,6 +54,17 @@ public class NodeTests
    public Node createNode()
    {
       node = new Node();
+      return node;
+   }
+
+   /**
+    * Create a new dummy node which connects to a node and has no server.
+    */
+   public DummyNode createDummyNode(InetSocketAddress address)
+      throws IOException
+   {
+      DummyNode node = new DummyNode(address);
+      dummyNodes.add(node);
       return node;
    }
 
@@ -207,6 +219,78 @@ public class NodeTests
       }
    }
 
+   public void testSameAddressTwice()
+      throws IOException
+   {
+      DummyNode dummyNode = createDummyNode();
+      // Create bootstrapper
+      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      addresses.add(dummyNode.getAddress());
+      addresses.add(dummyNode.getAddress()); // 2nd time
+      AddressSource source = EasyMock.createMock(AddressSource.class);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.replay(source);
+      // Create node
+      Node node = createNode();
+      node.setAddressSource(source);
+      // Start node
+      node.start();
+      // Accept the connection from node
+      dummyNode.accept();
+      // Broadcast 2 messages
+      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message1","Signature"));
+      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message2","Signature"));
+      // Now check that the 1st message arrives only once
+      AlertMessage message = (AlertMessage) dummyNode.read();
+      Assert.assertEquals(message.getMessage(),"Message1");
+      message = (AlertMessage) dummyNode.read();
+      Assert.assertEquals(message.getMessage(),"Message2");
+   }
+
+   public void testAcceptExternalConnection()
+      throws IOException
+   {
+      // Create & start node
+      Node node = createNode();
+      node.start();
+      // Create dummy
+      DummyNode dummyNode = createDummyNode(new InetSocketAddress(node.getPort()));
+      // Check connection
+      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message","Signature"));
+      AlertMessage message = (AlertMessage) dummyNode.read();
+      Assert.assertEquals(message.getMessage(),"Message");
+   }
+
+   public void testMaxConnections()
+      throws IOException
+   {
+      DummyNode dummyNode = createDummyNode();
+      // Create bootstrapper
+      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      addresses.add(dummyNode.getAddress());
+      AddressSource source = EasyMock.createMock(AddressSource.class);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.replay(source);
+      // Create node
+      Node node = createNode();
+      node.setMinConnections(1);
+      node.setMaxConnections(1);
+      node.setAddressSource(source);
+      // Start node
+      node.start();
+      // Accept the connection from node
+      dummyNode.accept();
+      // Now try to connect new node and communicate
+      DummyNode dummyNode2 = createDummyNode(new InetSocketAddress(node.getPort()));
+      try
+      {
+         Message message = dummyNode2.read();
+         Assert.fail("read successful although node should not be connected");
+      } catch ( IOException e ) {
+         // Good, communication failed because socket should be closed
+      }
+   }
+
    private class DummyNode 
    {
       private ServerSocket serverSocket;
@@ -214,18 +298,38 @@ public class NodeTests
       private MessageMarshaller marshaller;
       private BitCoinInputStream input;
       private BitCoinOutputStream output;
+      private InetSocketAddress address;
 
+      /**
+       * Make dummy "client" node which connects from external.
+       */
+      public DummyNode(InetSocketAddress address)
+         throws IOException
+      {
+         this.address=address;
+         socket = new Socket();
+         socket.setSoTimeout(500);
+         socket.connect(address,500); // 0.5 seconds to connect
+         input = new BitCoinInputStream(new BufferedInputStream(socket.getInputStream()));
+         output = new BitCoinOutputStream(socket.getOutputStream());
+         marshaller = new MessageMarshaller();
+      }
+
+      /**
+       * Make dummy server.
+       */
       public DummyNode()
          throws IOException
       {
          serverSocket = new ServerSocket(0);
+         address = (InetSocketAddress) serverSocket.getLocalSocketAddress();
          serverSocket.setSoTimeout(500); // Wait for incoming for 0.5 sec
          marshaller = new MessageMarshaller();
       }
 
       public InetSocketAddress getAddress()
       {
-         return (InetSocketAddress) serverSocket.getLocalSocketAddress();
+         return address;
       }
 
       public boolean isAccepted()
@@ -233,10 +337,16 @@ public class NodeTests
          return socket != null;
       }
 
+      public boolean isClosed()
+      {
+         return socket.isClosed();
+      }
+
       public void close()
          throws IOException
       {
-         serverSocket.close();
+         if ( serverSocket != null )
+            serverSocket.close();
          if ( socket != null )
             socket.close();
       }
