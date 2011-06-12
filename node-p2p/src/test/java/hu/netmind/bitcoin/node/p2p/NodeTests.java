@@ -328,6 +328,56 @@ public class NodeTests
       Message message = dummyNode2.read();
    }
 
+   public void testSingleHandlerReply()
+      throws IOException
+   {
+      DummyNode dummyNode = createDummyNode();
+      // Create bootstrapper
+      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      addresses.add(dummyNode.getAddress());
+      AddressSource source = EasyMock.createMock(AddressSource.class);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.replay(source);
+      // Create node
+      Node node = createNode();
+      node.setAddressSource(source);
+      // Create two repeater handlers
+      node.addHandler(new MessageHandler() {
+               public Message handle(Message message)
+               {
+                  // Send right back
+                  return message;
+               }
+            });
+      node.addHandler(new MessageHandler() {
+               public Message handle(Message message)
+               {
+                  // Send right back
+                  return message;
+               }
+            });
+      // Create a mock to make sure all handlers are invoked
+      MessageHandler signalHandler = EasyMock.createMock(MessageHandler.class);
+      EasyMock.expect(signalHandler.handle((Message) EasyMock.anyObject())).andReturn(null);
+      EasyMock.expect(signalHandler.handle((Message) EasyMock.anyObject())).andReturn(null);
+      EasyMock.replay(signalHandler);
+      node.addHandler(signalHandler);
+      // Start node
+      node.start();
+      // Accept the connection from node
+      dummyNode.accept();
+      // Send two messages to node
+      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message1","Signature"));
+      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message2","Signature"));
+      // Check that first message only arrives once
+      AlertMessage incoming = (AlertMessage) dummyNode.read();
+      Assert.assertEquals(incoming.getMessage(),"Message1");
+      incoming = (AlertMessage) dummyNode.read();
+      Assert.assertEquals(incoming.getMessage(),"Message2");
+      // Check that the last control handler was invoked at both messages
+      EasyMock.verify(signalHandler);
+   }
+
    private class DummyNode 
    {
       private ServerSocket serverSocket;
