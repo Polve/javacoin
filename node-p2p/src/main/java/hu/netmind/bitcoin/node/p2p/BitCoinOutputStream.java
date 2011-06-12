@@ -48,6 +48,24 @@ public class BitCoinOutputStream extends OutputStream
    }
 
    /**
+    * Forward bulk write to underlying output.
+    */
+   public void write(byte[] array)
+      throws IOException
+   {
+      output.write(array);
+   }
+
+   /**
+    * Forward flush call to underlying stream.
+    */
+   public void flush()
+      throws IOException
+   {
+      output.flush();
+   }
+
+   /**
     * Forward to underlying stream.
     */
    public void close()

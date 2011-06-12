@@ -150,6 +150,7 @@ public class MessageMarshaller
       message.postWriteTo(byteArray,version);
       // Copy it to the output
       output.write(byteArray);
+      output.flush(); // Send
    }
 
    public long getVersion()

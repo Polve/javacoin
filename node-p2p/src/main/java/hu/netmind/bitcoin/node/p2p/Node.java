@@ -38,6 +38,9 @@ import java.util.ArrayList;
  * from all established connections (if any), and forward all messages
  * to message handlers. Message handlers should implement not only the 
  * main logic of bitcoin, but also protocol related housekeeping.
+ * TODO: implement node timeout if no traffic
+ * TODO: implement no traffic until handshake over
+ * TODO: supply our address too to handler
  * @author Robert Brautigam
  */
 public class Node
