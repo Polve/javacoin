@@ -40,9 +40,9 @@ public class networkTap
                {
                   System.out.println("Connected to "+addr);
                   // Send our version information
-                  VersionMessage version = new VersionMessage(Message.MAGIC_MAIN,32002,0,System.currentTimeMillis()/1000,
-                     new NodeAddress(0,(InetSocketAddress) addr),
-                     new NodeAddress(0,new InetSocketAddress(node.getPort())),
+                  VersionMessage version = new VersionMessage(Message.MAGIC_MAIN,31902,1,System.currentTimeMillis()/1000,
+                     new NodeAddress(1,(InetSocketAddress) addr),
+                     new NodeAddress(1,new InetSocketAddress(node.getPort())),
                      123,"",99);
                   System.out.println("Sending handshake version: "+version);
                   return version;
