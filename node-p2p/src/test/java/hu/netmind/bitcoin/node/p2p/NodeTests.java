@@ -36,6 +36,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests the p2p network node implementation.
@@ -287,7 +289,7 @@ public class NodeTests
    }
 
    public void testCleanupNodes()
-      throws IOException
+      throws IOException, InterruptedException
    {
       DummyNode dummyNode = createDummyNode();
       // Create bootstrapper
@@ -301,16 +303,23 @@ public class NodeTests
       node.setMinConnections(1);
       node.setMaxConnections(1);
       node.setAddressSource(source);
-      // Create a repeater handler
-      node.addHandler(new MessageRepeaterHandler());
+      // Create a handler which repeats and also notifies
+      final Semaphore semaphore = new Semaphore(0);
+      node.addHandler(new MessageRepeaterHandler(){
+               public void onLeave(SocketAddress addr)
+               {
+                  semaphore.release();
+               }
+            });
       // Start node
       node.start();
       // Accept the connection from node
       dummyNode.accept();
       // Now terminate the connection to the dummy node
       dummyNode.close();
-      // Send a broadcast, so that the server can realize node is no longer there
-      node.broadcast(new PingMessage(Message.MAGIC_TEST));
+      // Wait until the node releases the node
+      if ( ! semaphore.tryAcquire(500,TimeUnit.MILLISECONDS) )
+         Assert.fail("didn't receive the 'leave' event of closed node in time");
       // Now try to connect new node and communicate
       DummyNode dummyNode2 = createDummyNode(new InetSocketAddress(node.getPort()));
       dummyNode2.send(new PingMessage(Message.MAGIC_TEST));
@@ -357,6 +366,34 @@ public class NodeTests
       // Check that the last control handler was invoked at both messages
       EasyMock.verify(signalHandler);
       EasyMock.reset(signalHandler);
+   }
+
+   public void testInitialMessage()
+      throws IOException
+   {
+      DummyNode dummyNode = createDummyNode();
+      // Create bootstrapper
+      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      addresses.add(dummyNode.getAddress());
+      AddressSource source = EasyMock.createMock(AddressSource.class);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.replay(source);
+      // Create node
+      Node node = createNode();
+      node.setAddressSource(source);
+      // Create a repeater handler
+      node.addHandler(new MessageRepeaterHandler() {
+               public Message onJoin(SocketAddress addr)
+               {
+                  return new VerackMessage(Message.MAGIC_TEST);
+               }
+            });
+      // Start node
+      node.start();
+      // Accept the connection from node
+      dummyNode.accept();
+      // Dummy node should now have received the message automatically
+      VerackMessage verack = (VerackMessage) dummyNode.read();
    }
 
    private class DummyNode 

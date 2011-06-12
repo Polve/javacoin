@@ -102,12 +102,12 @@ public class MessageTests
       // Check timestamp
       Assert.assertEquals(message.getTimestamp(),1000l*0x4D1015e6l);
       // Check sender and recipient
-      Assert.assertEquals(message.getSenderAddress().getServices(),1);
-      Assert.assertEquals(message.getSenderAddress().getAddress().getPort(),56054);
-      Assert.assertEquals(message.getSenderAddress().getAddress().getAddress().getHostAddress(),"10.0.0.1");
       Assert.assertEquals(message.getReceiverAddress().getServices(),1);
-      Assert.assertEquals(message.getReceiverAddress().getAddress().getPort(),8333);
-      Assert.assertEquals(message.getReceiverAddress().getAddress().getAddress().getHostAddress(),"10.0.0.2");
+      Assert.assertEquals(message.getReceiverAddress().getAddress().getPort(),56054);
+      Assert.assertEquals(message.getReceiverAddress().getAddress().getAddress().getHostAddress(),"10.0.0.1");
+      Assert.assertEquals(message.getSenderAddress().getServices(),1);
+      Assert.assertEquals(message.getSenderAddress().getAddress().getPort(),8333);
+      Assert.assertEquals(message.getSenderAddress().getAddress().getAddress().getHostAddress(),"10.0.0.2");
       // Other stuff
       Assert.assertEquals(message.getNonce(),0x1357B43A2C209DDDl);
       Assert.assertEquals(message.getSecondaryVersion(),"");
