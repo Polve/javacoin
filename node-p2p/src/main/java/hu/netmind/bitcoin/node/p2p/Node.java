@@ -125,7 +125,7 @@ public class Node
                if ( ! addWorker(socket) )
                   socket.close();
                else
-                  logger.debug("worker added for address {}",address);
+                  logger.debug("worker added for address {}, current number of workers {}",address,workers.size());
             } catch ( IOException e ) {
                logger.error("error connecting to address: {}",address);
             }
