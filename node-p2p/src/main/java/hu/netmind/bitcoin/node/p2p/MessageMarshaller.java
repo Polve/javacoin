@@ -94,21 +94,7 @@ public class MessageMarshaller
          if ( messageType == null )
          {
             // Did not recognize, so skip this message altogether
-            long remainingBytes = header.getLength() + 24; // +24 is to skip header
-            while ( remainingBytes > 0 )
-            {
-               if ( remainingBytes >= 4096 )
-               {
-                  // Message is too big, just read a chunk
-                  input.readBytes(4096);
-                  remainingBytes -= 4096;
-               }
-               else
-               {
-                  input.readBytes((int)remainingBytes);
-                  remainingBytes = 0;
-               }
-            }
+            input.skip(header.getLength() + 24); // +24 is to skip header
             logger.warn("did not find message type for command (skipping message): {}",header.getCommand());
          }
       }
@@ -119,8 +105,13 @@ public class MessageMarshaller
       try
       {
          Message message = (Message) messageType.newInstance();
+         input.resetByteCount();
          message.readFrom(input,version,param);
          message.postReadFrom(input,version,param);
+         // If we read less bytes than the announced length of message,
+         // it is probable there was an extension to this message and we don't know it
+         // yet. Just skip the rest of message, hopefully it was not important :)
+         input.skip(header.getLength()+((message instanceof ChecksummedMessage)?24:20)-input.getByteCount());
          logger.debug("deserialized message: {}",message);
          return message;
       } catch ( Exception e ) {

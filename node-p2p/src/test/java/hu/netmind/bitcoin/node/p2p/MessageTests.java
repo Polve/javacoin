@@ -927,5 +927,22 @@ public class MessageTests
             "4D 65");                                // signature "Me"
    }
 
+   public void testFutureProofMessageParsing()
+      throws IOException
+   {
+      // Prepare a verack message that is longer than normal
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
+            "F9 BE B4 D9 "+                          // Main network magic bytes
+            "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
+            "05 00 00 00 "+                          // Payload is 5 bytes long (0 normally)
+            "01 02 03 04 05 "+                       // "payload"
+            "F9 BE B4 D9 "+                          // Main network magic bytes (next verack)
+            "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
+            "00 00 00 00 ")));                       // Payload is 5 bytes long (0 normally)
+      // Unmarshall 2 messages
+      MessageMarshaller marshal = new MessageMarshaller();
+      VerackMessage message = (VerackMessage) marshal.read(input);
+      message = (VerackMessage) marshal.read(input);
+   }
 }
 

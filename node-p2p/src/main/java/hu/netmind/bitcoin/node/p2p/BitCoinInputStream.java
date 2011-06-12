@@ -30,8 +30,11 @@ import java.util.Observer;
  */
 public class BitCoinInputStream extends InputStream
 {
+   private static final int MAX_SKIP = 4096;
+
    private Listener listener = null;
    private InputStream input;
+   private long byteCount = 0;
 
    /**
     * Create this bitcoin input stream using another input stream to read bytes from.
@@ -52,12 +55,53 @@ public class BitCoinInputStream extends InputStream
    }
 
    /**
+    * This implementation of skip differs from the default one in that
+    * it does not allocate any buffers larger than 4k, so it skips
+    * at most 4k bytes. Note that this implementation guarantees to
+    * skip the number of bytes given, or throw an exception if that
+    * was not successful (for example stream ended).
+    */
+   public long skip(long size)
+      throws IOException
+   {
+      long originalSize = size;
+      while ( size > 0 )
+      {
+         if ( size >= MAX_SKIP )
+         {
+            // Message is too big, just read a chunk
+            readBytes(MAX_SKIP);
+            size -= MAX_SKIP;
+         }
+         else
+         {
+            readBytes((int) size);
+            size = 0;
+         }
+      }
+      return originalSize;
+   }
+
+   /**
     * Implement read by forwarding the request to the underlying stream.
     */
    public int read()
       throws IOException
    {
-      return input.read();
+      int result = input.read();
+      if ( result >= 0 )
+         byteCount++;
+      return result;
+   }
+
+   public long getByteCount()
+   {
+      return byteCount;
+   }
+
+   public void resetByteCount()
+   {
+      byteCount=0;
    }
 
    /**
