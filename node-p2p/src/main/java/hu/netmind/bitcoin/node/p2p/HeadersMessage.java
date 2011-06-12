@@ -21,7 +21,6 @@ package hu.netmind.bitcoin.node.p2p;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * @author Robert Brautigam

@@ -19,7 +19,6 @@
 package hu.netmind.bitcoin.node.p2p;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.io.IOException;
 import java.net.InetAddress;
 
@@ -65,7 +64,7 @@ public class NodeAddress
          output.write(addr);
       }
       else
-         throw new IOException("ip address was not 4 or 16 bytes: "+Arrays.toString(addr));
+         throw new IOException("ip address was not 4 or 16 bytes: "+HexUtil.toHexString(addr));
       output.writeUInt16BE(address.getPort());
    }
 

@@ -21,7 +21,6 @@ package hu.netmind.bitcoin.node.p2p;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * @author Robert Brautigam
@@ -74,8 +73,8 @@ public class BlockHeader
 
    public String toString()
    {
-      return "version: "+version+", prevBlock: "+Arrays.toString(prevBlock)+
-         ", root hash: "+Arrays.toString(rootHash)+", timestamp: "+timestamp+", difficulty: "+difficulty+
+      return "version: "+version+", prevBlock: "+HexUtil.toHexString(prevBlock)+
+         ", root hash: "+HexUtil.toHexString(rootHash)+", timestamp: "+timestamp+", difficulty: "+difficulty+
          ", nonce: "+nonce;
    }
 

@@ -19,7 +19,6 @@
 package hu.netmind.bitcoin.node.p2p;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * @author Robert Brautigam
@@ -59,7 +58,7 @@ public class InventoryItem
 
    public String toString()
    {
-      return type+":"+Arrays.toString(hash);
+      return type+":"+HexUtil.toHexString(hash);
    }
 
    public int getType()

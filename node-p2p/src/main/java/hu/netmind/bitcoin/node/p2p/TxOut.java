@@ -19,7 +19,6 @@
 package hu.netmind.bitcoin.node.p2p;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * @author Robert Brautigam
@@ -61,7 +60,7 @@ public class TxOut
 
    public String toString()
    {
-      return "value: "+value+", script: "+Arrays.toString(script);
+      return "value: "+value+", script: "+HexUtil.toHexString(script);
    }
 
    public long getValue()

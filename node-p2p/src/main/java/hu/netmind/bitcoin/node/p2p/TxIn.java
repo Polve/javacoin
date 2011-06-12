@@ -19,7 +19,6 @@
 package hu.netmind.bitcoin.node.p2p;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * @author Robert Brautigam
@@ -68,7 +67,7 @@ public class TxIn
 
    public String toString()
    {
-      return "version: "+sequence+", tx hash/out: "+Arrays.toString(referencedTxHash)+"/"+referencedTxOutIndex+", signature: "+Arrays.toString(signatureScript);
+      return "version: "+sequence+", tx hash/out: "+HexUtil.toHexString(referencedTxHash)+"/"+referencedTxOutIndex+", signature: "+HexUtil.toHexString(signatureScript);
    }
 
    public byte[] getReferencedTxHash()
