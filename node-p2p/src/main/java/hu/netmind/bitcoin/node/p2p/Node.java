@@ -358,7 +358,18 @@ public class Node
          workerThread.start();
          // Invoke listeners
          for ( MessageHandler handler : handlers )
-            handler.onJoin(getAddress());
+         {
+            Message message = handler.onJoin(getAddress());
+            if ( message != null )
+            {
+               try
+               {
+                  send(message);
+               } catch ( IOException e ) {
+                  logger.error("failed to send join message {} to {}",message,getAddress());
+               }
+            }
+         }
       }
 
       public boolean isRunning()

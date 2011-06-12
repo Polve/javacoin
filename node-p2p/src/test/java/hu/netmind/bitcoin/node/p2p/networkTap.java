@@ -34,16 +34,18 @@ public class networkTap
       System.out.println("BitCoin Network Tapper... Press CTRL-C to exit.");
       // Initialize node
       final Node node = new Node();
+      node.setMinConnections(1);
+      node.setMaxConnections(1);
       node.setAddressSource(new FallbackNodesSource());
       node.addHandler(new MessageHandler() {
                public Message onJoin(SocketAddress addr)
                {
                   System.out.println("Connected to "+addr);
                   // Send our version information
-                  VersionMessage version = new VersionMessage(Message.MAGIC_MAIN,31902,1,System.currentTimeMillis()/1000,
+                  VersionMessage version = new VersionMessage(Message.MAGIC_MAIN,32100,1,System.currentTimeMillis()/1000,
                      new NodeAddress(1,(InetSocketAddress) addr),
-                     new NodeAddress(1,new InetSocketAddress(node.getPort())),
-                     123,"",99);
+                     new NodeAddress(1,new InetSocketAddress("192.168.1.101",node.getPort())),
+                     123,"",0);
                   System.out.println("Sending handshake version: "+version);
                   return version;
                }
