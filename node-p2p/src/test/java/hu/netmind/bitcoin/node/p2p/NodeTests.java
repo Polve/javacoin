@@ -174,6 +174,39 @@ public class NodeTests
       Assert.assertEquals(answer.getSignature(),"Signature");
    }
 
+   public void testBroadcast()
+      throws IOException
+   {
+      DummyNode dummyNodes[] = new DummyNode[3];
+      for ( int i=0; i<dummyNodes.length; i++ )
+         dummyNodes[i] = createDummyNode();
+      // Create bootstrapper
+      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      for ( int i=0; i<dummyNodes.length; i++ )
+         addresses.add(dummyNodes[i].getAddress());
+      AddressSource source = EasyMock.createMock(AddressSource.class);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.replay(source);
+      // Create node
+      Node node = createNode();
+      node.setAddressSource(source);
+      // Start node
+      node.start();
+      // Accept the connection from node
+      for ( int i=0; i<dummyNodes.length; i++ )
+         dummyNodes[i].accept();
+      // Broadcast a message to all connected nodes
+      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message","Signature"));
+      // Get the messages from all nodes
+      for ( int i=0; i<dummyNodes.length; i++ )
+      {
+         AlertMessage answer = (AlertMessage) dummyNodes[i].read();
+         // Check
+         Assert.assertEquals(answer.getMessage(),"Message");
+         Assert.assertEquals(answer.getSignature(),"Signature");
+      }
+   }
+
    private class DummyNode 
    {
       private ServerSocket serverSocket;
