@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ResourceBundle;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
@@ -55,13 +56,13 @@ public class Node
    private int connectTimeout = defaultConnectTimeout;
 
    private boolean running = false;
-   private Thread nodeThread = null;
    
    private MessageMarshaller marshaller = new MessageMarshaller();
    private AddressSource addressSource;
    private List<MessageHandler> handlers = new ArrayList<MessageHandler>();
 
    private List<NodeWorker> workers = new ArrayList<NodeWorker>();
+   private NodeListener nodeListener;
    
    /**
     * Create this node which will then listen for incoming
@@ -90,9 +91,8 @@ public class Node
          return;
       running=true;
       // Start listening
-      nodeThread = new Thread(new NodeListener(),"BitCoin Node Listener");
-      nodeThread.setDaemon(true);
-      nodeThread.start();
+      nodeListener = new NodeListener();
+      nodeListener.start();
       // Add initial workers to the node
       bootstrapWorkers();
    }
@@ -154,9 +154,7 @@ public class Node
             logger.debug("setting up worker to: {}",socket);
             NodeWorker worker = new NodeWorker(socket);
             workers.add(worker);
-            Thread workerThread = new Thread(worker,"BitCoin Node Connection");
-            workerThread.setDaemon(true);
-            workerThread.start();
+            worker.start();
             return true;
          } else {
             logger.debug("not creating worker because maximum number of connections reached ({})",maxConnections);
@@ -166,11 +164,36 @@ public class Node
    }
 
    /**
+    * Remove workers which already stopped. Workers can't remove themselves, because
+    * then it's not possible to implement a synchronous shutdown, we want to make sure
+    * the thread of the node worker has really ended.
+    */
+   private void cleanupWorkers()
+   {
+      logger.debug("running cleanup of stopped workers...");
+      synchronized ( workers )
+      {
+         Iterator<NodeWorker> workerIterator = workers.iterator();
+         while ( workerIterator.hasNext() )
+         {
+            NodeWorker worker = workerIterator.next();
+            if ( ! worker.isRunning() )
+            {
+               // Remove
+               worker.stop();
+               workerIterator.remove();
+            }
+         }
+      }
+   }
+
+   /**
     * Stop listening to messages, close all connections with other nodes. This
     * method is synchronous, it returns after the node is completely closed.
     */
    public void stop()
    {
+      logger.debug("stop called on node...");
       running = false; // Non-invasive way to stop, but it won't be immediate
       // Stop also all worker nodes
       synchronized ( workers )
@@ -179,13 +202,8 @@ public class Node
             worker.stop();
       }
       // Interrupt thread
-      try
-      {
-         nodeThread.interrupt();
-         nodeThread.join();
-      } catch ( InterruptedException e ) {
-         logger.error("interrupted while waiting for node to stop, node might not be stopped",e);
-      }
+      nodeListener.stop();
+      logger.info("node stopped");
    }
 
    /**
@@ -216,10 +234,36 @@ public class Node
     */
    private class NodeListener implements Runnable
    {
+      private Thread thread;
+      private ServerSocket serverSocket;
+
+      public void start()
+      {
+         thread = new Thread(this,"BitCoin Node Listener");
+         thread.setDaemon(true);
+         thread.start();
+      }
+
+      public void stop()
+      {
+         try
+         {
+            if ( !serverSocket.isClosed() )
+               serverSocket.close();
+         } catch ( IOException e ) {
+            logger.error("error closing server socket",e);
+         }
+         try
+         {
+            thread.join();
+         } catch ( InterruptedException e ) {
+            logger.error("interrupted while waiting for node to stop, node might not be stopped",e);
+         }
+      }
+
       public void run()
       {
          logger.info("starting node listener on port: "+port);
-         ServerSocket serverSocket = null;
          try
          {
             // Establish server socket
@@ -235,20 +279,28 @@ public class Node
                   // Socket arrived, so setup worker node
                   if ( (!running) || (! addWorker(socket)) )
                      socket.close();
+                  // Do some cleanup, remove stopped workers
+                  cleanupWorkers();
                } catch ( SocketTimeoutException e ) {
                   // Normal for it to time out, this is so that we can
                   // check the exit criteria, and also to check on workers.
-                  // If there are no workers, bootstrap again.
-                  synchronized ( workers )
+                  // If there are no workers, bootstrap again. (Note this is only
+                  // on socket timeout, of there is traffic there is no need to 
+                  // get new nodes anyway)
+                  if ( running )
                   {
-                     if ( workers.size() < minConnections )
-                        bootstrapWorkers();
+                     synchronized ( workers )
+                     {
+                        if ( workers.size() < minConnections )
+                           bootstrapWorkers();
+                     }
                   }
                } catch ( IOException e ) {
                   logger.error("could not add worker for socket {}",socket);
                   try
                   {
-                     socket.close();
+                     if ( socket != null )
+                        socket.close();
                   } catch ( IOException ioe ) {
                      logger.error("could not close socket {}",socket,ioe);
                   }
@@ -257,6 +309,7 @@ public class Node
          } catch ( Exception e ) {
             logger.error("node listener exiting because of an exception",e);
          } finally {
+            running = false;
             // Close server
             try
             {
@@ -266,7 +319,7 @@ public class Node
                logger.error("error while closing server socket",e);
             }
          }
-         logger.info("node stopped for port: {}",port);
+         logger.info("node listener stopped for port: {}",port);
       }
    }
 
@@ -279,6 +332,7 @@ public class Node
       private BitCoinInputStream input;
       private BitCoinOutputStream output;
       private boolean running;
+      private Thread workerThread;
 
       private NodeWorker(Socket socket)
          throws IOException
@@ -289,21 +343,42 @@ public class Node
          this.running = true;
       }
 
-      public void stop()
+      public void start()
+      {
+         workerThread = new Thread(this,"BitCoin Node Connection");
+         workerThread.setDaemon(true);
+         workerThread.start();
+      }
+
+      public boolean isRunning()
+      {
+         return running;
+      }
+
+      private void stopInternal()
       {
          // Stop running
          running = false;
-         // Remove from workers
-         synchronized ( workers )
-         {
-            workers.remove(this);
-         }
          // Close socket
          try
          {
-            socket.close();
+            if ( ! socket.isClosed() )
+               socket.close();
          } catch ( IOException e ) {
             logger.error("error closing socket {}",socket,e);
+         }
+      }
+
+      public void stop()
+      {
+         stopInternal();
+         logger.debug("stopped node worker.");
+         // Wait for thread to stop
+         try
+         {
+            workerThread.join();
+         } catch ( InterruptedException e ) {
+            logger.error("error while waiting for worker to stop, worker may not be completely stopped",e);
          }
       }
 
@@ -315,8 +390,11 @@ public class Node
       public synchronized void send(Message message)
          throws IOException
       {
-         marshaller.write(message,output);
-         logger.debug("sent message {}, to socket {}",message,socket);
+         if ( ! running )
+         {
+            marshaller.write(message,output);
+            logger.debug("sent message {}, to socket {}",message,socket);
+         }
       }
 
       public void run()
@@ -348,7 +426,7 @@ public class Node
             else
                logger.debug("error from reading, but probably calling stop() on worker on socket {}",socket);
          } finally {
-            stop(); // Stop worker properly
+            stopInternal(); // Stop worker properly
          }
       }
    }
@@ -387,6 +465,24 @@ public class Node
    public void setAddressSource(AddressSource addressSource)
    {
       this.addressSource=addressSource;
+   }
+
+   public int getMinConnections()
+   {
+      return minConnections;
+   }
+   public void setMinConnections(int minConnections)
+   {
+      this.minConnections=minConnections;
+   }
+
+   public int getConnectTimeout()
+   {
+      return connectTimeout;
+   }
+   public void setConnectTimeout(int connectTimeout)
+   {
+      this.connectTimeout=connectTimeout;
    }
 
    /**
