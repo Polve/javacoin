@@ -28,21 +28,21 @@ public class VersionMessage extends Message
    private long version;
    private long services;
    private long timestamp;
-   private NodeAddress senderAddress;
    private NodeAddress receiverAddress;
+   private NodeAddress senderAddress;
    private long nonce;
    private String secondaryVersion;
    private long startHeight;
 
    public VersionMessage(long magic, long version, long services, long timestamp,
-         NodeAddress senderAddress, NodeAddress receiverAddress, long nonce, String secondaryVersion, long startHeight)
+         NodeAddress receiverAddress, NodeAddress senderAddress, long nonce, String secondaryVersion, long startHeight)
    {
       super(magic,"version");
       this.version=version;
       this.services=services;
       this.timestamp=timestamp;
-      this.senderAddress=senderAddress;
       this.receiverAddress=receiverAddress;
+      this.senderAddress=senderAddress;
       this.nonce=nonce;
       this.secondaryVersion=secondaryVersion;
       this.startHeight=startHeight;
@@ -62,12 +62,12 @@ public class VersionMessage extends Message
       timestamp = input.readUInt64()*1000; // We need milliseconds not seconds
       if ( timestamp < 0 )
          throw new IOException("timestamp for version message is out of supported range");
-      senderAddress = new NodeAddress();
-      senderAddress.readFrom(input);
+      receiverAddress = new NodeAddress();
+      receiverAddress.readFrom(input);
       if ( version >= 106 )
       {
-         receiverAddress = new NodeAddress();
-         receiverAddress.readFrom(input);
+         senderAddress = new NodeAddress();
+         senderAddress.readFrom(input);
          nonce = input.readUInt64();
          secondaryVersion = input.readString();
          if ( version >= 209 )
@@ -84,10 +84,10 @@ public class VersionMessage extends Message
       output.writeUInt32(version);
       output.writeUInt64(services);
       output.writeUInt64(timestamp/1000); // Convert millis to seconds
-      senderAddress.writeTo(output);
+      receiverAddress.writeTo(output);
       if ( version >= 106 )
       {
-         receiverAddress.writeTo(output);
+         senderAddress.writeTo(output);
          output.writeUInt64(nonce);
          output.writeString(secondaryVersion);
          if ( version >= 209 )

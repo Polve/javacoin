@@ -349,9 +349,13 @@ public class Node
 
       public void start()
       {
+         // Start worker
          workerThread = new Thread(this,"BitCoin Node Connection");
          workerThread.setDaemon(true);
          workerThread.start();
+         // Invoke listeners
+         for ( MessageHandler handler : handlers )
+            handler.onJoin(getAddress());
       }
 
       public boolean isRunning()
@@ -371,6 +375,9 @@ public class Node
          } catch ( IOException e ) {
             logger.error("error closing socket {}",socket,e);
          }
+         // Invoke listeners
+         for ( MessageHandler handler : handlers )
+            handler.onLeave(getAddress());
       }
 
       public void stop()
@@ -419,7 +426,7 @@ public class Node
                replied = false;
                for ( MessageHandler handler : handlers )
                {
-                  Message reply = handler.handle(message);
+                  Message reply = handler.onMessage(getAddress(),message);
                   if ( (!replied) && (reply != null) )
                   {
                      send(reply);

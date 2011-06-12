@@ -18,6 +18,8 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
+import java.net.SocketAddress;
+
 /**
  * Implement and register this interface to a Node to receive messages
  * from the bitcoin network.
@@ -26,11 +28,25 @@ package hu.netmind.bitcoin.node.p2p;
 public interface MessageHandler
 {
    /**
+    * There is a possibility to send a message to a new node on a join.
+    * @param addr The address of the node who joined.
+    */
+   Message onJoin(SocketAddress addr);
+
+   /**
+    * Called when a node disconnects.
+    * @param addr The address of the node who disconnected.
+    */
+   void onLeave(SocketAddress addr);
+
+   /**
     * Handle a message from the network. There is a possibility
     * to reply to the incoming message by returning a message.
+    * @param source The source of the message.
+    * @param message The incoming message.
     * @return A message to reply to only the source node for the
     * incoming message, or null if no reply is needed.
     */
-   Message handle(Message message);
+   Message onMessage(SocketAddress source, Message message);
 }
 

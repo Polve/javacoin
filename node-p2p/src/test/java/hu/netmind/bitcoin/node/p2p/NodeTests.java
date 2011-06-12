@@ -29,6 +29,7 @@ import org.easymock.EasyMock;
 import java.net.InetSocketAddress;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.ServerSocket;
 import java.util.Arrays;
@@ -166,13 +167,7 @@ public class NodeTests
       Node node = createNode();
       node.setAddressSource(source);
       // Create a repeater handler
-      node.addHandler(new MessageHandler() {
-               public Message handle(Message message)
-               {
-                  // Send right back
-                  return message;
-               }
-            });
+      node.addHandler(new MessageRepeaterHandler());
       // Start node
       node.start();
       // Accept the connection from node
@@ -307,13 +302,7 @@ public class NodeTests
       node.setMaxConnections(1);
       node.setAddressSource(source);
       // Create a repeater handler
-      node.addHandler(new MessageHandler() {
-               public Message handle(Message message)
-               {
-                  // Send right back
-                  return message;
-               }
-            });
+      node.addHandler(new MessageRepeaterHandler());
       // Start node
       node.start();
       // Accept the connection from node
@@ -342,24 +331,15 @@ public class NodeTests
       Node node = createNode();
       node.setAddressSource(source);
       // Create two repeater handlers
-      node.addHandler(new MessageHandler() {
-               public Message handle(Message message)
-               {
-                  // Send right back
-                  return message;
-               }
-            });
-      node.addHandler(new MessageHandler() {
-               public Message handle(Message message)
-               {
-                  // Send right back
-                  return message;
-               }
-            });
+      node.addHandler(new MessageRepeaterHandler());
+      node.addHandler(new MessageRepeaterHandler());
       // Create a mock to make sure all handlers are invoked
       MessageHandler signalHandler = EasyMock.createMock(MessageHandler.class);
-      EasyMock.expect(signalHandler.handle((Message) EasyMock.anyObject())).andReturn(null);
-      EasyMock.expect(signalHandler.handle((Message) EasyMock.anyObject())).andReturn(null);
+      EasyMock.expect(signalHandler.onJoin((SocketAddress) EasyMock.anyObject())).andReturn(null);
+      EasyMock.expect(signalHandler.onMessage(
+               (SocketAddress) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null);
+      EasyMock.expect(signalHandler.onMessage(
+               (SocketAddress) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null);
       EasyMock.replay(signalHandler);
       node.addHandler(signalHandler);
       // Start node
@@ -376,6 +356,7 @@ public class NodeTests
       Assert.assertEquals(incoming.getMessage(),"Message2");
       // Check that the last control handler was invoked at both messages
       EasyMock.verify(signalHandler);
+      EasyMock.reset(signalHandler);
    }
 
    private class DummyNode 
@@ -456,6 +437,24 @@ public class NodeTests
          socket = serverSocket.accept();
          input = new BitCoinInputStream(new BufferedInputStream(socket.getInputStream()));
          output = new BitCoinOutputStream(socket.getOutputStream());
+      }
+   }
+
+   public class MessageRepeaterHandler implements MessageHandler
+   {
+      public Message onJoin(SocketAddress addr)
+      {
+         return null;
+      }
+
+      public void onLeave(SocketAddress addr)
+      {
+      }
+
+      public Message onMessage(SocketAddress addr, Message message)
+      {
+         // Send right back
+         return message;
       }
    }
 }
