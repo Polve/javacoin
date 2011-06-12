@@ -291,6 +291,43 @@ public class NodeTests
       }
    }
 
+   public void testCleanupNodes()
+      throws IOException
+   {
+      DummyNode dummyNode = createDummyNode();
+      // Create bootstrapper
+      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      addresses.add(dummyNode.getAddress());
+      AddressSource source = EasyMock.createMock(AddressSource.class);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.replay(source);
+      // Create node
+      Node node = createNode();
+      node.setMinConnections(1);
+      node.setMaxConnections(1);
+      node.setAddressSource(source);
+      // Create a repeater handler
+      node.addHandler(new MessageHandler() {
+               public Message handle(Message message)
+               {
+                  // Send right back
+                  return message;
+               }
+            });
+      // Start node
+      node.start();
+      // Accept the connection from node
+      dummyNode.accept();
+      // Now terminate the connection to the dummy node
+      dummyNode.close();
+      // Send a broadcast, so that the server can realize node is no longer there
+      node.broadcast(new PingMessage(Message.MAGIC_TEST));
+      // Now try to connect new node and communicate
+      DummyNode dummyNode2 = createDummyNode(new InetSocketAddress(node.getPort()));
+      dummyNode2.send(new PingMessage(Message.MAGIC_TEST));
+      Message message = dummyNode2.read();
+   }
+
    private class DummyNode 
    {
       private ServerSocket serverSocket;
