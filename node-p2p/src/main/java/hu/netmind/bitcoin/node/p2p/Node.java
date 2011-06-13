@@ -31,6 +31,8 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * A network node which keeps the communication to other nodes in the p2p
@@ -38,9 +40,7 @@ import java.util.ArrayList;
  * from all established connections (if any), and forward all messages
  * to message handlers. Message handlers should implement not only the 
  * main logic of bitcoin, but also protocol related housekeeping.
- * TODO: implement no traffic until handshake over
  * TODO: implement node timeout if no traffic, less timeout if no handshake
- * TODO: supply our address too to handler
  * @author Robert Brautigam
  */
 public class Node
@@ -61,7 +61,6 @@ public class Node
 
    private boolean running = false;
    
-   private MessageMarshaller marshaller = new MessageMarshaller();
    private AddressSource addressSource;
    private List<MessageHandler> handlers = new ArrayList<MessageHandler>();
 
@@ -340,6 +339,8 @@ public class Node
       private BitCoinOutputStream output;
       private boolean running;
       private Thread workerThread;
+      private MessageMarshaller marshaller = new MessageMarshaller();
+      private Connection connection;
 
       private NodeWorker(Socket socket)
          throws IOException
@@ -348,6 +349,7 @@ public class Node
          output = new BitCoinOutputStream(socket.getOutputStream());
          this.socket=socket;
          this.running = true;
+         connection = new NodeWorkerConnection();
       }
 
       public void start()
@@ -359,7 +361,7 @@ public class Node
          // Invoke listeners
          for ( MessageHandler handler : handlers )
          {
-            Message message = handler.onJoin(getAddress());
+            Message message = handler.onJoin(connection);
             if ( message != null )
             {
                try
@@ -391,7 +393,7 @@ public class Node
          }
          // Invoke listeners
          for ( MessageHandler handler : handlers )
-            handler.onLeave(getAddress());
+            handler.onLeave(connection);
       }
 
       public void stop()
@@ -440,7 +442,7 @@ public class Node
                replied = false;
                for ( MessageHandler handler : handlers )
                {
-                  Message reply = handler.onMessage(getAddress(),message);
+                  Message reply = handler.onMessage(connection,message);
                   if ( (!replied) && (reply != null) )
                   {
                      send(reply);
@@ -457,6 +459,46 @@ public class Node
             stopInternal(); // Stop worker properly
          }
       }
+
+      /**
+       * This inner class of the NodeWorker will be passed to handlers as a shortcut to
+       * NodeWorker values and functionality.
+       */
+      public class NodeWorkerConnection implements Connection
+      {
+         private Map session = new HashMap();
+
+         public Map getSession()
+         {
+            return session;
+         }
+
+         public SocketAddress getRemoteAddress()
+         {
+            return socket.getRemoteSocketAddress();
+         }
+
+         public SocketAddress getLocalAddress()
+         {
+            return socket.getLocalSocketAddress();
+         }
+
+         public long getVersion()
+         {
+            return marshaller.getVersion();
+         }
+
+         public void setVersion(long version)
+         {
+            marshaller.setVersion(version);
+         }
+
+         public void close()
+         {
+            stop();
+         }
+      }
+
    }
 
    public int getPort()

@@ -306,7 +306,7 @@ public class NodeTests
       // Create a handler which repeats and also notifies
       final Semaphore semaphore = new Semaphore(0);
       node.addHandler(new MessageRepeaterHandler(){
-               public void onLeave(SocketAddress addr)
+               public void onLeave(Connection conn)
                {
                   semaphore.release();
                }
@@ -344,11 +344,11 @@ public class NodeTests
       node.addHandler(new MessageRepeaterHandler());
       // Create a mock to make sure all handlers are invoked
       MessageHandler signalHandler = EasyMock.createMock(MessageHandler.class);
-      EasyMock.expect(signalHandler.onJoin((SocketAddress) EasyMock.anyObject())).andReturn(null);
+      EasyMock.expect(signalHandler.onJoin((Connection) EasyMock.anyObject())).andReturn(null);
       EasyMock.expect(signalHandler.onMessage(
-               (SocketAddress) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null);
+               (Connection) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null);
       EasyMock.expect(signalHandler.onMessage(
-               (SocketAddress) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null);
+               (Connection) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null);
       EasyMock.replay(signalHandler);
       node.addHandler(signalHandler);
       // Start node
@@ -383,7 +383,7 @@ public class NodeTests
       node.setAddressSource(source);
       // Create a repeater handler
       node.addHandler(new MessageRepeaterHandler() {
-               public Message onJoin(SocketAddress addr)
+               public Message onJoin(Connection conn)
                {
                   return new VerackMessage(Message.MAGIC_TEST);
                }
@@ -479,16 +479,16 @@ public class NodeTests
 
    public class MessageRepeaterHandler implements MessageHandler
    {
-      public Message onJoin(SocketAddress addr)
+      public Message onJoin(Connection conn)
       {
          return null;
       }
 
-      public void onLeave(SocketAddress addr)
+      public void onLeave(Connection conn)
       {
       }
 
-      public Message onMessage(SocketAddress addr, Message message)
+      public Message onMessage(Connection conn, Message message)
       {
          // Send right back
          return message;

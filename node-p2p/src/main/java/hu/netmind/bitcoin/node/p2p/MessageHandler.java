@@ -29,24 +29,24 @@ public interface MessageHandler
 {
    /**
     * There is a possibility to send a message to a new node on a join.
-    * @param addr The address of the node who joined.
+    * @param conn The connection object to node.
     */
-   Message onJoin(SocketAddress addr);
+   Message onJoin(Connection conn);
 
    /**
     * Called when a node disconnects.
-    * @param addr The address of the node who disconnected.
+    * @param conn The connection object to node.
     */
-   void onLeave(SocketAddress addr);
+   void onLeave(Connection conn);
 
    /**
     * Handle a message from the network. There is a possibility
     * to reply to the incoming message by returning a message.
-    * @param source The source of the message.
+    * @param addr The address of the node who disconnected.
     * @param message The incoming message.
     * @return A message to reply to only the source node for the
     * incoming message, or null if no reply is needed.
     */
-   Message onMessage(SocketAddress source, Message message);
+   Message onMessage(Connection conn, Message message);
 }
 
