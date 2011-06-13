@@ -107,11 +107,11 @@ public class MessageMarshaller
          Message message = (Message) messageType.newInstance();
          input.resetByteCount();
          message.readFrom(input,version,param);
-         message.postReadFrom(input,version,param);
          // If we read less bytes than the announced length of message,
          // it is probable there was an extension to this message and we don't know it
          // yet. Just skip the rest of message, hopefully it was not important :)
          input.skip(header.getLength()+((message instanceof ChecksummedMessage)?24:20)-input.getByteCount());
+         message.postReadFrom(input,version,param);
          logger.debug("deserialized message: {}",message);
          return message;
       } catch ( Exception e ) {

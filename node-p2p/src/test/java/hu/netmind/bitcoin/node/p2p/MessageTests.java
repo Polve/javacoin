@@ -944,5 +944,25 @@ public class MessageTests
       VerackMessage message = (VerackMessage) marshal.read(input);
       message = (VerackMessage) marshal.read(input);
    }
+
+   public void testFutureProofChecksum()
+      throws IOException
+   {
+      // This is an alert with extra bytes
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
+            "F9 BE B4 D9 "+                          // Main network magic bytes
+            "61 6C 65 72 74 00 00 00 00 00 00 00 "+  // "alert" command
+            "0D 00 00 00 "+                          // Payload is 10 bytes long + 3 bytes extra
+            "81 0D 54 F8 "+                          // checksum
+            "06 "+                                   // length of message
+            "41 6C 65 72 74 21 "+                    // message "Alert!"
+            "02 "+                                   // length of signature
+            "4D 65 "+                                // signature "Me"
+            "01 02 03")));                           // 3 extra bytes
+      // Unmarshall 2 messages
+      MessageMarshaller marshal = new MessageMarshaller();
+      AlertMessage message = (AlertMessage) marshal.read(input);
+      Assert.assertTrue(message.verify(),"could not verify message");
+   }
 }
 
