@@ -52,7 +52,7 @@ public class Address
       keyHash = new byte[decoded.length-5];
       System.arraycopy(decoded,1,keyHash,0,keyHash.length);
       byte[] interimHash = new byte[decoded.length-4];
-      System.arraycopy(decoded,0,keyHash,0,keyHash.length+1);
+      System.arraycopy(decoded,0,interimHash,0,interimHash.length);
       // Verify checksum
       try
       {
@@ -92,8 +92,7 @@ public class Address
       System.arraycopy(keyHash,0,composite,1,keyHash.length);
       // Calculate hash and put first 4 bytes to the end of composite
       byte[] interimHash = new byte[keyHash.length+1];
-      interimHash[0]=composite[0];
-      System.arraycopy(keyHash,0,interimHash,1,keyHash.length);
+      System.arraycopy(composite,0,interimHash,0,interimHash.length);
       try
       {
          MessageDigest digest = MessageDigest.getInstance("SHA-256");

@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.impl.wallet;
+package hu.netmind.bitcoin.wallet;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -78,33 +78,33 @@ public class WalletTests
    }
 
    public void testSendMoney()
-      throws NotEnoughMoneyException
+      throws NotEnoughMoneyException, VerificationException
    {
       // Setup transaction that will be returned
       Transaction transaction = EasyMock.createMock(Transaction.class);
       EasyMock.expect(transactionFactory.createTransaction(
-               (String) EasyMock.anyObject(),EasyMock.anyLong())).andReturn(transaction);
+               (byte[]) EasyMock.anyObject(),EasyMock.anyLong())).andReturn(transaction);
       EasyMock.replay(transactionFactory);
       // Setup miner to expect the transaction
       miner.addTransaction(transaction);
       EasyMock.replay(miner);
       // Send money
-      wallet.sendMoney("ADDR",1234);
+      wallet.sendMoney("14rJHyyXwPzRLptBm46VYUQrucQ9BMsXCS",1234);
       // Verify mine was called
       EasyMock.verify(miner);
    }
 
    @Test(expectedExceptions = NotEnoughMoneyException.class)
    public void testSendMoreMoneyThanAvailable()
-      throws NotEnoughMoneyException
+      throws NotEnoughMoneyException, VerificationException
    {
       // Setup factory so it throws an exception
       EasyMock.expect(transactionFactory.createTransaction(
-               (String) EasyMock.anyObject(),EasyMock.anyLong())).andThrow(
+               (byte[]) EasyMock.anyObject(),EasyMock.anyLong())).andThrow(
             new NotEnoughMoneyException("Give me more money!"));
       EasyMock.replay(transactionFactory);
       // Send money
-      wallet.sendMoney("ADDR",1234);
+      wallet.sendMoney("14rJHyyXwPzRLptBm46VYUQrucQ9BMsXCS",1234);
    }
 }
 
