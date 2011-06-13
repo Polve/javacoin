@@ -52,12 +52,16 @@ public class Node
    private static int defaultMaxConnections = 5;
    private static int defaultMinConnections = 3;
    private static int defaultConnectTimeout = 10000; // 10 secs
+   private static int defaultInitialTimeout = 1800000; // 30 mins
+   private static int defaultTimeout = 30000; // 30 seconds
 
    private int port = defaultPort;
    private int soTimeout = defaultSoTimeout;
    private int maxConnections = defaultMaxConnections;
    private int minConnections = defaultMinConnections;
    private int connectTimeout = defaultConnectTimeout;
+   private int initialTimeout = defaultInitialTimeout;
+   private int timeout = defaultTimeout;
 
    private boolean running = false;
    
@@ -181,8 +185,18 @@ public class Node
          Iterator<NodeWorker> workerIterator = workers.iterator();
          while ( workerIterator.hasNext() )
          {
+            long currentTime = System.currentTimeMillis();
             NodeWorker worker = workerIterator.next();
-            if ( ! worker.isRunning() )
+            logger.debug("running on worker {}, created {}, last message received on {}, current time {}",
+                  new Object[] { worker.getAddress(), worker.creationTime, worker.lastIncomingTime, currentTime });
+            if ( 
+                  // If it's not running anymore
+                  (! worker.isRunning()) ||
+                  // OR if there was no message yet, and the "initial timeout" ran out
+                  ((worker.lastIncomingTime==0) && (currentTime-worker.creationTime>initialTimeout)) ||
+                  // OR there was a message, but it was longer than "timeout" ago
+                  ((worker.lastIncomingTime>0) && (currentTime-worker.lastIncomingTime>timeout))
+               )
             {
                // Remove
                workerIterator.remove();
@@ -278,29 +292,21 @@ public class Node
             // Wait for new connections
             while ( running )
             {
+               // Accept a new socket from outside
                Socket socket = null;
                try
                {
                   socket = serverSocket.accept();
-                  // Do some cleanup, remove stopped workers
-                  cleanupWorkers();
-                  // Socket arrived, so setup worker node
-                  if ( (!running) || (! addWorker(socket)) )
-                     socket.close();
                } catch ( SocketTimeoutException e ) {
-                  // Normal for it to time out, this is so that we can
-                  // check the exit criteria, and also to check on workers.
-                  // If there are no workers, bootstrap again. (Note this is only
-                  // on socket timeout, of there is traffic there is no need to 
-                  // get new nodes anyway)
-                  if ( running )
-                  {
-                     synchronized ( workers )
-                     {
-                        if ( workers.size() < minConnections )
-                           bootstrapWorkers();
-                     }
-                  }
+                  // Normal for a socket to time out do nothing!
+               }
+               // Do some cleanup, remove obsolate workers
+               cleanupWorkers();
+               // If socket is available, try to connect
+               try
+               {
+                  if ( (socket!=null) && ((!running) || (! addWorker(socket))) )
+                     socket.close();
                } catch ( IOException e ) {
                   logger.error("could not add worker for socket {}",socket);
                   try
@@ -309,6 +315,15 @@ public class Node
                         socket.close();
                   } catch ( IOException ioe ) {
                      logger.error("could not close socket {}",socket,ioe);
+                  }
+               }
+               // At the end, if there are not enough workers, try to recruit
+               if ( running )
+               {
+                  synchronized ( workers )
+                  {
+                     if ( workers.size() < minConnections )
+                        bootstrapWorkers();
                   }
                }
             }
@@ -341,6 +356,8 @@ public class Node
       private Thread workerThread;
       private MessageMarshaller marshaller = new MessageMarshaller();
       private Connection connection;
+      private long lastIncomingTime = 0;
+      private long creationTime = 0;
 
       private NodeWorker(Socket socket)
          throws IOException
@@ -350,6 +367,7 @@ public class Node
          this.socket=socket;
          this.running = true;
          connection = new NodeWorkerConnection();
+         creationTime = System.currentTimeMillis();
       }
 
       public void start()
@@ -438,6 +456,7 @@ public class Node
                // Get message from stream
                Message message = marshaller.read(input);
                logger.debug("received message {}, from socket {}",message,socket);
+               lastIncomingTime = System.currentTimeMillis();
                // Pass to handlers
                replied = false;
                for ( MessageHandler handler : handlers )
@@ -555,6 +574,24 @@ public class Node
       this.connectTimeout=connectTimeout;
    }
 
+   public int getInitialTimeout()
+   {
+      return initialTimeout;
+   }
+   public void setInitialTimeout(int initialTimeout)
+   {
+      this.initialTimeout=initialTimeout;
+   }
+
+   public int getTimeout()
+   {
+      return timeout;
+   }
+   public void setTimeout(int timeout)
+   {
+      this.timeout=timeout;
+   }
+
    /**
     * Add another message handler for the node. Note: this is only legal before
     * the node is started.
@@ -587,6 +624,8 @@ public class Node
          defaultMaxConnections = Integer.parseInt(bundle.getString("node.max_connections"));
          defaultMinConnections = Integer.parseInt(bundle.getString("node.min_connections"));
          defaultConnectTimeout = Integer.parseInt(bundle.getString("node.connect_timeout"));
+         defaultInitialTimeout = Integer.parseInt(bundle.getString("node.initial_timeout"));
+         defaultTimeout = Integer.parseInt(bundle.getString("node.timeout"));
       } catch ( Exception e ) {
          logger.error("can not read default configuration for node, will go with hardcoded values",e);
       }

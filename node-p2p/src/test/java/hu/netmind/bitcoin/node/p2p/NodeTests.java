@@ -396,6 +396,39 @@ public class NodeTests
       VerackMessage verack = (VerackMessage) dummyNode.read();
    }
 
+   @Test(groups="current")
+   public void testCleanupInitialTimeoutNodes()
+      throws IOException, InterruptedException
+   {
+      DummyNode dummyNode = createDummyNode();
+      // Create bootstrapper
+      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      addresses.add(dummyNode.getAddress());
+      AddressSource source = EasyMock.createMock(AddressSource.class);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
+      EasyMock.replay(source);
+      // Create node
+      Node node = createNode();
+      node.setSoTimeout(100); // Make sure resolution is small enough
+      node.setInitialTimeout(100); // 100 msec
+      node.setAddressSource(source);
+      // Create a handler which repeats and also notifies
+      final Semaphore semaphore = new Semaphore(0);
+      node.addHandler(new MessageRepeaterHandler(){
+               public void onLeave(Connection conn)
+               {
+                  semaphore.release();
+               }
+            });
+      // Start node
+      node.start();
+      // Accept the connection from node
+      dummyNode.accept();
+      // The node should release this node soon, because there was no message
+      if ( ! semaphore.tryAcquire(500,TimeUnit.MILLISECONDS) )
+         Assert.fail("didn't receive the 'leave' event, although the initial timeout should have ran out");
+   }
+
    private class DummyNode 
    {
       private ServerSocket serverSocket;
