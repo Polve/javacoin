@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.impl.wallet;
+package hu.netmind.bitcoin.wallet;
 
 import java.util.Observable;
 import java.util.Observer;

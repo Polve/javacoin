@@ -28,12 +28,12 @@ public interface TransactionFactory
    /**
     * Create a transaction to transfer some amount of money
     * to the specified target address.
-    * @param to The target address.
+    * @param keyHash The target key hash.
     * @param amount The amount to transfer in 100 millionth BTC.
     * @throws NotEnoughMoneyException If there is not enough money
     * to make the transfer.
     */
-   Transaction createTransaction(String to, long amount)
+   Transaction createTransaction(byte[] keyHash, long amount)
       throws NotEnoughMoneyException;
 }
 

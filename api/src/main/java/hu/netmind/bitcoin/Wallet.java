@@ -54,6 +54,16 @@ public interface Wallet extends Observable
     * not yet in the longest branch.
     */
    void sendMoney(String to, long amount)
-      throws NotEnoughMoneyException;
+      throws NotEnoughMoneyException, VerificationException;
+
+   /**
+    * Create a new address in this wallet others can transfer to. It is
+    * recommended not to cache this address, but to create new addresses
+    * for each transaction.
+    * @return A new valid address for this wallet. Money transfer to this
+    * address will (eventually) show up in this wallet.
+    */
+   String createAddress()
+      throws VerificationException;
 }
 

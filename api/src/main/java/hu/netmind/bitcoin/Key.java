@@ -16,29 +16,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.wallet;
-
-import hu.netmind.bitcoin.Observable;
+package hu.netmind.bitcoin;
 
 /**
- * Calculates the balance of the block chain for a given key set. Implementations
- * can choose the method of calculation, the algorithm of selecting transactions,
- * as well as associated risks, and caching mechanisms. Implementation must be
- * thread-safe.
+ * A key capable of being used in BitCoin transactions.
  * @author Robert Brautigam
  */
-public interface BalanceCalculator extends Observable
+public interface Key
 {
-   enum Event
+   enum Type
    {
-      BALANCE_CHANGE
+      MAIN,
+      TEST
    };
 
    /**
-    * Get the balance calculated according to the parameters defined for the
-    * implementation.
-    * @return The balance as calculated in hundred millionth BTC.
+    * Get the type of key. This indicates which network this key
+    * is supposed to be used in.
     */
-   long getBalance();
+   Type getType();
+
+   /**
+    * Return the hash of this key.
+    */
+   byte[] getHash();
 }
 

@@ -32,4 +32,12 @@ public interface KeyStore extends Observable
       KEY_ADDED,
       KEY_REMOVED,
    };
+
+   /**
+    * Create a completely new key that was not used before, and
+    * return it as well as store it.
+    * @return An unused key.
+    */
+   Key createKey();
+
 }
