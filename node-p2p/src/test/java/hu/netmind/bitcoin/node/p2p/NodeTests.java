@@ -396,7 +396,6 @@ public class NodeTests
       VerackMessage verack = (VerackMessage) dummyNode.read();
    }
 
-   @Test(groups="current")
    public void testCleanupInitialTimeoutNodes()
       throws IOException, InterruptedException
    {
