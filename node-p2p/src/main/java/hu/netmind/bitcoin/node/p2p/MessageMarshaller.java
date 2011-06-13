@@ -113,7 +113,11 @@ public class MessageMarshaller
          input.skip(header.getLength()+((message instanceof ChecksummedMessage)?24:20)-input.getByteCount());
          message.postReadFrom(input,version,param);
          logger.debug("deserialized message: {}",message);
+         if ( (message instanceof ChecksummedMessage) && (!((ChecksummedMessage)message).verify()) )
+            throw new IOException("message checksum wrong for message: "+message);
          return message;
+      } catch ( IOException e ) {
+         throw e;
       } catch ( Exception e ) {
          throw new IOException("unexpected exception from the message construction",e);
       }

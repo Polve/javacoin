@@ -964,5 +964,37 @@ public class MessageTests
       AlertMessage message = (AlertMessage) marshal.read(input);
       Assert.assertTrue(message.verify(),"could not verify message");
    }
+
+   @Test(expectedExceptions=IOException.class)
+   public void testWrongMagicDeserialize()
+      throws IOException
+   {
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
+            "11 22 33 44 "+                          // Wrong magic
+            "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
+            "00 00 00 00")));                        // Payload is 0 bytes long
+      // Unmarshall
+      MessageMarshaller marshal = new MessageMarshaller();
+      VerackMessage message = (VerackMessage) marshal.read(input);
+   }
+
+   @Test(expectedExceptions=IOException.class)
+   public void testWrongChecksumDeserialize()
+      throws IOException
+   {
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
+          "F9 BE B4 D9 "+                                     // Main network magic bytes
+          "69 6E 76 00 00 00 00 00 00 00 00 00 "+             // "inv"
+          "25 00 00 00 "+                                     // payload is 36 bytes long
+          "41 01 8A 31 "+                                     // wrong checksum
+          "01 "+                                              // number of items
+          "01 00 00 00 "+                                     // type 1 (tx)
+          "00 01 02 03 04 05 06 07 08 09 0A "+                // hash of tx
+          "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
+          "16 17 18 19 1A 1B 1C 1D 1E 1F")));
+      // Try to deserialize
+      MessageMarshaller marshal = new MessageMarshaller();
+      InvMessage message = (InvMessage) marshal.read(input);
+   }
 }
 
