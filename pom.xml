@@ -12,6 +12,7 @@
     <module>api</module>
     <module>wallet</module>
     <module>node-p2p</module>
+    <module>keystore-ec</module>
     <module>bcwallet</module>
   </modules>
 
