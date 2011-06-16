@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.keystore.ec;
+package hu.netmind.bitcoin.keystore.ecc;
 
 import hu.netmind.bitcoin.KeyStore;
 import hu.netmind.bitcoin.Key;
