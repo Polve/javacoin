@@ -3,7 +3,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>hu.netmind.bitcoin</groupId>
-  <artifactId>bitcoin-keystore-ec</artifactId>
+  <artifactId>bitcoin-keystore-ecc</artifactId>
   <packaging>jar</packaging>
   <version>1.0.0-SNAPSHOT</version>
   <name>BitCoin Key/KeyStore based on Elliptic Curve Cryptography</name>
