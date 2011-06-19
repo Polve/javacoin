@@ -13,6 +13,7 @@
     <module>wallet</module>
     <module>node-p2p</module>
     <module>keyfactory-ecc</module>
+    <module>script</module>
     <module>bcwallet</module>
   </modules>
 
