@@ -37,7 +37,7 @@ import java.util.ArrayList;
 public class BalanceCalculatorTests
 {
    private BlockChain blockChain;
-   private KeyStore keyStore;
+   private KeyFactory keyFactory;
    private Miner miner;
    private BlockBalanceCache cache;
 
@@ -46,7 +46,7 @@ public class BalanceCalculatorTests
    {
       // Setup mocks
       blockChain = EasyMock.createMock(BlockChain.class);
-      keyStore = EasyMock.createMock(KeyStore.class);
+      keyFactory = EasyMock.createMock(KeyFactory.class);
       miner = EasyMock.createMock(Miner.class);
       cache = EasyMock.createMock(BlockBalanceCache.class);
    }
@@ -54,7 +54,7 @@ public class BalanceCalculatorTests
    public void testUpdateInit()
    {
       UpdatingBalanceCalculator calculator = 
-         new UpdatingBalanceCalculatorImpl(blockChain, keyStore, miner);
+         new UpdatingBalanceCalculatorImpl(blockChain, keyFactory, miner);
       Assert.assertEquals(calculator.getBalance(),1);
    }
 
@@ -66,22 +66,22 @@ public class BalanceCalculatorTests
       EasyMock.replay(blockChain);
       // Create calculator
       UpdatingBalanceCalculator calculator = 
-         new UpdatingBalanceCalculatorImpl(blockChain, keyStore, miner);
+         new UpdatingBalanceCalculatorImpl(blockChain, keyFactory, miner);
       // Simulate update change
       observerTrap.getValue().update(null,null);
       // Check for increased balance because the update was invoked
       Assert.assertEquals(calculator.getBalance(),2);
    }
 
-   public void testUpdateKeyStore()
+   public void testUpdateKeyFactory()
    {
       // Capture the observer the calculator registers
       Capture<Observer> observerTrap = new Capture<Observer>();
-      keyStore.addObserver(EasyMock.capture(observerTrap));
-      EasyMock.replay(keyStore);
+      keyFactory.addObserver(EasyMock.capture(observerTrap));
+      EasyMock.replay(keyFactory);
       // Create calculator
       UpdatingBalanceCalculator calculator = 
-         new UpdatingBalanceCalculatorImpl(blockChain, keyStore, miner);
+         new UpdatingBalanceCalculatorImpl(blockChain, keyFactory, miner);
       // Simulate update change
       observerTrap.getValue().update(null,null);
       // Check for increased balance because the update was invoked
@@ -96,7 +96,7 @@ public class BalanceCalculatorTests
       EasyMock.replay(miner);
       // Create calculator
       UpdatingBalanceCalculator calculator = 
-         new UpdatingBalanceCalculatorImpl(blockChain, keyStore, miner);
+         new UpdatingBalanceCalculatorImpl(blockChain, keyFactory, miner);
       // Simulate update change
       observerTrap.getValue().update(null,null);
       // Check for increased balance because the update was invoked
@@ -123,7 +123,7 @@ public class BalanceCalculatorTests
       for ( int i=0; i<5; i++ )
          blockBalances.put(blocks.get(i),(long) 5); // Each block is worth 5
       CachingBalanceCalculatorImpl calculator = new CachingBalanceCalculatorImpl(
-            blockChain, keyStore, miner, cache);
+            blockChain, keyFactory, miner, cache);
       calculator.setBalanceMap(blockBalances);
       // Check results
       Assert.assertEquals(calculator.getBalance(),25);
@@ -148,7 +148,7 @@ public class BalanceCalculatorTests
       for ( int i=0; i<5; i++ )
          blockBalances.put(blocks.get(i),(long) 5); // Each block is worth 5
       CachingBalanceCalculatorImpl calculator = new CachingBalanceCalculatorImpl(
-            blockChain, keyStore, miner, cache);
+            blockChain, keyFactory, miner, cache);
       calculator.setBalanceMap(blockBalances);
       // Check results
       Assert.assertEquals(calculator.getBalance(),25);
@@ -177,7 +177,7 @@ public class BalanceCalculatorTests
       for ( int i=0; i<5; i++ )
          blockBalances.put(blocks.get(i),(long) 5); // Each block is worth 5
       CachingBalanceCalculatorImpl calculator = new CachingBalanceCalculatorImpl(
-            blockChain, keyStore, miner, cache);
+            blockChain, keyFactory, miner, cache);
       calculator.setBalanceMap(blockBalances);
       // Check results
       Assert.assertEquals(calculator.getBalance(),25);

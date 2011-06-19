@@ -18,12 +18,29 @@
 
 package hu.netmind.bitcoin.keystore.ecc;
 
+import java.util.List;
+
 /**
  * A storage mechanism for storing and retrieving keys.
  * @author Robert Brautigam
  */
-public interface Storage
+public interface KeyStore
 {
+   /**
+    * Add a key to the store.
+    */
+   void addKey(KeyImpl key);
 
+   /**
+    * Get the list of keys in the storage.
+    */
+   List<KeyImpl> getKeys();
+
+   /**
+    * Get the key which has the public hash given.
+    * @param pubHash The publich hash of key.
+    * @return The key with the given hash, or 
+    */
+   KeyImpl getKey(byte[] pubHash);
 }
 

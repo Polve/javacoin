@@ -16,38 +16,32 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.keystore.ecc;
-
-import hu.netmind.bitcoin.KeyStore;
-import hu.netmind.bitcoin.Key;
-import java.util.Observable;
+package hu.netmind.bitcoin;
 
 /**
- * A keystore to store EC keys. The storage mechanism is pluggable.
+ * The public key part of a created key pair.
  * @author Robert Brautigam
  */
-public class KeyStoreImpl implements KeyStore extends Observable
+public interface PublicKey
 {
-   private Storage storage;
-   private Key.Type keyType;
+   /**
+    * Return the hash of this key.
+    */
+   byte[] getHash();
 
    /**
-    * Create this keystore with the storage implementation given.
-    * @param storage The storage mechanism to use.
-    * @param keyType The type of keys to create, wither for live network or for test network.
+    * Verify that a block of data was signed with the private counterpart
+    * of this public key.
+    * @param data The data that was supposed to be signed.
+    * @param signature The signature for that data.
+    * @return True if the signature is a correct signature of the given data
+    * for the private key counterpart of this public key, false otherwise.
+    * @throws VerificationException If the signature is in the wrong format, or
+    * other algorithmical or data problems arise. Note: if the signature is merely not
+    * correct, this exception is not thrown, only false is returned.
     */
-   public KeyStoreImpl(Storage storage, Key.Type keyType)
-   {
-      this.storage=storage;
-      this.keyType=keyType;
-   }
+   boolean verify(byte[] data, byte[] signature)
+      throws VerificationException;
 
-   /**
-    * Generate a new key and store it in the given storage.
-    */
-   public Key createKey()
-   {
-      KeyImpl key = new KeyImpl();
-   }
 }
 

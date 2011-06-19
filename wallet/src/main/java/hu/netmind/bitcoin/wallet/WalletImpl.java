@@ -23,7 +23,7 @@ import java.util.Observer;
 import hu.netmind.bitcoin.Key;
 import hu.netmind.bitcoin.Wallet;
 import hu.netmind.bitcoin.Miner;
-import hu.netmind.bitcoin.KeyStore;
+import hu.netmind.bitcoin.KeyFactory;
 import hu.netmind.bitcoin.TransactionFactory;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.NotEnoughMoneyException;
@@ -40,21 +40,21 @@ public class WalletImpl extends Observable implements Wallet
    private final Miner miner;                           // Miner is responsible for taking Transactions
    private final BalanceCalculator balanceCalculator;   // Maintains/calculates the balance
    private final TransactionFactory transactionFactory; // Creates transactions
-   private final KeyStore keyStore;                     // Holds all of our keys
+   private final KeyFactory keyFactory;                     // Holds all of our keys
 
    /**
     * Initialize the Wallet with the block chain, key store and all algorithms.
-    * @param keyStore The cryptographical keys the owner of this wallet owns.
+    * @param keyFactory The cryptographical keys the owner of this wallet owns.
     * @param miner Miner that takes care of transactions.
     * @param balanceCalculator The calculator for the total balance.
     */
    public WalletImpl(Miner miner, BalanceCalculator balanceCalculator,
-         TransactionFactory transactionFactory, KeyStore keyStore)
+         TransactionFactory transactionFactory, KeyFactory keyFactory)
    {
       this.miner=miner;
       this.balanceCalculator=balanceCalculator;
       this.transactionFactory=transactionFactory;
-      this.keyStore=keyStore;
+      this.keyFactory=keyFactory;
       // Register listener to always call update when the balance might change
       balanceCalculator.addObserver(new Observer()
             {
@@ -104,8 +104,8 @@ public class WalletImpl extends Observable implements Wallet
    public String createAddress()
       throws VerificationException
    {
-      Key key = keyStore.createKey();
-      return new Address(key.getType(),key.getHash()).toString();
+      Key key = keyFactory.createKey();
+      return new Address(key.getType(),key.getPublicKey().getHash()).toString();
    }
 }
 

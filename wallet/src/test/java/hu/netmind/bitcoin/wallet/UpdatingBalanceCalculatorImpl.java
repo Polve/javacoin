@@ -19,7 +19,7 @@
 package hu.netmind.bitcoin.wallet;
 
 import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.KeyStore;
+import hu.netmind.bitcoin.KeyFactory;
 import hu.netmind.bitcoin.Miner;
 
 /**
@@ -30,9 +30,9 @@ import hu.netmind.bitcoin.Miner;
 public class UpdatingBalanceCalculatorImpl extends UpdatingBalanceCalculator
 {
    public UpdatingBalanceCalculatorImpl(BlockChain blockChain,
-         KeyStore keyStore, Miner miner)
+         KeyFactory keyFactory, Miner miner)
    {
-      super(blockChain,keyStore,miner);
+      super(blockChain,keyFactory,miner);
    }
 
    public void updateBalance()

@@ -21,7 +21,7 @@ package hu.netmind.bitcoin.wallet;
 import java.util.Observable;
 import java.util.Observer;
 import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.KeyStore;
+import hu.netmind.bitcoin.KeyFactory;
 import hu.netmind.bitcoin.Miner;
 
 /**
@@ -32,7 +32,7 @@ import hu.netmind.bitcoin.Miner;
  *    <li>The BlockChain changes. In this case there might be new transactions 
  *        integrated into the longest chain, or some side-branch becomes the
  *        longest chain.</li>
- *    <li>The KeyStore changes. If the owner receives new keys which were not
+ *    <li>The KeyFactory changes. If the owner receives new keys which were not
  *        generated, but imported, we don't know whether those keys were ever
  *        used, and so the balance might be impacted in unknown ways. Also if
  *        a key is removed the balance potentially changes.</li>
@@ -43,7 +43,7 @@ import hu.netmind.bitcoin.Miner;
 public abstract class UpdatingBalanceCalculator extends Observable implements BalanceCalculator
 {
    private BlockChain blockChain;
-   private KeyStore keyStore;
+   private KeyFactory keyFactory;
    private Miner miner;
 
    private long currentBalance = -1;
@@ -51,10 +51,10 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
    /**
     * Construct the balance calculator with the observed objects.
     */
-   public UpdatingBalanceCalculator(BlockChain blockChain, KeyStore keyStore, Miner miner)
+   public UpdatingBalanceCalculator(BlockChain blockChain, KeyFactory keyFactory, Miner miner)
    {
       this.blockChain=blockChain;
-      this.keyStore=keyStore;
+      this.keyFactory=keyFactory;
       this.miner=miner;
       // Register listeners to all
       blockChain.addObserver(new Observer()
@@ -64,7 +64,7 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
                   fireUpdateBalance();
                }
             });
-      keyStore.addObserver(new Observer()
+      keyFactory.addObserver(new Observer()
             {
                public void update(Observable source, Object event)
                {
@@ -90,9 +90,9 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
       return miner;
    }
 
-   public KeyStore getKeyStore()
+   public KeyFactory getKeyFactory()
    {
-      return keyStore;
+      return keyFactory;
    }
 
    private void fireUpdateBalance()

@@ -21,7 +21,7 @@ package hu.netmind.bitcoin.wallet;
 import hu.netmind.bitcoin.Block;
 import java.util.Map;
 import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.KeyStore;
+import hu.netmind.bitcoin.KeyFactory;
 import hu.netmind.bitcoin.Miner;
 
 /**
@@ -34,9 +34,9 @@ public class CachingBalanceCalculatorImpl extends CachingBalanceCalculator
    private Map<Block, Long> balanceMap;
 
    public CachingBalanceCalculatorImpl(BlockChain blockChain,
-         KeyStore keyStore, Miner miner, BlockBalanceCache cache)
+         KeyFactory keyFactory, Miner miner, BlockBalanceCache cache)
    {
-      super(blockChain, keyStore, miner, cache);
+      super(blockChain, keyFactory, miner, cache);
    }
 
    public void setBalanceMap(Map<Block,Long> balanceMap)

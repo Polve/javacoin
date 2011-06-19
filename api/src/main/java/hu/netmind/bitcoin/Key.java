@@ -37,8 +37,24 @@ public interface Key
    Type getType();
 
    /**
-    * Return the hash of this key.
+    * Sign a block of data with this private key.
+    * @param data The data to sign.
+    * @return The signature of the data.
+    * @throws VerificationException If the generation of signature fails.
     */
-   byte[] getHash();
+   byte[] sign(byte[] data)
+      throws VerificationException;
+
+   /**
+    * Get the public key of this private key.
+    */
+   PublicKey getPublicKey();
+
+   /**
+    * Get the time this key was created. This time should be
+    * the earliest time when the key might have been used the first
+    * time.
+    */
+   long getCreationTime();
 }
 

@@ -18,14 +18,16 @@
 
 package hu.netmind.bitcoin;
 
+import java.util.List;
+
 /**
- * The keystore holds all the private keys of the user/owner. The private
+ * The key factory can be used to create different kinds of keys, but
+ * it also can store/remember all keys that were created.
+ * The private
  * keys are the evidence which transactions belong to the owner, so losing
- * the keys amount to losing all the money associated with the key. Only this
- * keystore needs to be backed up, because all the money can be re-calculated
- * from the keys themselves.
+ * the keys amount to losing all the money associated with the key. 
  */
-public interface KeyStore extends Observable
+public interface KeyFactory extends Observable
 {
    enum Event
    {
@@ -39,5 +41,26 @@ public interface KeyStore extends Observable
     * @return An unused key.
     */
    Key createKey();
+
+   /**
+    * Create a public key from an already existing representation.
+    * This is a public key, and it won't be stored by this factory.
+    * @param data The representation of the public key. The format of
+    * the data is decided by the type of factory.
+    */
+   PublicKey createKey(byte[] data);
+
+   /**
+    * Get the list of all private keys stored in this factory.
+    * @return The list of all keys stored.
+    */
+   List<Key> getKeys();
+
+   /**
+    * Get a specific key that has the given hash.
+    * @param hash The hash of the key to get.
+    * @return The key if found, else null.
+    */
+   Key getKey(byte[] hash);
 
 }

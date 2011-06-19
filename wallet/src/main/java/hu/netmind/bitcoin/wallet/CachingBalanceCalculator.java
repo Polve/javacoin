@@ -21,7 +21,7 @@ package hu.netmind.bitcoin.wallet;
 import hu.netmind.bitcoin.Block;
 import java.util.Observable;
 import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.KeyStore;
+import hu.netmind.bitcoin.KeyFactory;
 import hu.netmind.bitcoin.Miner;
 import java.util.List;
 import org.slf4j.Logger;
@@ -43,10 +43,10 @@ public abstract class CachingBalanceCalculator extends UpdatingBalanceCalculator
 
    private BlockBalanceCache cache;
 
-   public CachingBalanceCalculator(BlockChain blockChain, KeyStore keyStore, Miner miner,
+   public CachingBalanceCalculator(BlockChain blockChain, KeyFactory keyFactory, Miner miner,
          BlockBalanceCache cache)
    {
-      super(blockChain, keyStore, miner);
+      super(blockChain, keyFactory, miner);
       this.cache=cache;
    }
 
