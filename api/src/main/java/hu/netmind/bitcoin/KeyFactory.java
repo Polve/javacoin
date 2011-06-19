@@ -48,7 +48,7 @@ public interface KeyFactory extends Observable
     * @param data The representation of the public key. The format of
     * the data is decided by the type of factory.
     */
-   PublicKey createKey(byte[] data);
+   PublicKey createPublicKey(byte[] data);
 
    /**
     * Get the list of all private keys stored in this factory.

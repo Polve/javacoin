@@ -60,7 +60,7 @@ public class KeyFactoryImpl extends Observable implements KeyFactory
     * This is a public key, and it won't be stored by this factory.
     * @param data The representation of the public key in EC public point.
     */
-   public PublicKey createKey(byte[] data)
+   public PublicKey createPublicKey(byte[] data)
    {
       return new KeyImpl.PublicKeyImpl(data);
    }

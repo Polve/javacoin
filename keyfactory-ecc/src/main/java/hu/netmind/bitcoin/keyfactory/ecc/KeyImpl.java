@@ -68,7 +68,7 @@ public class KeyImpl implements Key
     * Create a key with the given type. With this constructor a new key will be
     * actually generated.
     */
-   KeyImpl(Type type)
+   public KeyImpl(Type type)
    {
       this.type=type;
       // Initialize generator
@@ -89,7 +89,7 @@ public class KeyImpl implements Key
     * Create the key with all attributes supplied suitable for reconstructing an object
     * from storage. With this constructor, nothing will be calculated.
     */
-   KeyImpl(Type type, BigInteger privateKey, byte[] publicKey, byte[] pubHash, long creationTime)
+   public KeyImpl(Type type, BigInteger privateKey, byte[] publicKey, byte[] pubHash, long creationTime)
    {
       this.type=type;
       this.privateKey=privateKey;
@@ -208,7 +208,7 @@ public class KeyImpl implements Key
             derInput.close();
             // Now verify
             ECDSASigner signer = new ECDSASigner();
-            signer.init(true,new ECPublicKeyParameters(
+            signer.init(false,new ECPublicKeyParameters(
                      domainParameters.getCurve().decodePoint(publicKey),domainParameters));
             return signer.verifySignature(data,r,s);
          } catch ( IOException e ) {
