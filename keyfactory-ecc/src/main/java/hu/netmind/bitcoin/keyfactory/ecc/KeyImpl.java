@@ -27,10 +27,12 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.lang.reflect.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.asn1.x9.X9ECParametersHolder;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
 import org.bouncycastle.crypto.params.ECDomainParameters;
@@ -226,12 +228,22 @@ public class KeyImpl implements Key
          
    static
    {
-      random = new SecureRandom();
-      // Per specification BitCoin uses the secp256k1 curve
-      X9ECParameters params = SECNamedCurves.getByName("secp256k1");
-      // Create domain parameters out of the ec parameters
-      domainParameters = new ECDomainParameters(params.getCurve(), params.getG(), 
-            params.getN(),  params.getH(), params.getSeed());
+      try
+      {
+         random = new SecureRandom();
+         // Per specification BitCoin uses the secp256k1 curve, unfortunately
+         // that is not available by default, so we have to reflect. This might
+         // cause some problems when upgrading bouncycastle!
+         Field secp256k1Field = SECNamedCurves.class.getDeclaredField("secp256k1");
+         secp256k1Field.setAccessible(true);
+         X9ECParameters params =  ((X9ECParametersHolder) secp256k1Field.get(null)).getParameters();
+         logger.debug("x9ec parameters: "+params);
+         // Create domain parameters out of the ec parameters
+         domainParameters = new ECDomainParameters(params.getCurve(), params.getG(), 
+               params.getN(),  params.getH(), params.getSeed());
+      } catch ( Exception e ) {
+         logger.error("error initializing ecc encryption, crypto will not work",e);
+      }
    }
 
 }
