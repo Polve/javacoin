@@ -42,6 +42,39 @@
       <sourceDirectory>src</sourceDirectory>
       <plugins>
          <plugin>
+            <artifactId>maven-clean-plugin</artifactId>
+            <version>2.4.1</version>
+            <executions>
+               <execution>
+                  <id>bouncycastle-strip</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>clean</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <excludeDefaultDirectories>true</excludeDefaultDirectories>
+               <filesets>
+                  <fileset>
+                     <directory>target/android-classes/</directory>
+                     <includes>
+                        <include>org/bouncycastle/openssl/**/*.class</include>
+                        <include>org/bouncycastle/voms/**/*.class</include>
+                        <include>org/bouncycastle/x509/**/*.class</include>
+                        <include>org/bouncycastle/jce/**/*.class</include>
+                        <include>org/bouncycastle/ocsp/**/*.class</include>
+                        <include>org/bouncycastle/asn1/pkcs/**/*.class</include>
+                        <include>org/bouncycastle/asn1/cms/**/*.class</include>
+                        <include>org/bouncycastle/asn1/x509/**/*.class</include>
+                        <include>org/bouncycastle/asn1/ocsp/**/*.class</include>
+                        <include>org/bouncycastle/asn1/cmp/**/*.class</include>
+                     </includes>
+                  </fileset>
+               </filesets>   
+            </configuration>
+         </plugin>
+         <plugin>
             <groupId>com.jayway.maven.plugins.android.generation2</groupId>
             <artifactId>maven-android-plugin</artifactId>
             <version>2.8.4</version>
