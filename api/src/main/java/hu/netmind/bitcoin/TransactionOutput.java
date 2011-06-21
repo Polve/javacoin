@@ -26,5 +26,11 @@ package hu.netmind.bitcoin;
  */
 public interface TransactionOutput
 {
+   /**
+    * Get the script fragment to authorize spending. This fragment will
+    * be prepended by the transaction input's script that wants to spend
+    * this output. This script usually contains the public key of the recipient.
+    */
+   ScriptFragment getScript();
 }
 

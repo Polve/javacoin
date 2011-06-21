@@ -19,25 +19,14 @@
 package hu.netmind.bitcoin;
 
 /**
- * A single input definition for a transaction. An input references exactly
- * one output of a previous transaction (in another Block usually), and provides
- * all the information necessary to prove to third parties that the claim for
- * that output is legitimate.
+ * This factory can be used to create scripts from fragments.
  * @author Robert Brautigam
  */
-public interface TransactionInput
+public interface ScriptFactory
 {
    /**
-    * Get the transaction output this input refers to.
-    * @return The output this input claims to use, or null if this is
-    * a "coinbase" (money generated).
+    * Create a script from two script fragments by concatenating them.
     */
-   TransactionOutput getClaimedOutput();
-
-   /**
-    * Get the script fragment that confirms that the referenced output can be
-    * spent. This script should prepend the script in the referenced output.
-    */
-   ScriptFragment getSignatureScript();
+   Script createScript(ScriptFragment fragment1, ScriptFragment fragment2);
 }
 

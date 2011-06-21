@@ -19,25 +19,15 @@
 package hu.netmind.bitcoin;
 
 /**
- * A single input definition for a transaction. An input references exactly
- * one output of a previous transaction (in another Block usually), and provides
- * all the information necessary to prove to third parties that the claim for
- * that output is legitimate.
+ * A fragment of a script. A fragment alone can not be executed, it has to
+ * be completed by other fragments.
  * @author Robert Brautigam
  */
-public interface TransactionInput
+public interface ScriptFragment
 {
    /**
-    * Get the transaction output this input refers to.
-    * @return The output this input claims to use, or null if this is
-    * a "coinbase" (money generated).
+    * Convert this fragment in byte code.
     */
-   TransactionOutput getClaimedOutput();
-
-   /**
-    * Get the script fragment that confirms that the referenced output can be
-    * spent. This script should prepend the script in the referenced output.
-    */
-   ScriptFragment getSignatureScript();
+   byte[] toByteArray();
 }
 

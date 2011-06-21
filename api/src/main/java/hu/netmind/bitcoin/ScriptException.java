@@ -19,25 +19,19 @@
 package hu.netmind.bitcoin;
 
 /**
- * A single input definition for a transaction. An input references exactly
- * one output of a previous transaction (in another Block usually), and provides
- * all the information necessary to prove to third parties that the claim for
- * that output is legitimate.
+ * Thrown when issues are encountered in a script.
  * @author Robert Brautigam
  */
-public interface TransactionInput
+public class ScriptException extends BitCoinException
 {
-   /**
-    * Get the transaction output this input refers to.
-    * @return The output this input claims to use, or null if this is
-    * a "coinbase" (money generated).
-    */
-   TransactionOutput getClaimedOutput();
+   public ScriptException(String message, Throwable e)
+   {
+      super(message,e);
+   }
 
-   /**
-    * Get the script fragment that confirms that the referenced output can be
-    * spent. This script should prepend the script in the referenced output.
-    */
-   ScriptFragment getSignatureScript();
+   public ScriptException(String message)
+   {
+      super(message);
+   }
 }
 

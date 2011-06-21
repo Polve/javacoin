@@ -19,25 +19,23 @@
 package hu.netmind.bitcoin;
 
 /**
- * A single input definition for a transaction. An input references exactly
- * one output of a previous transaction (in another Block usually), and provides
- * all the information necessary to prove to third parties that the claim for
- * that output is legitimate.
+ * A script which can be run to authorize the spending of a
+ * transaction output by a transaction input. It is a concatenation
+ * of the signature script in the transaction input and the script in the
+ * transaction output.
  * @author Robert Brautigam
  */
-public interface TransactionInput
+public interface Script extends ScriptFragment
 {
    /**
-    * Get the transaction output this input refers to.
-    * @return The output this input claims to use, or null if this is
-    * a "coinbase" (money generated).
+    * Execute the script and provide the output decision whether
+    * spending of the given txIn is authorized.
+    * @param tx The transaction which contains the input for spending.
+    * @param txIn The input to verify.
+    * @return True if spending is approved by this script, false otherwise.
+    * @throws ScriptException If script can not be executed, or is an invalid script.
     */
-   TransactionOutput getClaimedOutput();
-
-   /**
-    * Get the script fragment that confirms that the referenced output can be
-    * spent. This script should prepend the script in the referenced output.
-    */
-   ScriptFragment getSignatureScript();
+   boolean execute(Transaction tx, TransactionInput txIn)
+      throws ScriptException;
 }
 

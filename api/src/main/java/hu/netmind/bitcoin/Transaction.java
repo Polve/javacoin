@@ -42,6 +42,14 @@ import java.util.List;
  */
 public interface Transaction
 {
+   enum SignatureHashType
+   {
+      SIGHASH_ALL,
+      SIGHASH_NONE,
+      SIGHASH_SINGLE,
+      SIGHASH_ANYONECANPAY
+   };
+
    /**
     * Get the all the transaction input specifications. These are the sources
     * where the money is coming from. 
@@ -54,6 +62,19 @@ public interface Transaction
     * the amount (or parts of it) provided by the inputs.
     */
    List<TransactionOutput> getOutputs();
+
+   /**
+    * Provide a hash of this transaction applicable to a given input 
+    * suitable for signature of that input.
+    * @param type The type of signature to generate.
+    * @param txIn The input to generate the hash for. Depending on the signature type
+    * this input may get special treatment compared to the other inputs.
+    * @param block Which script block to include in the hash. By default this should be 0
+    * (include full output script). It is different from 0 only when called from a script
+    * itself which has blocks.
+    * @return The signature compatible with BitCoin.
+    */
+   byte[] getSignatureHash(SignatureHashType type, TransactionInput txIn, int block);
 }
 
 
