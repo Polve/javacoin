@@ -25,8 +25,13 @@ package hu.netmind.bitcoin;
 public interface ScriptFactory
 {
    /**
-    * Create a script from two script fragments by concatenating them.
+    * Parse a byte array representation of a script fragment.
     */
-   Script createScript(ScriptFragment fragment1, ScriptFragment fragment2);
+   ScriptFragment createFragment(byte[] byteArray);
+
+   /**
+    * Create a script from script fragments by concatenating them.
+    */
+   Script createScript(ScriptFragment fragments...);
 }
 
