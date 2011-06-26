@@ -52,6 +52,8 @@ public class KeyFactoryImpl extends Observable implements KeyFactory
    {
       KeyImpl key = new KeyImpl(keyType);
       keyStore.addKey(key);
+      setChanged();
+      notifyObservers(Event.KEY_ADDED); 
       return key;
    }
 
