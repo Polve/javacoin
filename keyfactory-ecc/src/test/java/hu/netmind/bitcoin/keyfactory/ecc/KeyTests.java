@@ -22,6 +22,9 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.easymock.EasyMock;
 import hu.netmind.bitcoin.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.Arrays;
 
 /**
  * @author Robert Brautigam
@@ -29,6 +32,8 @@ import hu.netmind.bitcoin.*;
 @Test
 public class KeyTests
 {
+   private static Logger logger = LoggerFactory.getLogger(KeyTests.class);
+
    public void testCreateCallsStore()
    {
       // Create mock
@@ -80,6 +85,11 @@ public class KeyTests
       KeyFactoryImpl factory = new KeyFactoryImpl(store,Key.Type.MAIN);
       // Create key
       Key key = factory.createKey();
+      // Print values to debug
+      byte[] publicKey = ((KeyImpl.PublicKeyImpl) key.getPublicKey()).getPublicKey();
+      byte[] publicKeyHash =  key.getPublicKey().getHash();
+      logger.debug("key public key: "+Arrays.toString(publicKey)+" ("+(publicKey.length)+" bytes)");
+      logger.debug("key public key hash: "+Arrays.toString(publicKeyHash)+" ("+(publicKeyHash.length)+" bytes)");
       // Sign data
       byte[] signature = key.sign(data);
       // Now verify using the public key

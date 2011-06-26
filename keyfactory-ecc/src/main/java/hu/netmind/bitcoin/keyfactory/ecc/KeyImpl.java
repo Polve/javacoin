@@ -171,7 +171,7 @@ public class KeyImpl implements Key
             byte[] shaResult = shaDigest.digest(publicKey);
             RIPEMD160Digest ripeDigest = new RIPEMD160Digest();
             ripeDigest.update(shaResult,0,shaResult.length);
-            byte[] hash = new byte[ripeDigest.getDigestSize()]; // Should be actually 20 bytes (160 bits)
+            hash = new byte[ripeDigest.getDigestSize()]; // Should be actually 20 bytes (160 bits)
             ripeDigest.doFinal(hash,0);
          } catch ( NoSuchAlgorithmException e ) {
             throw new RuntimeException("could not get SHA-256 algorithm, crypto will not work at all",e);
