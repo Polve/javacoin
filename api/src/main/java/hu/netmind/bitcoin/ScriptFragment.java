@@ -26,6 +26,21 @@ package hu.netmind.bitcoin;
 public interface ScriptFragment
 {
    /**
+    * Get the "subscript" from this fragment of script. A subscript is needed
+    * for correctly hashing input (with the script fragment of the output).
+    * This method removes the given signatures from the script fragment 
+    * (which normally shouldn't be a part of the output script), and all
+    * OP_CODESEPARATOR operations. Note that after these operations the
+    * fragment might not be a valid script anymore, so it only an array of bytes.
+    * @param sigs Any number of signatures to be removed from this fragment.
+    * @return The bytes remaining after removing the given signatures and all
+    * OP_CODESEPARATOR operations.
+    */
+   byte[] getSubscript(byte[]... sigs)
+      throws ScriptException;
+
+
+   /**
     * Convert this fragment in byte code.
     */
    byte[] toByteArray();
