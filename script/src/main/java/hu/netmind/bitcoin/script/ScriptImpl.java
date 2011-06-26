@@ -30,6 +30,7 @@ import java.security.NoSuchAlgorithmException;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import java.io.IOException;
 import java.util.Stack;
+import java.util.Arrays;
 
 /**
  * Implements running a script.
@@ -366,22 +367,39 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   throw new ScriptException("OP_XOR is disabled");
                case OP_EQUAL:
                case OP_EQUALVERIFY:
-                  int a = popInt(stack,"executing OP_EQUAL(VERIFY)");
-                  int b = popInt(stack,"executing OP_EQUAL(VERIFY)");
+                  // Make comparison
+                  x1 = stack.pop();
+                  x2 = stack.pop();
+                  boolean equalResult = false;
+                  if ( (x1 instanceof Number) && (x2 instanceof Number) )
+                  {
+                     // Compare two numbers
+                     equalResult = x1.equals(x2);
+                  }
+                  else if ( (x1 instanceof byte[]) && (x2 instanceof byte[]) )
+                  {
+                     // Compare two arrays
+                     equalResult = Arrays.equals((byte[]) x1, (byte[]) x2);
+                  } 
+                  else
+                  {
+                     throw new ScriptException("comparing non-compatible values: "+x1+" vs. "+x2);
+                  }
+                  // Handle result
                   if ( instruction.getOperation()==Operation.OP_EQUALVERIFY )
                   {
                      // If VERIFY is called exit on false, and DON'T leave true in stack
-                     if ( a != b )
+                     if ( ! equalResult )
                         return false;
                   }
                   else
                   {
                      // Put result on stack
-                     stack.push( (a==b)?1:0 );
+                     stack.push( (equalResult)?1:0 );
                   }
                   break;
                case OP_1ADD:
-                  a = popInt(stack,"executing OP_1ADD");
+                  int a = popInt(stack,"executing OP_1ADD");
                   stack.push( (a+1) );
                   break;
                case OP_1SUB:
@@ -413,7 +431,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   break;
                case OP_ADD:
                   a = popInt(stack,"executing OP_ADD");
-                  b = popInt(stack,"executing OP_ADD");
+                  int b = popInt(stack,"executing OP_ADD");
                   stack.push( (a+b) );
                   break;
                case OP_SUB:

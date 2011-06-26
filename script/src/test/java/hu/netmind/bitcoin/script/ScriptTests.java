@@ -104,6 +104,12 @@ public class ScriptTests
       execute("");
    }
 
+   public void testInvalidOperation()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_1 OP_RESERVED"));
+   }
+
    // Constants tests
 
    public void testFalseResult()
@@ -314,5 +320,34 @@ public class ScriptTests
    {
       Assert.assertTrue(execute("OP_1 OP_2 OP_3 OP_4 OP_2SWAP OP_DROP"));
    }
+   
+   // "Splice" tests
+
+   public void testSize()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_PUSHDATA1 <01 02 03 04> OP_SIZE OP_1SUB OP_1SUB OP_1SUB"));
+   }
+
+   // Bitwise logic tests
+
+   public void testEqualsNumber()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_5 OP_6 OP_1SUB OP_EQUAL"));
+   }
+
+   public void testEqualsVerifyNumber()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_0 OP_5 OP_6 OP_1SUB OP_EQUALVERIFY"));
+   }
+
+   public void testEqualsData()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_PUSHDATA1 <01 02 03 04> CONSTANT <01 02 03 04> OP_EQUAL"));
+   }
+
 }
 
