@@ -79,7 +79,7 @@ public class InstructionInputStream extends InputStream
          return null;
       // If it's got parameters, then determine length of data that follows
       int parameterLength = 0;
-      if ( (opcode>=1) && (opcode<=76) ) // Constant
+      if ( (opcode>=1) && (opcode<76) ) // Constant
       {
          // This is a constant that with opcode length
          parameterLength = opcode;

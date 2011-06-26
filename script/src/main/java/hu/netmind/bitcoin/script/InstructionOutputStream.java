@@ -73,6 +73,7 @@ public class InstructionOutputStream extends OutputStream
       {
          if ( (instruction.getData().length < 0) || (instruction.getData().length>0xff) )
             throw new IOException("tried to write data with length not below 256: "+instruction.getData().length+", use OP_PUSHDATA2 (or OP_PUSHDATA4)");
+         write((byte)instruction.getOperation().getCode());
          int len = instruction.getData().length;
          write( (byte)(len & 0xff) );
          if ( ! ommitData )
@@ -82,6 +83,7 @@ public class InstructionOutputStream extends OutputStream
       {
          if ( (instruction.getData().length < 0) || (instruction.getData().length>0xffff) )
             throw new IOException("tried to write data with length not below 65536: "+instruction.getData().length+", use OP_PUSHDATA4");
+         write((byte)instruction.getOperation().getCode());
          int len = instruction.getData().length;
          write( (byte)(len & 0xff) );
          write( (byte)((len>>8) & 0xff) );
@@ -92,6 +94,7 @@ public class InstructionOutputStream extends OutputStream
       {
          if ( instruction.getData().length < 0 )
             throw new IOException("tried to write data with invalid length: "+instruction.getData().length);
+         write((byte)instruction.getOperation().getCode());
          int len = instruction.getData().length;
          write( (byte)(len & 0xff) );
          write( (byte)((len>>8) & 0xff) );

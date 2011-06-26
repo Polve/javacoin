@@ -355,6 +355,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                case OP_SIZE:
                   byte[] data = popData(stack,"executing OP_SIZE");
                   stack.push(data.length);
+                  break;
                case OP_INVERT:
                   throw new ScriptException("OP_INVERT is disabled");
                case OP_AND:
