@@ -32,6 +32,6 @@ public interface ScriptFactory
    /**
     * Create a script from script fragments by concatenating them.
     */
-   Script createScript(ScriptFragment fragments...);
+   Script createScript(ScriptFragment... fragments);
 }
 
