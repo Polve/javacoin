@@ -159,5 +159,56 @@ public class ScriptTests
    {
       Assert.assertTrue(execute("OP_PUSHDATA4 <01 02 03 04> OP_SIZE OP_1SUB OP_1SUB OP_1SUB"));
    }
+
+   // Flow control tests
+
+   public void testNop()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_NOP"));
+   }
+
+   public void testIfConcept()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_1 OP_IF OP_0 OP_ENDIF"));
+   }
+
+   public void testIfElseExecutes()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_0 OP_1 OP_IF OP_NOP OP_ELSE OP_1 OP_ENDIF"));
+   }
+
+   public void testIfNoElse()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_IF OP_0 OP_ENDIF"));
+   }
+
+   @Test(expectedExceptions=ScriptException.class)
+   public void testIfNoEndif()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_IF OP_0"));
+   }
+
+   public void testNotif()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_1 OP_0 OP_NOTIF OP_0 OP_ENDIF"));
+   }
+
+   public void testVerify()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_0 OP_1 OP_VERIFY"));
+   }
+
+   public void testReturn()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_1 OP_RETURN"));
+   }
 }
 
