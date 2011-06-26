@@ -26,12 +26,20 @@ public interface ScriptFactory
 {
    /**
     * Parse a byte array representation of a script fragment.
+    * @param byteArray The bytes of the script.
     */
    ScriptFragment createFragment(byte[] byteArray);
 
    /**
     * Create a script from script fragments by concatenating them.
+    * @param sigScript The fragment residing in the transaction output trying
+    * to spend an input. This script fragment usually contains a signature and
+    * is executed first.
+    * @param pubScript The script fragment from the output that the input wants
+    * to spend. This script usually contains the hash of the public key the amount
+    * in the output is addressed to. This fragment is the second part of the validation
+    * script.
     */
-   Script createScript(ScriptFragment... fragments);
+   Script createScript(ScriptFragment sigScript, ScriptFragment pubScript);
 }
 
