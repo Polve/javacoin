@@ -690,7 +690,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
    {
       // Determine hash type first (last byte of pubKey)
       Transaction.SignatureHashType sigType = null;
-      switch ( (pubKey[pubKey.length-1] & 0xff) )
+      switch ( (sig[sig.length-1] & 0xff) )
       {
          case 0x01:
             sigType = Transaction.SignatureHashType.SIGHASH_ALL;
@@ -707,17 +707,18 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
          default:
             throw new ScriptException("found unknown signature type on while checking signature: "+(pubKey[pubKey.length-1]&0xff));
       }
-      // Create public key to check (also remove last byte)
-      byte[] pubKeyRaw = new byte[pubKey.length-1];
-      System.arraycopy(pubKey,0,pubKeyRaw,0,pubKeyRaw.length);
-      PublicKey publicKey = keyFactory.createPublicKey(pubKeyRaw);
+      // Remove last byte from sig
+      byte[] sigRaw = new byte[sig.length-1];
+      System.arraycopy(sig,0,sigRaw,0,sigRaw.length);
+      // Create public key to check
+      PublicKey publicKey = keyFactory.createPublicKey(pubKey);
       // Re-create hash of the transaction
       byte[] transactionHash = tx.getSignatureHash(sigType,txIn,subscript);
       // Now check that the sig is the encrypted transaction hash (done with the
       // private key corresponding to the public key at hand)
       try
       {
-         return publicKey.verify(transactionHash,sig);
+         return publicKey.verify(transactionHash,sigRaw);
       } catch ( VerificationException e ) {
          throw new ScriptException("verification exception while checking signature",e);
       }
@@ -726,7 +727,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
    private ScriptFragmentImpl fragment(int position)
    {
       byte[] fragment = new byte[toByteArray().length-position];
-      System.arraycopy(toByteArray(),0,fragment,0,fragment.length);
+      System.arraycopy(toByteArray(),position,fragment,0,fragment.length);
       return new ScriptFragmentImpl(fragment);
    }
 }

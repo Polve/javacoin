@@ -28,6 +28,7 @@ import hu.netmind.bitcoin.ScriptException;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.KeyFactory;
+import hu.netmind.bitcoin.PublicKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -499,6 +500,117 @@ public class ScriptTests
       Assert.assertTrue(execute(
                "CONSTANT <"+HexUtil.toHexString("The quick brown fox jumps over the lazy dog".getBytes())+"> "+
                "OP_DUP OP_SHA256 OP_SHA256 OP_SWAP OP_HASH256 OP_EQUAL"));
+   }
+
+   public void testChecksigNoSeparator()
+      throws Exception
+   {
+      // Create data
+      byte[] signature = new byte[] { 100, 101, 102, 103, 110, 3 };
+      byte[] pubkey = new byte[] { 44, 42, 53, 12, 3, 1, 1, 1, 1, 1 };
+      byte[] hash = new byte[] { 1, 2, 3, 4 };
+      // Create transaction mock and return hash
+      Transaction tx = EasyMock.createMock(Transaction.class);
+      TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
+      EasyMock.expect(tx.getSignatureHash(
+               EasyMock.eq(Transaction.SignatureHashType.SIGHASH_ALL), 
+               EasyMock.eq(txIn),
+               EasyMock.aryEq(HexUtil.toByteArray("07 0A 2C 2A 35 0C 03 01 01 01 01 01 AC"))
+               )).andReturn(hash);
+      EasyMock.replay(tx);
+      // Create key factory and expect verify call to public key
+      PublicKey publicKey = EasyMock.createMock(PublicKey.class);
+      EasyMock.expect(publicKey.verify(EasyMock.aryEq(hash),EasyMock.aryEq(signature))).andReturn(true);
+      EasyMock.replay(publicKey);
+      KeyFactory keyFactory = EasyMock.createMock(KeyFactory.class);
+      EasyMock.expect(keyFactory.createPublicKey(EasyMock.aryEq(pubkey))).andReturn(publicKey);
+      EasyMock.replay(keyFactory);
+      // Create script
+      ScriptImpl scriptImpl = new ScriptImpl(toScript(
+               "CONSTANT <"+HexUtil.toHexString(signature)+" 01> "+
+               "CONSTANT <"+HexUtil.toHexString(pubkey)+"> "+
+               "OP_CHECKSIG"
+               ),keyFactory,0);
+      logger.debug("executing checksig script in bytes: "+HexUtil.toHexString(scriptImpl.toByteArray()));
+      // Run the script and check
+      Assert.assertTrue(scriptImpl.execute(tx,txIn));
+      EasyMock.verify(tx);
+      EasyMock.verify(publicKey);
+      EasyMock.verify(keyFactory);
+   }
+
+   public void testChecksigVerifyNoSeparator()
+      throws Exception
+   {
+      // Create data
+      byte[] signature = new byte[] { 100, 101, 102, 103, 110, 3 };
+      byte[] pubkey = new byte[] { 44, 42, 53, 12, 3, 1, 1, 1, 1, 1 };
+      byte[] hash = new byte[] { 1, 2, 3, 4 };
+      // Create transaction mock and return hash
+      Transaction tx = EasyMock.createMock(Transaction.class);
+      TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
+      EasyMock.expect(tx.getSignatureHash(
+               EasyMock.eq(Transaction.SignatureHashType.SIGHASH_ALL), 
+               EasyMock.eq(txIn),
+               EasyMock.aryEq(HexUtil.toByteArray("00 07 0A 2C 2A 35 0C 03 01 01 01 01 01 AD"))
+               )).andReturn(hash);
+      EasyMock.replay(tx);
+      // Create key factory and expect verify call to public key
+      PublicKey publicKey = EasyMock.createMock(PublicKey.class);
+      EasyMock.expect(publicKey.verify(EasyMock.aryEq(hash),EasyMock.aryEq(signature))).andReturn(true);
+      EasyMock.replay(publicKey);
+      KeyFactory keyFactory = EasyMock.createMock(KeyFactory.class);
+      EasyMock.expect(keyFactory.createPublicKey(EasyMock.aryEq(pubkey))).andReturn(publicKey);
+      EasyMock.replay(keyFactory);
+      // Create script
+      ScriptImpl scriptImpl = new ScriptImpl(toScript("OP_0 "+
+               "CONSTANT <"+HexUtil.toHexString(signature)+" 01> "+
+               "CONSTANT <"+HexUtil.toHexString(pubkey)+"> "+
+               "OP_CHECKSIGVERIFY"
+               ),keyFactory,0);
+      logger.debug("executing checksig verify script in bytes: "+HexUtil.toHexString(scriptImpl.toByteArray()));
+      // Run the script and check
+      Assert.assertFalse(scriptImpl.execute(tx,txIn));
+      EasyMock.verify(tx);
+      EasyMock.verify(publicKey);
+      EasyMock.verify(keyFactory);
+   }
+
+   public void testChecksigSeparator()
+      throws Exception
+   {
+      // Create data
+      byte[] signature = new byte[] { 100, 101, 102, 103, 110, 3 };
+      byte[] pubkey = new byte[] { 44, 42, 53, 12, 3, 1, 1, 1, 1, 1 };
+      byte[] hash = new byte[] { 1, 2, 3, 4 };
+      // Create transaction mock and return hash
+      Transaction tx = EasyMock.createMock(Transaction.class);
+      TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
+      EasyMock.expect(tx.getSignatureHash(
+               EasyMock.eq(Transaction.SignatureHashType.SIGHASH_ALL), 
+               EasyMock.eq(txIn),
+               EasyMock.aryEq(HexUtil.toByteArray("07 0A 2C 2A 35 0C 03 01 01 01 01 01 AC"))
+               )).andReturn(hash);
+      EasyMock.replay(tx);
+      // Create key factory and expect verify call to public key
+      PublicKey publicKey = EasyMock.createMock(PublicKey.class);
+      EasyMock.expect(publicKey.verify(EasyMock.aryEq(hash),EasyMock.aryEq(signature))).andReturn(true);
+      EasyMock.replay(publicKey);
+      KeyFactory keyFactory = EasyMock.createMock(KeyFactory.class);
+      EasyMock.expect(keyFactory.createPublicKey(EasyMock.aryEq(pubkey))).andReturn(publicKey);
+      EasyMock.replay(keyFactory);
+      // Create script
+      ScriptImpl scriptImpl = new ScriptImpl(toScript("OP_1 OP_NEGATE OP_CODESEPARATOR "+
+               "CONSTANT <"+HexUtil.toHexString(signature)+" 01> "+
+               "CONSTANT <"+HexUtil.toHexString(pubkey)+"> "+
+               "OP_CHECKSIG OP_CODESEPARATOR"
+               ),keyFactory,0);
+      logger.debug("executing checksig separator script in bytes: "+HexUtil.toHexString(scriptImpl.toByteArray()));
+      // Run the script and check
+      Assert.assertTrue(scriptImpl.execute(tx,txIn));
+      EasyMock.verify(tx);
+      EasyMock.verify(publicKey);
+      EasyMock.verify(keyFactory);
    }
 
 }
