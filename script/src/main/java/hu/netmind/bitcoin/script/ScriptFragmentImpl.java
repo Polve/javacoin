@@ -19,8 +19,11 @@
 package hu.netmind.bitcoin.script;
 
 import hu.netmind.bitcoin.ScriptFragment;
+import hu.netmind.bitcoin.ScriptException;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +50,41 @@ public class ScriptFragmentImpl implements ScriptFragment
    public InstructionInputStream getInstructionInput()
    {
       return new InstructionInputStream(new ByteArrayInputStream(byteArray));
+   }
+
+   public byte[] getSubscript(byte[]... sigs)
+      throws ScriptException
+   {
+      try
+      {
+         ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+         InstructionOutputStream output = new InstructionOutputStream(byteOutput);
+         InstructionInputStream input = getInstructionInput();
+         Instruction instruction = null;
+         while ( (instruction=input.readInstruction()) != null )
+         {
+            if ( instruction.getData() == null )
+            {
+               // There is no parameter, so if this is not an OP_CODESEPARATOR copy
+               // instruction to the output
+               if ( instruction.getOperation() != Operation.OP_CODESEPARATOR )
+                  output.writeInstruction(instruction);
+            }
+            else
+            {
+               // If there is data then filter out the sigs
+               boolean matches = false;
+               for ( int i=0; (i<sigs.length) && (!matches); i++ )
+                  matches |= Arrays.equals(sigs[i],instruction.getData());
+               // Copy only if it was not matched, but preserve the instruction itself
+               // which acutally invalidates the script (you can't parse this)
+               output.writeInstruction(instruction, matches);
+            }
+         }
+         return byteOutput.toByteArray();
+      } catch ( IOException e ) {
+         throw new ScriptException("exception while generating subscript",e);
+      }
    }
 
    /**

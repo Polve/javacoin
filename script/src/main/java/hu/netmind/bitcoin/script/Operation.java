@@ -28,7 +28,7 @@ public enum Operation
    OP_0(0),
    OP_PUSHDATA1(76),
    OP_PUSHDATA2(77),
-   OP_PUSHDATA3(78),
+   OP_PUSHDATA4(78),
    OP_1NEGATE(79),
    OP_1(81),
    OP_2(82),

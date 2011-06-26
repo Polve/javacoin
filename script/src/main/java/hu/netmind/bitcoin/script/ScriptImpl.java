@@ -20,8 +20,14 @@ package hu.netmind.bitcoin.script;
 
 import hu.netmind.bitcoin.ScriptException;
 import hu.netmind.bitcoin.Script;
+import hu.netmind.bitcoin.PublicKey;
+import hu.netmind.bitcoin.KeyFactory;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
+import hu.netmind.bitcoin.VerificationException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import java.io.IOException;
 import java.util.Stack;
 
@@ -31,9 +37,18 @@ import java.util.Stack;
  */
 public class ScriptImpl extends ScriptFragmentImpl implements Script
 {
-   ScriptImpl(byte[] script)
+   private int pubFragmentPointer;
+   private KeyFactory keyFactory;
+
+   /**
+    * Create the script from the full bytes, and the pub script. We need
+    * to pub script because the transaction hashing depends on it.
+    */
+   ScriptImpl(byte[] script, KeyFactory keyFactory, int pubFragmentLength)
    {
       super(script);
+      this.keyFactory=keyFactory;
+      this.pubFragmentPointer=pubFragmentLength;
    }
 
    private byte[] popData(Stack stack, String reason)
@@ -81,6 +96,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       // Create script runtime
       Stack stack = new Stack();
       Stack altStack = new Stack();
+      int blockPointer = pubFragmentPointer;
       // Run the script
       try
       {
@@ -92,7 +108,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                case CONSTANT:
                case OP_PUSHDATA1:
                case OP_PUSHDATA2:
-               case OP_PUSHDATA3:
+               case OP_PUSHDATA4:
                   // These instruction all push data to stack
                   stack.push(instruction.getData());
                   break;
@@ -510,24 +526,80 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                      stack.push(0);
                   break;
                case OP_RIPEMD160:
+                  data = popData(stack,"executing OP_RIPEMD160");
+                  stack.push(digestRIPEMD160(data));
                   break;
                case OP_SHA1:
+                  data = popData(stack,"executing OP_SHA1");
+                  stack.push(digestMessage(data,"SHA-1"));
                   break;
                case OP_SHA256:
+                  data = popData(stack,"executing OP_SHA256");
+                  stack.push(digestMessage(data,"SHA-256"));
                   break;
                case OP_HASH160:
+                  data = popData(stack,"executing OP_HASH160");
+                  stack.push(digestRIPEMD160(digestMessage(data,"SHA-256")));
                   break;
                case OP_HASH256:
+                  data = popData(stack,"executing OP_HASH256");
+                  stack.push(digestMessage(digestMessage(data,"SHA-256"),"SHA-256"));
                   break;
                case OP_CODESEPARATOR:
+                  blockPointer = input.getPointer(); // Remember the position
                   break;
                case OP_CHECKSIG:
+                  // Get input
+                  byte[] pubKey = popData(stack,"executing OP_CHECKSIG");
+                  byte[] sig = popData(stack,"executing OP_CHECKSIG");
+                  // Push result to stack
+                  if ( verify(sig,pubKey,tx,txIn,fragment(blockPointer).getSubscript(sig)) )
+                     stack.push(1);
+                  else
+                     stack.push(0);
                   break;
                case OP_CHECKSIGVERIFY:
+                  // Get input
+                  pubKey = popData(stack,"executing OP_CHECKSIGVERIFY");
+                  sig = popData(stack,"executing OP_CHECKSIGVERIFY");
+                  // Abort if it does not verify
+                  if ( ! verify(sig,pubKey,tx,txIn,fragment(blockPointer).getSubscript(sig)) )
+                     return false;
                   break;
                case OP_CHECKMULTISIG:
-                  break;
                case OP_CHECKMULTISIGVERIFY:
+                  // Get inputs
+                  int pubKeyCount = popInt(stack,"executing OP_CHECKMULTISIG/OP_CHECKMULTISIGVERIFY");
+                  byte[][] pubKeys = new byte[pubKeyCount][];
+                  for ( int i=0; i<pubKeyCount; i++ )
+                     pubKeys[i] = popData(stack,"executing OP_CHECKMULTISIG/OP_CHECKMULTISIGVERIFY");
+                  int sigCount = popInt(stack,"executing OP_CHECKMULTISIG/OP_CHECKMULTISIGVERIFY");
+                  byte[][] sigs = new byte[sigCount][];
+                  for ( int i=0; i<sigCount; i++ )
+                     sigs[i] = popData(stack,"executing OP_CHECKMULTISIG/OP_CHECKMULTISIGVERIFY");
+                  // Prepare subscript (remove all sigs)
+                  byte[] subscript = fragment(blockPointer).getSubscript(sigs);
+                  // Verify signatures now. Note that all signatures must verify, but not
+                  // all public keys must correspond to signatures (there are more public keys
+                  // than signatures). Also, public keys and signatures should be ordered, so no need
+                  // to try all combinations.
+                  int currentSig = 0; // Current sig to verify
+                  for ( int i=0; (i<pubKeyCount) && (currentSig<sigCount); i++ )
+                     if ( verify(sigs[currentSig],pubKeys[i],tx,txIn,subscript) )
+                        currentSig++; // Go to next signature
+                  // Result
+                  if ( instruction.getOperation()==Operation.OP_CHECKMULTISIGVERIFY )
+                  {
+                     if ( currentSig < sigCount )
+                        return false; // Not all signatures were verified, so exit
+                  }
+                  else
+                  {
+                     if ( currentSig < sigCount )
+                        stack.push(0);
+                     else
+                        stack.push(1);
+                  }
                   break;
                case OP_PUBKEYHASH:
                   throw new ScriptException("OP_PUBKEYHASH is a pseudo-word, should not be in a script");
@@ -566,5 +638,71 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       return popBoolean(stack,"determining script result");
    }
 
+   private byte[] digestRIPEMD160(byte[] data)
+   {
+      RIPEMD160Digest ripeDigest = new RIPEMD160Digest();
+      ripeDigest.update(data,0,data.length);
+      byte[] hash = new byte[ripeDigest.getDigestSize()]; // Should be actually 20 bytes (160 bits)
+      ripeDigest.doFinal(hash,0);
+      return hash;
+   }
+
+   private byte[] digestMessage(byte[] data, String algorithm)
+      throws ScriptException
+   {
+      try
+      {
+         MessageDigest digest = MessageDigest.getInstance(algorithm);
+         digest.update(data,0,data.length);
+         return digest.digest();
+      } catch ( NoSuchAlgorithmException e ) {
+         throw new ScriptException("could not produce given digest: "+algorithm,e);
+      }
+   }
+
+   private boolean verify(byte[] sig, byte[] pubKey, Transaction tx, TransactionInput txIn, byte[] subscript)
+      throws ScriptException
+   {
+      // Determine hash type first (last byte of pubKey)
+      Transaction.SignatureHashType sigType = null;
+      switch ( (pubKey[pubKey.length-1] & 0xff) )
+      {
+         case 0x01:
+            sigType = Transaction.SignatureHashType.SIGHASH_ALL;
+            break;
+         case 0x02:
+            sigType = Transaction.SignatureHashType.SIGHASH_NONE;
+            break;
+         case 0x03:
+            sigType = Transaction.SignatureHashType.SIGHASH_SINGLE;
+            break;
+         case 0x80:
+            sigType = Transaction.SignatureHashType.SIGHASH_ANYONECANPAY;
+            break;
+         default:
+            throw new ScriptException("found unknown signature type on while checking signature: "+(pubKey[pubKey.length-1]&0xff));
+      }
+      // Create public key to check (also remove last byte)
+      byte[] pubKeyRaw = new byte[pubKey.length-1];
+      System.arraycopy(pubKey,0,pubKeyRaw,0,pubKeyRaw.length);
+      PublicKey publicKey = keyFactory.createPublicKey(pubKeyRaw);
+      // Re-create hash of the transaction
+      byte[] transactionHash = tx.getSignatureHash(sigType,txIn,subscript);
+      // Now check that the sig is the encrypted transaction hash (done with the
+      // private key corresponding to the public key at hand)
+      try
+      {
+         return publicKey.verify(transactionHash,sig);
+      } catch ( VerificationException e ) {
+         throw new ScriptException("verification exception while checking signature",e);
+      }
+   }
+
+   private ScriptFragmentImpl fragment(int position)
+   {
+      byte[] fragment = new byte[toByteArray().length-position];
+      System.arraycopy(toByteArray(),0,fragment,0,fragment.length);
+      return new ScriptFragmentImpl(fragment);
+   }
 }
 

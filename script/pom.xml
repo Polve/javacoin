@@ -47,6 +47,11 @@
 
   <dependencies>
      <dependency>
+        <groupId>bouncycastle</groupId>
+        <artifactId>bcprov-jdk16</artifactId>
+        <version>140</version>
+     </dependency>
+     <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
         <artifactId>bitcoin-api</artifactId>
         <version>1.0.0-SNAPSHOT</version>
