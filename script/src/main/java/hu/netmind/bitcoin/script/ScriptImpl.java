@@ -31,6 +31,8 @@ import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import java.io.IOException;
 import java.util.Stack;
 import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements running a script.
@@ -38,6 +40,8 @@ import java.util.Arrays;
  */
 public class ScriptImpl extends ScriptFragmentImpl implements Script
 {
+   private static Logger logger = LoggerFactory.getLogger(ScriptImpl.class);
+
    private int pubFragmentPointer;
    private KeyFactory keyFactory;
 
@@ -593,6 +597,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   break;
                case OP_CHECKMULTISIG:
                case OP_CHECKMULTISIGVERIFY:
+                  logger.debug("executing OP_CHECKMULTISIG(VERIFY)...");
                   // Get inputs
                   int pubKeyCount = popInt(stack,"executing OP_CHECKMULTISIG/OP_CHECKMULTISIGVERIFY");
                   byte[][] pubKeys = new byte[pubKeyCount][];
@@ -602,6 +607,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   byte[][] sigs = new byte[sigCount][];
                   for ( int i=0; i<sigCount; i++ )
                      sigs[i] = popData(stack,"executing OP_CHECKMULTISIG/OP_CHECKMULTISIGVERIFY");
+                  logger.debug("found {} public keys and {} signatures",pubKeyCount, sigCount);
                   // Prepare subscript (remove all sigs)
                   byte[] subscript = fragment(blockPointer).getSubscript(sigs);
                   // Verify signatures now. Note that all signatures must verify, but not
@@ -610,8 +616,12 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   // to try all combinations.
                   int currentSig = 0; // Current sig to verify
                   for ( int i=0; (i<pubKeyCount) && (currentSig<sigCount); i++ )
+                  {
+                     logger.debug("verifying signature {} with public key {}",currentSig,i);
                      if ( verify(sigs[currentSig],pubKeys[i],tx,txIn,subscript) )
                         currentSig++; // Go to next signature
+                  }
+                  logger.debug("total {} signatures successfully verified out of {}",currentSig, sigCount);
                   // Result
                   if ( instruction.getOperation()==Operation.OP_CHECKMULTISIGVERIFY )
                   {
