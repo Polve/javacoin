@@ -453,5 +453,53 @@ public class ScriptTests
       Assert.assertTrue(execute("OP_5 OP_0 OP_10 OP_WITHIN OP_VERIFY OP_4 OP_5 OP_10 OP_WITHIN OP_NOT"));
    }
 
+   // Crypto
+
+   public void testRipemd160()
+      throws Exception
+   {
+      // Samples from wikipedia
+      Assert.assertTrue(execute(
+               "CONSTANT <37 F3 32 F6 8D B7 7B D9 D7 ED D4 96 95 71 AD 67 1C F9 DD 3B> "+
+               "CONSTANT <"+HexUtil.toHexString("The quick brown fox jumps over the lazy dog".getBytes())+"> "+
+               "OP_RIPEMD160 OP_EQUAL"));
+   }
+
+   public void testSha1()
+      throws Exception
+   {
+      // Samples from wikipedia
+      Assert.assertTrue(execute(
+               "CONSTANT <2F D4 E1 C6 7A 2D 28 FC ED 84 9E E1 BB 76 E7 39 1B 93 EB 12> "+
+               "CONSTANT <"+HexUtil.toHexString("The quick brown fox jumps over the lazy dog".getBytes())+"> "+
+               "OP_SHA1 OP_EQUAL"));
+   }
+
+   public void testSha256()
+      throws Exception
+   {
+      // Samples from wikipedia
+      Assert.assertTrue(execute(
+               "CONSTANT <D7 A8 FB B3 07 D7 80 94 69 CA 9A BC B0 08 2E 4F 8D 56 51 E4 6D 3C DB 76 2D 02 D0 BF 37 C9 E5 92> "+
+               "CONSTANT <"+HexUtil.toHexString("The quick brown fox jumps over the lazy dog".getBytes())+"> "+
+               "OP_SHA256 OP_EQUAL"));
+   }
+
+   public void testHash160()
+      throws Exception
+   {
+      Assert.assertTrue(execute(
+               "CONSTANT <"+HexUtil.toHexString("The quick brown fox jumps over the lazy dog".getBytes())+"> "+
+               "OP_DUP OP_SHA256 OP_RIPEMD160 OP_SWAP OP_HASH160 OP_EQUAL"));
+   }
+
+   public void testHash256()
+      throws Exception
+   {
+      Assert.assertTrue(execute(
+               "CONSTANT <"+HexUtil.toHexString("The quick brown fox jumps over the lazy dog".getBytes())+"> "+
+               "OP_DUP OP_SHA256 OP_SHA256 OP_SWAP OP_HASH256 OP_EQUAL"));
+   }
+
 }
 
