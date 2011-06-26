@@ -210,5 +210,109 @@ public class ScriptTests
    {
       Assert.assertFalse(execute("OP_1 OP_RETURN"));
    }
+
+   // Stack tests
+
+   public void testAltstack()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_1 OP_0 OP_TOALTSTACK OP_VERIFY OP_FROMALTSTACK"));
+   }
+
+   public void testIfdup()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_IFDUP OP_TOALTSTACK OP_IFDUP OP_VERIFY"));
+   }
+
+   public void testDepth()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_0 OP_DEPTH"));
+   }
+
+   public void testDrop()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_DROP"));
+   }
+
+   public void testDup()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_DUP OP_VERIFY"));
+   }
+
+   public void testNip()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_1 OP_NIP OP_VERIFY"));
+   }
+
+   public void testOver()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_OVER OP_VERIFY OP_DROP"));
+   }
+
+   public void testPick()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_0 OP_0 OP_3 OP_PICK OP_VERIFY OP_DEPTH OP_1SUB OP_1SUB OP_1SUB"));
+   }
+
+   public void testRoll()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_0 OP_0 OP_3 OP_ROLL OP_VERIFY OP_DEPTH OP_1SUB OP_1SUB"));
+   }
+
+   public void testRot()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_1 OP_0 OP_1 OP_ROT OP_VERIFY OP_VERIFY"));
+   }
+
+   public void testSwap()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_1 OP_0 OP_SWAP OP_VERIFY"));
+   }
+
+   public void testTuck()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_1 OP_0 OP_TUCK OP_1ADD OP_VERIFY OP_VERIFY"));
+   }
+
+   public void test2Drop()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_0 OP_2DROP"));
+   }
+
+   public void test2Dup()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_2DUP OP_DEPTH OP_1SUB OP_1SUB OP_1SUB"));
+   }
+
+   public void test2Over()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_2 OP_3 OP_4 OP_2OVER OP_DROP"));
+   }
+
+   public void test2Rot()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_2 OP_3 OP_4 OP_5 OP_6 OP_2ROT OP_DROP"));
+   }
+
+   public void test2Swap()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_2 OP_3 OP_4 OP_2SWAP OP_DROP"));
+   }
 }
 
