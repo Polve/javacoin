@@ -349,5 +349,109 @@ public class ScriptTests
       Assert.assertTrue(execute("OP_PUSHDATA1 <01 02 03 04> CONSTANT <01 02 03 04> OP_EQUAL"));
    }
 
+   // Arithmetic tests
+
+   public void testAddSub1()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_1SUB OP_1ADD"));
+   }
+
+   public void testNeg()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_3 OP_NEGATE OP_1ADD OP_1ADD OP_1ADD"));
+   }
+
+   public void testAbs()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1NEGATE OP_ABS"));
+   }
+
+   public void testNot()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_0 OP_NOT OP_VERIFY OP_2 OP_NOT"));
+   }
+
+   public void test0NotEquals()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_2 OP_0NOTEQUAL OP_VERIFY OP_0 OP_0NOTEQUAL"));
+   }
+
+   public void testAddSub()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_5 OP_6 OP_ADD OP_10 OP_SUB"));
+   }
+
+   public void testBoolOps()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_1 OP_BOOLOR OP_BOOLAND"));
+   }
+
+   public void testNumEquals()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_5 OP_6 OP_1SUB OP_NUMEQUAL"));
+   }
+
+   public void testNumEqualsVerify()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_0 OP_5 OP_6 OP_1SUB OP_NUMEQUALVERIFY"));
+   }
+
+   public void testNumNotEquals()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_5 OP_6 OP_NUMNOTEQUAL"));
+   }
+
+   public void testLessThan()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_5 OP_6 OP_LESSTHAN"));
+   }
+
+   public void testGreaterThan()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_5 OP_6 OP_GREATERTHAN"));
+   }
+
+   public void testLessThanEqual()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_6 OP_5 OP_LESSTHANOREQUAL"));
+   }
+
+   public void testGreaterThanEqual()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_5 OP_5 OP_GREATERTHANOREQUAL"));
+   }
+
+   public void testMin()
+      throws Exception
+   {
+      Assert.assertFalse(execute("OP_0 OP_1 OP_MIN"));
+   }
+
+   public void testMax()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_0 OP_1 OP_MAX"));
+   }
+
+   public void testWithin()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_5 OP_0 OP_10 OP_WITHIN OP_VERIFY OP_4 OP_5 OP_10 OP_WITHIN OP_NOT"));
+   }
+
 }
 

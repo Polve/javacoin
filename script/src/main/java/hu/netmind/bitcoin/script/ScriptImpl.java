@@ -422,21 +422,27 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                      stack.push( (a) );
                   break;
                case OP_NOT:
-               case OP_0NOTEQUAL:
-                  a = popInt(stack,"executing OP_NOT/OP_0NOTEQUAL");
+                  a = popInt(stack,"executing OP_NOT");
                   if ( a == 0 )
                      stack.push(1);
                   else
                      stack.push(0);
                   break;
+               case OP_0NOTEQUAL:
+                  a = popInt(stack,"executing OP_0NOTEQUAL");
+                  if ( a != 0 )
+                     stack.push(1);
+                  else
+                     stack.push(0);
+                  break;
                case OP_ADD:
-                  a = popInt(stack,"executing OP_ADD");
                   int b = popInt(stack,"executing OP_ADD");
+                  a = popInt(stack,"executing OP_ADD");
                   stack.push( (a+b) );
                   break;
                case OP_SUB:
-                  a = popInt(stack,"executing OP_SUB");
                   b = popInt(stack,"executing OP_SUB");
+                  a = popInt(stack,"executing OP_SUB");
                   stack.push( (a-b) );
                   break;
                case OP_MUL:
@@ -450,95 +456,95 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                case OP_RSHIFT:
                   throw new ScriptException("OP_RSHIFT is disabled");
                case OP_BOOLAND:
-                  a = popInt(stack,"executing OP_BOOLAND");
                   b = popInt(stack,"executing OP_BOOLAND");
+                  a = popInt(stack,"executing OP_BOOLAND");
                   if ( (a!=0) && (b!=0) )
                      stack.push(1);
                   else
                      stack.push(0);
                   break;
                case OP_BOOLOR:
-                  a = popInt(stack,"executing OP_BOOLOR");
                   b = popInt(stack,"executing OP_BOOLOR");
+                  a = popInt(stack,"executing OP_BOOLOR");
                   if ( (a!=0) || (b!=0) )
                      stack.push(1);
                   else
                      stack.push(0);
                   break;
                case OP_NUMEQUAL:
-                  a = popInt(stack,"executing OP_NUMEQUAL");
                   b = popInt(stack,"executing OP_NUMEQUAL");
+                  a = popInt(stack,"executing OP_NUMEQUAL");
                   if ( a == b )
                      stack.push(1);
                   else
                      stack.push(0);
                   break;
                case OP_NUMEQUALVERIFY:
-                  a = popInt(stack,"executing OP_NUMEQUALVERIFY");
                   b = popInt(stack,"executing OP_NUMEQUALVERIFY");
+                  a = popInt(stack,"executing OP_NUMEQUALVERIFY");
                   if ( a != b )
                      return false; // Abort
                   break;
                case OP_NUMNOTEQUAL:
-                  a = popInt(stack,"executing OP_NUMNOTEQUAL");
                   b = popInt(stack,"executing OP_NUMNOTEQUAL");
+                  a = popInt(stack,"executing OP_NUMNOTEQUAL");
                   if ( a != b )
                      stack.push(1);
                   else
                      stack.push(0);
                   break;
                case OP_LESSTHAN:
-                  a = popInt(stack,"executing OP_LESSTHAN");
                   b = popInt(stack,"executing OP_LESSTHAN");
+                  a = popInt(stack,"executing OP_LESSTHAN");
                   if ( a < b )
                      stack.push(1);
                   else
                      stack.push(0);
                   break;
                case OP_GREATERTHAN:
-                  a = popInt(stack,"executing OP_GREATERTHAN");
                   b = popInt(stack,"executing OP_GREATERTHAN");
+                  a = popInt(stack,"executing OP_GREATERTHAN");
                   if ( a > b )
                      stack.push(1);
                   else
                      stack.push(0);
                   break;
                case OP_LESSTHANOREQUAL:
-                  a = popInt(stack,"executing OP_LESSTHANOREQUAL");
                   b = popInt(stack,"executing OP_LESSTHANOREQUAL");
+                  a = popInt(stack,"executing OP_LESSTHANOREQUAL");
                   if ( a <= b )
                      stack.push(1);
                   else
                      stack.push(0);
                   break;
                case OP_GREATERTHANOREQUAL:
-                  a = popInt(stack,"executing OP_GREATERTHANOREQUAL");
                   b = popInt(stack,"executing OP_GREATERTHANOREQUAL");
+                  a = popInt(stack,"executing OP_GREATERTHANOREQUAL");
                   if ( a >= b )
                      stack.push(1);
                   else
                      stack.push(0);
                   break;
                case OP_MIN:
-                  a = popInt(stack,"executing OP_MIN");
                   b = popInt(stack,"executing OP_MIN");
+                  a = popInt(stack,"executing OP_MIN");
                   if ( a < b )
                      stack.push(a);
                   else
                      stack.push(b);
                   break;
                case OP_MAX:
-                  a = popInt(stack,"executing OP_MAX");
                   b = popInt(stack,"executing OP_MAX");
+                  a = popInt(stack,"executing OP_MAX");
                   if ( a > b )
                      stack.push(a);
                   else
                      stack.push(b);
                   break;
                case OP_WITHIN:
-                  a = popInt(stack,"executing OP_WITHIN");
-                  int min = popInt(stack,"executing OP_WITHIN");
                   int max = popInt(stack,"executing OP_WITHIN");
+                  int min = popInt(stack,"executing OP_WITHIN");
+                  a = popInt(stack,"executing OP_WITHIN");
                   if ( (a>=min) && (a<=max) )
                      stack.push(1);
                   else
