@@ -51,6 +51,13 @@ public interface Transaction
    };
 
    /**
+    * Get the block in which this transaction resides. Note that the same transaction content
+    * can be in different blocks also (two miners creating a competing block at the same time), but
+    * each transaction will be a separate instance, and hence have a separate parent block.
+    */
+   Block getBlock();
+
+   /**
     * Get the all the transaction input specifications. These are the sources
     * where the money is coming from. 
     */

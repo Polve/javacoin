@@ -28,6 +28,11 @@ package hu.netmind.bitcoin;
 public interface TransactionInput
 {
    /**
+    * Get the transaction this input is a part of.
+    */
+   Transaction getTransaction();
+
+   /**
     * Get the transaction output this input refers to.
     * @return The output this input claims to use, or null if this is
     * a "coinbase" (money generated).
