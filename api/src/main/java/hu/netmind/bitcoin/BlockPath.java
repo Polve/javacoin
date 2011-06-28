@@ -33,5 +33,13 @@ public interface BlockPath
     * Get the blocks starting from the genesis block as a list.
     */
    List<Block> getBlocks();
+
+   /**
+    * Get the claimer input for a given output.
+    * @return The input if the output's transaction is in this path,
+    * and an input is found in this path which claims this output. 
+    * Null otherwise.
+    */
+   TransactionInput getClaimerInput(TransactionOutput output);
 }
 
