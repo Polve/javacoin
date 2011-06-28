@@ -494,17 +494,17 @@ public class MessageTests
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"tx");
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
-      Assert.assertEquals(message.getTransaction().getVersion(),1);
-      Assert.assertEquals(message.getTransaction().getLockTime(),0);
-      Assert.assertEquals(message.getTransaction().getInputs().size(),1);
-      Assert.assertEquals(message.getTransaction().getInputs().get(0).getReferencedTxOutIndex(),0);
-      Assert.assertEquals(message.getTransaction().getInputs().get(0).getSequence(),0xffffffffl);
-      Assert.assertEquals(message.getTransaction().getInputs().get(0).getSignatureScript().length,139);
-      Assert.assertEquals(message.getTransaction().getOutputs().size(),2);
-      Assert.assertEquals(message.getTransaction().getOutputs().get(0).getValue(),5000000l);
-      Assert.assertEquals(message.getTransaction().getOutputs().get(1).getValue(),3354000000l);
-      Assert.assertEquals(message.getTransaction().getOutputs().get(0).getScript().length,25);
-      Assert.assertEquals(message.getTransaction().getOutputs().get(1).getScript().length,25);
+      Assert.assertEquals(message.getTx().getVersion(),1);
+      Assert.assertEquals(message.getTx().getLockTime(),0);
+      Assert.assertEquals(message.getTx().getInputs().size(),1);
+      Assert.assertEquals(message.getTx().getInputs().get(0).getReferencedTxOutIndex(),0);
+      Assert.assertEquals(message.getTx().getInputs().get(0).getSequence(),0xffffffffl);
+      Assert.assertEquals(message.getTx().getInputs().get(0).getSignatureScript().length,139);
+      Assert.assertEquals(message.getTx().getOutputs().size(),2);
+      Assert.assertEquals(message.getTx().getOutputs().get(0).getValue(),5000000l);
+      Assert.assertEquals(message.getTx().getOutputs().get(1).getValue(),3354000000l);
+      Assert.assertEquals(message.getTx().getOutputs().get(0).getScript().length,25);
+      Assert.assertEquals(message.getTx().getOutputs().get(1).getScript().length,25);
    }
 
    public void testTxSerialize()
@@ -538,7 +538,7 @@ public class MessageTests
       List<TxOut> outputs = new ArrayList<TxOut>();
       outputs.add(out1);
       outputs.add(out2);
-      TxMessage tx = new TxMessage(Message.MAGIC_MAIN,new Transaction(1,inputs,outputs,0));
+      TxMessage tx = new TxMessage(Message.MAGIC_MAIN,new Tx(1,inputs,outputs,0));
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
@@ -609,8 +609,8 @@ public class MessageTests
       List<TxOut> outputs = new ArrayList<TxOut>();
       outputs.add(out1);
       outputs.add(out2);
-      Transaction tx = new Transaction(1,inputs,outputs,0);
-      List<Transaction> transactions = new ArrayList<Transaction>();
+      Tx tx = new Tx(1,inputs,outputs,0);
+      List<Tx> transactions = new ArrayList<Tx>();
       transactions.add(tx);
       BlockMessage block = new BlockMessage(Message.MAGIC_MAIN,
             new BlockHeader(1,

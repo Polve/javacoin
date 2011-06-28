@@ -25,14 +25,14 @@ import java.util.ArrayList;
 /**
  * @author Robert Brautigam
  */
-public class Transaction
+public class Tx
 {
    private long version;
    private List<TxIn> inputs;
    private List<TxOut> outputs;
    private long lockTime;
 
-   public Transaction(long version, List<TxIn> inputs, List<TxOut> outputs, long lockTime)
+   public Tx(long version, List<TxIn> inputs, List<TxOut> outputs, long lockTime)
    {
       this.version=version;
       this.inputs=inputs;
@@ -40,7 +40,7 @@ public class Transaction
       this.lockTime=lockTime;
    }
 
-   Transaction()
+   Tx()
    {
    }
 
@@ -65,6 +65,15 @@ public class Transaction
          outputs.add(out);
       }
       lockTime = input.readUInt32();
+   }
+
+   /**
+    * Write this transaction object with the latest protocol version to the output.
+    */
+   public void writeTo(BitCoinOutputStream output)
+      throws IOException
+   {
+      writeTo(output,0);
    }
 
    void writeTo(BitCoinOutputStream output, long protocolVersion)

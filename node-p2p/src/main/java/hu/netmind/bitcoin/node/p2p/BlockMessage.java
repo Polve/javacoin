@@ -28,9 +28,9 @@ import java.util.ArrayList;
 public class BlockMessage extends ChecksummedMessage
 {
    private BlockHeader header;
-   private List<Transaction> transactions;
+   private List<Tx> transactions;
 
-   public BlockMessage(long magic, BlockHeader header, List<Transaction> transactions)
+   public BlockMessage(long magic, BlockHeader header, List<Tx> transactions)
       throws IOException
    {
       super(magic,"block");
@@ -53,12 +53,12 @@ public class BlockMessage extends ChecksummedMessage
       long txCount = input.readUIntVar();
       if ( (txCount<0) || (txCount>=Integer.MAX_VALUE) )
          throw new IOException("too many transactions in the block: "+txCount);
-      transactions = new ArrayList<Transaction>();
+      transactions = new ArrayList<Tx>();
       for ( long i = 0; i<txCount; i++ )
       {
-         Transaction transaction = new Transaction();
-         transaction.readFrom(input,protocolVersion,param);
-         transactions.add(transaction);
+         Tx tx = new Tx();
+         tx.readFrom(input,protocolVersion,param);
+         transactions.add(tx);
       }
    }
 
@@ -68,8 +68,8 @@ public class BlockMessage extends ChecksummedMessage
       super.writeTo(output,protocolVersion);
       header.writeTo(output,protocolVersion);
       output.writeUIntVar(transactions.size());
-      for ( Transaction transaction : transactions )
-         transaction.writeTo(output,protocolVersion);
+      for ( Tx tx : transactions )
+         tx.writeTo(output,protocolVersion);
    }
 
    public String toString()
@@ -82,7 +82,7 @@ public class BlockMessage extends ChecksummedMessage
       return header;
    }
 
-   public List<Transaction> getTransactions()
+   public List<Tx> getTransactions()
    {
       return transactions;
    }

@@ -27,13 +27,13 @@ import java.util.ArrayList;
  */
 public class TxMessage extends ChecksummedMessage
 {
-   private Transaction transaction;
+   private Tx tx;
 
-   public TxMessage(long magic, Transaction transaction)
+   public TxMessage(long magic, Tx tx)
       throws IOException
    {
       super(magic,"tx");
-      this.transaction=transaction;
+      this.tx=tx;
    }
 
    TxMessage()
@@ -46,25 +46,25 @@ public class TxMessage extends ChecksummedMessage
       throws IOException
    {
       super.readFrom(input,protocolVersion,param);
-      transaction = new Transaction();
-      transaction.readFrom(input,protocolVersion,param);
+      tx = new Tx();
+      tx.readFrom(input,protocolVersion,param);
    }
 
    void writeTo(BitCoinOutputStream output, long protocolVersion)
       throws IOException
    {
       super.writeTo(output,protocolVersion);
-      transaction.writeTo(output,protocolVersion);
+      tx.writeTo(output,protocolVersion);
    }
 
    public String toString()
    {
-      return super.toString()+" tx: "+transaction;
+      return super.toString()+" tx: "+tx;
    }
 
-   public Transaction getTransaction()
+   public Tx getTx()
    {
-      return transaction;
+      return tx;
    }
 }
 
