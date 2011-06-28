@@ -44,5 +44,11 @@ public interface TransactionInput
     * spent. This script should prepend the script in the referenced output.
     */
    ScriptFragment getSignatureScript();
+
+   /**
+    * The sequence number of this input. If the owner transaction is not yet locked it is possible
+    * to update this input by announcing a transaction input with higher sequence number.
+    */
+   long getSequence();
 }
 

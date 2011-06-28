@@ -54,6 +54,7 @@ public interface Transaction
     * Get the block in which this transaction resides. Note that the same transaction content
     * can be in different blocks also (two miners creating a competing block at the same time), but
     * each transaction will be a separate instance, and hence have a separate parent block.
+    * @return The block this transaction is in, or null if transaction is not yet part of any blocks.
     */
    Block getBlock();
 
@@ -69,6 +70,15 @@ public interface Transaction
     * the amount (or parts of it) provided by the inputs.
     */
    List<TransactionOutput> getOutputs();
+
+   /**
+    * Get block number or timestamp at which this transaction becomes locked. Locked means
+    * miners would no longer accept any updates to the transaction, and it's time to include
+    * the transaction in a block.
+    * @return The lock time. If this number is smaller than 500.000.000 then it is a block number,
+    * otherwise it is the time in millis when the lock will engage. It is 0 then the transaction is locked.
+    */
+   long getLockTime();
 
    /**
     * Provide a hash of this transaction applicable to a given input 
