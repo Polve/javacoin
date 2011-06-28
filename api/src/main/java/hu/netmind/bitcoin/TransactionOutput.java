@@ -41,6 +41,11 @@ public interface TransactionOutput
    Transaction getTransaction();
 
    /**
+    * Get the index of this output among all outputs in the transaction.
+    */
+   int getIndex();
+
+   /**
     * Get the value this output carries.
     */
    long getValue();

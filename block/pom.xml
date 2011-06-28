@@ -48,6 +48,12 @@
   <dependencies>
      <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
+        <artifactId>bitcoin-node-p2p</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <type>jar</type>
+     </dependency>
+     <dependency>
+        <groupId>hu.netmind.bitcoin</groupId>
         <artifactId>bitcoin-api</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <type>jar</type>
