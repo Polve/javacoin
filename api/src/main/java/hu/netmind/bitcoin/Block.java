@@ -41,5 +41,10 @@ import java.util.List;
  */
 public interface Block extends TransactionContainer
 {
+   /**
+    * Return the hash of this transaction.
+    */
+   byte[] getHash();
+
 }
 

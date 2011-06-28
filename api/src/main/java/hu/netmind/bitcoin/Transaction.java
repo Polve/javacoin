@@ -81,6 +81,11 @@ public interface Transaction
    long getLockTime();
 
    /**
+    * Return the hash of this transaction.
+    */
+   byte[] getHash();
+
+   /**
     * Provide a hash of this transaction applicable to a given input 
     * suitable for signature of that input.
     * @param type The type of signature to generate.
