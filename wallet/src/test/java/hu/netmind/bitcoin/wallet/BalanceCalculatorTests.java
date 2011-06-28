@@ -37,6 +37,7 @@ import java.util.ArrayList;
 public class BalanceCalculatorTests
 {
    private BlockChain blockChain;
+   private BlockPath blockPath;
    private KeyFactory keyFactory;
    private Miner miner;
    private BlockBalanceCache cache;
@@ -46,6 +47,7 @@ public class BalanceCalculatorTests
    {
       // Setup mocks
       blockChain = EasyMock.createMock(BlockChain.class);
+      blockPath = EasyMock.createMock(BlockPath.class);
       keyFactory = EasyMock.createMock(KeyFactory.class);
       miner = EasyMock.createMock(Miner.class);
       cache = EasyMock.createMock(BlockBalanceCache.class);
@@ -110,9 +112,11 @@ public class BalanceCalculatorTests
       for ( int i=0; i<5; i++ )
          blocks.add(EasyMock.createMock(Block.class));
       // Create block chain
-      EasyMock.expect(blockChain.getLongestChain()).andReturn(blocks).anyTimes();
+      EasyMock.expect(blockChain.getLongestPath()).andReturn(blockPath).anyTimes();
       blockChain.addObserver((Observer)EasyMock.anyObject());
       EasyMock.replay(blockChain);
+      EasyMock.expect(blockPath.getBlocks()).andReturn(blocks).anyTimes();
+      EasyMock.replay(blockPath);
       // Prepare what calls the cache should receive
       EasyMock.expect(cache.getEntry((Block) EasyMock.anyObject())).andReturn(null).anyTimes();
       for ( int i=0; i<5; i++ )
@@ -137,9 +141,11 @@ public class BalanceCalculatorTests
       for ( int i=0; i<5; i++ )
          blocks.add(EasyMock.createMock(Block.class));
       // Create block chain
-      EasyMock.expect(blockChain.getLongestChain()).andReturn(blocks).anyTimes();
+      EasyMock.expect(blockChain.getLongestPath()).andReturn(blockPath).anyTimes();
       blockChain.addObserver((Observer)EasyMock.anyObject());
       EasyMock.replay(blockChain);
+      EasyMock.expect(blockPath.getBlocks()).andReturn(blocks).anyTimes();
+      EasyMock.replay(blockPath);
       // Prepare what calls the cache should receive
       EasyMock.expect(cache.getEntry(blocks.get(4))).andReturn((long) 25).anyTimes();
       EasyMock.replay(cache); // No other calls should be made
@@ -162,9 +168,11 @@ public class BalanceCalculatorTests
       for ( int i=0; i<5; i++ )
          blocks.add(EasyMock.createMock(Block.class));
       // Create block chain
-      EasyMock.expect(blockChain.getLongestChain()).andReturn(blocks).anyTimes();
+      EasyMock.expect(blockChain.getLongestPath()).andReturn(blockPath).anyTimes();
       blockChain.addObserver((Observer)EasyMock.anyObject());
       EasyMock.replay(blockChain);
+      EasyMock.expect(blockPath.getBlocks()).andReturn(blocks).anyTimes();
+      EasyMock.replay(blockPath);
       // Prepare what calls the cache should receive
       EasyMock.expect(cache.getEntry(blocks.get(4))).andReturn(null);
       EasyMock.expect(cache.getEntry(blocks.get(3))).andReturn(null);

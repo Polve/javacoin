@@ -62,7 +62,7 @@ public abstract class CachingBalanceCalculator extends UpdatingBalanceCalculator
       // of thousands of blocks. So this algorithm tries to find the first parent
       // for which we know the balance from cache, then go forward again and
       // put the values into the cache.
-      List<Block> chain = getBlockChain().getLongestChain();
+      List<Block> chain = getBlockChain().getLongestPath().getBlocks();
       int index;
       // Search for newest block for which we know the balance
       for ( index = chain.size()-1; (index >= 0) && (cache.getEntry(chain.get(index))==null) ; index-- );
