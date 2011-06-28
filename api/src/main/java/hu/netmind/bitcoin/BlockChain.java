@@ -40,14 +40,14 @@ public interface BlockChain extends Observable
 {
    enum Event
    {
-      LONGEST_CHAIN_CHANGE
+      LONGEST_PATH_CHANGE
    };
 
    /**
-    * Get the longest chain in this block chain. By "longest"
+    * Get the longest path (chain) in this block chain. By "longest"
     * we mean that it has the most difficulty associated with it.
     */
-   List<Block> getLongestChain();
+   BlockPath getLongestPath();
 
 }
 
