@@ -33,18 +33,34 @@ public class TransactionImpl implements Transaction
    private List<TransactionOutput> outputs;
    private long lockTime;
    private transient Block block; // Only set runtime by block
+   private byte[] hash;
 
    /**
-    * Create the transaction with the inputs, outputs and locking time.
+    * Create the transaction with the inputs, outputs and locking time. This method
+    * computes the transaction hash.
     */
    public TransactionImpl(List<TransactionInput> inputs, List<TransactionOutput> outputs,
          long lockTime)
    {
       this.inputs=inputs;
       this.outputs=outputs;
-      this.lockTime;
+      this.lockTime=lockTime;
+      calculateHash();
    }
    
+   /**
+    * Create the transaction with all the necessary parameters, but also the computed hash.
+    * This constructor should be used when deserializing transactions.
+    */
+   public TransactionImpl(List<TransactionInput> inputs, List<TransactionOutput> outputs,
+         long lockTime, byte[] hash)
+   {
+      this.inputs=inputs;
+      this.outputs=outputs;
+      this.lockTime=lockTime;
+      this.hash=hash;
+   }
+
    public List<TransactionInput> getInputs()
    {
       return inputs;
@@ -71,6 +87,19 @@ public class TransactionImpl implements Transaction
    void setBlock(Block block)
    {
       this.block=block;
+   }
+
+   public byte[] getHash()
+   {
+      return hash;
+   }
+
+   /**
+    * Calculate the hash of the whole transaction.
+    */
+   private void calculateHash()
+   {
+      TODO
    }
 
    /**
