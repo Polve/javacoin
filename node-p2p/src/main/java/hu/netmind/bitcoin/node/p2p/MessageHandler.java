@@ -19,6 +19,7 @@
 package hu.netmind.bitcoin.node.p2p;
 
 import java.net.SocketAddress;
+import java.io.IOException;
 
 /**
  * Implement and register this interface to a Node to receive messages
@@ -31,13 +32,15 @@ public interface MessageHandler
     * There is a possibility to send a message to a new node on a join.
     * @param conn The connection object to node.
     */
-   Message onJoin(Connection conn);
+   Message onJoin(Connection conn)
+      throws IOException;
 
    /**
     * Called when a node disconnects.
     * @param conn The connection object to node.
     */
-   void onLeave(Connection conn);
+   void onLeave(Connection conn)
+      throws IOException;
 
    /**
     * Handle a message from the network. There is a possibility
@@ -47,6 +50,7 @@ public interface MessageHandler
     * @return A message to reply to only the source node for the
     * incoming message, or null if no reply is needed.
     */
-   Message onMessage(Connection conn, Message message);
+   Message onMessage(Connection conn, Message message)
+      throws IOException;
 }
 

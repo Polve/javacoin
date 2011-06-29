@@ -379,15 +379,13 @@ public class Node
          // Invoke listeners
          for ( MessageHandler handler : handlers )
          {
-            Message message = handler.onJoin(connection);
-            if ( message != null )
+            try
             {
-               try
-               {
+               Message message = handler.onJoin(connection);
+               if ( message != null )
                   send(message);
-               } catch ( IOException e ) {
-                  logger.error("failed to send join message {} to {}",message,getAddress());
-               }
+            } catch ( IOException e ) {
+               logger.error("failed to handle join by handler {}",handler);
             }
          }
       }
@@ -411,7 +409,14 @@ public class Node
          }
          // Invoke listeners
          for ( MessageHandler handler : handlers )
-            handler.onLeave(connection);
+         {
+            try
+            {
+               handler.onLeave(connection);
+            } catch ( IOException e ) {
+               logger.error("handler "+handler+" could not execute onLeave()",e);
+            }
+         }
       }
 
       public void stop()
@@ -461,7 +466,13 @@ public class Node
                replied = false;
                for ( MessageHandler handler : handlers )
                {
-                  Message reply = handler.onMessage(connection,message);
+                  Message reply = null;
+                  try
+                  {
+                     reply = handler.onMessage(connection,message);
+                  } catch ( IOException e ) {
+                     logger.error("handler "+handler+" failed to handle message",e);
+                  }
                   if ( (!replied) && (reply != null) )
                   {
                      send(reply);
