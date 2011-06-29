@@ -34,6 +34,9 @@ import hu.netmind.bitcoin.node.p2p.TxIn;
 import hu.netmind.bitcoin.node.p2p.TxOut;
 import hu.netmind.bitcoin.node.p2p.Tx;
 import hu.netmind.bitcoin.node.p2p.BitCoinOutputStream;
+import hu.netmind.bitcoin.node.p2p.HexUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Robert Brautigam
@@ -41,6 +44,8 @@ import hu.netmind.bitcoin.node.p2p.BitCoinOutputStream;
 public class TransactionImpl implements Transaction
 {
    private static final int TX_VERSION = 1;
+   
+   private static Logger logger = LoggerFactory.getLogger(TransactionImpl.class);
 
    private List<TransactionInputImpl> inputs;
    private List<TransactionOutputImpl> outputs;
@@ -152,9 +157,12 @@ public class TransactionImpl implements Transaction
          BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
          tx.writeTo(output);
          output.close();
+         byte[] txBytes = byteOutput.toByteArray();
+         if ( logger.isDebugEnabled() )
+            logger.debug("hashing transaction: {}",HexUtil.toHexString(txBytes));
          // Hash this twice
          MessageDigest digest = MessageDigest.getInstance("SHA-256");
-         byte[] firstHash = digest.digest(byteOutput.toByteArray());
+         byte[] firstHash = digest.digest(txBytes);
          digest.reset();
          hash = digest.digest(firstHash);
       } catch ( NoSuchAlgorithmException e ) {

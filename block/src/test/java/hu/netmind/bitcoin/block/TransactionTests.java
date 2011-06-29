@@ -44,10 +44,10 @@ public class TransactionTests
       // First build the 2 outputs with script
       TransactionOutputImpl output1 = new TransactionOutputImpl(203000000,
          scriptFactory.createFragment(HexUtil.toByteArray(
-            "76 A9 20 CA C8 9D 2F 1F C9 11 1B 38 BC 5F D7 27 8B E6 14 A7 89 C4 88 AC")));
+            "76 A9 14 20 CA C8 9D 2F 1F C9 11 1B 38 BC 5F D7 27 8B E6 14 A7 89 C4 88 AC")));
       TransactionOutputImpl output2 = new TransactionOutputImpl(300000000,
          scriptFactory.createFragment(HexUtil.toByteArray(
-            "76 A9 17 BE E5 04 89 99 BC 6D 7C CD B0 62 AE 06 C8 FD F8 E0 0B 17 88 AC")));
+            "76 A9 14 17 BE E5 04 89 99 BC 6D 7C CD B0 62 AE 06 C8 FD F8 E0 0B 17 88 AC")));
       List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
       outputs.add(output1);
       outputs.add(output2);
@@ -75,7 +75,7 @@ public class TransactionTests
             "17 FE E3 1F 19 59 37 2D 9C 56 AD F2 B3 DA FD 87 "+
             "37 2C D8 2D 21 8C D0 73 97 D7 F5 8D DF DE 9A 42 "+
             "F3")),
-         0xFFFFFFFF); // We assume sequence number was UINT_MAX (not seen in block explorer)
+         0xFFFFFFFFl); // We assume sequence number was UINT_MAX (not seen in block explorer)
       List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
       inputs.add(input);
       // Now build the transaction itself, the hash should be automaticall generated
