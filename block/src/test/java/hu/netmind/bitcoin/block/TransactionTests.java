@@ -54,7 +54,7 @@ public class TransactionTests
       // Before building the input, we have to simulate the claimed output
       Transaction claimedTransaction = EasyMock.createMock(Transaction.class);
       EasyMock.expect(claimedTransaction.getHash()).andReturn(HexUtil.toByteArray(
-               "98 4F 59 A9 1A 14 C2 B5 11 81 57 4A 35 F8 6A F8 36 3D C4 80 F6 8B B2 84 7D 99 FB 49 C1 84 83 2B"));
+               "2B 83 84 C1 49 FB 99 7D 84 B2 8B F6 80 C4 3D 36 F8 6A F8 35 4A 57 81 11 B5 C2 14 1A A9 59 4F 98"));
       EasyMock.replay(claimedTransaction);
       TransactionOutput claimedOutput = EasyMock.createMock(TransactionOutput.class);
       EasyMock.expect(claimedOutput.getTransaction()).andReturn(claimedTransaction);
@@ -79,10 +79,10 @@ public class TransactionTests
       List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
       inputs.add(input);
       // Now build the transaction itself, the hash should be automaticall generated
-      TransactionImpl transaction = new TransactionImpl(inputs,outputs,0); // We assume lock time was 0 (not seen in block explorer)
+      TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
       // Check generated hash
       Assert.assertEquals(HexUtil.toHexString(transaction.getHash()), 
-               "47 19 E0 88 CC 11 05 E7 AA 63 66 15 A5 3F 5E 5B 50 82 EC 22 01 44 7E 5D 4E 51 44 9E 66 70 A7 56");
+               "56 A7 70 66 9E 44 51 4E 5D 7E 44 01 22 EC 82 50 5B 5E 3F A5 15 66 63 AA E7 05 11 CC 88 E0 19 47");
    }
 }
 
