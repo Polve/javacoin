@@ -89,6 +89,7 @@ public class getdata
                      items.add(item);
                      GetDataMessage getdataMessage =  new GetDataMessage(Message.MAGIC_MAIN,items);
                      System.out.println("Sending a request to get data: "+getdataMessage);
+                     return getdataMessage;
                   }
                   if ( (message instanceof TxMessage) || (message instanceof BlockMessage) )
                   {
