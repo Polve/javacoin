@@ -246,13 +246,17 @@ public class NodeTests
    }
 
    public void testAcceptExternalConnection()
-      throws IOException
+      throws IOException, InterruptedException
    {
       // Create & start node
       Node node = createNode();
+      JoinWaiterHandler waiter = new JoinWaiterHandler();
+      node.addHandler(waiter);
       node.start();
       // Create dummy
       DummyNode dummyNode = createDummyNode(new InetSocketAddress(node.getPort()));
+      // Wait unilt the node really connected to the node
+      waiter.waitForJoin();
       // Check connection
       node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message","Signature"));
       AlertMessage message = (AlertMessage) dummyNode.read();
@@ -346,8 +350,8 @@ public class NodeTests
       // Create a mock to make sure all handlers are invoked
       MessageHandler signalHandler = EasyMock.createMock(MessageHandler.class);
       EasyMock.expect(signalHandler.onJoin((Connection) EasyMock.anyObject())).andReturn(null);
-      EasyMock.expect(signalHandler.onMessage(
-               (Connection) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null).times(2);
+      EasyMock.expect(signalHandler.onMessage( // Whether this is once or twice depends on timing, so we only need at least once to make sure it is invoked
+               (Connection) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null).atLeastOnce();
       signalHandler.onLeave((Connection) EasyMock.anyObject()); 
       EasyMock.expectLastCall().anyTimes(); // This depends on timing whether it is actually invoked from cleanup()
       EasyMock.replay(signalHandler);
@@ -359,12 +363,13 @@ public class NodeTests
       // Send two messages to node
       dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message1","Signature"));
       dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message2","Signature"));
-      // Check that first message only arrives once
+      // Check that easy is only replied once by the node, meaning that only one repeater handler
+      // is allowed to answer.
       AlertMessage incoming = (AlertMessage) dummyNode.read();
       Assert.assertEquals(incoming.getMessage(),"Message1");
       incoming = (AlertMessage) dummyNode.read();
       Assert.assertEquals(incoming.getMessage(),"Message2");
-      // Check that the last control handler was invoked at both messages
+      // Check that the last handler is invoked even if some other handler before it already replied
       EasyMock.verify(signalHandler);
       EasyMock.reset(signalHandler);
    }
@@ -510,6 +515,40 @@ public class NodeTests
       }
    }
 
+   public class JoinWaiterHandler implements MessageHandler
+   {
+      private boolean joined = false;
+      private Object joinWaiter = new Object();
+
+      public Message onJoin(Connection conn)
+      {
+         synchronized ( joinWaiter )
+         {
+            joined = true;
+            joinWaiter.notifyAll();
+         }
+         return null;
+      }
+
+      public void onLeave(Connection conn)
+      {
+      }
+
+      public void waitForJoin()
+         throws InterruptedException
+      {
+         synchronized ( joinWaiter )
+         {
+            while ( ! joined )
+               joinWaiter.wait(1000);
+         }
+      }
+
+      public Message onMessage(Connection conn, Message message)
+      {
+         return null;
+      }
+   }
    public class MessageRepeaterHandler implements MessageHandler
    {
       public Message onJoin(Connection conn)
