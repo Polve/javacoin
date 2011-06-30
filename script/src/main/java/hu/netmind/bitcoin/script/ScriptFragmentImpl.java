@@ -47,12 +47,26 @@ public class ScriptFragmentImpl implements ScriptFragment
       return byteArray;
    }
 
+   public int hashCode()
+   {
+      return Arrays.hashCode(byteArray);
+   }
+
+   public boolean equals(Object o)
+   {
+      if ( ! (o instanceof ScriptFragmentImpl) )
+         return false;
+      if ( o == null )
+         return false;
+      return Arrays.equals(((ScriptFragmentImpl)o).byteArray,byteArray);
+   }
+
    public InstructionInputStream getInstructionInput()
    {
       return new InstructionInputStream(new ByteArrayInputStream(byteArray));
    }
 
-   public byte[] getSubscript(byte[]... sigs)
+   public ScriptFragment getSubscript(byte[]... sigs)
       throws ScriptException
    {
       try
@@ -72,16 +86,17 @@ public class ScriptFragmentImpl implements ScriptFragment
             }
             else
             {
-               // If there is data then filter out the sigs
+               // If there is data then filter out the sigs (if there are any)
                boolean matches = false;
-               for ( int i=0; (i<sigs.length) && (!matches); i++ )
-                  matches |= Arrays.equals(sigs[i],instruction.getData());
+               if ( sigs != null )
+                  for ( int i=0; (i<sigs.length) && (!matches); i++ )
+                     matches |= Arrays.equals(sigs[i],instruction.getData());
                // Copy only if it was not matched, but preserve the instruction itself
                // which acutally invalidates the script (you can't parse this)
                output.writeInstruction(instruction, matches);
             }
          }
-         return byteOutput.toByteArray();
+         return new ScriptFragmentImpl(byteOutput.toByteArray());
       } catch ( IOException e ) {
          throw new ScriptException("exception while generating subscript",e);
       }

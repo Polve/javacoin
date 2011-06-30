@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import hu.netmind.bitcoin.ScriptException;
+import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.KeyFactory;
@@ -512,7 +513,7 @@ public class ScriptTests
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
                EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.aryEq(HexUtil.toByteArray("07 0A 2C 2A 35 0C 03 01 01 01 01 01 AC"))
+               EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("07 0A 2C 2A 35 0C 03 01 01 01 01 01 AC")))
                )).andReturn(hash);
       EasyMock.replay(txIn);
       // Create key factory and expect verify call to public key
@@ -546,7 +547,7 @@ public class ScriptTests
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
                EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.aryEq(HexUtil.toByteArray("00 07 0A 2C 2A 35 0C 03 01 01 01 01 01 AD"))
+               EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("00 07 0A 2C 2A 35 0C 03 01 01 01 01 01 AD")))
                )).andReturn(hash);
       EasyMock.replay(txIn);
       // Create key factory and expect verify call to public key
@@ -580,7 +581,7 @@ public class ScriptTests
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
                EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.aryEq(HexUtil.toByteArray("07 0A 2C 2A 35 0C 03 01 01 01 01 01 AC"))
+               EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("07 0A 2C 2A 35 0C 03 01 01 01 01 01 AC")))
                )).andReturn(hash);
       EasyMock.replay(txIn);
       // Create key factory and expect verify call to public key
@@ -617,7 +618,7 @@ public class ScriptTests
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
                EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
-               (byte[]) EasyMock.anyObject()
+               (ScriptFragment) EasyMock.anyObject()
                )).andReturn(hash).times(3);
       EasyMock.replay(txIn);
       // Create the 3 public keys corresponding to the data
@@ -668,7 +669,7 @@ public class ScriptTests
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
                EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
-               (byte[]) EasyMock.anyObject()
+               (ScriptFragment) EasyMock.anyObject()
                )).andReturn(hash).times(3);
       EasyMock.replay(txIn);
       // Create the 3 public keys corresponding to the data

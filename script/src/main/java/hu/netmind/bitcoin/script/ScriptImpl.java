@@ -20,6 +20,7 @@ package hu.netmind.bitcoin.script;
 
 import hu.netmind.bitcoin.ScriptException;
 import hu.netmind.bitcoin.Script;
+import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.PublicKey;
 import hu.netmind.bitcoin.KeyFactory;
 import hu.netmind.bitcoin.Transaction;
@@ -608,7 +609,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                      sigs[i] = popData(stack,"executing OP_CHECKMULTISIG/OP_CHECKMULTISIGVERIFY");
                   logger.debug("found {} public keys and {} signatures",pubKeyCount, sigCount);
                   // Prepare subscript (remove all sigs)
-                  byte[] subscript = fragment(blockPointer).getSubscript(sigs);
+                  ScriptFragment subscript = fragment(blockPointer).getSubscript(sigs);
                   // Verify signatures now. Note that all signatures must verify, but not
                   // all public keys must correspond to signatures (there are more public keys
                   // than signatures). Also, public keys and signatures should be ordered, so no need
@@ -694,7 +695,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       }
    }
 
-   private boolean verify(byte[] sig, byte[] pubKey, TransactionInput txIn, byte[] subscript)
+   private boolean verify(byte[] sig, byte[] pubKey, TransactionInput txIn, ScriptFragment subscript)
       throws ScriptException
    {
       // Determine hash type first (last byte of pubKey)

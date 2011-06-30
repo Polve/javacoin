@@ -31,14 +31,13 @@ public interface ScriptFragment
     * This method removes the given signatures from the script fragment 
     * (which normally shouldn't be a part of the output script), and all
     * OP_CODESEPARATOR operations. Note that after these operations the
-    * fragment might not be a valid script anymore, so it only an array of bytes.
+    * fragment might not be a valid script anymore, and might not be executable.
     * @param sigs Any number of signatures to be removed from this fragment.
     * @return The bytes remaining after removing the given signatures and all
     * OP_CODESEPARATOR operations.
     */
-   byte[] getSubscript(byte[]... sigs)
+   ScriptFragment getSubscript(byte[]... sigs)
       throws ScriptException;
-
 
    /**
     * Convert this fragment in byte code.
