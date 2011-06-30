@@ -88,12 +88,11 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
    /**
     * Execute the script and provide the output decision whether
     * spending of the given txIn is authorized.
-    * @param tx The transaction which contains the input for spending.
     * @param txIn The input to verify.
     * @return True if spending is approved by this script, false otherwise.
     * @throws ScriptException If script can not be executed, or is an invalid script.
     */
-   public boolean execute(Transaction tx, TransactionInput txIn)
+   public boolean execute(TransactionInput txIn)
       throws ScriptException
    {
       // Create the script input
@@ -582,7 +581,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   byte[] pubKey = popData(stack,"executing OP_CHECKSIG");
                   byte[] sig = popData(stack,"executing OP_CHECKSIG");
                   // Push result to stack
-                  if ( verify(sig,pubKey,tx,txIn,fragment(blockPointer).getSubscript(sig)) )
+                  if ( verify(sig,pubKey,txIn,fragment(blockPointer).getSubscript(sig)) )
                      stack.push(1);
                   else
                      stack.push(0);
@@ -592,7 +591,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   pubKey = popData(stack,"executing OP_CHECKSIGVERIFY");
                   sig = popData(stack,"executing OP_CHECKSIGVERIFY");
                   // Abort if it does not verify
-                  if ( ! verify(sig,pubKey,tx,txIn,fragment(blockPointer).getSubscript(sig)) )
+                  if ( ! verify(sig,pubKey,txIn,fragment(blockPointer).getSubscript(sig)) )
                      return false;
                   break;
                case OP_CHECKMULTISIG:
@@ -618,7 +617,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   for ( int i=0; (i<pubKeyCount) && (currentSig<sigCount); i++ )
                   {
                      logger.debug("verifying signature {} with public key {}",currentSig,i);
-                     if ( verify(sigs[currentSig],pubKeys[i],tx,txIn,subscript) )
+                     if ( verify(sigs[currentSig],pubKeys[i],txIn,subscript) )
                         currentSig++; // Go to next signature
                   }
                   logger.debug("total {} signatures successfully verified out of {}",currentSig, sigCount);
@@ -695,24 +694,24 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       }
    }
 
-   private boolean verify(byte[] sig, byte[] pubKey, Transaction tx, TransactionInput txIn, byte[] subscript)
+   private boolean verify(byte[] sig, byte[] pubKey, TransactionInput txIn, byte[] subscript)
       throws ScriptException
    {
       // Determine hash type first (last byte of pubKey)
-      Transaction.SignatureHashType sigType = null;
+      TransactionInput.SignatureHashType sigType = null;
       switch ( (sig[sig.length-1] & 0xff) )
       {
          case 0x01:
-            sigType = Transaction.SignatureHashType.SIGHASH_ALL;
+            sigType = TransactionInput.SignatureHashType.SIGHASH_ALL;
             break;
          case 0x02:
-            sigType = Transaction.SignatureHashType.SIGHASH_NONE;
+            sigType = TransactionInput.SignatureHashType.SIGHASH_NONE;
             break;
          case 0x03:
-            sigType = Transaction.SignatureHashType.SIGHASH_SINGLE;
+            sigType = TransactionInput.SignatureHashType.SIGHASH_SINGLE;
             break;
          case 0x80:
-            sigType = Transaction.SignatureHashType.SIGHASH_ANYONECANPAY;
+            sigType = TransactionInput.SignatureHashType.SIGHASH_ANYONECANPAY;
             break;
          default:
             throw new ScriptException("found unknown signature type on while checking signature: "+(pubKey[pubKey.length-1]&0xff));
@@ -723,7 +722,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       // Create public key to check
       PublicKey publicKey = keyFactory.createPublicKey(pubKey);
       // Re-create hash of the transaction
-      byte[] transactionHash = tx.getSignatureHash(sigType,txIn,subscript);
+      byte[] transactionHash = txIn.getSignatureHash(sigType,subscript);
       // Now check that the sig is the encrypted transaction hash (done with the
       // private key corresponding to the public key at hand)
       try

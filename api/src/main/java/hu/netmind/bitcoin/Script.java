@@ -30,12 +30,11 @@ public interface Script extends ScriptFragment
    /**
     * Execute the script and provide the output decision whether
     * spending of the given txIn is authorized.
-    * @param tx The transaction which contains the input for spending.
-    * @param txIn The input to verify.
+    * @param txIn The input to verify with this script.
     * @return True if spending is approved by this script, false otherwise.
     * @throws ScriptException If script can not be executed, or is an invalid script.
     */
-   boolean execute(Transaction tx, TransactionInput txIn)
+   boolean execute(TransactionInput txIn)
       throws ScriptException;
 }
 

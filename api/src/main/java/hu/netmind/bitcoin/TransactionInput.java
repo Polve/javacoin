@@ -27,6 +27,14 @@ package hu.netmind.bitcoin;
  */
 public interface TransactionInput
 {
+   enum SignatureHashType
+   {
+      SIGHASH_ALL,
+      SIGHASH_NONE,
+      SIGHASH_SINGLE,
+      SIGHASH_ANYONECANPAY
+   };
+
    /**
     * Get the transaction this input is a part of.
     */
@@ -50,5 +58,20 @@ public interface TransactionInput
     * to update this input by announcing a transaction input with higher sequence number.
     */
    long getSequence();
+
+   /**
+    * Provide a hash for this transaction input using the transaction it is in as a context suitable
+    * for signing this input. A signature created out of this hash is used to prove that this input
+    * can use the output it referenced. Note: this is done most of the time, although signatures as
+    * such might not required, depending on the script used by the output referenced.
+    * @param type The type of signature to generate.
+    * @param subscript The byte array to use instead of the <i>output</i> script (which is used
+    * by default if this parameter is null). Note: a subscript is not really a script, it
+    * is a result of three transformations done before hashing:  removing signatures (constants), 
+    * splitting up based on code separators, and removing code separators. These cases are used 
+    * only by "special" scripts.
+    * @return The signature compatible with BitCoin.
+    */
+   byte[] getSignatureHash(SignatureHashType type, byte[] subscript);
 }
 

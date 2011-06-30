@@ -42,14 +42,6 @@ import java.util.List;
  */
 public interface Transaction
 {
-   enum SignatureHashType
-   {
-      SIGHASH_ALL,
-      SIGHASH_NONE,
-      SIGHASH_SINGLE,
-      SIGHASH_ANYONECANPAY
-   };
-
    /**
     * Get the block in which this transaction resides. Note that the same transaction content
     * can be in different blocks also (two miners creating a competing block at the same time), but
@@ -84,24 +76,6 @@ public interface Transaction
     * Return the hash of this transaction.
     */
    byte[] getHash();
-
-   /**
-    * Provide a hash of this transaction applicable to a given input 
-    * suitable for signature of that input.
-    * @param type The type of signature to generate.
-    * @param txIn The input to generate the hash for. Depending on the signature type
-    * this input may get special treatment compared to the other inputs.
-    * @param subscript The byte array to use instead of the <i>output</i> script (which is used
-    * by default if this parameter is null). Note: a subscript is not really a script, it
-    * is a result of three transformations done before hashing:  removing signatures (constants), 
-    * splitting up based on code separators, and removing code separators. These cases are used 
-    * only by "special" scripts.
-    * @param block Which script block to include in the hash. By default this should be 0
-    * (include full output script). It is different from 0 only when called from a script
-    * itself which has blocks.
-    * @return The signature compatible with BitCoin.
-    */
-   byte[] getSignatureHash(SignatureHashType type, TransactionInput txIn, byte[] subscript);
 }
 
 

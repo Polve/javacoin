@@ -86,14 +86,13 @@ public class ScriptTests
       throws ScriptException, IOException
    {
       // Create mocks
-      Transaction tx = EasyMock.createMock(Transaction.class);
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       KeyFactory keyFactory = EasyMock.createMock(KeyFactory.class);
       // Create script
       ScriptImpl scriptImpl = new ScriptImpl(toScript(script),keyFactory,0);
       logger.debug("executing script: "+script+", which in bytes is: "+HexUtil.toHexString(scriptImpl.toByteArray()));
       // Run the script
-      return scriptImpl.execute(tx,txIn);
+      return scriptImpl.execute(txIn);
    }
 
    // Concept tests
@@ -510,14 +509,12 @@ public class ScriptTests
       byte[] pubkey = new byte[] { 44, 42, 53, 12, 3, 1, 1, 1, 1, 1 };
       byte[] hash = new byte[] { 1, 2, 3, 4 };
       // Create transaction mock and return hash
-      Transaction tx = EasyMock.createMock(Transaction.class);
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
-      EasyMock.expect(tx.getSignatureHash(
-               EasyMock.eq(Transaction.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.eq(txIn),
+      EasyMock.expect(txIn.getSignatureHash(
+               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
                EasyMock.aryEq(HexUtil.toByteArray("07 0A 2C 2A 35 0C 03 01 01 01 01 01 AC"))
                )).andReturn(hash);
-      EasyMock.replay(tx);
+      EasyMock.replay(txIn);
       // Create key factory and expect verify call to public key
       PublicKey publicKey = EasyMock.createMock(PublicKey.class);
       EasyMock.expect(publicKey.verify(EasyMock.aryEq(hash),EasyMock.aryEq(signature))).andReturn(true);
@@ -533,8 +530,7 @@ public class ScriptTests
                ),keyFactory,0);
       logger.debug("executing checksig script in bytes: "+HexUtil.toHexString(scriptImpl.toByteArray()));
       // Run the script and check
-      Assert.assertTrue(scriptImpl.execute(tx,txIn));
-      EasyMock.verify(tx);
+      Assert.assertTrue(scriptImpl.execute(txIn));
       EasyMock.verify(publicKey);
       EasyMock.verify(keyFactory);
    }
@@ -547,14 +543,12 @@ public class ScriptTests
       byte[] pubkey = new byte[] { 44, 42, 53, 12, 3, 1, 1, 1, 1, 1 };
       byte[] hash = new byte[] { 1, 2, 3, 4 };
       // Create transaction mock and return hash
-      Transaction tx = EasyMock.createMock(Transaction.class);
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
-      EasyMock.expect(tx.getSignatureHash(
-               EasyMock.eq(Transaction.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.eq(txIn),
+      EasyMock.expect(txIn.getSignatureHash(
+               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
                EasyMock.aryEq(HexUtil.toByteArray("00 07 0A 2C 2A 35 0C 03 01 01 01 01 01 AD"))
                )).andReturn(hash);
-      EasyMock.replay(tx);
+      EasyMock.replay(txIn);
       // Create key factory and expect verify call to public key
       PublicKey publicKey = EasyMock.createMock(PublicKey.class);
       EasyMock.expect(publicKey.verify(EasyMock.aryEq(hash),EasyMock.aryEq(signature))).andReturn(true);
@@ -570,8 +564,7 @@ public class ScriptTests
                ),keyFactory,0);
       logger.debug("executing checksig verify script in bytes: "+HexUtil.toHexString(scriptImpl.toByteArray()));
       // Run the script and check
-      Assert.assertFalse(scriptImpl.execute(tx,txIn));
-      EasyMock.verify(tx);
+      Assert.assertFalse(scriptImpl.execute(txIn));
       EasyMock.verify(publicKey);
       EasyMock.verify(keyFactory);
    }
@@ -584,14 +577,12 @@ public class ScriptTests
       byte[] pubkey = new byte[] { 44, 42, 53, 12, 3, 1, 1, 1, 1, 1 };
       byte[] hash = new byte[] { 1, 2, 3, 4 };
       // Create transaction mock and return hash
-      Transaction tx = EasyMock.createMock(Transaction.class);
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
-      EasyMock.expect(tx.getSignatureHash(
-               EasyMock.eq(Transaction.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.eq(txIn),
+      EasyMock.expect(txIn.getSignatureHash(
+               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
                EasyMock.aryEq(HexUtil.toByteArray("07 0A 2C 2A 35 0C 03 01 01 01 01 01 AC"))
                )).andReturn(hash);
-      EasyMock.replay(tx);
+      EasyMock.replay(txIn);
       // Create key factory and expect verify call to public key
       PublicKey publicKey = EasyMock.createMock(PublicKey.class);
       EasyMock.expect(publicKey.verify(EasyMock.aryEq(hash),EasyMock.aryEq(signature))).andReturn(true);
@@ -607,8 +598,7 @@ public class ScriptTests
                ),keyFactory,0);
       logger.debug("executing checksig separator script in bytes: "+HexUtil.toHexString(scriptImpl.toByteArray()));
       // Run the script and check
-      Assert.assertTrue(scriptImpl.execute(tx,txIn));
-      EasyMock.verify(tx);
+      Assert.assertTrue(scriptImpl.execute(txIn));
       EasyMock.verify(publicKey);
       EasyMock.verify(keyFactory);
    }
@@ -624,14 +614,12 @@ public class ScriptTests
       byte[] pubkey3 = new byte[] { 1,8,9 };
       byte[] hash = new byte[] { 1, 2, 3, 4, 5 };
       // Create transaction mock and return hash
-      Transaction tx = EasyMock.createMock(Transaction.class);
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
-      EasyMock.expect(tx.getSignatureHash(
-               EasyMock.eq(Transaction.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.eq(txIn),
+      EasyMock.expect(txIn.getSignatureHash(
+               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
                (byte[]) EasyMock.anyObject()
                )).andReturn(hash).times(3);
-      EasyMock.replay(tx);
+      EasyMock.replay(txIn);
       // Create the 3 public keys corresponding to the data
       PublicKey publicKey1 = EasyMock.createMock(PublicKey.class);
       EasyMock.expect(publicKey1.verify(EasyMock.aryEq(hash),EasyMock.aryEq(signature1))).andReturn(true);
@@ -659,8 +647,7 @@ public class ScriptTests
                "OP_CHECKMULTISIG"
                ),keyFactory,0);
       // Run the script and check
-      Assert.assertTrue(scriptImpl.execute(tx,txIn));
-      EasyMock.verify(tx);
+      Assert.assertTrue(scriptImpl.execute(txIn));
       EasyMock.verify(publicKey1);
       EasyMock.verify(publicKey2);
       EasyMock.verify(publicKey3);
@@ -678,14 +665,12 @@ public class ScriptTests
       byte[] pubkey3 = new byte[] { 1,8,9 };
       byte[] hash = new byte[] { 1, 2, 3, 4, 5 };
       // Create transaction mock and return hash
-      Transaction tx = EasyMock.createMock(Transaction.class);
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
-      EasyMock.expect(tx.getSignatureHash(
-               EasyMock.eq(Transaction.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.eq(txIn),
+      EasyMock.expect(txIn.getSignatureHash(
+               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
                (byte[]) EasyMock.anyObject()
                )).andReturn(hash).times(3);
-      EasyMock.replay(tx);
+      EasyMock.replay(txIn);
       // Create the 3 public keys corresponding to the data
       PublicKey publicKey1 = EasyMock.createMock(PublicKey.class);
       EasyMock.expect(publicKey1.verify(EasyMock.aryEq(hash),EasyMock.aryEq(signature1))).andReturn(true);
@@ -713,8 +698,7 @@ public class ScriptTests
                "OP_CHECKMULTISIG"
                ),keyFactory,0);
       // Run the script and check
-      Assert.assertFalse(scriptImpl.execute(tx,txIn));
-      EasyMock.verify(tx);
+      Assert.assertFalse(scriptImpl.execute(txIn));
       EasyMock.verify(publicKey1);
       EasyMock.verify(publicKey2);
       EasyMock.verify(publicKey3);
