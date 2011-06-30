@@ -93,6 +93,7 @@ public class Node
     * Start to establish connections and listen to incoming messages.
     */
    public void start()
+      throws IOException
    {
       if ( running )
          return;
@@ -257,13 +258,25 @@ public class Node
       private Thread thread;
       private ServerSocket serverSocket;
 
+      /**
+       * Start node listener and return only when node started to listen and connections
+       * will be accepted.
+       */
       public void start()
+         throws IOException
       {
+         // Establish server socket
+         serverSocket = new ServerSocket(port);
+         serverSocket.setSoTimeout(soTimeout);
+         // Start thread
          thread = new Thread(this,"BitCoin Node Listener");
          thread.setDaemon(true);
          thread.start();
       }
 
+      /**
+       * Stop the node listener, and only return if listener is really stopped.
+       */
       public void stop()
       {
          try
@@ -286,9 +299,6 @@ public class Node
          logger.info("starting node listener on port: "+port);
          try
          {
-            // Establish server socket
-            serverSocket = new ServerSocket(port);
-            serverSocket.setSoTimeout(soTimeout);
             // Wait for new connections
             while ( running )
             {

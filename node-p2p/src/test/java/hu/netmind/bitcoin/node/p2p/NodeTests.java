@@ -121,6 +121,7 @@ public class NodeTests
    }
 
    public void testStartStop()
+      throws IOException
    {
       // Create node with defaults
       Node node = new Node();
@@ -346,9 +347,9 @@ public class NodeTests
       MessageHandler signalHandler = EasyMock.createMock(MessageHandler.class);
       EasyMock.expect(signalHandler.onJoin((Connection) EasyMock.anyObject())).andReturn(null);
       EasyMock.expect(signalHandler.onMessage(
-               (Connection) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null);
-      EasyMock.expect(signalHandler.onMessage(
-               (Connection) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null);
+               (Connection) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null).times(2);
+      signalHandler.onLeave((Connection) EasyMock.anyObject()); 
+      EasyMock.expectLastCall().anyTimes(); // This depends on timing whether it is actually invoked from cleanup()
       EasyMock.replay(signalHandler);
       node.addHandler(signalHandler);
       // Start node
@@ -445,8 +446,8 @@ public class NodeTests
       {
          this.address=address;
          socket = new Socket();
-         socket.setSoTimeout(500);
-         socket.connect(address,500); // 0.5 seconds to connect
+         socket.setSoTimeout(1000);
+         socket.connect(address,1000); // 0.5 seconds to connect
          input = new BitCoinInputStream(new BufferedInputStream(socket.getInputStream()));
          output = new BitCoinOutputStream(socket.getOutputStream());
          marshaller = new MessageMarshaller();
@@ -460,7 +461,7 @@ public class NodeTests
       {
          serverSocket = new ServerSocket(0);
          address = (InetSocketAddress) serverSocket.getLocalSocketAddress();
-         serverSocket.setSoTimeout(500); // Wait for incoming for 0.5 sec
+         serverSocket.setSoTimeout(1000); // Wait for incoming for 0.5 sec
          marshaller = new MessageMarshaller();
       }
 
