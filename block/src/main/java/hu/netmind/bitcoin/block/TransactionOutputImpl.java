@@ -75,6 +75,14 @@ public class TransactionOutputImpl implements TransactionOutput
       return index;
    }
 
+   void setValue(long value)
+   {
+      this.value=value;
+   }
+   void setScript(ScriptFragment script)
+   {
+      this.script=script;
+   }
    void setIndex(int index)
    {
       this.index=index;

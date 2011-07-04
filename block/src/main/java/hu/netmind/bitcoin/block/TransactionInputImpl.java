@@ -23,6 +23,7 @@ import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
+import hu.netmind.bitcoin.VerificationException;
 
 /**
  * @author Robert Brautigam
@@ -77,7 +78,10 @@ public class TransactionInputImpl implements TransactionInput
     * (no signatures in it, no code separators, etc.)
     */
    public byte[] getSignatureHash(SignatureHashType type, ScriptFragment subscript)
+      throws VerificationException
    {
+      TODO: refactor to not modifiy transaction but create according to hash type
+
       // Create a copy of the whole tx and then set the subscript to fulfill base requirements
       // of signature hash from BitCoin wiki
       TransactionImpl txCopy = transaction.copy();
@@ -96,6 +100,42 @@ public class TransactionInputImpl implements TransactionInput
                   input.setSequence(0);
             // Allow any spending of the inputs (do not hash in outputs)
             txCopy.getOutputs().clear();
+         case SIGHASH_SINGLE:
+            // Allow updates to other inputs (hash with sequence set to 0)
+            for ( TransactionInput input : txCopy.getInputs() )
+               if ( input != txInputCopy )
+                  input.setSequence(0);
+            // Now remove all outputs with higher index than this input 
+            // (maybe this assumes each input will have exactly one output in these
+            // kinds of transactions?) Also blank out lower outputs, so scripts
+            // and value can change on those, essentially only locking this single input
+            // and the assumed related output at the same index.
+            int txInputIndex = txCopy.getInputs().indexOf(txInputCopy);
+            if ( txInputIndex >= txCopy.getOutputs().size() )
+               throw new VerificationException("calculating hash type SIGHASH_SINGLE, but not enough outputs: "+txInputIndex+" vs. "+txCopy.getOutputs().size());
+            int txOutputCount = 0;
+            Iterator<TransactionOutput> txOutputIterator = txCopy.getOutputs().iterator();
+            while ( txOutputIterator.hasNext() )
+            {
+               TransactionOutput txOutput = txOutputIterator.next();
+               if ( txOutputCount < txInputIndex )
+               {
+                  // All outputs lower than the index of the transaction input
+                  txOutput.setScript(null);
+                  txOutput.setValue(-1);
+               } else if ( txOutputCount > txInputIndex ) {
+                  // All outputs higher than the index of the transaction input
+                  txOutputIterator.remove();
+               }
+            }
+            break;
+         case SIGHASH_ANYONECANPAY:
+            // Only hash this input, which makes it possible to add any number of new inputs,
+            // leaving the possibility open for others to contribute to the same (hashed) outputs and
+            // amount.
+            txCopy.getInputs().clear();
+            txInputCopy.getInputs().add(txInputCopy);
+            break;
          case SIGHASH_ALL:
             // Nothing to do (every input and output is hashed in at current version/sequence)
             break;
