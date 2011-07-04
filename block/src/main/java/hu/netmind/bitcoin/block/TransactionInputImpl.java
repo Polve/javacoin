@@ -32,7 +32,7 @@ public class TransactionInputImpl implements TransactionInput
    private TransactionOutput claimedOutput;
    private ScriptFragment signatureScript;
    private long sequence;
-   private transient Transaction transaction; // Parent is filled out runtime
+   private transient TransactionImpl transaction; // Parent is filled out runtime
 
    public TransactionInputImpl(TransactionOutput claimedOutput, 
          ScriptFragment signatureScript, long sequence)
@@ -40,6 +40,11 @@ public class TransactionInputImpl implements TransactionInput
       this.claimedOutput=claimedOutput;
       this.signatureScript=signatureScript;
       this.sequence=sequence;
+   }
+
+   TransactionInputImpl copy()
+   {
+      return TransactionInputImpl(claimedOutput,signatureScript,sequence);
    }
 
    public TransactionOutput getClaimedOutput()
@@ -59,9 +64,43 @@ public class TransactionInputImpl implements TransactionInput
       return transaction;
    }
 
-   void setTransaction(Transaction transaction)
+   void setTransaction(TransactionImpl transaction)
    {
       this.transaction=transaction;
    }
+
+   /**
+    * Calculate the hash for a this input suitable for creating a signature. The hash 
+    * calculation is based on message serialization.
+    * @param type The hash type.
+    * @param subscript The subscript to use for hashing. We assume it fits the subscript requirements
+    * (no signatures in it, no code separators, etc.)
+    */
+   public byte[] getSignatureHash(SignatureHashType type, ScriptFragment subscript)
+   {
+      // Create a copy of the whole tx and then set the subscript to fulfill base requirements
+      // of signature hash from BitCoin wiki
+      TransactionImpl txCopy = transaction.copy();
+      TransactionInput txInputCopy = txCopy.getInputs().get(transaction.getInputs().indexOf(this));
+      // Set all but the copy of this input to empty script
+      for ( TransactionInput input : txCopy.getInputs() )
+         input.setSignatureScript(null);
+      txInputCopy.setSignatureScript(subscript);
+      // Handle various hash type cases
+      switch ( type )
+      {
+         case SIGHASH_NONE:
+            // Allow updates to other inputs (hash with sequence set to 0)
+            for ( TransactionInput input : txCopy.getInputs() )
+               if ( input != txInputCopy )
+                  input.setSequence(0);
+            // Allow any spending of the inputs (do not hash in outputs)
+            txCopy.getOutputs().clear();
+         case SIGHASH_ALL:
+            // Nothing to do (every input and output is hashed in at current version/sequence)
+            break;
+      }
+   }
+
 }
 

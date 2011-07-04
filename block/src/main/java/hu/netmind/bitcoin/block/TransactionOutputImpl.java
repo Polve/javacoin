@@ -41,6 +41,11 @@ public class TransactionOutputImpl implements TransactionOutput
       this.script=script;
    }
 
+   TransactionOutputImpl copy()
+   {
+      return new TransactionOutputImpl(value,script);
+   }
+
    /**
     * Get the claimer output from the path specified.
     */

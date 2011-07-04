@@ -173,18 +173,25 @@ public class TransactionImpl implements Transaction
    }
 
    /**
-    * Calculate the hash for a specific input suitable for creating a signature. The hash 
-    * calculation is based on message serialization.
-    * @param type The hash type.
-    * @param txIn The input to hash for.
-    * @param subscript The subscript to use for hashing. We assume it fits the subscript requirements
-    * (no signatures in it, no code separators, etc.)
+    * Create a deep copy of this transaction. This means a copy is created for all inputs and outputs
+    * too which can be modified at will without influencing this transaction or its inputs or outputs.
+    * Note: scripts are not deep-copied, so modifying script bytes in the copy is not recommended
+    * (although the script itself can be exchanged).
     */
-   public byte[] getSignatureHash(SignatureHashType type, TransactionInput txIn, byte[] subscript)
+   TransactionImpl copy()
    {
-      // TODO
-      return null;
+      // Create copy of inputs
+      List<TransactionInputImpl> inputsCopy = new ArrayList<TransactionInputImpl>();
+      for ( TransactionInputImpl input : inputs )
+         inputsCopy.add(input.copy());
+      // Create copy of outputs
+      List<TransactionOutputImpl> outputsCopy = new ArrayList<TransactionOutputImpl>();
+      for ( TransactionOutputImpl output : outputs )
+         outputsCopy.add(output.copy());
+      // Create new transaction and return
+      TransactionImpl result = new TransactionImpl(inputsCopy,outputsCopy,lockTime,hash);
+      result.setBlock(block);
+      return result;
    }
-
 }
 
