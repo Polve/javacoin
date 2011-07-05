@@ -26,6 +26,7 @@ import hu.netmind.bitcoin.KeyFactory;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.VerificationException;
+import hu.netmind.bitcoin.BitCoinException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
@@ -723,7 +724,13 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       // Create public key to check
       PublicKey publicKey = keyFactory.createPublicKey(pubKey);
       // Re-create hash of the transaction
-      byte[] transactionHash = txIn.getSignatureHash(sigType,subscript);
+      byte[] transactionHash = null;
+      try
+      {
+         transactionHash = txIn.getSignatureHash(sigType,subscript);
+      } catch ( BitCoinException e ) {
+         throw new ScriptException("could not generate signature hash");
+      }
       // Now check that the sig is the encrypted transaction hash (done with the
       // private key corresponding to the public key at hand)
       try
