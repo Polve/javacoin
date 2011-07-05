@@ -32,18 +32,13 @@ public class TransactionOutputImpl implements TransactionOutput
 {
    private long value;
    private ScriptFragment script;
-   private transient Transaction transaction;
-   private transient int index;
+   private Transaction transaction; // Filled add-time
+   private int index; // Filled add-time
 
    public TransactionOutputImpl(long value, ScriptFragment script)
    {
       this.value=value;
       this.script=script;
-   }
-
-   TransactionOutputImpl copy()
-   {
-      return new TransactionOutputImpl(value,script);
    }
 
    /**
@@ -75,14 +70,6 @@ public class TransactionOutputImpl implements TransactionOutput
       return index;
    }
 
-   void setValue(long value)
-   {
-      this.value=value;
-   }
-   void setScript(ScriptFragment script)
-   {
-      this.script=script;
-   }
    void setIndex(int index)
    {
       this.index=index;

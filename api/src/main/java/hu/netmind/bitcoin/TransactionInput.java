@@ -72,6 +72,7 @@ public interface TransactionInput
     * only by "special" scripts.
     * @return The signature compatible with BitCoin.
     */
-   byte[] getSignatureHash(SignatureHashType type, ScriptFragment subscript);
+   byte[] getSignatureHash(SignatureHashType type, ScriptFragment subscript)
+      throws BitCoinException;
 }
 

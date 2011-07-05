@@ -19,7 +19,9 @@
 package hu.netmind.bitcoin.block;
 
 import java.util.List;
+import java.util.ArrayList;
 import hu.netmind.bitcoin.ScriptFragment;
+import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
@@ -33,7 +35,7 @@ public class TransactionInputImpl implements TransactionInput
    private TransactionOutput claimedOutput;
    private ScriptFragment signatureScript;
    private long sequence;
-   private transient TransactionImpl transaction; // Parent is filled out runtime
+   private TransactionImpl transaction; // Parent is filled out runtime
 
    public TransactionInputImpl(TransactionOutput claimedOutput, 
          ScriptFragment signatureScript, long sequence)
@@ -41,11 +43,6 @@ public class TransactionInputImpl implements TransactionInput
       this.claimedOutput=claimedOutput;
       this.signatureScript=signatureScript;
       this.sequence=sequence;
-   }
-
-   TransactionInputImpl copy()
-   {
-      return TransactionInputImpl(claimedOutput,signatureScript,sequence);
    }
 
    public TransactionOutput getClaimedOutput()
@@ -78,68 +75,67 @@ public class TransactionInputImpl implements TransactionInput
     * (no signatures in it, no code separators, etc.)
     */
    public byte[] getSignatureHash(SignatureHashType type, ScriptFragment subscript)
-      throws VerificationException
+      throws BitCoinException
    {
-      TODO: refactor to not modifiy transaction but create according to hash type
-
-      // Create a copy of the whole tx and then set the subscript to fulfill base requirements
-      // of signature hash from BitCoin wiki
-      TransactionImpl txCopy = transaction.copy();
-      TransactionInput txInputCopy = txCopy.getInputs().get(transaction.getInputs().indexOf(this));
-      // Set all but the copy of this input to empty script
-      for ( TransactionInput input : txCopy.getInputs() )
-         input.setSignatureScript(null);
-      txInputCopy.setSignatureScript(subscript);
-      // Handle various hash type cases
+      List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
+      List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
+      // Now create the transaction copy based on the hash type
       switch ( type )
       {
+         case SIGHASH_ALL:
+            // In this mode everything is hashed in other than the scripts in the other inputs,
+            // meaning nothing can essentially change after the hash is signed.
+            for ( TransactionInput input : getTransaction().getInputs() )
+               if ( input == this )
+                  inputs.add(new TransactionInputImpl(claimedOutput,subscript,sequence));
+               else
+                  inputs.add(new TransactionInputImpl(input.getClaimedOutput(),null,input.getSequence()));
+            for ( TransactionOutput output : getTransaction().getOutputs() )
+               outputs.add(new TransactionOutputImpl(output.getValue(),output.getScript()));
+            break;
          case SIGHASH_NONE:
-            // Allow updates to other inputs (hash with sequence set to 0)
-            for ( TransactionInput input : txCopy.getInputs() )
-               if ( input != txInputCopy )
-                  input.setSequence(0);
+            // Allow updates to other inputs (hash with sequence set to 0, in addition to null script)
+            for ( TransactionInput input : getTransaction().getInputs() )
+               if ( input == this )
+                  inputs.add(new TransactionInputImpl(claimedOutput,subscript,sequence));
+               else
+                  inputs.add(new TransactionInputImpl(input.getClaimedOutput(),null,0));
             // Allow any spending of the inputs (do not hash in outputs)
-            txCopy.getOutputs().clear();
+            break;
          case SIGHASH_SINGLE:
-            // Allow updates to other inputs (hash with sequence set to 0)
-            for ( TransactionInput input : txCopy.getInputs() )
-               if ( input != txInputCopy )
-                  input.setSequence(0);
-            // Now remove all outputs with higher index than this input 
+            // Allow updates to other inputs (hash with sequence set to 0, in addition to null script)
+            for ( TransactionInput input : getTransaction().getInputs() )
+               if ( input == this )
+                  inputs.add(new TransactionInputImpl(claimedOutput,subscript,sequence));
+               else
+                  inputs.add(new TransactionInputImpl(input.getClaimedOutput(),null,0));
+            // Now remove all outputs with higher index than this input (don't copy those)
             // (maybe this assumes each input will have exactly one output in these
             // kinds of transactions?) Also blank out lower outputs, so scripts
             // and value can change on those, essentially only locking this single input
             // and the assumed related output at the same index.
-            int txInputIndex = txCopy.getInputs().indexOf(txInputCopy);
-            if ( txInputIndex >= txCopy.getOutputs().size() )
-               throw new VerificationException("calculating hash type SIGHASH_SINGLE, but not enough outputs: "+txInputIndex+" vs. "+txCopy.getOutputs().size());
-            int txOutputCount = 0;
-            Iterator<TransactionOutput> txOutputIterator = txCopy.getOutputs().iterator();
-            while ( txOutputIterator.hasNext() )
-            {
-               TransactionOutput txOutput = txOutputIterator.next();
-               if ( txOutputCount < txInputIndex )
-               {
-                  // All outputs lower than the index of the transaction input
-                  txOutput.setScript(null);
-                  txOutput.setValue(-1);
-               } else if ( txOutputCount > txInputIndex ) {
-                  // All outputs higher than the index of the transaction input
-                  txOutputIterator.remove();
-               }
-            }
+            int inputIndex = getTransaction().getInputs().indexOf(this);
+            if ( inputIndex >= getTransaction().getOutputs().size() )
+               throw new VerificationException("calculating hash type SIGHASH_SINGLE, but not enough outputs: "+inputIndex+" vs. "+getTransaction().getOutputs().size());
+            for ( int i=0; i<inputIndex; i++ ) // Copy over the preceding outputs blanked out
+               outputs.add(new TransactionOutputImpl(-1,null));
+            TransactionOutput pairedOutput = getTransaction().getOutputs().get(inputIndex); // Copy output at same index
+            outputs.add(new TransactionOutputImpl(pairedOutput.getValue(),pairedOutput.getScript()));
             break;
          case SIGHASH_ANYONECANPAY:
             // Only hash this input, which makes it possible to add any number of new inputs,
             // leaving the possibility open for others to contribute to the same (hashed) outputs and
             // amount.
-            txCopy.getInputs().clear();
-            txInputCopy.getInputs().add(txInputCopy);
-            break;
-         case SIGHASH_ALL:
-            // Nothing to do (every input and output is hashed in at current version/sequence)
+            inputs.add(new TransactionInputImpl(claimedOutput,subscript,sequence));
+            // Copy over all outputs unmodified
+            for ( TransactionOutput output : getTransaction().getOutputs() )
+               outputs.add(new TransactionOutputImpl(output.getValue(),output.getScript()));
             break;
       }
+      // Now create the transaction copy with the modified inputs and outputs
+      TransactionImpl txCopy = new TransactionImpl(inputs,outputs,getTransaction().getLockTime());
+      // Return the hash of this specially created transaction
+      return txCopy.getHash();
    }
 
 }
