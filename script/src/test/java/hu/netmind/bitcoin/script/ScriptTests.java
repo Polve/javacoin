@@ -90,7 +90,7 @@ public class ScriptTests
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       KeyFactory keyFactory = EasyMock.createMock(KeyFactory.class);
       // Create script
-      ScriptImpl scriptImpl = new ScriptImpl(toScript(script),keyFactory,0);
+      ScriptImpl scriptImpl = new ScriptImpl(toScript(script),keyFactory);
       logger.debug("executing script: "+script+", which in bytes is: "+HexUtil.toHexString(scriptImpl.toByteArray()));
       // Run the script
       return scriptImpl.execute(txIn);
@@ -528,7 +528,7 @@ public class ScriptTests
                "CONSTANT <"+HexUtil.toHexString(signature)+" 01> "+
                "CONSTANT <"+HexUtil.toHexString(pubkey)+"> "+
                "OP_CHECKSIG"
-               ),keyFactory,0);
+               ),keyFactory);
       logger.debug("executing checksig script in bytes: "+HexUtil.toHexString(scriptImpl.toByteArray()));
       // Run the script and check
       Assert.assertTrue(scriptImpl.execute(txIn));
@@ -562,7 +562,7 @@ public class ScriptTests
                "CONSTANT <"+HexUtil.toHexString(signature)+" 01> "+
                "CONSTANT <"+HexUtil.toHexString(pubkey)+"> "+
                "OP_CHECKSIGVERIFY"
-               ),keyFactory,0);
+               ),keyFactory);
       logger.debug("executing checksig verify script in bytes: "+HexUtil.toHexString(scriptImpl.toByteArray()));
       // Run the script and check
       Assert.assertFalse(scriptImpl.execute(txIn));
@@ -596,7 +596,7 @@ public class ScriptTests
                "CONSTANT <"+HexUtil.toHexString(signature)+" 01> "+
                "CONSTANT <"+HexUtil.toHexString(pubkey)+"> "+
                "OP_CHECKSIG OP_CODESEPARATOR"
-               ),keyFactory,0);
+               ),keyFactory);
       logger.debug("executing checksig separator script in bytes: "+HexUtil.toHexString(scriptImpl.toByteArray()));
       // Run the script and check
       Assert.assertTrue(scriptImpl.execute(txIn));
@@ -646,7 +646,7 @@ public class ScriptTests
                "CONSTANT <"+HexUtil.toHexString(pubkey1)+"> "+
                "OP_3 "+
                "OP_CHECKMULTISIG"
-               ),keyFactory,0);
+               ),keyFactory);
       // Run the script and check
       Assert.assertTrue(scriptImpl.execute(txIn));
       EasyMock.verify(publicKey1);
@@ -697,7 +697,7 @@ public class ScriptTests
                "CONSTANT <"+HexUtil.toHexString(pubkey1)+"> "+
                "OP_3 "+
                "OP_CHECKMULTISIG"
-               ),keyFactory,0);
+               ),keyFactory);
       // Run the script and check
       Assert.assertFalse(scriptImpl.execute(txIn));
       EasyMock.verify(publicKey1);

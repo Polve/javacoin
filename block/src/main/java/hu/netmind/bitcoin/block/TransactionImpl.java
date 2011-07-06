@@ -78,7 +78,7 @@ public class TransactionImpl implements Transaction
       this.hash=hash;
       // If no hash given, then calculate it
       if ( hash == null )
-         calculateHash();
+         calculateHash(null);
       // Make all inputs and outputs be a part of this transaction
       for ( TransactionInputImpl input : inputs )
          input.setTransaction(this);
@@ -131,22 +131,24 @@ public class TransactionImpl implements Transaction
       // Create txouts
       List<TxOut> outs = new ArrayList<TxOut>();
       for ( TransactionOutput output : outputs )
-         outs.add(new TxOut(output.getValue(),output.getScript().toByteArray()));
+         outs.add(new TxOut(output.getValue(),
+                  (output.getScript()==null?new byte[] {}:output.getScript().toByteArray())));
       // Create txins
       List<TxIn> ins = new ArrayList<TxIn>();
       for ( TransactionInput input : inputs )
          ins.add(new TxIn(input.getClaimedOutput().getTransaction().getHash(),
                   input.getClaimedOutput().getIndex(), 
-                  input.getSignatureScript().toByteArray(), input.getSequence()));
+                  (input.getSignatureScript()==null?new byte[] {}:input.getSignatureScript().toByteArray()), 
+                  input.getSequence()));
       // Create transaction itself
       Tx tx = new Tx(TX_VERSION,ins,outs,lockTime);
       return tx;
    }
 
    /**
-    * Calculate the hash of the whole transaction.
+    * Calculate the hash of the whole transaction, with some optional additional bytes.
     */
-   private void calculateHash()
+   void calculateHash(byte[] postfix)
       throws BitCoinException
    {
       try
@@ -156,6 +158,9 @@ public class TransactionImpl implements Transaction
          ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
          BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
          tx.writeTo(output);
+         // Add postfix if it's there
+         if ( postfix != null )
+            output.write(postfix);
          output.close();
          byte[] txBytes = byteOutput.toByteArray();
          if ( logger.isDebugEnabled() )

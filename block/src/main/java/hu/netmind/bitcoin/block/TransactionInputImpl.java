@@ -79,10 +79,12 @@ public class TransactionInputImpl implements TransactionInput
    {
       List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
       List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
+      int hashType = 0;
       // Now create the transaction copy based on the hash type
       switch ( type )
       {
          case SIGHASH_ALL:
+            hashType=1;
             // In this mode everything is hashed in other than the scripts in the other inputs,
             // meaning nothing can essentially change after the hash is signed.
             for ( TransactionInput input : getTransaction().getInputs() )
@@ -94,6 +96,7 @@ public class TransactionInputImpl implements TransactionInput
                outputs.add(new TransactionOutputImpl(output.getValue(),output.getScript()));
             break;
          case SIGHASH_NONE:
+            hashType=2;
             // Allow updates to other inputs (hash with sequence set to 0, in addition to null script)
             for ( TransactionInput input : getTransaction().getInputs() )
                if ( input == this )
@@ -103,6 +106,7 @@ public class TransactionInputImpl implements TransactionInput
             // Allow any spending of the inputs (do not hash in outputs)
             break;
          case SIGHASH_SINGLE:
+            hashType=3;
             // Allow updates to other inputs (hash with sequence set to 0, in addition to null script)
             for ( TransactionInput input : getTransaction().getInputs() )
                if ( input == this )
@@ -123,6 +127,7 @@ public class TransactionInputImpl implements TransactionInput
             outputs.add(new TransactionOutputImpl(pairedOutput.getValue(),pairedOutput.getScript()));
             break;
          case SIGHASH_ANYONECANPAY:
+            hashType=0x80;
             // Only hash this input, which makes it possible to add any number of new inputs,
             // leaving the possibility open for others to contribute to the same (hashed) outputs and
             // amount.
@@ -132,9 +137,11 @@ public class TransactionInputImpl implements TransactionInput
                outputs.add(new TransactionOutputImpl(output.getValue(),output.getScript()));
             break;
       }
-      // Now create the transaction copy with the modified inputs and outputs
-      TransactionImpl txCopy = new TransactionImpl(inputs,outputs,getTransaction().getLockTime());
-      // Return the hash of this specially created transaction
+      // Now create the transaction copy with the modified inputs and outputs and calculate hash with
+      // the type added
+      TransactionImpl txCopy = new TransactionImpl(inputs,outputs,getTransaction().getLockTime(),new byte[] {});
+      txCopy.calculateHash(new byte[] { (byte)hashType, 0, 0, 0});
+      // Return the hash of this specially created transaction with the type added
       return txCopy.getHash();
    }
 

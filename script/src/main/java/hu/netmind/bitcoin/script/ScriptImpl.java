@@ -44,18 +44,16 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
 {
    private static Logger logger = LoggerFactory.getLogger(ScriptImpl.class);
 
-   private int pubFragmentPointer;
    private KeyFactory keyFactory;
 
    /**
     * Create the script from the full bytes, and the pub script. We need
     * to pub script because the transaction hashing depends on it.
     */
-   ScriptImpl(byte[] script, KeyFactory keyFactory, int pubFragmentLength)
+   ScriptImpl(byte[] script, KeyFactory keyFactory)
    {
       super(script);
       this.keyFactory=keyFactory;
-      this.pubFragmentPointer=pubFragmentLength;
    }
 
    private byte[] popData(Stack stack, String reason)
@@ -102,7 +100,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       // Create script runtime
       Stack stack = new Stack();
       Stack altStack = new Stack();
-      int blockPointer = pubFragmentPointer;
+      int blockPointer = 0;
       // Run the script
       try
       {
