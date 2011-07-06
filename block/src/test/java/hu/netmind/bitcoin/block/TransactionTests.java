@@ -140,7 +140,7 @@ public class TransactionTests
             "45 9C 7A 23 B6 DF CB 86 8A C7 46 7E DD 9A 6F DD "+
             "1D 96 98 71 BE 02 21 00 88 94 8A EA 29 B6 91 61 "+
             "CA 34 1C 49 C0 26 86 A8 1D 8C BB 73 94 0F 91 7F "+
-            "A0 ED 71 54 68 6D 3E 5B 01"+
+            "A0 ED 71 54 68 6D 3E 5B 01 "+
             "41 "+ // Pub key
             "04 47 D4 90 56 1F 39 6C 8A 9E FC 14 48 6B C1 98 "+
             "88 4B A1 83 79 BC AC 2E 0B E2 D8 52 51 34 AB 74 "+
