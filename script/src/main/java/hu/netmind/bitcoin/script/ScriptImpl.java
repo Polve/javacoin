@@ -33,6 +33,7 @@ import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import java.io.IOException;
 import java.util.Stack;
 import java.util.Arrays;
+import java.math.BigInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -726,6 +727,8 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       try
       {
          transactionHash = txIn.getSignatureHash(sigType,subscript);
+         if ( logger.isDebugEnabled() )
+            logger.debug("running verification, tx signature hash is {}, for type: {}",new BigInteger(transactionHash).toString(16),sigType);
       } catch ( BitCoinException e ) {
          throw new ScriptException("could not generate signature hash");
       }
