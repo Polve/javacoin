@@ -56,16 +56,5 @@ public class StreamTests
       // Compare the result is exactly the same
       Assert.assertEquals(byteOutput2.toByteArray(),byteOutput.toByteArray());
    }
-
-   public void testOmmitData()
-      throws IOException
-   {
-      byte[] data = HexUtil.toByteArray("01 02 03 04 05 06 07 08");
-      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      InstructionOutputStream output = new InstructionOutputStream(byteOutput);
-      output.writeInstruction(new Instruction(Operation.CONSTANT,data),true);
-      output.close();
-      Assert.assertEquals(byteOutput.toByteArray().length,1); // Only length is written
-   }
 }
 

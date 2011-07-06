@@ -91,9 +91,9 @@ public class ScriptFragmentImpl implements ScriptFragment
                if ( sigs != null )
                   for ( int i=0; (i<sigs.length) && (!matches); i++ )
                      matches |= Arrays.equals(sigs[i],instruction.getData());
-               // Copy only if it was not matched, but preserve the instruction itself
-               // which acutally invalidates the script (you can't parse this)
-               output.writeInstruction(instruction, matches);
+               // Output only if the data does not match the signature we want to remove
+               if ( ! matches )
+                  output.writeInstruction(instruction);
             }
          }
          return new ScriptFragmentImpl(byteOutput.toByteArray());

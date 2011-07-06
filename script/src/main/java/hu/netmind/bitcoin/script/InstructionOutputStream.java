@@ -52,13 +52,7 @@ public class InstructionOutputStream extends OutputStream
       output.write(b,off,len);
    }
 
-   public void writeInstruction(Instruction instruction)
-      throws IOException
-   {
-      writeInstruction(instruction,false);
-   }
-
-   void writeInstruction(Instruction instruction, boolean ommitData)
+   void writeInstruction(Instruction instruction)
       throws IOException
    {
       if ( instruction.getOperation() == Operation.CONSTANT )
@@ -66,8 +60,7 @@ public class InstructionOutputStream extends OutputStream
          if ( (instruction.getData().length < 1) || (instruction.getData().length>75) )
             throw new IOException("tried to write a constant with length not between 1 - 75: "+instruction.getData().length+", use OP_PUSHDATA");
          write(instruction.getData().length);
-         if ( ! ommitData )
-            write(instruction.getData());
+         write(instruction.getData());
       }
       else if ( instruction.getOperation() == Operation.OP_PUSHDATA1 )
       {
@@ -76,8 +69,7 @@ public class InstructionOutputStream extends OutputStream
          write((byte)instruction.getOperation().getCode());
          int len = instruction.getData().length;
          write( (byte)(len & 0xff) );
-         if ( ! ommitData )
-            write(instruction.getData());
+         write(instruction.getData());
       } 
       else if ( instruction.getOperation() == Operation.OP_PUSHDATA2 )
       {
@@ -87,8 +79,7 @@ public class InstructionOutputStream extends OutputStream
          int len = instruction.getData().length;
          write( (byte)(len & 0xff) );
          write( (byte)((len>>8) & 0xff) );
-         if ( ! ommitData )
-            write(instruction.getData());
+         write(instruction.getData());
       }
       else if ( instruction.getOperation() == Operation.OP_PUSHDATA4 )
       {
@@ -100,8 +91,7 @@ public class InstructionOutputStream extends OutputStream
          write( (byte)((len>>8) & 0xff) );
          write( (byte)((len>>16) & 0xff) );
          write( (byte)((len>>24) & 0xff) );
-         if ( ! ommitData )
-            write(instruction.getData());
+         write(instruction.getData());
       }
       else
       {

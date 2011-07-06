@@ -744,6 +744,8 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
 
    private ScriptFragmentImpl fragment(int position)
    {
+      if ( position == 0 )
+         return this;
       byte[] fragment = new byte[toByteArray().length-position];
       System.arraycopy(toByteArray(),position,fragment,0,fragment.length);
       return new ScriptFragmentImpl(fragment);

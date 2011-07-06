@@ -513,7 +513,7 @@ public class ScriptTests
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
                EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("07 0A 2C 2A 35 0C 03 01 01 01 01 01 AC")))
+               EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("0A 2C 2A 35 0C 03 01 01 01 01 01 AC")))
                )).andReturn(hash);
       EasyMock.replay(txIn);
       // Create key factory and expect verify call to public key
@@ -547,7 +547,7 @@ public class ScriptTests
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
                EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("00 07 0A 2C 2A 35 0C 03 01 01 01 01 01 AD")))
+               EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("00 0A 2C 2A 35 0C 03 01 01 01 01 01 AD")))
                )).andReturn(hash);
       EasyMock.replay(txIn);
       // Create key factory and expect verify call to public key
@@ -581,7 +581,7 @@ public class ScriptTests
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
                EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
-               EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("07 0A 2C 2A 35 0C 03 01 01 01 01 01 AC")))
+               EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("0A 2C 2A 35 0C 03 01 01 01 01 01 AC")))
                )).andReturn(hash);
       EasyMock.replay(txIn);
       // Create key factory and expect verify call to public key
