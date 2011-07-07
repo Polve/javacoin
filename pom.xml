@@ -16,6 +16,7 @@
     <module>script</module>
     <module>block</module>
     <module>bcwallet</module>
+    <module>integration-tests</module>
   </modules>
 
 </project>
