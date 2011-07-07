@@ -40,7 +40,6 @@ public class TransactionVerificationITTests
 {
    private static Logger logger = LoggerFactory.getLogger(TransactionVerificationITTests.class);
 
-   /*
    public void testTransactionVerification()
       throws Exception
    {
@@ -61,15 +60,16 @@ public class TransactionVerificationITTests
       outputs.add(output1);
       outputs.add(output2);
       // Before building the input, we have to build the claimed output
-      Transaction claimedTransaction = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(claimedTransaction.getHash()).andReturn(HexUtil.toByteArray(
-               "2B 83 84 C1 49 FB 99 7D 84 B2 8B F6 80 C4 3D 36 F8 6A F8 35 4A 57 81 11 B5 C2 14 1A A9 59 4F 98")).anyTimes();
-      EasyMock.replay(claimedTransaction);
       TransactionOutputImpl claimedOutput = new TransactionOutputImpl(503000000,
          scriptFactory.createFragment(HexUtil.toByteArray(
             "76 A9 14 34 28 B4 98 22 00 CE 46 53 2B 9C 54 23 08 65 44 AC 99 D3 69 88 AC")));
-      claimedOutput.setTransaction(claimedTransaction);
-      claimedOutput.setIndex(1);
+      List<TransactionOutputImpl> claimedOutputs = new ArrayList<TransactionOutputImpl>();
+      claimedOutputs.add(claimedOutput);
+      claimedOutputs.add(claimedOutput); // This is a hack to make it to index 1, we don't use 0 anyway
+      List<TransactionInputImpl> claimedInputs = new ArrayList<TransactionInputImpl>();
+      TransactionImpl claimedTransaction = new TransactionImpl(claimedInputs,claimedOutputs,0,
+            HexUtil.toByteArray(
+               "2B 83 84 C1 49 FB 99 7D 84 B2 8B F6 80 C4 3D 36 F8 6A F8 35 4A 57 81 11 B5 C2 14 1A A9 59 4F 98"));
       // Build the input
       TransactionInputImpl input = new TransactionInputImpl(claimedOutput,
          scriptFactory.createFragment(HexUtil.toByteArray(
@@ -95,7 +95,6 @@ public class TransactionVerificationITTests
       Script verificationScript = scriptFactory.createScript(input.getSignatureScript(),claimedOutput.getScript());
       Assert.assertTrue(verificationScript.execute(input));
    }
-   */
 
    public void testTransactionVerification2()
       throws Exception
