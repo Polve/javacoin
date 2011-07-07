@@ -46,15 +46,21 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
    private static Logger logger = LoggerFactory.getLogger(ScriptImpl.class);
 
    private KeyFactory keyFactory;
+   private int pubScriptPointer = 0;
 
    /**
     * Create the script from the full bytes, and the pub script. We need
     * to pub script because the transaction hashing depends on it.
+    * @param script The full bytes of the script.
+    * @param keyFactory The key factory to get the public keys from for OP_CHECKSIG.
+    * @param pubScriptPointer The start of the pubscript, this is needed to generate
+    * the subscript, because that is only generated from the output's pubscript.
     */
-   ScriptImpl(byte[] script, KeyFactory keyFactory)
+   ScriptImpl(byte[] script, KeyFactory keyFactory, int pubScriptPointer)
    {
       super(script);
       this.keyFactory=keyFactory;
+      this.pubScriptPointer=pubScriptPointer;
    }
 
    private byte[] popData(Stack stack, String reason)
@@ -101,7 +107,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       // Create script runtime
       Stack stack = new Stack();
       Stack altStack = new Stack();
-      int blockPointer = 0;
+      int blockPointer = pubScriptPointer;
       // Run the script
       try
       {

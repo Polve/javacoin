@@ -52,7 +52,7 @@ public class ScriptFactoryImpl implements ScriptFactory
       System.arraycopy(sigScript.toByteArray(),0,scriptBytes,0,sigScript.toByteArray().length);
       System.arraycopy(pubScript.toByteArray(),0,scriptBytes,sigScript.toByteArray().length,pubScript.toByteArray().length);
       // Create script
-      return new ScriptImpl(scriptBytes,keyFactory);
+      return new ScriptImpl(scriptBytes,keyFactory,sigScript.toByteArray().length);
    }
 }
 
