@@ -109,21 +109,22 @@ public class TransactionVerificationITTests
 
       ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null,null));
       // First build the output with script
+
       TransactionOutputImpl output = new TransactionOutputImpl(10200000000l,
          scriptFactory.createFragment(HexUtil.toByteArray(
             "76 A9 14 9E 35 D9 3C 77 92 BD CA AD 56 97 DD EB F0 43 53 D9 A5 E1 96 88 AC")));
       List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
       outputs.add(output);
       // Build claimed output 1
-      Transaction claimedTransaction1 = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(claimedTransaction1.getHash()).andReturn(HexUtil.toByteArray(
-               "30 F3 70 1F 9B C4 64 55 2F 70 49 57 91 04 08 17 CE 77 7A D5 ED E1 6E 52 9F CD 0C 0E 94 91 56 94")).anyTimes();
-      EasyMock.replay(claimedTransaction1);
       TransactionOutputImpl claimedOutput1 = new TransactionOutputImpl(200000000,
          scriptFactory.createFragment(HexUtil.toByteArray(
             "76 A9 14 02 BF 4B 28 89 C6 AD A8 19 0C 25 2E 70 BD E1 A1 90 9F 96 17 88 AC")));
-      claimedOutput1.setTransaction(claimedTransaction1);
-      claimedOutput1.setIndex(0);
+      List<TransactionOutputImpl> outputs1 = new ArrayList<TransactionOutputImpl>();
+      outputs1.add(claimedOutput1);
+      List<TransactionInputImpl> inputs1 = new ArrayList<TransactionInputImpl>();
+      Transaction claimedTransaction1 = new TransactionImpl(inputs1,outputs1,0,
+         HexUtil.toByteArray(
+            "30 F3 70 1F 9B C4 64 55 2F 70 49 57 91 04 08 17 CE 77 7A D5 ED E1 6E 52 9F CD 0C 0E 94 91 56 94"));
       // Build claimed output 2 (don't need the values)
       Transaction claimedTransaction2 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(claimedTransaction2.getHash()).andReturn(HexUtil.toByteArray(
