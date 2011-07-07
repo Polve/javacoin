@@ -21,11 +21,10 @@ package hu.netmind.bitcoin.block;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.easymock.EasyMock;
-import hu.netmind.bitcoin.script.ScriptFactoryImpl;
-import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import java.util.List;
 import java.util.ArrayList;
 import hu.netmind.bitcoin.Script;
+import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.TransactionInput;
@@ -36,20 +35,25 @@ import hu.netmind.bitcoin.TransactionInput;
 @Test
 public class TransactionTests
 {
+   private ScriptFragment createFragment(String hexString)
+   {
+      ScriptFragment fragment = EasyMock.createMock(ScriptFragment.class);
+      EasyMock.expect(fragment.toByteArray()).andReturn(HexUtil.toByteArray(hexString)).anyTimes();
+      EasyMock.replay(fragment);
+      return fragment;
+   }
+
    public void testTransactionHashing()
       throws Exception
    {
       // The data is taken from a real transaction, hash:
       // 4719e088cc1105e7aa636615a53f5e5b5082ec2201447e5d4e51449e6670a756
 
-      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(null);
       // First build the 2 outputs with script
       TransactionOutputImpl output1 = new TransactionOutputImpl(203000000,
-         scriptFactory.createFragment(HexUtil.toByteArray(
-            "76 A9 14 20 CA C8 9D 2F 1F C9 11 1B 38 BC 5F D7 27 8B E6 14 A7 89 C4 88 AC")));
+            createFragment("76 A9 14 20 CA C8 9D 2F 1F C9 11 1B 38 BC 5F D7 27 8B E6 14 A7 89 C4 88 AC"));
       TransactionOutputImpl output2 = new TransactionOutputImpl(300000000,
-         scriptFactory.createFragment(HexUtil.toByteArray(
-            "76 A9 14 17 BE E5 04 89 99 BC 6D 7C CD B0 62 AE 06 C8 FD F8 E0 0B 17 88 AC")));
+            createFragment("76 A9 14 17 BE E5 04 89 99 BC 6D 7C CD B0 62 AE 06 C8 FD F8 E0 0B 17 88 AC"));
       List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
       outputs.add(output1);
       outputs.add(output2);
@@ -64,7 +68,7 @@ public class TransactionTests
       EasyMock.replay(claimedOutput);
       // Build the input
       TransactionInputImpl input = new TransactionInputImpl(claimedOutput,
-         scriptFactory.createFragment(HexUtil.toByteArray(
+            createFragment(
             "47 "+ // Start of sig
             "30 44 02 20 15 78 04 17 3F 7E 25 82 65 7B 9C 40 "+
             "26 CC 72 9E F8 12 3E 2E 38 79 8D 3F 6A 9A 9B 54 "+
@@ -76,7 +80,7 @@ public class TransactionTests
             "03 6F 5F B4 FF A6 F8 D7 36 77 17 DC E3 A6 F4 46 "+
             "17 FE E3 1F 19 59 37 2D 9C 56 AD F2 B3 DA FD 87 "+
             "37 2C D8 2D 21 8C D0 73 97 D7 F5 8D DF DE 9A 42 "+
-            "F3")),
+            "F3"),
          0xFFFFFFFFl); // We assume sequence number was UINT_MAX (not seen in block explorer)
       List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
       inputs.add(input);
@@ -97,11 +101,9 @@ public class TransactionTests
       // The referenced output is in:
       // 945691940e0ccd9f526ee1edd57a77ce170804915749702f5564c49b1f70f330
 
-      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(null);
       // First build the output with script
       TransactionOutputImpl output = new TransactionOutputImpl(10200000000l,
-         scriptFactory.createFragment(HexUtil.toByteArray(
-            "76 A9 14 9E 35 D9 3C 77 92 BD CA AD 56 97 DD EB F0 43 53 D9 A5 E1 96 88 AC")));
+            createFragment("76 A9 14 9E 35 D9 3C 77 92 BD CA AD 56 97 DD EB F0 43 53 D9 A5 E1 96 88 AC"));
       List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
       outputs.add(output);
       // Build claimed output 1
@@ -110,8 +112,7 @@ public class TransactionTests
                "30 F3 70 1F 9B C4 64 55 2F 70 49 57 91 04 08 17 CE 77 7A D5 ED E1 6E 52 9F CD 0C 0E 94 91 56 94")).anyTimes();
       EasyMock.replay(claimedTransaction1);
       TransactionOutputImpl claimedOutput1 = new TransactionOutputImpl(200000000,
-         scriptFactory.createFragment(HexUtil.toByteArray(
-            "76 A9 14 02 BF 4B 28 89 C6 AD A8 19 0C 25 2E 70 BD E1 A1 90 9F 96 17 88 AC")));
+            createFragment("76 A9 14 02 BF 4B 28 89 C6 AD A8 19 0C 25 2E 70 BD E1 A1 90 9F 96 17 88 AC"));
       claimedOutput1.setTransaction(claimedTransaction1);
       claimedOutput1.setIndex(0);
       // Build claimed output 2 (don't need the values)
@@ -134,7 +135,7 @@ public class TransactionTests
       EasyMock.replay(claimedOutput3);
       // Build the inputs
       TransactionInputImpl input1 = new TransactionInputImpl(claimedOutput1,
-         scriptFactory.createFragment(HexUtil.toByteArray(
+         createFragment(
             "49 "+ // Start of sig
             "30 46 02 21 00 F5 74 6B 0B 25 4F 5A 37 E7 52 51 "+
             "45 9C 7A 23 B6 DF CB 86 8A C7 46 7E DD 9A 6F DD "+
@@ -146,25 +147,25 @@ public class TransactionTests
             "88 4B A1 83 79 BC AC 2E 0B E2 D8 52 51 34 AB 74 "+
             "2F 30 1A 9A CA 36 60 6E 5D 29 AA 23 8A 9E 29 93 "+
             "00 31 50 42 3D F6 92 45 63 64 2D 4A FE 9B F4 FE "+
-            "28")),
+            "28"),
          0xFFFFFFFFl);
       TransactionInputImpl input2 = new TransactionInputImpl(claimedOutput2,
-         scriptFactory.createFragment(HexUtil.toByteArray(
+         createFragment(
             "49 "+ // Start of sig
             "30 46 02 21 00 BC E4 3A D3 AC BC 79 B0 24 7E 54 "+
             "C8 C9 1E AC 1C F9 03 75 05 00 0E 01 D1 FD 81 18 "+
             "54 D8 5B C2 1A 02 21 00 99 2A 6F 6F 2F EB 6F 62 "+
             "D3 70 6F 3B 9A AA B8 8D 9F 11 32 95 6A 1D FF A9 "+
-            "26 CD 55 6E D5 53 60 DF 01")),
+            "26 CD 55 6E D5 53 60 DF 01"),
          0xFFFFFFFFl);
       TransactionInputImpl input3 = new TransactionInputImpl(claimedOutput3,
-         scriptFactory.createFragment(HexUtil.toByteArray(
+         createFragment(
             "49 "+ // Start of sig
             "30 45 02 20 20 97 57 36 81 61 53 77 08 FD 29 D8 "+
             "9B B1 E9 D6 48 00 79 49 EC FD ED 78 9B 51 A9 63 "+
             "24 CB 65 18 02 21 00 CD 0F 7C 30 21 39 16 48 2B "+
             "6E 16 6D 8A 4F 2B 98 1F 77 7E B1 84 CD 8A 49 5F "+
-            "1B 3D 36 90 FB BF 2D 01")),
+            "1B 3D 36 90 FB BF 2D 01"),
          0xFFFFFFFFl);
       List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
       inputs.add(input1);
@@ -174,14 +175,10 @@ public class TransactionTests
       TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
       // Check generated signature hash
       Assert.assertEquals(HexUtil.toHexString(input1.getSignatureHash(TransactionInput.SignatureHashType.SIGHASH_ALL,
-                  scriptFactory.createFragment(HexUtil.toByteArray(     // This is the full script with the signature removed
-                    "41 04 47 D4 90 56 1F 39 6C 8A 9E FC 14 48 6B C1 "+
-                    "98 88 4B A1 83 79 BC AC 2E 0B E2 D8 52 51 34 AB "+
-                    "74 2F 30 1A 9A CA 36 60 6E 5D 29 AA 23 8A 9E 29 "+
-                    "93 00 31 50 42 3D F6 92 45 63 64 2D 4A FE 9B F4 "+
-                    "FE 28 76 A9 14 02 BF 4B 28 89 C6 AD A8 19 0C 25 "+
-                    "2E 70 BD E1 A1 90 9F 96 17 88 AC")))), 
-               "90 37 75 25 E0 5B D7 1C E8 BA 41 3A 84 FD AE A2 99 76 67 32 F1 65 FA B2 8A 69 D3 0C 83 33 7F 9B");
+                  createFragment(
+                    "76 A9 14 02 BF 4B 28 89 C6 AD A8 19 0C 25 2E 70 "+
+                    "BD E1 A1 90 9F 96 17 88 AC"))),
+               "E8 A8 75 B4 A6 B2 3E 50 7C DA D5 6D 1D 74 28 5F 22 FE C0 5B FD 6B E2 F7 37 92 3C 43 FC C2 39 87");
    }
 }
 
