@@ -38,7 +38,8 @@ import java.util.List;
 public interface TransactionFilter extends Comparable<TransactionFilter>
 {
    /**
-    * This method is invoked to actually filter the transactions.<br>
+    * This method is invoked to actually filter the transactions in place in the
+    * supplied list.<br>
     * Note: depending on the container imlpementation the supplied transactions
     * might not be all transactions that belong to a specific container, 
     * but it is guaranteed that if it is somehow
@@ -49,9 +50,8 @@ public interface TransactionFilter extends Comparable<TransactionFilter>
     * @param transactions The list of transactions. Transactions are not guaranteed
     * to be in any specific order, or that the belong to the same block, or any block
     * for that matter.
-    * @return The list of transactions after the filtering, input order preserved.
     */
-   List<Transaction> getFilteredTransactions(List<Transaction> transactions);
+   void filterTransactions(List<Transaction> transactions);
 }
 
 
