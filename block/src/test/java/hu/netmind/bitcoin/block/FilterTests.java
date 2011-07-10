@@ -36,6 +36,11 @@ public class FilterTests
       Assert.assertEquals(createNamedFilter("A").getDNF().toString(),"A");
    }
 
+   public void testOneClauseDNF()
+   {
+      Assert.assertEquals(createNamedFilter("A AND B").getDNF().toString(),"(A AND B)");
+   }
+
    /**
     * Creates filter expressions using OrFilter, AndFilter and
     * NamedFilter. Syntax is like: ((A OR B) AND C).
@@ -47,24 +52,7 @@ public class FilterTests
       boolean resultIsSub = false;
       while ( nextIndex < expression.length() )
       {
-         char firstChar = expression.charAt(0);
-         if ( Character.isLetter(firstChar) && Character.isUpperCase(firstChar) )
-         {
-            // This is a named filter, so create it
-            DNFFilter literal = new NamedFilter(""+firstChar);
-            if ( result == null )
-            {
-               result = literal;
-            }
-            else
-            {
-               Assert.assertTrue((result instanceof AggregateFilter) && (!resultIsSub),
-                     "Two clauses without and aggregation at index: "+nextIndex);
-               ((AggregateFilter)result).addFilter(literal);
-            }
-            // Get to next character
-            nextIndex++;
-         }
+         char firstChar = expression.charAt(nextIndex);
          if ( firstChar == ' ' )
          {
             // This is either a " AND " or " OR "
@@ -105,7 +93,24 @@ public class FilterTests
                nextIndex += 4;
             }
          }
-         if ( firstChar == '(' )
+         else if ( Character.isLetter(firstChar) && Character.isUpperCase(firstChar) )
+         {
+            // This is a named filter, so create it
+            DNFFilter literal = new NamedFilter(""+firstChar);
+            if ( result == null )
+            {
+               result = literal;
+            }
+            else
+            {
+               Assert.assertTrue((result instanceof AggregateFilter) && (!resultIsSub),
+                     "Two clauses without and aggregation at index: "+nextIndex);
+               ((AggregateFilter)result).addFilter(literal);
+            }
+            // Get to next character
+            nextIndex++;
+         }
+         else if ( firstChar == '(' )
          {
             // Create the sub-expression
             int closingBrace = expression.lastIndexOf(')');
@@ -125,7 +130,10 @@ public class FilterTests
          }
       }
       // Now return the result, but first check if we achieved the target string
-      Assert.assertEquals(result.toString(),expression);
+      if ( (result instanceof AggregateFilter) && (!resultIsSub) )
+         Assert.assertEquals(result.toString(),"("+expression+")");
+      else
+         Assert.assertEquals(result.toString(),expression);
       return result;
    }
 

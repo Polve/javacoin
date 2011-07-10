@@ -113,6 +113,8 @@ public class AndFilter extends AggregateFilter
             hasMore = false; // Can not increment anymore, so all options exhausted
       }
       // We are ready, return the disjunction
+      if ( result.getFilters().size() == 1 )
+         return result.getFilters().get(0);
       return result;
    }
 
