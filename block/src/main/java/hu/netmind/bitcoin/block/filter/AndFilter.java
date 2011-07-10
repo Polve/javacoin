@@ -21,6 +21,9 @@ package hu.netmind.bitcoin.block.filter;
 import hu.netmind.bitcoin.Transaction;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This filter aggregates with an "and" operator.
@@ -28,6 +31,8 @@ import java.util.ArrayList;
  */
 public class AndFilter extends AggregateFilter
 {
+   private static Logger logger = LoggerFactory.getLogger(AndFilter.class);
+
    /**
     * Returns the transaction filtered if at least one filter
     * wants it filtered.
@@ -50,6 +55,7 @@ public class AndFilter extends AggregateFilter
     */
    public DNFFilter getDNF()
    {
+      logger.debug("creating DNF for: {}",this);
       // First get all the conjuctive clauses from all the sub-DNFs.
       List<List<DNFFilter>> conjuctiveClauses = new ArrayList<List<DNFFilter>>();
       for ( DNFFilter subFilter : getFilters() )
@@ -71,6 +77,7 @@ public class AndFilter extends AggregateFilter
             conjuctiveSubClauses.add(dnfSubFilter);
          }
       }
+      logger.debug("all conjuctive clauses are: {}",conjuctiveClauses);
       // Now we must produce all combinations of all conjuction clauses which
       // then will be included in the disjunction. This will be done by constructing
       // a multi-digit counter where each digit will have a maximum value corresponding
@@ -101,7 +108,7 @@ public class AndFilter extends AggregateFilter
          result.addFilter(conjunction);
          // Now increment the counter
          boolean carryOver = true;
-         for ( int i=conjuctiveClauses.size()-1; i>=0; i-- )
+         for ( int i=conjuctiveClauses.size()-1; (i>=0) && (carryOver); i-- )
          {
             counter[i]++;
             if ( counter[i] >= conjuctiveClauses.get(i).size() )
@@ -112,6 +119,7 @@ public class AndFilter extends AggregateFilter
          if ( carryOver )
             hasMore = false; // Can not increment anymore, so all options exhausted
       }
+      logger.debug("after direct multiplication of subclauses we have: {}",result);
       // We are ready, return the disjunction
       if ( result.getFilters().size() == 1 )
          return result.getFilters().get(0);

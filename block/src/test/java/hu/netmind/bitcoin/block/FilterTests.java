@@ -36,9 +36,48 @@ public class FilterTests
       Assert.assertEquals(createNamedFilter("A").getDNF().toString(),"A");
    }
 
-   public void testOneClauseDNF()
+   public void testOneAndClauseDNF()
    {
       Assert.assertEquals(createNamedFilter("A AND B").getDNF().toString(),"(A AND B)");
+   }
+
+   public void testOneAndClauseDNFMultiLiteral()
+   {
+      Assert.assertEquals(createNamedFilter("A AND B AND C AND D").getDNF().toString(),"(A AND B AND C AND D)");
+   }
+
+   public void testOneOrClauseDNF()
+   {
+      Assert.assertEquals(createNamedFilter("A OR B").getDNF().toString(),"(A OR B)");
+   }
+
+   public void testOneOrClauseDNFMultiLiteral()
+   {
+      Assert.assertEquals(createNamedFilter("A OR B OR C OR D").getDNF().toString(),"(A OR B OR C OR D)");
+   }
+
+   public void testSubOrFiltersDNF()
+   {
+      Assert.assertEquals(createNamedFilter("A AND (B OR C)").getDNF().toString(),"((A AND B) OR (A AND C))");
+   }
+
+   public void testSubAndFiltersDNF()
+   {
+      Assert.assertEquals(createNamedFilter("A OR (B AND C)").getDNF().toString(),"(A OR (B AND C))");
+   }
+
+   public void testMultiSubDNF()
+   {
+      Assert.assertEquals(createNamedFilter("A OR (B AND (C OR D))").getDNF().toString(),"(A OR (B AND C) OR (B AND D))");
+   }
+
+   public void testRandomLargeExpressionDNF()
+   {
+      Assert.assertEquals(createNamedFilter("(A AND (B OR C)) AND ((G OR H) AND (C OR (D OR E)))").getDNF().toString(),
+            "((A AND B AND G AND C) OR (A AND B AND G AND D) OR (A AND B AND G AND E) OR "+
+            "(A AND B AND H AND C) OR (A AND B AND H AND D) OR (A AND B AND H AND E) OR "+
+            "(A AND C AND G AND C) OR (A AND C AND G AND D) OR (A AND C AND G AND E) OR "+
+            "(A AND C AND H AND C) OR (A AND C AND H AND D) OR (A AND C AND H AND E))");
    }
 
    /**
@@ -85,7 +124,7 @@ public class FilterTests
                else
                {
                   // Result was a primitive until now
-                  AggregateFilter aggregate = new AndFilter();
+                  AggregateFilter aggregate = new OrFilter();
                   aggregate.addFilter(result);
                   result = aggregate;
                   resultIsSub=false;
@@ -113,7 +152,7 @@ public class FilterTests
          else if ( firstChar == '(' )
          {
             // Create the sub-expression
-            int closingBrace = expression.lastIndexOf(')');
+            int closingBrace = findClosingBrace(expression,nextIndex);
             DNFFilter subFilter = createNamedFilter(expression.substring(nextIndex+1,closingBrace));
             nextIndex = closingBrace+1;
             // Save it
@@ -135,6 +174,20 @@ public class FilterTests
       else
          Assert.assertEquals(result.toString(),expression);
       return result;
+   }
+
+   private int findClosingBrace(String expression, int fromIndex)
+   {
+      int level = 1;
+      while ( level > 0 )
+      {
+         fromIndex++;
+         if ( expression.charAt(fromIndex) == '(' )
+            level++;
+         if ( expression.charAt(fromIndex) == ')' )
+            level--;
+      }
+      return fromIndex;
    }
 
    private static class NamedFilter extends DNFFilter
