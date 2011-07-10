@@ -1,0 +1,152 @@
+/**
+ * Copyright (C) 2011 NetMind Consulting Bt.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+package hu.netmind.bitcoin.block;
+
+import hu.netmind.bitcoin.block.filter.*;
+import hu.netmind.bitcoin.Transaction;
+import org.testng.annotations.Test;
+import org.testng.Assert;
+import org.easymock.EasyMock;
+import java.util.List;
+
+/**
+ * @author Robert Brautigam
+ */
+@Test
+public class FilterTests
+{
+   public void testPrimitiveDNFItself()
+   {
+      Assert.assertEquals(createNamedFilter("A").getDNF().toString(),"A");
+   }
+
+   /**
+    * Creates filter expressions using OrFilter, AndFilter and
+    * NamedFilter. Syntax is like: ((A OR B) AND C).
+    */
+   private DNFFilter createNamedFilter(String expression)
+   {
+      int nextIndex = 0;
+      DNFFilter result = null;
+      boolean resultIsSub = false;
+      while ( nextIndex < expression.length() )
+      {
+         char firstChar = expression.charAt(0);
+         if ( Character.isLetter(firstChar) && Character.isUpperCase(firstChar) )
+         {
+            // This is a named filter, so create it
+            DNFFilter literal = new NamedFilter(""+firstChar);
+            if ( result == null )
+            {
+               result = literal;
+            }
+            else
+            {
+               Assert.assertTrue((result instanceof AggregateFilter) && (!resultIsSub),
+                     "Two clauses without and aggregation at index: "+nextIndex);
+               ((AggregateFilter)result).addFilter(literal);
+            }
+            // Get to next character
+            nextIndex++;
+         }
+         if ( firstChar == ' ' )
+         {
+            // This is either a " AND " or " OR "
+            if ( expression.substring(nextIndex).startsWith(" AND ") )
+            {
+               // This is an AND
+               if ( (result instanceof AggregateFilter) && (!resultIsSub) )
+               {
+                  // Only check that it is the same aggregation, nothing to do
+                  Assert.assertTrue(result instanceof AndFilter,"A clause was first OR then tried to switch to AND at: "+nextIndex);
+               }
+               else
+               {
+                  // Result was a primitive until now
+                  AggregateFilter aggregate = new AndFilter();
+                  aggregate.addFilter(result);
+                  result = aggregate;
+                  resultIsSub=false;
+               }
+               nextIndex += 5;
+            }
+            else if ( expression.substring(nextIndex).startsWith(" OR ") )
+            {
+               // This is an OR
+               if ( (result instanceof AggregateFilter) && (!resultIsSub) )
+               {
+                  // Only check that it is the same aggregation, nothing to do
+                  Assert.assertTrue(result instanceof OrFilter,"A clause was first AND then tried to switch to OR at: "+nextIndex);
+               }
+               else
+               {
+                  // Result was a primitive until now
+                  AggregateFilter aggregate = new AndFilter();
+                  aggregate.addFilter(result);
+                  result = aggregate;
+                  resultIsSub=false;
+               }
+               nextIndex += 4;
+            }
+         }
+         if ( firstChar == '(' )
+         {
+            // Create the sub-expression
+            int closingBrace = expression.lastIndexOf(')');
+            DNFFilter subFilter = createNamedFilter(expression.substring(nextIndex+1,closingBrace));
+            nextIndex = closingBrace+1;
+            // Save it
+            if ( (result instanceof AggregateFilter) && (!resultIsSub) )
+            {
+               ((AggregateFilter)result).addFilter(subFilter);
+            }
+            else
+            {
+               Assert.assertNull(result,"There was a literal but no aggregation when subexpression starts at: "+nextIndex);
+               result = subFilter;
+               resultIsSub = true;
+            }
+         }
+      }
+      // Now return the result, but first check if we achieved the target string
+      Assert.assertEquals(result.toString(),expression);
+      return result;
+   }
+
+   private static class NamedFilter extends DNFFilter
+   {
+      private String name;
+
+      public NamedFilter(String name)
+      {
+         this.name=name;
+      }
+
+      public boolean isFiltered(Transaction tx)
+      {
+         return true; // Doesn't matter
+      }
+
+      public String toString()
+      {
+         return name;
+      }
+   }
+}
+

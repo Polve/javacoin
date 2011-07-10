@@ -115,5 +115,18 @@ public class AndFilter extends AggregateFilter
       // We are ready, return the disjunction
       return result;
    }
+
+   public String toString()
+   {
+      StringBuilder builder = new StringBuilder("(");
+      for ( int i=0; i<getFilters().size(); i++ )
+      {
+         if ( i > 0 )
+            builder.append(" AND ");
+         builder.append(getFilters().get(i).toString());
+      }
+      builder.append(")");
+      return builder.toString();
+   }
 }
 
