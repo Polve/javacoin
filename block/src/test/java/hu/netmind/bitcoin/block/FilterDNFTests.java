@@ -29,7 +29,7 @@ import java.util.List;
  * @author Robert Brautigam
  */
 @Test
-public class FilterTests
+public class FilterDNFTests
 {
    public void testPrimitiveDNFItself()
    {
