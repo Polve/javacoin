@@ -20,6 +20,8 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.block.filter.*;
 import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.TransactionFilter;
+import hu.netmind.bitcoin.NotComparableException;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.easymock.EasyMock;
@@ -80,6 +82,21 @@ public class FilterTests
             "(A AND C AND H AND C) OR (A AND C AND H AND D) OR (A AND C AND H AND E))");
    }
 
+   public void testComparisonPrimitivesLess()
+   {
+      Assert.assertTrue(createNamedFilter("A1").compareTo(createNamedFilter("A2")) < 0);
+   }
+
+   public void testComparisonPrimitivesGreater()
+   {
+      Assert.assertTrue(createNamedFilter("A3").compareTo(createNamedFilter("A2")) > 0);
+   }
+
+   public void testComparisonPrimitivesEqual()
+   {
+      Assert.assertTrue(createNamedFilter("A3").compareTo(createNamedFilter("A3")) == 0);
+   }
+
    /**
     * Creates filter expressions using OrFilter, AndFilter and
     * NamedFilter. Syntax is like: ((A OR B) AND C).
@@ -134,8 +151,20 @@ public class FilterTests
          }
          else if ( Character.isLetter(firstChar) && Character.isUpperCase(firstChar) )
          {
+            // Get to next character, if it is a number, then include it in the name
+            int value = 0;
+            nextIndex++;
+            if ( nextIndex < expression.length() )
+            {
+               char nextChar = expression.charAt(nextIndex);
+               if ( Character.isDigit(nextChar) )
+               {
+                  value = Integer.parseInt(""+nextChar);
+                  nextIndex++;
+               }
+            }
             // This is a named filter, so create it
-            DNFFilter literal = new NamedFilter(""+firstChar);
+            DNFFilter literal = new NamedFilter(""+firstChar,value);
             if ( result == null )
             {
                result = literal;
@@ -146,8 +175,6 @@ public class FilterTests
                      "Two clauses without and aggregation at index: "+nextIndex);
                ((AggregateFilter)result).addFilter(literal);
             }
-            // Get to next character
-            nextIndex++;
          }
          else if ( firstChar == '(' )
          {
@@ -190,13 +217,19 @@ public class FilterTests
       return fromIndex;
    }
 
+   /**
+    * A named filter has a name, and a number. Named filters can be compared if
+    * they have the same name, and in that case they are compared by the number they have.
+    */
    private static class NamedFilter extends DNFFilter
    {
       private String name;
+      private int value;
 
-      public NamedFilter(String name)
+      public NamedFilter(String name, int value)
       {
          this.name=name;
+         this.value=value;
       }
 
       public boolean isFiltered(Transaction tx)
@@ -206,7 +239,16 @@ public class FilterTests
 
       public String toString()
       {
-         return name;
+         if ( value == 0 )
+            return name;
+         return name+value;
+      }
+
+      public int compareTo(TransactionFilter filter)
+      {
+         if ( ! name.equals(((NamedFilter) filter).name) )
+            throw new NotComparableException("Two named filters have different names, so they are not comparable");
+         return value - ((NamedFilter) filter).value;
       }
    }
 }
