@@ -97,6 +97,56 @@ public class FilterTests
       Assert.assertTrue(createNamedFilter("A3").compareTo(createNamedFilter("A3")) == 0);
    }
 
+   public void testComparisonBasicAnd()
+   {
+      Assert.assertTrue(createNamedFilter("A1 AND B1").compareTo(createNamedFilter("A2 AND B2")) < 0);
+   }
+
+   public void testComparisonBasicOr()
+   {
+      Assert.assertTrue(createNamedFilter("A1 OR B1").compareTo(createNamedFilter("A2 OR B2")) < 0);
+   }
+
+   public void testComparisonComplexToPrimitive()
+   {
+      Assert.assertTrue(createNamedFilter("A3 AND (B2 OR C2) AND D4").compareTo(createNamedFilter("A3")) < 0);
+   }
+
+   public void testComparisonComplexToLessComplexPartlyUnrelated()
+   {
+      Assert.assertTrue(createNamedFilter("A3 AND (B2 OR C2) AND D4").compareTo(createNamedFilter("A3 OR E3")) < 0);
+   }
+
+   public void testComparisonComplexToRelatedComplex()
+   {
+      Assert.assertTrue(createNamedFilter("A3 AND (B2 OR C2) AND D4").compareTo(createNamedFilter("A3 AND (B2 OR C3) AND D6")) < 0);
+   }
+
+   public void testComparisonComplexToDifferentStructureComplex()
+   {
+      Assert.assertTrue(createNamedFilter("A3 AND (B2 OR C2) AND D4").compareTo(
+               createNamedFilter("(A3 AND B3) OR (A5 OR C2)")) < 0);
+   }
+
+   public void testComparisonComplexToDifferentStructureComplexEqual()
+   {
+      Assert.assertTrue(createNamedFilter("A3 AND (B2 OR C2) AND D4").compareTo(
+               createNamedFilter("((A3 AND B2) OR (A3 AND C2)) AND D4")) == 0);
+   }
+
+   @Test(expectedExceptions=NotComparableException.class)
+   public void testComparisonPrimitiveUnrelated()
+   {
+      Assert.assertTrue(createNamedFilter("A3").compareTo(createNamedFilter("B3")) == 0);
+   }
+
+   @Test(expectedExceptions=NotComparableException.class)
+   public void testComparisonComplexUnrelated()
+   {
+      Assert.assertTrue(createNamedFilter("A3 AND (B2 OR C2) AND D4").compareTo(
+               createNamedFilter("(A3 AND B3) OR (A5 AND E4)")) < 0);
+   }
+
    /**
     * Creates filter expressions using OrFilter, AndFilter and
     * NamedFilter. Syntax is like: ((A OR B) AND C).
