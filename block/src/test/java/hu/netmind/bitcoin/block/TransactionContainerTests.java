@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionFilter;
+import hu.netmind.bitcoin.NotAvailableException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Robert Brautigam
@@ -33,7 +36,9 @@ import hu.netmind.bitcoin.TransactionFilter;
 @Test
 public class TransactionContainerTests
 {
-   public void testPrefilterConcept()
+   private static Logger logger = LoggerFactory.getLogger(TransactionContainerTests.class);
+
+   public void testPrefiltering()
    {
       ListPrefilteredContainer container = new ListPrefilteredContainer();
       // Set prefilter
@@ -60,6 +65,61 @@ public class TransactionContainerTests
       Assert.assertEquals(container.getStoredTransactions().get(1),tx3);
    }
 
+   public void testStricterFilter()
+      throws NotAvailableException
+   {
+      ListPrefilteredContainer container = new ListPrefilteredContainer();
+      // Set prefilter
+      container.setPreFilter(new LockTimeFilter(10));
+      // Create the list of transactions to add
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      Transaction tx1 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx1.getLockTime()).andReturn(5l).anyTimes();
+      EasyMock.replay(tx1);
+      Transaction tx2 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx2.getLockTime()).andReturn(11l).anyTimes();
+      EasyMock.replay(tx2);
+      Transaction tx3 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx3.getLockTime()).andReturn(8l).anyTimes();
+      EasyMock.replay(tx3);
+      transactions.add(tx1);
+      transactions.add(tx2);
+      transactions.add(tx3);
+      // Put it into the container
+      container.addTransactions(transactions);
+      // Check return values while tx2 should be filtered out with prefilter
+      List<Transaction> result = container.getTransactions(new LockTimeFilter(6));
+      Assert.assertEquals(result.size(),1);
+      Assert.assertEquals(result.get(0),tx1);
+   }
+
+   @Test(expectedExceptions=NotAvailableException.class)
+   public void testLooserFilter()
+      throws NotAvailableException
+   {
+      ListPrefilteredContainer container = new ListPrefilteredContainer();
+      // Set prefilter
+      container.setPreFilter(new LockTimeFilter(10));
+      // Create the list of transactions to add
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      Transaction tx1 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx1.getLockTime()).andReturn(5l);
+      EasyMock.replay(tx1);
+      Transaction tx2 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx2.getLockTime()).andReturn(11l);
+      EasyMock.replay(tx2);
+      Transaction tx3 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx3.getLockTime()).andReturn(8l);
+      EasyMock.replay(tx3);
+      transactions.add(tx1);
+      transactions.add(tx2);
+      transactions.add(tx3);
+      // Put it into the container
+      container.addTransactions(transactions);
+      // Check return values while tx2 should be filtered out with prefilter
+      List<Transaction> result = container.getTransactions(new LockTimeFilter(11));
+   }
+
    /**
     * A dummy filter to test, it just removes all transactions above a certain lock time.
     */
@@ -74,6 +134,7 @@ public class TransactionContainerTests
 
       public void filterTransactions(List<Transaction> transactions)
       {
+         logger.debug("filtering ("+lockTime+"): "+transactions);
          Iterator<Transaction> transactionsIterator = transactions.iterator();
          while ( transactionsIterator.hasNext() )
          {
@@ -81,12 +142,13 @@ public class TransactionContainerTests
             if ( transaction.getLockTime() > lockTime )
                transactionsIterator.remove();
          }
+         logger.debug("after filtering: "+transactions);
       }
 
       public int compareTo(TransactionFilter other)
       {
          // Higher locktime actually removes less transactions
-         return (int) (((LockTimeFilter) other).lockTime - lockTime);
+         return (int) (lockTime - ((LockTimeFilter) other).lockTime);
       }
    }
 
