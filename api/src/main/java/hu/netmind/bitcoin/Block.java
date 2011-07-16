@@ -42,9 +42,44 @@ import java.util.List;
 public interface Block extends TransactionContainer
 {
    /**
-    * Return the hash of this transaction.
+    * Get the previous block.
+    */
+   Block getPreviousBlock();
+
+   /**
+    * Get the longest path this block is on. Note, that might not be the overall
+    * longest path in the block chain.
+    */
+   BlockPath getLongestPath();
+
+   /**
+    * Get the magic number this block belongs to.
+    */
+   long getMagic();
+
+   /**
+    * Get the creation time in millis.
+    */
+   long getCreationTime();
+
+   /**
+    * Get the nonce used to generate the hash.
+    */
+   long getNonce();
+
+   /**
+    * Get the difficulty target for this block.
+    */
+   long getBits();
+
+   /**
+    * Get the merkle root of the transactions.
+    */
+   byte[] getMerkleRoot();
+
+   /**
+    * Return the hash of this block.
     */
    byte[] getHash();
-
 }
 

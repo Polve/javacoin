@@ -44,6 +44,11 @@ public interface BlockChain extends Observable
    };
 
    /**
+    * Get the magic number of all the blocks in this chain.
+    */
+   long getMagic();
+
+   /**
     * Get the longest path (chain) in this block chain. By "longest"
     * we mean that it has the most difficulty associated with it.
     */

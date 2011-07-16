@@ -45,12 +45,12 @@ public abstract class PrefilteredTransactionContainer implements TransactionCont
     * the new pre-filter. Only change pre-filter if you know there was no the previously
     * filtered transactions would be also filtered by the new pre-filter.
     */
-   public void setPreFilter(TransactionFilter preFilter)
+   protected void setPreFilter(TransactionFilter preFilter)
    {
       this.preFilter=preFilter;
    }
 
-   public TransactionFilter getPreFilter()
+   protected TransactionFilter getPreFilter()
    {
       return preFilter;
    }
@@ -59,7 +59,7 @@ public abstract class PrefilteredTransactionContainer implements TransactionCont
     * Add a transaction to this container. This transaction will be only "stored" in
     * the container if it passes the pre-filter.
     */
-   public void addTransaction(Transaction transaction)
+   protected void addTransaction(Transaction transaction)
    {
       List<Transaction> transactions = new ArrayList<Transaction>();
       transactions.add(transaction);
@@ -70,7 +70,7 @@ public abstract class PrefilteredTransactionContainer implements TransactionCont
     * Add transactions to this container. Only those transactions will be added
     * which pass the filter.
     */
-   public void addTransactions(List<Transaction> transactions)
+   protected void addTransactions(List<Transaction> transactions)
    {
       List<Transaction> workingList = new ArrayList<Transaction>(transactions);
       if ( preFilter != null )
