@@ -73,6 +73,8 @@ public class MerkleTree
       throws BitCoinException
    {
       this.outerNodes=outerNodes;
+      if ( this.outerNodes == null )
+         this.outerNodes = new LinkedList<MerkleNode>();
       this.transactions=transactions;
       try
       {
@@ -117,9 +119,7 @@ public class MerkleTree
       for ( Transaction tx : transactions )
          openLeafNodes.add(new MerkleNode(tx.getHash(),-1,-1,null,false));
       // Copy other nodes
-      SortedSet<MerkleNode> openNodes = new TreeSet<MerkleNode>();
-      if ( outerNodes != null )
-         openNodes.addAll(outerNodes);
+      SortedSet<MerkleNode> openNodes = new TreeSet<MerkleNode>(outerNodes);
       logger.debug("starting to build tree, open leafs: {}, open nodes: {}",openLeafNodes,openNodes);
       // Go through all open leafs and position them into the sorted
       // open nodes list. Find spots from the open nodes where there is
@@ -219,11 +219,19 @@ public class MerkleTree
       buildTree();
       // Remove from the list of transactions
       transactions.remove(tx);
+      // Remove hash
+      removeHash(tx.getHash());
+   }
+
+   private void removeHash(byte[] hash)
+   {
       // Mark node as removed, and also remove sibling if it's also removed
-      MerkleNode parent = getParentNode(tx.getHash());
+      MerkleNode parent = getParentNode(hash);
+      if ( parent == null )
+         return; // This is root, don't remove
       MerkleNode thisNode = parent.getChildren()[0];
       MerkleNode otherNode = parent.getChildren()[1];
-      if ( ! Arrays.equals(thisNode.getHash(),tx.getHash()) )
+      if ( ! Arrays.equals(thisNode.getHash(),hash) )
       {
          // Swap
          thisNode = parent.getChildren()[1];
@@ -232,11 +240,14 @@ public class MerkleTree
       thisNode.setRemoved(true);
       if ( otherNode.isRemoved() )
       {
-         // Both siblings are removed, so we can safely removed them altogether
-         // just leave the parent hash in
+         // Both siblings are removed, so we can safely remove them altogether
+         // just leave the parent hash in (but mark as removable)
          parent.setChildren(null);
-         // Mark parent as outer node now
          outerNodes.add(parent);
+         outerNodes.remove(thisNode);
+         outerNodes.remove(otherNode);
+         // Now try to remove parent too, since there is nothing below it
+         removeHash(parent.getHash());
       }
    }
 
