@@ -70,7 +70,12 @@ public interface Block extends TransactionContainer
    /**
     * Get the difficulty target for this block.
     */
-   long getBits();
+   long getDifficulty();
+
+   /**
+    * Get the hash of the previous block.
+    */
+   byte[] getPreviousBlockHash();
 
    /**
     * Get the merkle root of the transactions.

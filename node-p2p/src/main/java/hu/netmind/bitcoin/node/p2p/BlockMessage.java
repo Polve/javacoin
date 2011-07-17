@@ -66,7 +66,7 @@ public class BlockMessage extends ChecksummedMessage
       throws IOException
    {
       super.writeTo(output,protocolVersion);
-      header.writeTo(output,protocolVersion);
+      header.writeTo(output);
       output.writeUIntVar(transactions.size());
       for ( Tx tx : transactions )
          tx.writeTo(output,protocolVersion);

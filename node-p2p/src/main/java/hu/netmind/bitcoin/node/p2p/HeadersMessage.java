@@ -64,7 +64,7 @@ public class HeadersMessage extends ChecksummedMessage
       super.writeTo(output,protocolVersion);
       output.writeUIntVar(headers.size());
       for ( BlockHeader header : headers )
-         header.writeTo(output,protocolVersion);
+         header.writeTo(output);
    }
 
    public String toString()

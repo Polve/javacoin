@@ -60,7 +60,7 @@ public class BlockHeader
       nonce = input.readUInt32();
    }
 
-   void writeTo(BitCoinOutputStream output, long protocolVersion)
+   public void writeTo(BitCoinOutputStream output)
       throws IOException
    {
       output.writeUInt32(version);
