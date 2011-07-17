@@ -53,11 +53,6 @@ public interface Block extends TransactionContainer
    BlockPath getLongestPath();
 
    /**
-    * Get the magic number this block belongs to.
-    */
-   long getMagic();
-
-   /**
     * Get the creation time in millis.
     */
    long getCreationTime();

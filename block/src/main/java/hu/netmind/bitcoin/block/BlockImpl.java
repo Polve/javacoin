@@ -54,7 +54,6 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    private static int BLOCK_VERSION = 1;
 
    // These are unalterable properties of the block
-   private long magic;
    private long creationTime;
    private long nonce;
    private long difficulty;
@@ -68,18 +67,17 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    private BlockImpl previousBlock;
 
    public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
-         long magic, long creationTime, long nonce, long difficulty, byte[] previousBlockHash, byte[] merkleRoot)
+         long creationTime, long nonce, long difficulty, byte[] previousBlockHash, byte[] merkleRoot)
       throws BitCoinException
    {
-      this(transactions,preFilter,magic,creationTime,nonce,difficulty,previousBlockHash,merkleRoot,null,null);
+      this(transactions,preFilter,creationTime,nonce,difficulty,previousBlockHash,merkleRoot,null,null);
    }
 
    public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
-         long magic, long creationTime, long nonce, long difficulty, byte[] previousBlockHash, 
+         long creationTime, long nonce, long difficulty, byte[] previousBlockHash, 
          byte[] merkleRoot, byte[] calculatedMerkleRoot, byte[] hash)
       throws BitCoinException
    {
-      this.magic=magic;
       this.creationTime=creationTime;
       this.nonce=nonce;
       this.difficulty=difficulty;
@@ -198,10 +196,6 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       return null;
    }
 
-   public long getMagic()
-   {
-      return magic;
-   }
    public long getCreationTime()
    {
       return creationTime;
