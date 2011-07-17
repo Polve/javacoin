@@ -33,6 +33,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,9 @@ import org.slf4j.LoggerFactory;
  * also). Transactions are considered valid if they are in a Block on a longest path, all other
  * transactions are candidates to include in a next Block. Note: this implementation requires
  * <code>all</code> transactions be supplied if the merkle root hash is not yet calculated,
- * otherwise merkle root can not be calculated.
+ * otherwise merkle root can not be calculated. Note: this block implementation does not retain
+ * the merkle tree. If transactions are removed later, the root can not be re-calculated. This
+ * should not be a problem, if we can trust that all transactions validated already.
  * @author Robert Brautigam
  */
 public class BlockImpl extends PrefilteredTransactionContainer implements Block
@@ -63,7 +66,7 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    private byte[] hash;
    private List<Transaction> transactions;
    
-   // Below are properties filled runtime
+   // Below are properties filled runtime (and potentially altered depending on chain changes)
    private BlockImpl previousBlock;
 
    public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
@@ -114,8 +117,62 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
     * Calculate the merkle hash from the given transactions.
     */
    private void calculatedMerkleRoot(List<Transaction> transactions)
+      throws BitCoinException
    {
-      // TODO
+      if ( (transactions==null) && (transactions.isEmpty()) )
+         throw new BitCoinException("can not calculate merkle hash, since there were no transactions");
+      // The merkle root here is calculated level by level, starting from the 
+      // leaves, that is the actual transaction hashes. At each level two hashes
+      // are added and then hashed, so each level is half as long as the previous
+      // one, stopping when we arrive at a single hash.
+      try
+      {
+         // Get digest algorithm
+         MessageDigest digest = MessageDigest.getInstance("SHA-256");
+         // Setup the lowest level (the transaction hashes)
+         List<byte[]> level = new ArrayList<byte[]>();
+         for ( Transaction tx : transactions )
+            level.add(tx.getHash());
+         // Now create a new level until there is only one value
+         while ( level.size() > 1 )
+         {
+            if ( logger.isDebugEnabled() )
+            {
+               StringBuilder loggerBuilder = new StringBuilder("hashes on level:");
+               for ( byte[] loggerHash : level )
+                  loggerBuilder.append(" <"+HexUtil.toHexString(loggerHash)+">");
+               logger.debug(loggerBuilder.toString());
+            }
+            List<byte[]> newLevel = new ArrayList<byte[]>();
+            // Go through the items and add them up in pairs
+            // (if the number of items is odd, just duplicate last item)
+            for ( int i=0; i<level.size(); i+=2 )
+            {
+               // Calculate hash sum hash
+               byte[] hash1 = level.get(i);
+               byte[] hash2 = null;
+               if ( i+1 >= level.size() )
+                  hash2 = level.get(i);
+               else
+                  hash2 = level.get(i+1);
+               // Double hash it
+               digest.reset();
+               digest.update(hash1,0,hash1.length);
+               digest.update(hash2,0,hash1.length);
+               byte[] firstHash = digest.digest();
+               digest.reset();
+               byte[] secondHash = digest.digest(firstHash);
+               // Save the result
+               newLevel.add(secondHash);
+            }
+            // Step to the next level and repeat
+            level=newLevel;
+         }
+         // The merkle root is the only item on the top level
+         calculatedMerkleRoot = level.get(0);
+      } catch ( NoSuchAlgorithmException e ) {
+         throw new BitCoinException("can not find sha-256 algorithm for merkle root calculation",e);
+      }
    }
 
    /**
