@@ -19,12 +19,14 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.TransactionFilter;
 import hu.netmind.bitcoin.BitCoinException;
 import org.testng.annotations.Test;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import hu.netmind.bitcoin.node.p2p.HexUtil;
 import java.util.List;
+import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
@@ -94,10 +96,48 @@ public class BlockTests
             "3C 5A 5B E5 ED DF 0F 25 91 19 E8 4E 4F 36 9C 4E B5 D3 26 C0 BB F4 ED 2E 68 F5 EE EC C8 AC C0 4A");
    }
 
-   public void testBlockPrefiltering()
+   public void testBlockInitialPrefiltering()
       throws BitCoinException
    {
-      // TODO
+      // Create some transactions
+      Transaction tx1 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx1.getHash()).andReturn(
+            reverse(HexUtil.toByteArray("F0 3B 56 C4 DF CA 0E 4D 53 B0 7C D4 7C B5 8F C4 75 66 58 12 39 68 80 63 D3 D4 A0 37 CC AB C3 14"))).anyTimes();
+      EasyMock.replay(tx1);
+      Transaction tx2 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx2.getHash()).andReturn(
+            reverse(HexUtil.toByteArray("C5 D1 11 7E A2 2E 83 15 54 E4 39 4F E8 E1 59 16 1C 6D 01 D0 A5 D7 6A B7 5B BD 90 5E D4 C6 7A 54"))).anyTimes();
+      EasyMock.replay(tx2);
+      Transaction tx3 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx3.getHash()).andReturn(
+            reverse(HexUtil.toByteArray("0D 7D 45 88 E6 69 21 E5 79 5D 41 1C A1 43 1C 07 8C CC D3 16 03 0C 06 74 C6 F8 0F DB 82 D6 DB ED"))).anyTimes();
+      EasyMock.replay(tx3);
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      transactions.add(tx1);
+      transactions.add(tx2);
+      transactions.add(tx3);
+      // Setup block with filtering out hashes starting with "C5"
+      BlockImpl block = new BlockImpl(transactions,
+            new TransactionFilter() 
+            {
+               public int compareTo(TransactionFilter filter)
+               {
+                  throw new UnsupportedOperationException("not implemented");
+               }
+               public void filterTransactions(List<Transaction> transactions)
+               {
+                  Iterator<Transaction> txIterator = transactions.iterator();
+                  while ( txIterator.hasNext() )
+                  {
+                     Transaction tx = txIterator.next();
+                     if ( (tx.getHash()[0] & 0xff) == 0x54 )
+                        txIterator.remove();
+                  }
+               }
+            }
+            ,0,0,0,null,null,null,new byte[] {});
+      // Determine whether that transaction was filtered out
+      Assert.assertEquals(block.getStoredTransactions().size(),2);
    }
 
    private byte[] reverse(byte[] byteArray)
