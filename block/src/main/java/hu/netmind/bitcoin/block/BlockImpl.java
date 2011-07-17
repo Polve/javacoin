@@ -34,6 +34,8 @@ import java.security.NoSuchAlgorithmException;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.AbstractList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,12 +64,13 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    private long difficulty;
    private byte[] previousBlockHash;
    private byte[] merkleRoot;
-   private byte[] calculatedMerkleRoot;
    private byte[] hash;
-   private List<Transaction> transactions;
    
-   // Below are properties filled runtime (and potentially altered depending on chain changes)
+   // Below are properties filled runtime (and potentially altered depending on chain changes,
+   // or new blocks or filters)
+   private List<Transaction> transactions;
    private BlockImpl previousBlock;
+   private MerkleTree merkleTree;
 
    public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
          long creationTime, long nonce, long difficulty, byte[] previousBlockHash, byte[] merkleRoot)
@@ -78,7 +81,7 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
 
    public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
          long creationTime, long nonce, long difficulty, byte[] previousBlockHash, 
-         byte[] merkleRoot, byte[] calculatedMerkleRoot, byte[] hash)
+         byte[] merkleRoot, MerkleTree merkleTree, byte[] hash)
       throws BitCoinException
    {
       this.creationTime=creationTime;
@@ -86,14 +89,48 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       this.difficulty=difficulty;
       this.previousBlockHash=previousBlockHash;
       this.merkleRoot=merkleRoot;
-      this.calculatedMerkleRoot=calculatedMerkleRoot;
-      if ( calculatedMerkleRoot == null )
-         calculatedMerkleRoot(transactions);
+      this.merkleTree=merkleTree;
+      if ( merkleTree == null )
+         this.merkleTree = calculateMerkleRoot(transactions);
       this.hash=hash;
       if ( hash == null )
-         calculateHash();
+         this.hash = calculateHash();
       setPreFilter(preFilter);
-      addTransactions(transactions);
+      this.transactions = new LinkedList<Transaction>(transactions);
+      prefilterTransactions();
+   }
+
+   /**
+    * Use the pre-filter to filter the transactions stored in this block. This is done on creation
+    * as an initial pre-filtering, but may be called regularly (for example if some filters are time
+    * or block depth dependent). As a result the filtered transactions will be removed, the merkle tree
+    * will be adjusted (compacted) accordingly.
+    */
+   void prefilterTransactions()
+   {
+      if ( getPreFilter() == null )
+         return;
+      // Run the filtering, but handle removed items
+      getPreFilter().filterTransactions(new AbstractList<Transaction>()
+            {
+               public Transaction get(int index)
+               {
+                  return transactions.get(index);
+               }
+
+               public int size()
+               {
+                  return transactions.size();
+               }
+
+               public Transaction remove(int index)
+               {
+                  // This is called when a transaction is removed
+                  Transaction removedTx = transactions.remove(index);
+                  merkleTree.removeLeaf(removedTx.getHash());
+                  return removedTx;
+               }
+            });
    }
 
    /**
@@ -104,75 +141,25 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       return transactions;
    }
 
-   /**
-    * Add transactions permanently to this block. This may be only invoked once when constructing
-    * this object.
-    */
    protected void addStoredTransactions(List<Transaction> transactions)
    {
-      this.transactions=transactions;
+      throw new UnsupportedOperationException("Can not add transactions to block");
    }
 
    /**
     * Calculate the merkle hash from the given transactions.
     */
-   private void calculatedMerkleRoot(List<Transaction> transactions)
+   private MerkleTree calculateMerkleRoot(List<Transaction> transactions)
       throws BitCoinException
    {
       if ( (transactions==null) && (transactions.isEmpty()) )
          throw new BitCoinException("can not calculate merkle hash, since there were no transactions");
-      // The merkle root here is calculated level by level, starting from the 
-      // leaves, that is the actual transaction hashes. At each level two hashes
-      // are added and then hashed, so each level is half as long as the previous
-      // one, stopping when we arrive at a single hash.
-      try
-      {
-         // Get digest algorithm
-         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-         // Setup the lowest level (the transaction hashes)
-         List<byte[]> level = new ArrayList<byte[]>();
-         for ( Transaction tx : transactions )
-            level.add(tx.getHash());
-         // Now create a new level until there is only one value
-         while ( level.size() > 1 )
-         {
-            if ( logger.isDebugEnabled() )
-            {
-               StringBuilder loggerBuilder = new StringBuilder("hashes on level:");
-               for ( byte[] loggerHash : level )
-                  loggerBuilder.append(" <"+HexUtil.toHexString(loggerHash)+">");
-               logger.debug(loggerBuilder.toString());
-            }
-            List<byte[]> newLevel = new ArrayList<byte[]>();
-            // Go through the items and add them up in pairs
-            // (if the number of items is odd, just duplicate last item)
-            for ( int i=0; i<level.size(); i+=2 )
-            {
-               // Calculate hash sum hash
-               byte[] hash1 = level.get(i);
-               byte[] hash2 = null;
-               if ( i+1 >= level.size() )
-                  hash2 = level.get(i);
-               else
-                  hash2 = level.get(i+1);
-               // Double hash it
-               digest.reset();
-               digest.update(hash1,0,hash1.length);
-               digest.update(hash2,0,hash1.length);
-               byte[] firstHash = digest.digest();
-               digest.reset();
-               byte[] secondHash = digest.digest(firstHash);
-               // Save the result
-               newLevel.add(secondHash);
-            }
-            // Step to the next level and repeat
-            level=newLevel;
-         }
-         // The merkle root is the only item on the top level
-         calculatedMerkleRoot = level.get(0);
-      } catch ( NoSuchAlgorithmException e ) {
-         throw new BitCoinException("can not find sha-256 algorithm for merkle root calculation",e);
-      }
+      // Setup the hashes first
+      List<byte[]> level = new ArrayList<byte[]>();
+      for ( Transaction tx : transactions )
+         level.add(tx.getHash());
+      // Create merkle tree from the hashes as leafs
+      return new MerkleTree(level);
    }
 
    /**
@@ -187,7 +174,7 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    /**
     * Calculate the hash of this block.
     */
-   private void calculateHash()
+   private byte[] calculateHash()
       throws BitCoinException
    {
       try
@@ -205,7 +192,7 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
          MessageDigest digest = MessageDigest.getInstance("SHA-256");
          byte[] firstHash = digest.digest(blockHeaderBytes);
          digest.reset();
-         hash = digest.digest(firstHash);
+         return digest.digest(firstHash);
       } catch ( NoSuchAlgorithmException e ) {
          throw new BitCoinException("can not find sha-256 algorithm for hash calculation",e);
       } catch ( IOException e ) {
@@ -269,9 +256,9 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    {
       return merkleRoot;
    }
-   public byte[] getCalculatedMerkleRoot()
+   public MerkleTree getMerkleTree()
    {
-      return calculatedMerkleRoot;
+      return merkleTree;
    }
    public byte[] getHash()
    {
