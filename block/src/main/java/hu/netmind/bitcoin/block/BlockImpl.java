@@ -91,7 +91,7 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       this.merkleRoot=merkleRoot;
       this.merkleTree=merkleTree;
       if ( merkleTree == null )
-         this.merkleTree = calculateMerkleRoot(transactions);
+         this.merkleTree = new MerkleTree(transactions);
       this.hash=hash;
       if ( hash == null )
          this.hash = calculateHash();
@@ -127,7 +127,7 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
                {
                   // This is called when a transaction is removed
                   Transaction removedTx = transactions.remove(index);
-                  merkleTree.removeLeaf(removedTx.getHash());
+                  merkleTree.removeTransaction(removedTx);
                   return removedTx;
                }
             });
@@ -144,22 +144,6 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    protected void addStoredTransactions(List<Transaction> transactions)
    {
       throw new UnsupportedOperationException("Can not add transactions to block");
-   }
-
-   /**
-    * Calculate the merkle hash from the given transactions.
-    */
-   private MerkleTree calculateMerkleRoot(List<Transaction> transactions)
-      throws BitCoinException
-   {
-      if ( (transactions==null) && (transactions.isEmpty()) )
-         throw new BitCoinException("can not calculate merkle hash, since there were no transactions");
-      // Setup the hashes first
-      List<byte[]> level = new ArrayList<byte[]>();
-      for ( Transaction tx : transactions )
-         level.add(tx.getHash());
-      // Create merkle tree from the hashes as leafs
-      return new MerkleTree(level);
    }
 
    /**
