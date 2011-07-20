@@ -278,7 +278,12 @@ public class MerkleTree
          return "Node "+startIndex+"-"+endIndex+" (removed: "+removed+")";
       }
 
-      public MerkleNode(byte[] hash, int startIndex, int endIndex, 
+      public MerkleNode(byte[] hash, int startIndex, int endIndex)
+      {
+         this(hash,startIndex,endIndex,null,true);
+      }
+
+      MerkleNode(byte[] hash, int startIndex, int endIndex, 
             MerkleNode[] children, boolean removed)
       {
          this.hash=hash;
