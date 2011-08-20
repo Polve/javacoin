@@ -47,6 +47,11 @@ public interface Block extends TransactionContainer
    Block getPreviousBlock();
 
    /**
+    * Get the next block on the given path.
+    */
+   Block getNextBlock(BlockPath path);
+
+   /**
     * Get the longest path this block is on. Note, that might not be the overall
     * longest path in the block chain.
     */
