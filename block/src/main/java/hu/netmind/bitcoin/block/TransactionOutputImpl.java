@@ -19,7 +19,6 @@
 package hu.netmind.bitcoin.block;
 
 import java.util.List;
-import hu.netmind.bitcoin.BlockPath;
 import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
@@ -39,14 +38,6 @@ public class TransactionOutputImpl implements TransactionOutput
    {
       this.value=value;
       this.script=script;
-   }
-
-   /**
-    * Get the claimer output from the path specified.
-    */
-   public TransactionInput getClaimerInput(BlockPath path)
-   {
-      return path.getClaimerInput(this);
    }
 
    public long getValue()

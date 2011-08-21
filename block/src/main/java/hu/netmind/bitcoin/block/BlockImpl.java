@@ -23,7 +23,6 @@ import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.TransactionFilter;
-import hu.netmind.bitcoin.BlockPath;
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.node.p2p.BlockHeader;
 import hu.netmind.bitcoin.node.p2p.BitCoinOutputStream;
@@ -194,34 +193,6 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    void setPreviousBlock(BlockImpl previousBlock)
    {
       this.previousBlock=previousBlock;
-   }
-
-   /**
-    * Get the next block on a given path.
-    */
-   Block getNextBlock(BlockPath path)
-   {
-      // TODO
-      return null;
-   }
-
-   /**
-    * Get claimer input for a given output in this block for a given path.
-    */
-   TransactionInput getClaimerInput(TransactionOutput output, BlockPath path)
-   {
-      // TODO
-      return null;
-   }
-
-   /**
-    * Get the longest path this block is on. Note, that might not be the overall
-    * longest path in the block chain.
-    */
-   public BlockPath getLongestPath()
-   {
-      // TODO
-      return null;
    }
 
    public long getCreationTime()
