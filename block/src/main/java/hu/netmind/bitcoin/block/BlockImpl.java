@@ -68,21 +68,23 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    // Below are properties filled runtime (and potentially altered depending on chain changes,
    // or new blocks or filters)
    private List<Transaction> transactions;
-   private BlockImpl previousBlock;
    private MerkleTree merkleTree;
 
-   public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
+   private BlockStorage blockStorage;
+
+   public BlockImpl(BlockStorage blockStorage, List<Transaction> transactions, TransactionFilter preFilter,
          long creationTime, long nonce, long difficulty, byte[] previousBlockHash, byte[] merkleRoot)
       throws BitCoinException
    {
-      this(transactions,preFilter,creationTime,nonce,difficulty,previousBlockHash,merkleRoot,null,null);
+      this(blockStorage,transactions,preFilter,creationTime,nonce,difficulty,previousBlockHash,merkleRoot,null,null);
    }
 
-   public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
+   public BlockImpl(BlockStorage blockStorage, List<Transaction> transactions, TransactionFilter preFilter,
          long creationTime, long nonce, long difficulty, byte[] previousBlockHash, 
          byte[] merkleRoot, MerkleTree merkleTree, byte[] hash)
       throws BitCoinException
    {
+      this.blockStorage=blockStorage;
       this.creationTime=creationTime;
       this.nonce=nonce;
       this.difficulty=difficulty;
@@ -184,15 +186,11 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    }
 
    /**
-    * Get the previous block.
+    * Get the previous block from storage.
     */
    public Block getPreviousBlock()
    {
-      return previousBlock;
-   }
-   void setPreviousBlock(BlockImpl previousBlock)
-   {
-      this.previousBlock=previousBlock;
+      return blockStorage.getBlock(getPreviousBlockHash());
    }
 
    public long getCreationTime()

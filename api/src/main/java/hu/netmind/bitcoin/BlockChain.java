@@ -44,9 +44,9 @@ public interface BlockChain extends Observable
    };
 
    /**
-    * Get the magic number of all the blocks in this chain.
+    * Get the Genesis Block (the first block).
     */
-   long getMagic();
+   Block getGenesisBlock();
 
    /**
     * Get the last Block on the "longest path".
