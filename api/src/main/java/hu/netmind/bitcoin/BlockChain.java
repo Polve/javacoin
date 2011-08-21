@@ -49,10 +49,9 @@ public interface BlockChain extends Observable
    long getMagic();
 
    /**
-    * Get the longest path (chain) in this block chain. By "longest"
-    * we mean that it has the most difficulty associated with it.
+    * Get the last Block on the "longest path".
     */
-   BlockPath getLongestPath();
+   Block getLastBlock();
 
 }
 

@@ -42,20 +42,13 @@ import java.util.List;
 public interface Block extends TransactionContainer
 {
    /**
-    * Get the previous block.
+    * Get the previous block. This method might be lazy, in that it
+    * does not pre-load the full Block object, but rather it constructs
+    * it on-demand. This should be regarded as an expensive method (as
+    * opposed to the other methods in this class which should be normal
+    * getters).
     */
    Block getPreviousBlock();
-
-   /**
-    * Get the next block on the given path.
-    */
-   Block getNextBlock(BlockPath path);
-
-   /**
-    * Get the longest path this block is on. Note, that might not be the overall
-    * longest path in the block chain.
-    */
-   BlockPath getLongestPath();
 
    /**
     * Get the creation time in millis.
