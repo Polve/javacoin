@@ -28,7 +28,7 @@ import java.util.Observer;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * @author Robert Brautigam
@@ -37,26 +37,43 @@ import java.util.ArrayList;
 public class BalanceCalculatorTests
 {
    private BlockChain blockChain;
-   private BlockPath blockPath;
    private KeyFactory keyFactory;
-   private Miner miner;
    private BlockBalanceCache cache;
+
+   private List<Block> createBlocks(int count)
+   {
+      // Create the blocks
+      LinkedList<Block> blocks = new LinkedList<Block>();
+      for ( int i=0; i<count; i++ )
+      {
+         Block currentBlock = EasyMock.createMock(Block.class);
+         if ( blocks.isEmpty() )
+            EasyMock.expect(currentBlock.getPreviousBlock()).andReturn(null).anyTimes();
+         else
+            EasyMock.expect(currentBlock.getPreviousBlock()).andReturn(blocks.getLast()).anyTimes();
+         EasyMock.replay(currentBlock);
+         blocks.addLast(currentBlock);
+      }
+      // Create block chain
+      EasyMock.expect(blockChain.getLastBlock()).andReturn(blocks.getLast()).anyTimes();
+      blockChain.addObserver((Observer)EasyMock.anyObject());
+      EasyMock.replay(blockChain);
+      return blocks;
+   }
 
    @BeforeMethod
    public void setupMocks()
    {
       // Setup mocks
       blockChain = EasyMock.createMock(BlockChain.class);
-      blockPath = EasyMock.createMock(BlockPath.class);
       keyFactory = EasyMock.createMock(KeyFactory.class);
-      miner = EasyMock.createMock(Miner.class);
       cache = EasyMock.createMock(BlockBalanceCache.class);
    }
 
    public void testUpdateInit()
    {
       UpdatingBalanceCalculator calculator = 
-         new UpdatingBalanceCalculatorImpl(blockChain, keyFactory, miner);
+         new UpdatingBalanceCalculatorImpl();
       Assert.assertEquals(calculator.getBalance(),1);
    }
 
@@ -65,14 +82,17 @@ public class BalanceCalculatorTests
       // Capture the observer the calculator registers
       Capture<Observer> observerTrap = new Capture<Observer>();
       blockChain.addObserver(EasyMock.capture(observerTrap));
+      EasyMock.expect(blockChain.getLastBlock()).andReturn(null).anyTimes();
       EasyMock.replay(blockChain);
       // Create calculator
-      UpdatingBalanceCalculator calculator = 
-         new UpdatingBalanceCalculatorImpl(blockChain, keyFactory, miner);
+      CachingBalanceCalculatorImpl calculator = 
+         new CachingBalanceCalculatorImpl(blockChain, keyFactory, cache);
+      calculator.getBalance();
+      Assert.assertEquals(calculator.getCalculateCount(),1);
       // Simulate update change
       observerTrap.getValue().update(null,null);
       // Check for increased balance because the update was invoked
-      Assert.assertEquals(calculator.getBalance(),2);
+      Assert.assertEquals(calculator.getCalculateCount(),2);
    }
 
    public void testUpdateKeyFactory()
@@ -81,42 +101,24 @@ public class BalanceCalculatorTests
       Capture<Observer> observerTrap = new Capture<Observer>();
       keyFactory.addObserver(EasyMock.capture(observerTrap));
       EasyMock.replay(keyFactory);
+      blockChain.addObserver(EasyMock.capture(observerTrap));
+      EasyMock.expect(blockChain.getLastBlock()).andReturn(null).anyTimes();
+      EasyMock.replay(blockChain);
       // Create calculator
-      UpdatingBalanceCalculator calculator = 
-         new UpdatingBalanceCalculatorImpl(blockChain, keyFactory, miner);
+      CachingBalanceCalculatorImpl calculator = 
+         new CachingBalanceCalculatorImpl(blockChain, keyFactory, cache);
+      calculator.getBalance();
+      Assert.assertEquals(calculator.getCalculateCount(),1);
       // Simulate update change
       observerTrap.getValue().update(null,null);
       // Check for increased balance because the update was invoked
-      Assert.assertEquals(calculator.getBalance(),2);
-   }
-
-   public void testUpdateMiner()
-   {
-      // Capture the observer the calculator registers
-      Capture<Observer> observerTrap = new Capture<Observer>();
-      miner.addObserver(EasyMock.capture(observerTrap));
-      EasyMock.replay(miner);
-      // Create calculator
-      UpdatingBalanceCalculator calculator = 
-         new UpdatingBalanceCalculatorImpl(blockChain, keyFactory, miner);
-      // Simulate update change
-      observerTrap.getValue().update(null,null);
-      // Check for increased balance because the update was invoked
-      Assert.assertEquals(calculator.getBalance(),2);
+      Assert.assertEquals(calculator.getCalculateCount(),2);
    }
 
    public void testCachingWithNothingCached()
    {
       // Create the blocks
-      List<Block> blocks = new ArrayList<Block>();
-      for ( int i=0; i<5; i++ )
-         blocks.add(EasyMock.createMock(Block.class));
-      // Create block chain
-      EasyMock.expect(blockChain.getLongestPath()).andReturn(blockPath).anyTimes();
-      blockChain.addObserver((Observer)EasyMock.anyObject());
-      EasyMock.replay(blockChain);
-      EasyMock.expect(blockPath.getBlocks()).andReturn(blocks).anyTimes();
-      EasyMock.replay(blockPath);
+      List<Block> blocks = createBlocks(5);
       // Prepare what calls the cache should receive
       EasyMock.expect(cache.getEntry((Block) EasyMock.anyObject())).andReturn(null).anyTimes();
       for ( int i=0; i<5; i++ )
@@ -127,7 +129,7 @@ public class BalanceCalculatorTests
       for ( int i=0; i<5; i++ )
          blockBalances.put(blocks.get(i),(long) 5); // Each block is worth 5
       CachingBalanceCalculatorImpl calculator = new CachingBalanceCalculatorImpl(
-            blockChain, keyFactory, miner, cache);
+            blockChain, keyFactory, cache);
       calculator.setBalanceMap(blockBalances);
       // Check results
       Assert.assertEquals(calculator.getBalance(),25);
@@ -137,15 +139,7 @@ public class BalanceCalculatorTests
    public void testCachingWithLatestCached()
    {
       // Create the blocks
-      List<Block> blocks = new ArrayList<Block>();
-      for ( int i=0; i<5; i++ )
-         blocks.add(EasyMock.createMock(Block.class));
-      // Create block chain
-      EasyMock.expect(blockChain.getLongestPath()).andReturn(blockPath).anyTimes();
-      blockChain.addObserver((Observer)EasyMock.anyObject());
-      EasyMock.replay(blockChain);
-      EasyMock.expect(blockPath.getBlocks()).andReturn(blocks).anyTimes();
-      EasyMock.replay(blockPath);
+      List<Block> blocks = createBlocks(5);
       // Prepare what calls the cache should receive
       EasyMock.expect(cache.getEntry(blocks.get(4))).andReturn((long) 25).anyTimes();
       EasyMock.replay(cache); // No other calls should be made
@@ -154,7 +148,7 @@ public class BalanceCalculatorTests
       for ( int i=0; i<5; i++ )
          blockBalances.put(blocks.get(i),(long) 5); // Each block is worth 5
       CachingBalanceCalculatorImpl calculator = new CachingBalanceCalculatorImpl(
-            blockChain, keyFactory, miner, cache);
+            blockChain, keyFactory, cache);
       calculator.setBalanceMap(blockBalances);
       // Check results
       Assert.assertEquals(calculator.getBalance(),25);
@@ -164,15 +158,7 @@ public class BalanceCalculatorTests
    public void testCachingWithMiddleCached()
    {
       // Create the blocks
-      List<Block> blocks = new ArrayList<Block>();
-      for ( int i=0; i<5; i++ )
-         blocks.add(EasyMock.createMock(Block.class));
-      // Create block chain
-      EasyMock.expect(blockChain.getLongestPath()).andReturn(blockPath).anyTimes();
-      blockChain.addObserver((Observer)EasyMock.anyObject());
-      EasyMock.replay(blockChain);
-      EasyMock.expect(blockPath.getBlocks()).andReturn(blocks).anyTimes();
-      EasyMock.replay(blockPath);
+      List<Block> blocks = createBlocks(5);
       // Prepare what calls the cache should receive
       EasyMock.expect(cache.getEntry(blocks.get(4))).andReturn(null);
       EasyMock.expect(cache.getEntry(blocks.get(3))).andReturn(null);
@@ -185,7 +171,7 @@ public class BalanceCalculatorTests
       for ( int i=0; i<5; i++ )
          blockBalances.put(blocks.get(i),(long) 5); // Each block is worth 5
       CachingBalanceCalculatorImpl calculator = new CachingBalanceCalculatorImpl(
-            blockChain, keyFactory, miner, cache);
+            blockChain, keyFactory, cache);
       calculator.setBalanceMap(blockBalances);
       // Check results
       Assert.assertEquals(calculator.getBalance(),25);

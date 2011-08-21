@@ -32,11 +32,23 @@ import hu.netmind.bitcoin.Miner;
 public class CachingBalanceCalculatorImpl extends CachingBalanceCalculator
 {
    private Map<Block, Long> balanceMap;
+   private int calculateCount = 0;
 
    public CachingBalanceCalculatorImpl(BlockChain blockChain,
-         KeyFactory keyFactory, Miner miner, BlockBalanceCache cache)
+         KeyFactory keyFactory, BlockBalanceCache cache)
    {
-      super(blockChain, keyFactory, miner, cache);
+      super(blockChain, keyFactory, cache);
+   }
+
+   protected void calculateBalance()
+   {
+      super.calculateBalance();
+      calculateCount++;
+   }
+
+   public int getCalculateCount()
+   {
+      return calculateCount;
    }
 
    public void setBalanceMap(Map<Block,Long> balanceMap)

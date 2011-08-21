@@ -20,10 +20,11 @@ package hu.netmind.bitcoin.wallet;
 
 import hu.netmind.bitcoin.Block;
 import java.util.Observable;
+import java.util.Observer;
 import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.KeyFactory;
-import hu.netmind.bitcoin.Miner;
 import java.util.List;
+import java.util.LinkedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,19 @@ import org.slf4j.LoggerFactory;
  * assuming new keys don't appear in the key store which have previously
  * been used (import), and the calculation algorithm does not depend on 
  * blocks coming <i>after</i> the cached block (which sometimes make sense actually).
+ * The events that might update the balance are the following:
+ * <ul>
+ *    <li>The BlockChain changes. In this case there might be new transactions 
+ *        integrated into the longest chain, or some side-branch becomes the
+ *        longest chain.</li>
+ *    <li>The KeyFactory changes. If the owner receives new keys which were not
+ *        generated, but imported, we don't know whether those keys were ever
+ *        used, and so the balance might be impacted in unknown ways. Also if
+ *        a key is removed the balance potentially changes.</li>
+ *    <li>The Miner receives transactions which are not yet incorporated into
+ *        the BlockChain. (This is not handled, since this implementation does
+ *        not calculate the open amount in the Miner)</li>
+ * </ul>
  * @author Robert Brautigam
  */
 public abstract class CachingBalanceCalculator extends UpdatingBalanceCalculator
@@ -42,12 +56,35 @@ public abstract class CachingBalanceCalculator extends UpdatingBalanceCalculator
    private static final Logger logger = LoggerFactory.getLogger(CachingBalanceCalculator.class);
 
    private BlockBalanceCache cache;
+   private BlockChain blockChain;
+   private KeyFactory keyFactory;
 
-   public CachingBalanceCalculator(BlockChain blockChain, KeyFactory keyFactory, Miner miner,
+   public CachingBalanceCalculator(BlockChain blockChain, KeyFactory keyFactory,
          BlockBalanceCache cache)
    {
-      super(blockChain, keyFactory, miner);
+      this.blockChain=blockChain;
+      this.keyFactory=keyFactory;
       this.cache=cache;
+      // Register listeners to all
+      blockChain.addObserver(new Observer()
+            {
+               public void update(Observable source, Object event)
+               {
+                  // If block change changes, we merely need to calculate
+                  // the balances of the new blocks
+                  calculateBalance();
+               }
+            });
+      keyFactory.addObserver(new Observer()
+            {
+               public void update(Observable source, Object event)
+               {
+                  // Currently there is no import of keys, so new keys
+                  // do not have retroactive impact, so we don't have
+                  // to clean the cache.
+                  calculateBalance();
+               }
+            });
    }
 
    /**
@@ -55,27 +92,34 @@ public abstract class CachingBalanceCalculator extends UpdatingBalanceCalculator
     * the aggregated transaction value up to the last Block in the longest
     * chain.
     */
-   protected void updateBalance()
+   protected void calculateBalance()
    {
       // This could be implemented really simply with a recursive function,
-      // but we don't want to stress the stack that much. There are hundreds
-      // of thousands of blocks. So this algorithm tries to find the first parent
+      // but we don't want to stress the stack that much, because there are hundreds
+      // of thousands of blocks. Instead we use heap to store the path we've walked.
+      // So this algorithm tries to find the first parent
       // for which we know the balance from cache, then go forward again and
       // put the values into the cache.
-      List<Block> chain = getBlockChain().getLongestPath().getBlocks();
-      int index;
+      Block currentBlock = blockChain.getLastBlock();
+      LinkedList<Block> path = new LinkedList<Block>();
       // Search for newest block for which we know the balance
-      for ( index = chain.size()-1; (index >= 0) && (cache.getEntry(chain.get(index))==null) ; index-- );
-      // Now calculate the newer ones (note index is -1 if no cache entries at all)
-      long balance = 0;
-      if ( index >= 0 )
-         balance = cache.getEntry(chain.get(index));
-      for ( index++ ; index < chain.size() ; index++ )
+      while ( (currentBlock!=null) && (cache.getEntry(currentBlock) == null) )
       {
-         balance += calculateBalance(chain.get(index));
-         cache.addEntry(chain.get(index),balance);
+         path.addFirst(currentBlock); // Save block path
+         currentBlock = currentBlock.getPreviousBlock();
       }
-      // Set the new balance
+      // Initialize balance. Note: currentBlock is not in path, and is either null,
+      // or non-null if there was a cache entry for a parent.
+      long balance = 0;
+      if ( currentBlock != null )
+         balance = cache.getEntry(currentBlock);
+      // Now walk through the same path, this time forward, cache and add all blocks
+      for ( Block block : path )
+      {
+         balance += calculateBalance(block);
+         cache.addEntry(block,balance);
+      }
+      // Set the new total balance
       setBalance(balance);
    }
 

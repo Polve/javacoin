@@ -19,92 +19,15 @@
 package hu.netmind.bitcoin.wallet;
 
 import java.util.Observable;
-import java.util.Observer;
-import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.KeyFactory;
-import hu.netmind.bitcoin.Miner;
 
 /**
- * Provides mechanisms to remember the last calculated balance, and listen to 
- * events that might update the balance. The events that might update the
- * balance are the following:
- * <ul>
- *    <li>The BlockChain changes. In this case there might be new transactions 
- *        integrated into the longest chain, or some side-branch becomes the
- *        longest chain.</li>
- *    <li>The KeyFactory changes. If the owner receives new keys which were not
- *        generated, but imported, we don't know whether those keys were ever
- *        used, and so the balance might be impacted in unknown ways. Also if
- *        a key is removed the balance potentially changes.</li>
- *    <li>The Miner receives transactions which are not yet incorporated into
- *        the BlockChain.</li>
- * </ul>
+ * Provides mechanisms to remember the last calculated balance.
+ * It is the responsibility of the implementations to hook into events which
+ * might update the balance.
  */
 public abstract class UpdatingBalanceCalculator extends Observable implements BalanceCalculator
 {
-   private BlockChain blockChain;
-   private KeyFactory keyFactory;
-   private Miner miner;
-
    private long currentBalance = -1;
-
-   /**
-    * Construct the balance calculator with the observed objects.
-    */
-   public UpdatingBalanceCalculator(BlockChain blockChain, KeyFactory keyFactory, Miner miner)
-   {
-      this.blockChain=blockChain;
-      this.keyFactory=keyFactory;
-      this.miner=miner;
-      // Register listeners to all
-      blockChain.addObserver(new Observer()
-            {
-               public void update(Observable source, Object event)
-               {
-                  fireUpdateBalance();
-               }
-            });
-      keyFactory.addObserver(new Observer()
-            {
-               public void update(Observable source, Object event)
-               {
-                  fireUpdateBalance();
-               }
-            });
-      miner.addObserver(new Observer()
-            {
-               public void update(Observable source, Object event)
-               {
-                  fireUpdateBalance();
-               }
-            });
-   }
-
-   public BlockChain getBlockChain()
-   {
-      return blockChain;
-   }
-
-   public Miner getMiner()
-   {
-      return miner;
-   }
-
-   public KeyFactory getKeyFactory()
-   {
-      return keyFactory;
-   }
-
-   private void fireUpdateBalance()
-   {
-      // First update the balance
-      synchronized ( this )
-      {
-         updateBalance();
-      }
-      // Then fire the notification to observers
-      notifyObservers(Event.BALANCE_CHANGE);
-   }
 
    /**
     * Get the currently calculated balance.
@@ -115,7 +38,7 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
       {
          // Initialize balance
          currentBalance = 0;
-         updateBalance();
+         calculateBalance();
       }
       return currentBalance;
    }
@@ -127,13 +50,15 @@ public abstract class UpdatingBalanceCalculator extends Observable implements Ba
    protected synchronized void setBalance(long balance)
    {
       this.currentBalance=balance;
+      // Notify listeners of change
       setChanged();
+      notifyObservers(Event.BALANCE_CHANGE);
    }
 
    /**
     * Implement this method to actually (re-)calculate the balance based on
     * the new information.
     */
-   protected abstract void updateBalance();
+   protected abstract void calculateBalance();
 }
 

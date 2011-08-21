@@ -29,13 +29,11 @@ import hu.netmind.bitcoin.Miner;
  */
 public class UpdatingBalanceCalculatorImpl extends UpdatingBalanceCalculator
 {
-   public UpdatingBalanceCalculatorImpl(BlockChain blockChain,
-         KeyFactory keyFactory, Miner miner)
+   public UpdatingBalanceCalculatorImpl()
    {
-      super(blockChain,keyFactory,miner);
    }
 
-   public void updateBalance()
+   public void calculateBalance()
    {
       setBalance(getBalance()+1);
    }
