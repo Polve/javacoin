@@ -85,7 +85,7 @@ public class TransactionTests
       List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
       inputs.add(input);
       // Now build the transaction itself, the hash should be automaticall generated
-      TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
+      TransactionImpl transaction = new TransactionImpl(null,inputs,outputs,0);
       // Check generated hash
       Assert.assertEquals(HexUtil.toHexString(transaction.getHash()), 
                "56 A7 70 66 9E 44 51 4E 5D 7E 44 01 22 EC 82 50 5B 5E 3F A5 15 66 63 AA E7 05 11 CC 88 E0 19 47");
@@ -172,7 +172,7 @@ public class TransactionTests
       inputs.add(input2);
       inputs.add(input3);
       // Now build the transaction itself
-      TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
+      TransactionImpl transaction = new TransactionImpl(null,inputs,outputs,0);
       // Check generated signature hash
       Assert.assertEquals(HexUtil.toHexString(input1.getSignatureHash(TransactionInput.SignatureHashType.SIGHASH_ALL,
                   createFragment(

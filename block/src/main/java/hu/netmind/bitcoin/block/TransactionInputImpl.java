@@ -139,7 +139,8 @@ public class TransactionInputImpl implements TransactionInput
       }
       // Now create the transaction copy with the modified inputs and outputs and calculate hash with
       // the type added
-      TransactionImpl txCopy = new TransactionImpl(inputs,outputs,getTransaction().getLockTime(),new byte[] {});
+      TransactionImpl txCopy = new TransactionImpl(transaction.getBlockStorage(),
+            inputs,outputs,transaction.getLockTime(),new byte[] {});
       txCopy.calculateHash(new byte[] { (byte)hashType, 0, 0, 0});
       // Return the hash of this specially created transaction with the type added
       return txCopy.getHash();

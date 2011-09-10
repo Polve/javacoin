@@ -30,6 +30,8 @@ import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.VerificationException;
+import hu.netmind.bitcoin.ScriptException;
 import hu.netmind.bitcoin.node.p2p.TxIn;
 import hu.netmind.bitcoin.node.p2p.TxOut;
 import hu.netmind.bitcoin.node.p2p.Tx;
@@ -44,34 +46,42 @@ import org.slf4j.LoggerFactory;
 public class TransactionImpl implements Transaction
 {
    private static final int TX_VERSION = 1;
+   private static final long MAX_BLOCK_SIZE = 1000000;
+   private static final long MIN_BLOCK_SIZE = 100;
+   private static final long COIN = 100000000;
+   private static final long MAX_MONEY = 21000000l * COIN;
    
    private static Logger logger = LoggerFactory.getLogger(TransactionImpl.class);
+   private BlockStorage blockStorage;
 
    private List<TransactionInputImpl> inputs;
    private List<TransactionOutputImpl> outputs;
    private long lockTime;
-   private transient Block block; // Only set runtime by block
    private byte[] hash;
+   private byte[] blockHash;
 
    /**
     * Create the transaction with the inputs, outputs and locking time. This method
     * computes the transaction hash.
     */
-   public TransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
+   public TransactionImpl(BlockStorage blockStorage, 
+         List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
          long lockTime)
       throws BitCoinException
    {
-      this(inputs,outputs,lockTime,null);
+      this(blockStorage,inputs,outputs,lockTime,null);
    }
    
    /**
     * Create the transaction with all the necessary parameters, but also the computed hash.
     * This constructor should be used when deserializing transactions.
     */
-   public TransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
+   public TransactionImpl(BlockStorage blockStorage, 
+         List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
          long lockTime, byte[] hash)
       throws BitCoinException
    {
+      this.blockStorage=blockStorage;
       this.inputs=inputs;
       this.outputs=outputs;
       this.lockTime=lockTime;
@@ -107,20 +117,26 @@ public class TransactionImpl implements Transaction
 
    public Block getBlock()
    {
-      return block;
+      return blockStorage.getBlock(getBlockHash());
    }
 
-   /**
-    * Block is set by the block itself when the transaction is added to it.
-    */
-   void setBlock(Block block)
+   BlockStorage getBlockStorage()
    {
-      this.block=block;
+      return blockStorage;
    }
 
    public byte[] getHash()
    {
       return hash;
+   }
+
+   public byte[] getBlockHash()
+   {
+      return blockHash;
+   }
+   public void setBlockHash(byte[] blockHash)
+   {
+      this.blockHash=blockHash;
    }
 
    /**
@@ -174,6 +190,77 @@ public class TransactionImpl implements Transaction
          throw new BitCoinException("can not find sha-256 algorithm for hash calculation",e);
       } catch ( IOException e ) {
          throw new BitCoinException("failed to calculate hash for transaction",e);
+      }
+   }
+
+   /**
+    * Do internal validations.
+    */
+   public void validate()
+      throws VerificationException
+   {
+      // This method goes over all the rules mentioned at:
+      // https://en.bitcoin.it/wiki/Protocol_rules#cite_note-1
+      // Note: only those checks are made which need no context (1-7, except 5)
+
+      // 1. Check syntactic correctness
+      //    Done: already done when transaction is parsed
+      // 2. Make sure neither in or out lists are empty
+      if ( inputs.isEmpty() )
+         throw new VerificationException("input list is empty for transaction: "+this);
+      if ( outputs.isEmpty() )
+         throw new VerificationException("output list is empty for transaction: "+this);
+      // 3. Size in bytes < MAX_BLOCK_SIZE
+      try
+      {
+         Tx tx = getTx();
+         // Now serialize this to byte array
+         ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+         BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+         tx.writeTo(output);
+         output.close();
+         int totalSize = byteOutput.toByteArray().length;
+         if ( totalSize > MAX_BLOCK_SIZE )
+            throw new VerificationException("transaction ("+this+") is bigger than: "+MAX_BLOCK_SIZE+" bytes: "+totalSize);
+         if ( totalSize < MIN_BLOCK_SIZE )
+            throw new VerificationException("transaction ("+this+") is smaller than: "+MIN_BLOCK_SIZE+" bytes: "+totalSize);
+      } catch ( IOException e ) {
+         throw new VerificationException("can not serialize transaction: "+this);
+      }
+      // 4. Each output value, as well as the total, must be in legal money range
+      long totalMoney = 0;
+      for ( TransactionOutput out : outputs )
+      {
+         if ( out.getValue() < 0 )
+            throw new VerificationException("output ("+out+") of transaction "+this+", has negative value: "+out.getValue());
+         if ( out.getValue() > MAX_MONEY )
+            throw new VerificationException("output ("+out+") of transaction "+this+", has more value than allowed: "+out.getValue());
+         totalMoney+=out.getValue();
+      }
+      if ( totalMoney < 0 )
+         throw new VerificationException("total value of transaction "+this+" is negative: "+totalMoney);
+      if ( totalMoney > MAX_MONEY )
+         throw new VerificationException("total value of transaction "+this+" is more than allowed: "+totalMoney);
+      // 5. Make sure none of the inputs have hash=0, n=-1 (coinbase transactions)
+      //    Omitted: this check has to be done only when transaction is
+      //    standalone (not in block), because coinbase is always already in a block
+      // 6. Check that nLockTime <= INT_MAX, size in bytes >= 100, and sig opcount <= 2
+      //    Note: min size check is done in step 3, sig opcount is done in step 7 (next)
+      if ( (getLockTime()<0) || (getLockTime() > Integer.MAX_VALUE) )
+         throw new VerificationException("lock time of transaction "+this+" is not in valid range (integer): "+getLockTime());
+      // 7. Reject "nonstandard" transactions: scriptSig doing anything other 
+      //    than pushing numbers on the stack, or scriptPubkey not matching the two usual forms
+      //    Note: only implemented dos attack on sig check (count the number of sigchecks)
+      try
+      {
+         for ( TransactionOutput out : outputs )
+            if ( out.getScript().isComputationallyExpensive() )
+               throw new VerificationException("transaction ("+this+") has computationally too expensive output: "+out);
+         for ( TransactionInput in : inputs )
+            if ( in.getSignatureScript().isComputationallyExpensive() )
+               throw new VerificationException("transaction ("+this+") has computationally too expensive input: "+in);
+      } catch ( ScriptException e ) {
+         throw new VerificationException("could not parse script fragment",e);
       }
    }
 }
