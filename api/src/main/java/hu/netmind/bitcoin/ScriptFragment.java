@@ -40,6 +40,13 @@ public interface ScriptFragment
       throws ScriptException;
 
    /**
+    * Determine whether this script it computationally expensive. The
+    * implementation should be a consensus all nodes have.
+    */
+   boolean isComputationallyExpensive()
+      throws ScriptException;
+
+   /**
     * Convert this fragment in byte code.
     */
    byte[] toByteArray();

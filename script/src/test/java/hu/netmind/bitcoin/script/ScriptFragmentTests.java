@@ -73,5 +73,23 @@ public class ScriptFragmentTests
       // The result should be the script without this part
       Assert.assertEquals(HexUtil.toHexString(subscript.toByteArray()),"76 A9 88 AC");
    }
+
+   public void testNotComplexScript()
+      throws ScriptException
+   {
+      ScriptFragmentImpl fragment = new ScriptFragmentImpl(HexUtil.toByteArray(
+               "76 A9 14 1A A0 CD 1C BE A6 E7 45 8A 7A BA D5 12 "+
+               "A9 D9 EA 1A FB 22 5E 88 AC"));
+      Assert.assertFalse(fragment.isComputationallyExpensive());
+   }
+
+   public void testComplexScript()
+      throws ScriptException
+   {
+      ScriptFragmentImpl fragment = new ScriptFragmentImpl(HexUtil.toByteArray(
+               "76 A9 14 1A A0 CD 1C BE A6 E7 45 8A 7A BA D5 12 "+
+               "A9 D9 EA 1A FB 22 5E 88 AC AC"));
+      Assert.assertTrue(fragment.isComputationallyExpensive());
+   }
 }
 

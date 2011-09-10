@@ -137,5 +137,33 @@ public class ScriptFragmentImpl implements ScriptFragment
          return "[Script error: "+e.getMessage()+"]";
       }
    }
+
+   /**
+    * Determine whether a script fragment is computationally expensive. Currently
+    * the implementation checks whether there is more than one signature check
+    * in the script.
+    */
+   public boolean isComputationallyExpensive()
+      throws ScriptException
+   {
+      try
+      {
+         int sigCount = 0;
+         InstructionInputStream input = getInstructionInput();
+         Instruction instruction = null;
+         while ( (instruction=input.readInstruction()) != null )
+         {
+            if ( (instruction.getOperation() == Operation.OP_CHECKSIG) ||
+                  (instruction.getOperation() == Operation.OP_CHECKSIGVERIFY) )
+               sigCount++;
+            if ( (instruction.getOperation() == Operation.OP_CHECKMULTISIG) ||
+                  (instruction.getOperation() == Operation.OP_CHECKMULTISIGVERIFY) )
+               sigCount+=20; // This is somehow assumed in the original client
+         }
+         return sigCount > byteArray.length / 14;
+      } catch ( IOException e ) {
+         throw new ScriptException("could not parse script fragment to determine complexity",e);
+      }
+   }
 }
 
