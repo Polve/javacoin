@@ -52,36 +52,31 @@ public class TransactionImpl implements Transaction
    private static final long MAX_MONEY = 21000000l * COIN;
    
    private static Logger logger = LoggerFactory.getLogger(TransactionImpl.class);
-   private BlockStorage blockStorage;
 
    private List<TransactionInputImpl> inputs;
    private List<TransactionOutputImpl> outputs;
    private long lockTime;
    private byte[] hash;
-   private byte[] blockHash;
 
    /**
     * Create the transaction with the inputs, outputs and locking time. This method
     * computes the transaction hash.
     */
-   public TransactionImpl(BlockStorage blockStorage, 
-         List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
+   public TransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
          long lockTime)
       throws BitCoinException
    {
-      this(blockStorage,inputs,outputs,lockTime,null);
+      this(inputs,outputs,lockTime,null);
    }
    
    /**
     * Create the transaction with all the necessary parameters, but also the computed hash.
     * This constructor should be used when deserializing transactions.
     */
-   public TransactionImpl(BlockStorage blockStorage, 
-         List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
+   public TransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
          long lockTime, byte[] hash)
       throws BitCoinException
    {
-      this.blockStorage=blockStorage;
       this.inputs=inputs;
       this.outputs=outputs;
       this.lockTime=lockTime;
@@ -115,28 +110,9 @@ public class TransactionImpl implements Transaction
       return lockTime;
    }
 
-   public Block getBlock()
-   {
-      return blockStorage.getBlock(getBlockHash());
-   }
-
-   BlockStorage getBlockStorage()
-   {
-      return blockStorage;
-   }
-
    public byte[] getHash()
    {
       return hash;
-   }
-
-   public byte[] getBlockHash()
-   {
-      return blockHash;
-   }
-   public void setBlockHash(byte[] blockHash)
-   {
-      this.blockHash=blockHash;
    }
 
    /**
@@ -152,8 +128,7 @@ public class TransactionImpl implements Transaction
       // Create txins
       List<TxIn> ins = new ArrayList<TxIn>();
       for ( TransactionInput input : inputs )
-         ins.add(new TxIn(input.getClaimedOutput().getTransaction().getHash(),
-                  input.getClaimedOutput().getIndex(), 
+         ins.add(new TxIn(input.getClaimedTransactionHash(),input.getClaimedOutputIndex(),
                   (input.getSignatureScript()==null?new byte[] {}:input.getSignatureScript().toByteArray()), 
                   input.getSequence()));
       // Create transaction itself

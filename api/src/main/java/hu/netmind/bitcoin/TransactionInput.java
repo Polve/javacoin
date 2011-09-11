@@ -41,11 +41,16 @@ public interface TransactionInput
    Transaction getTransaction();
 
    /**
-    * Get the transaction output this input refers to.
-    * @return The output this input claims to use, or null if this is
-    * a "coinbase" (money generated).
+    * Get the hash of the transaction this input claims an output
+    * from. Note: the exact object might depend on which path (chain) the
+    * transaction is in, so it is ambiguous.
     */
-   TransactionOutput getClaimedOutput();
+   byte[] getClaimedTransactionHash();
+
+   /**
+    * Get the claimed output's index in the claimed transaction.
+    */
+   int getClaimedOutputIndex();
 
    /**
     * Get the script fragment that confirms that the referenced output can be

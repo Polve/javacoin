@@ -59,19 +59,11 @@ public class TransactionVerificationITTests
       List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
       outputs.add(output1);
       outputs.add(output2);
-      // Before building the input, we have to build the claimed output
-      TransactionOutputImpl claimedOutput = new TransactionOutputImpl(503000000,
-         scriptFactory.createFragment(HexUtil.toByteArray(
-            "76 A9 14 34 28 B4 98 22 00 CE 46 53 2B 9C 54 23 08 65 44 AC 99 D3 69 88 AC")));
-      List<TransactionOutputImpl> claimedOutputs = new ArrayList<TransactionOutputImpl>();
-      claimedOutputs.add(claimedOutput);
-      claimedOutputs.add(claimedOutput); // This is a hack to make it to index 1, we don't use 0 anyway
-      List<TransactionInputImpl> claimedInputs = new ArrayList<TransactionInputImpl>();
-      TransactionImpl claimedTransaction = new TransactionImpl(claimedInputs,claimedOutputs,0,
-            HexUtil.toByteArray(
-               "2B 83 84 C1 49 FB 99 7D 84 B2 8B F6 80 C4 3D 36 F8 6A F8 35 4A 57 81 11 B5 C2 14 1A A9 59 4F 98"));
       // Build the input
-      TransactionInputImpl input = new TransactionInputImpl(claimedOutput,
+      TransactionInputImpl input = new TransactionInputImpl(
+         HexUtil.toByteArray(
+            "2B 83 84 C1 49 FB 99 7D 84 B2 8B F6 80 C4 3D 36 F8 6A F8 35 4A 57 81 11 B5 C2 14 1A A9 59 4F 98"),
+         1,
          scriptFactory.createFragment(HexUtil.toByteArray(
             "47 "+ // Start of sig
             "30 44 02 20 15 78 04 17 3F 7E 25 82 65 7B 9C 40 "+
@@ -92,7 +84,9 @@ public class TransactionVerificationITTests
       TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
       // Now try to validate the input with the provided script (note: we don't know
       // the private key belonging to the input we picked here)
-      Script verificationScript = scriptFactory.createScript(input.getSignatureScript(),claimedOutput.getScript());
+      Script verificationScript = scriptFactory.createScript(input.getSignatureScript(),
+         scriptFactory.createFragment(HexUtil.toByteArray( // The output's script
+            "76 A9 14 34 28 B4 98 22 00 CE 46 53 2B 9C 54 23 08 65 44 AC 99 D3 69 88 AC")));
       Assert.assertTrue(verificationScript.execute(input));
    }
 
@@ -114,36 +108,11 @@ public class TransactionVerificationITTests
             "76 A9 14 9E 35 D9 3C 77 92 BD CA AD 56 97 DD EB F0 43 53 D9 A5 E1 96 88 AC")));
       List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
       outputs.add(output);
-      // Build claimed output 1
-      TransactionOutputImpl claimedOutput1 = new TransactionOutputImpl(200000000,
-         scriptFactory.createFragment(HexUtil.toByteArray(
-            "76 A9 14 02 BF 4B 28 89 C6 AD A8 19 0C 25 2E 70 BD E1 A1 90 9F 96 17 88 AC")));
-      List<TransactionOutputImpl> outputs1 = new ArrayList<TransactionOutputImpl>();
-      outputs1.add(claimedOutput1);
-      List<TransactionInputImpl> inputs1 = new ArrayList<TransactionInputImpl>();
-      Transaction claimedTransaction1 = new TransactionImpl(inputs1,outputs1,0,
-         HexUtil.toByteArray(
-            "30 F3 70 1F 9B C4 64 55 2F 70 49 57 91 04 08 17 CE 77 7A D5 ED E1 6E 52 9F CD 0C 0E 94 91 56 94"));
-      // Build claimed output 2 (don't need the values)
-      Transaction claimedTransaction2 = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(claimedTransaction2.getHash()).andReturn(HexUtil.toByteArray(
-               "72 14 2B F7 68 6C E9 2C 6D E5 B7 33 65 BF B9 D5 9B B6 0C 2C 80 98 2D 59 58 C1 E6 A3 B0 8E A6 89")).anyTimes();
-      EasyMock.replay(claimedTransaction2);
-      TransactionOutput claimedOutput2 = EasyMock.createMock(TransactionOutput.class);
-      EasyMock.expect(claimedOutput2.getTransaction()).andReturn(claimedTransaction2).anyTimes();
-      EasyMock.expect(claimedOutput2.getIndex()).andReturn(0).anyTimes();
-      EasyMock.replay(claimedOutput2);
-      // Build claimed output 3 (don't need the values)
-      Transaction claimedTransaction3 = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(claimedTransaction3.getHash()).andReturn(HexUtil.toByteArray(
-               "D2 81 28 BB B6 20 7C 1C 3D 0A 63 0C C6 19 DC 7E 7B EA 56 AC 19 A1 DA B1 27 C6 2C 78 FA 1B 63 2C")).anyTimes();
-      EasyMock.replay(claimedTransaction3);
-      TransactionOutput claimedOutput3 = EasyMock.createMock(TransactionOutput.class);
-      EasyMock.expect(claimedOutput3.getTransaction()).andReturn(claimedTransaction3).anyTimes();
-      EasyMock.expect(claimedOutput3.getIndex()).andReturn(0).anyTimes();
-      EasyMock.replay(claimedOutput3);
       // Build the inputs
-      TransactionInputImpl input1 = new TransactionInputImpl(claimedOutput1,
+      TransactionInputImpl input1 = new TransactionInputImpl(
+         HexUtil.toByteArray(
+            "30 F3 70 1F 9B C4 64 55 2F 70 49 57 91 04 08 17 CE 77 7A D5 ED E1 6E 52 9F CD 0C 0E 94 91 56 94"),
+         0,
          scriptFactory.createFragment(HexUtil.toByteArray(
             "49 "+ // Start of sig
             "30 46 02 21 00 F5 74 6B 0B 25 4F 5A 37 E7 52 51 "+
@@ -158,7 +127,10 @@ public class TransactionVerificationITTests
             "00 31 50 42 3D F6 92 45 63 64 2D 4A FE 9B F4 FE "+
             "28")),
          0xFFFFFFFFl);
-      TransactionInputImpl input2 = new TransactionInputImpl(claimedOutput2,
+      TransactionInputImpl input2 = new TransactionInputImpl(
+         HexUtil.toByteArray(
+                  "72 14 2B F7 68 6C E9 2C 6D E5 B7 33 65 BF B9 D5 9B B6 0C 2C 80 98 2D 59 58 C1 E6 A3 B0 8E A6 89"),
+         0,
          scriptFactory.createFragment(HexUtil.toByteArray(
             "49 "+ // Start of sig
             "30 46 02 21 00 BC E4 3A D3 AC BC 79 B0 24 7E 54 "+
@@ -167,7 +139,10 @@ public class TransactionVerificationITTests
             "D3 70 6F 3B 9A AA B8 8D 9F 11 32 95 6A 1D FF A9 "+
             "26 CD 55 6E D5 53 60 DF 01")),
          0xFFFFFFFFl);
-      TransactionInputImpl input3 = new TransactionInputImpl(claimedOutput3,
+      TransactionInputImpl input3 = new TransactionInputImpl(
+         HexUtil.toByteArray(
+            "D2 81 28 BB B6 20 7C 1C 3D 0A 63 0C C6 19 DC 7E 7B EA 56 AC 19 A1 DA B1 27 C6 2C 78 FA 1B 63 2C"),
+         0,
          scriptFactory.createFragment(HexUtil.toByteArray(
             "49 "+ // Start of sig
             "30 45 02 20 20 97 57 36 81 61 53 77 08 FD 29 D8 "+
@@ -184,7 +159,9 @@ public class TransactionVerificationITTests
       TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
       // Now try to validate the input with the provided script (note: we don't know
       // the private key belonging to the input we picked here)
-      Script verificationScript = scriptFactory.createScript(input1.getSignatureScript(),claimedOutput1.getScript());
+      Script verificationScript = scriptFactory.createScript(input1.getSignatureScript(),
+         scriptFactory.createFragment(HexUtil.toByteArray( // Claimed output 1 script
+            "76 A9 14 02 BF 4B 28 89 C6 AD A8 19 0C 25 2E 70 BD E1 A1 90 9F 96 17 88 AC")));
       logger.debug("running verification script: "+verificationScript);
       Assert.assertTrue(verificationScript.execute(input1));
    }

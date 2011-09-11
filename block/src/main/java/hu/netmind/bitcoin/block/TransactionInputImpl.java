@@ -32,23 +32,31 @@ import hu.netmind.bitcoin.VerificationException;
  */
 public class TransactionInputImpl implements TransactionInput
 {
-   private TransactionOutput claimedOutput;
+   private byte[] claimedTransactionHash;
+   private int claimedOutputIndex;
    private ScriptFragment signatureScript;
    private long sequence;
    private TransactionImpl transaction; // Parent is filled out runtime
 
-   public TransactionInputImpl(TransactionOutput claimedOutput, 
+   public TransactionInputImpl(byte[] claimedTransactionHash, int claimedOutputIndex,
          ScriptFragment signatureScript, long sequence)
    {
-      this.claimedOutput=claimedOutput;
+      this.claimedTransactionHash=claimedTransactionHash;
+      this.claimedOutputIndex=claimedOutputIndex;
       this.signatureScript=signatureScript;
       this.sequence=sequence;
    }
 
-   public TransactionOutput getClaimedOutput()
+   public byte[] getClaimedTransactionHash()
    {
-      return claimedOutput;
+      return claimedTransactionHash;
    }
+
+   public int getClaimedOutputIndex()
+   {
+      return claimedOutputIndex;
+   }
+
    public ScriptFragment getSignatureScript()
    {
       return signatureScript;
@@ -89,9 +97,11 @@ public class TransactionInputImpl implements TransactionInput
             // meaning nothing can essentially change after the hash is signed.
             for ( TransactionInput input : getTransaction().getInputs() )
                if ( input == this )
-                  inputs.add(new TransactionInputImpl(claimedOutput,subscript,sequence));
+                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
+                           input.getClaimedOutputIndex(),subscript,sequence));
                else
-                  inputs.add(new TransactionInputImpl(input.getClaimedOutput(),null,input.getSequence()));
+                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
+                           input.getClaimedOutputIndex(),null,input.getSequence()));
             for ( TransactionOutput output : getTransaction().getOutputs() )
                outputs.add(new TransactionOutputImpl(output.getValue(),output.getScript()));
             break;
@@ -100,9 +110,11 @@ public class TransactionInputImpl implements TransactionInput
             // Allow updates to other inputs (hash with sequence set to 0, in addition to null script)
             for ( TransactionInput input : getTransaction().getInputs() )
                if ( input == this )
-                  inputs.add(new TransactionInputImpl(claimedOutput,subscript,sequence));
+                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
+                           input.getClaimedOutputIndex(),subscript,sequence));
                else
-                  inputs.add(new TransactionInputImpl(input.getClaimedOutput(),null,0));
+                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
+                           input.getClaimedOutputIndex(),null,0));
             // Allow any spending of the inputs (do not hash in outputs)
             break;
          case SIGHASH_SINGLE:
@@ -110,9 +122,11 @@ public class TransactionInputImpl implements TransactionInput
             // Allow updates to other inputs (hash with sequence set to 0, in addition to null script)
             for ( TransactionInput input : getTransaction().getInputs() )
                if ( input == this )
-                  inputs.add(new TransactionInputImpl(claimedOutput,subscript,sequence));
+                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
+                           input.getClaimedOutputIndex(),subscript,sequence));
                else
-                  inputs.add(new TransactionInputImpl(input.getClaimedOutput(),null,0));
+                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
+                           input.getClaimedOutputIndex(),null,0));
             // Now remove all outputs with higher index than this input (don't copy those)
             // (maybe this assumes each input will have exactly one output in these
             // kinds of transactions?) Also blank out lower outputs, so scripts
@@ -131,7 +145,8 @@ public class TransactionInputImpl implements TransactionInput
             // Only hash this input, which makes it possible to add any number of new inputs,
             // leaving the possibility open for others to contribute to the same (hashed) outputs and
             // amount.
-            inputs.add(new TransactionInputImpl(claimedOutput,subscript,sequence));
+            inputs.add(new TransactionInputImpl(claimedTransactionHash,
+                     claimedOutputIndex,subscript,sequence));
             // Copy over all outputs unmodified
             for ( TransactionOutput output : getTransaction().getOutputs() )
                outputs.add(new TransactionOutputImpl(output.getValue(),output.getScript()));
@@ -139,7 +154,7 @@ public class TransactionInputImpl implements TransactionInput
       }
       // Now create the transaction copy with the modified inputs and outputs and calculate hash with
       // the type added
-      TransactionImpl txCopy = new TransactionImpl(transaction.getBlockStorage(),
+      TransactionImpl txCopy = new TransactionImpl(
             inputs,outputs,transaction.getLockTime(),new byte[] {});
       txCopy.calculateHash(new byte[] { (byte)hashType, 0, 0, 0});
       // Return the hash of this specially created transaction with the type added
