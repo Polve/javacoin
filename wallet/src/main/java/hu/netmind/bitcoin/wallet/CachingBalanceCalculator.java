@@ -106,7 +106,7 @@ public abstract class CachingBalanceCalculator extends UpdatingBalanceCalculator
       while ( (currentBlock!=null) && (cache.getEntry(currentBlock) == null) )
       {
          path.addFirst(currentBlock); // Save block path
-         currentBlock = currentBlock.getPreviousBlock();
+         currentBlock = blockChain.getPreviousBlock(currentBlock);
       }
       // Initialize balance. Note: currentBlock is not in path, and is either null,
       // or non-null if there was a cache entry for a parent.

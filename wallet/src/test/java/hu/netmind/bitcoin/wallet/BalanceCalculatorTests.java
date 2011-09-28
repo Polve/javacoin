@@ -45,15 +45,15 @@ public class BalanceCalculatorTests
       // Create the blocks
       LinkedList<Block> blocks = new LinkedList<Block>();
       for ( int i=0; i<count; i++ )
+         blocks.addLast(EasyMock.createMock(Block.class));
+      for ( int i=count-2; i>=0; i-- )
       {
-         Block currentBlock = EasyMock.createMock(Block.class);
-         if ( blocks.isEmpty() )
-            EasyMock.expect(currentBlock.getPreviousBlock()).andReturn(null).anyTimes();
-         else
-            EasyMock.expect(currentBlock.getPreviousBlock()).andReturn(blocks.getLast()).anyTimes();
-         EasyMock.replay(currentBlock);
-         blocks.addLast(currentBlock);
+         Block currentBlock = blocks.get(i);
+         EasyMock.expect(blockChain.getPreviousBlock(
+                  (Block)EasyMock.anyObject())).andReturn(currentBlock);
       }
+      EasyMock.expect(blockChain.getPreviousBlock(
+               (Block)EasyMock.anyObject())).andReturn(null);
       // Create block chain
       EasyMock.expect(blockChain.getLastBlock()).andReturn(blocks.getLast()).anyTimes();
       blockChain.addObserver((Observer)EasyMock.anyObject());

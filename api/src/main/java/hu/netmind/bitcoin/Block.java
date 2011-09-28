@@ -42,15 +42,6 @@ import java.util.List;
 public interface Block extends TransactionContainer
 {
    /**
-    * Get the previous block. This method might be lazy, in that it
-    * does not pre-load the full Block object, but rather it constructs
-    * it on-demand. This should be regarded as an expensive method (as
-    * opposed to the other methods in this class which should be normal
-    * getters).
-    */
-   Block getPreviousBlock();
-
-   /**
     * Get the creation time in millis.
     */
    long getCreationTime();

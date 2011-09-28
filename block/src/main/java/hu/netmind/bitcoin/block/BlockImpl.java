@@ -70,21 +70,18 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    private List<Transaction> transactions;
    private MerkleTree merkleTree;
 
-   private BlockStorage blockStorage;
-
-   public BlockImpl(BlockStorage blockStorage, List<Transaction> transactions, TransactionFilter preFilter,
+   public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
          long creationTime, long nonce, long difficulty, byte[] previousBlockHash, byte[] merkleRoot)
       throws BitCoinException
    {
-      this(blockStorage,transactions,preFilter,creationTime,nonce,difficulty,previousBlockHash,merkleRoot,null,null);
+      this(transactions,preFilter,creationTime,nonce,difficulty,previousBlockHash,merkleRoot,null,null);
    }
 
-   public BlockImpl(BlockStorage blockStorage, List<Transaction> transactions, TransactionFilter preFilter,
+   public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
          long creationTime, long nonce, long difficulty, byte[] previousBlockHash, 
          byte[] merkleRoot, MerkleTree merkleTree, byte[] hash)
       throws BitCoinException
    {
-      this.blockStorage=blockStorage;
       this.creationTime=creationTime;
       this.nonce=nonce;
       this.difficulty=difficulty;
@@ -183,14 +180,6 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       } catch ( IOException e ) {
          throw new BitCoinException("failed to calculate hash for block header",e);
       }
-   }
-
-   /**
-    * Get the previous block from storage.
-    */
-   public Block getPreviousBlock()
-   {
-      return blockStorage.getBlock(getPreviousBlockHash());
    }
 
    public long getCreationTime()

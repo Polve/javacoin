@@ -46,7 +46,7 @@ public class BlockTests
       EasyMock.replay(tx1);
       List<Transaction> transactions = new ArrayList<Transaction>();
       transactions.add(tx1);
-      BlockImpl block = new BlockImpl(null,transactions, null,
+      BlockImpl block = new BlockImpl(transactions, null,
             1310891749000l, 3999553309l, 436911055l, 
             HexUtil.toByteArray("19 49 7C 77 6F 0E FD 5A 01 8E 2D 8E 73 BC B1 E2 85 CD C9 A2 CD 52 30 BC CF 04 00 00 00 00 00 00"),
             HexUtil.toByteArray("AE 52 FE 5C EC D5 7E B1 BA 4C A0 A2 FD 1E A9 DE 4B 6E 08 46 3B 34 69 C1 82 7C 2F 67 7D BC 9D FE"));
@@ -90,7 +90,7 @@ public class BlockTests
       transactions.add(tx4);
       transactions.add(tx5);
       // Setup block (so that it does not calculate normal hash)
-      BlockImpl block = new BlockImpl(null,transactions,null,0,0,0,null,null,null,new byte[] {});
+      BlockImpl block = new BlockImpl(transactions,null,0,0,0,null,null,null,new byte[] {});
       // Check merkle root
       Assert.assertEquals(HexUtil.toHexString(block.getMerkleTree().getRoot()),
             "3C 5A 5B E5 ED DF 0F 25 91 19 E8 4E 4F 36 9C 4E B5 D3 26 C0 BB F4 ED 2E 68 F5 EE EC C8 AC C0 4A");
@@ -117,7 +117,7 @@ public class BlockTests
       transactions.add(tx2);
       transactions.add(tx3);
       // Setup block with filtering out hashes starting with "C5"
-      BlockImpl block = new BlockImpl(null,transactions,
+      BlockImpl block = new BlockImpl(transactions,
             new TransactionFilter() 
             {
                public int compareTo(TransactionFilter filter)

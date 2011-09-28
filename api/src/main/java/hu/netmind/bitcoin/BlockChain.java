@@ -53,5 +53,14 @@ public interface BlockChain extends Observable
     */
    Block getLastBlock();
 
+   /**
+    * Get the block preceding the given block.
+    * @return The Block that is referenced from the
+    * given block in the chain, or null if no such block
+    * exists. There is no preceding block if that was not yet
+    * added to the chain, or the current block is the genesis
+    * block.
+    */
+   Block getPreviousBlock(Block current);
 }
 
