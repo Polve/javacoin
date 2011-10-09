@@ -237,6 +237,7 @@ public class TransactionImpl implements Transaction
       } catch ( ScriptException e ) {
          throw new VerificationException("could not parse script fragment",e);
       }
+      // Tests after #7 ommitted because they need context
    }
 }
 

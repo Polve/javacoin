@@ -27,6 +27,7 @@ import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.node.p2p.BlockHeader;
 import hu.netmind.bitcoin.node.p2p.BitCoinOutputStream;
 import hu.netmind.bitcoin.node.p2p.HexUtil;
+import hu.netmind.bitcoin.VerificationException;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -60,7 +61,7 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    // These are unalterable properties of the block
    private long creationTime;
    private long nonce;
-   private long difficulty;
+   private long compressedTarget;
    private byte[] previousBlockHash;
    private byte[] merkleRoot;
    private byte[] hash;
@@ -71,20 +72,20 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    private MerkleTree merkleTree;
 
    public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
-         long creationTime, long nonce, long difficulty, byte[] previousBlockHash, byte[] merkleRoot)
+         long creationTime, long nonce, long compressedTarget, byte[] previousBlockHash, byte[] merkleRoot)
       throws BitCoinException
    {
-      this(transactions,preFilter,creationTime,nonce,difficulty,previousBlockHash,merkleRoot,null,null);
+      this(transactions,preFilter,creationTime,nonce,compressedTarget,previousBlockHash,merkleRoot,null,null);
    }
 
    public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
-         long creationTime, long nonce, long difficulty, byte[] previousBlockHash, 
+         long creationTime, long nonce, long compressedTarget, byte[] previousBlockHash, 
          byte[] merkleRoot, MerkleTree merkleTree, byte[] hash)
       throws BitCoinException
    {
       this.creationTime=creationTime;
       this.nonce=nonce;
-      this.difficulty=difficulty;
+      this.compressedTarget=compressedTarget;
       this.previousBlockHash=previousBlockHash;
       this.merkleRoot=merkleRoot;
       this.merkleTree=merkleTree;
@@ -150,7 +151,7 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    private BlockHeader getBlockHeader()
    {
       return new BlockHeader(BLOCK_VERSION,previousBlockHash,merkleRoot,creationTime,
-            difficulty,nonce);
+            compressedTarget,nonce);
    }
 
    /**
@@ -182,6 +183,26 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       }
    }
 
+   /**
+    * Run all validations that require no context.
+    */
+   public void validate()
+      throws VerificationException
+   {
+      // This method goes over all the rules mentioned at:
+      // https://en.bitcoin.it/wiki/Protocol_rules#.22block.22_messages
+      
+      // 1. Check syntactic correctness 
+      //    Done: already done when block is parsed
+      // 2. Reject if duplicate of block we have in any of the three categories 
+      //    Ommitted: needs context, and depends on the original client implementation
+      // 3. Transaction list must be non-empty 
+      //    Ommitted: transaction list can be null in a block, for example all 
+      //    transactions are filtered
+      // 4. Block hash must satisfy claimed nBits proof of work 
+      
+   }
+
    public long getCreationTime()
    {
       return creationTime;
@@ -190,9 +211,9 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    {
       return nonce;
    }
-   public long getDifficulty()
+   public long getCompressedTarget()
    {
-      return difficulty;
+      return compressedTarget;
    }
    public byte[] getMerkleRoot()
    {
