@@ -52,9 +52,9 @@ public interface Block extends TransactionContainer
    long getNonce();
 
    /**
-    * Get the difficulty target for this block.
+    * Get the difficulty target for this block in a compressed form.
     */
-   long getDifficulty();
+   long getCompressedTarget();
 
    /**
     * Get the hash of the previous block.
