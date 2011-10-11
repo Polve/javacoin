@@ -70,5 +70,12 @@ public interface Block extends TransactionContainer
     * Return the hash of this block.
     */
    byte[] getHash();
+
+   /**
+    * Validate that this block and all contained transactions
+    * are consistent and follows all rules that don't require any context.
+    */
+   void validate()
+      throws VerificationException;
 }
 

@@ -68,6 +68,18 @@ public interface Transaction
     * Return the hash of this transaction.
     */
    byte[] getHash();
+
+   /**
+    * Determine whether this transaction is a "coinbase" transaction.
+    */
+   boolean isCoinbase();
+
+   /**
+    * Validate that this transaction is consistent and follows all rules
+    * that don't require any context.
+    */
+   void validate()
+      throws VerificationException;
 }
 
 
