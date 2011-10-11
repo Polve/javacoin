@@ -21,6 +21,7 @@ package hu.netmind.bitcoin.block;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.math.BigInteger;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.security.MessageDigest;
@@ -237,7 +238,31 @@ public class TransactionImpl implements Transaction
       } catch ( ScriptException e ) {
          throw new VerificationException("could not parse script fragment",e);
       }
-      // Tests after #7 ommitted because they need context
+      // Tests after #7 ommitted because they need context.
+      // Additional tests follow found in the source (or checked in other places)
+
+      // Check coinbase / not coinbase
+      if ( isCoinbase() )
+      {
+         // Scriptsig should be then between 2 and 100
+         int scriptSigLength = inputs.get(0).getSignatureScript().toByteArray().length;
+         if ( (scriptSigLength < 2) || (scriptSigLength > 100) )
+            throw new VerificationException("script in coinbase transaction ("+this+") has invalid size: "+scriptSigLength);
+      }
+      else
+      {
+         for ( TransactionInputImpl in : inputs )
+            if ( (in.getClaimedOutputIndex() < 0) || 
+                 (new BigInteger(1,inputs.get(0).getClaimedTransactionHash()).equals(BigInteger.ZERO)) )
+               throw new VerificationException("input for transaction ("+this+") has wrong reference to previous transaction");
+      }
+   }
+
+   public boolean isCoinbase()
+   {
+      return (inputs.size()==1) &&
+         (inputs.get(0).getClaimedOutputIndex()==-1) &&
+         (new BigInteger(1,inputs.get(0).getClaimedTransactionHash()).equals(BigInteger.ZERO));
    }
 }
 

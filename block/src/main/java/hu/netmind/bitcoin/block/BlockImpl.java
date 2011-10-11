@@ -32,6 +32,8 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -55,8 +57,9 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockImpl extends PrefilteredTransactionContainer implements Block
 {
+   private static final int BLOCK_VERSION = 1;
+   private static final long BLOCK_FUTURE_VALIDITY = 2*60*60*1000; // 2 hrs millis
    private static Logger logger = LoggerFactory.getLogger(BlockImpl.class);
-   private static int BLOCK_VERSION = 1;
 
    // These are unalterable properties of the block
    private long creationTime;
@@ -191,16 +194,42 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    {
       // This method goes over all the rules mentioned at:
       // https://en.bitcoin.it/wiki/Protocol_rules#.22block.22_messages
+      // Checks made 1- (except 2)
       
       // 1. Check syntactic correctness 
       //    Done: already done when block is parsed
       // 2. Reject if duplicate of block we have in any of the three categories 
       //    Ommitted: needs context, and depends on the original client implementation
       // 3. Transaction list must be non-empty 
-      //    Ommitted: transaction list can be null in a block, for example all 
-      //    transactions are filtered
+      //    Note: we have to keep coinbase transactions anyway for now, so
+      //    one transaction must be there
+      if ( transactions.isEmpty() )
+         throw new VerificationException("block ("+this+") has no transactions");
       // 4. Block hash must satisfy claimed nBits proof of work 
-      
+      Difficulty claimedDifficulty = new Difficulty(compressedTarget);
+      Difficulty hashDifficulty = new Difficulty(hash);
+      if ( hashDifficulty.compareTo(claimedDifficulty) < 0 )
+         throw new VerificationException("difficulty of block ("+this+") does not have claimed difficulty of: "+claimedDifficulty);
+      // 5. Block timestamp must not be more than two hours in the future 
+      if ( creationTime > System.currentTimeMillis() + BLOCK_FUTURE_VALIDITY )
+         throw new VerificationException("creation time of block ("+this+"): "+new Date(creationTime)+" is too far in future");
+      // 6. First transaction must be coinbase (i.e. only 1 input, with hash=0, n=-1), the rest must not be 
+      if ( ! transactions.get(0).isCoinbase() )
+         throw new VerificationException("block's first transaction was not coinbase: "+this);
+      for ( int i=1; i<transactions.size(); i++ )
+         if ( transactions.get(i).isCoinbase() )
+            throw new VerificationException("block's "+i+"th transaction is a coinbase, it should only be the first though");
+      // 7. For each transaction, apply "tx" checks 2-4 
+      //    Note: this does all the non-context aware checks for transactions
+      for ( Transaction tx : transactions )
+         tx.validate();
+      // 8. For the coinbase (first) transaction, scriptSig length must be 2-100 
+      //    Ommitted: checked in transaction validate
+      // 9. Reject if sum of transaction sig opcounts > MAX_BLOCK_SIGOPS 
+      //    Ommitted: transactions already check for script complexity
+      // 10. Verify Merkle hash 
+      if ( ! Arrays.equals(merkleTree.getRoot(),merkleRoot) )
+         throw new VerificationException("block's ("+this+") merkle root does not match transaction hashes");
    }
 
    public long getCreationTime()

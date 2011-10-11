@@ -97,6 +97,11 @@ public class Difficulty implements Comparable<Difficulty>
    {
       return difficulty;
    }
+
+   public String toString()
+   {
+      return difficulty.toString();
+   }
 }
 
 
