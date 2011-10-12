@@ -454,5 +454,54 @@ public class TransactionTests
       transaction.validate();      
    }
 
+   public void testCoinbase()
+      throws ScriptException, BitCoinException
+   {
+      // First build the output
+      TransactionOutputImpl output1 = new TransactionOutputImpl(1100000000l,
+            createFragment("76 A9 14 20 CA C8 9D 2F 1F C9 11 1B 38 BC 5F D7 27 8B E6 14 A7 89 C4 88 AC"));
+      List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
+      outputs.add(output1);
+      // Build the input
+      TransactionInputImpl input = new TransactionInputImpl(
+            new byte[] { 
+               0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0
+            }, 
+            -1, createFragment("01 02 03 04"),0xFFFFFFFFl);
+      List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
+      inputs.add(input);
+      // Now build the transaction itself, the hash should be automaticall generated
+      TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
+      // Check whether coinbase
+      Assert.assertTrue(transaction.isCoinbase());
+   }
+
+   public void testNotCoinbase()
+      throws ScriptException, BitCoinException
+   {
+      // First build the output
+      TransactionOutputImpl output1 = new TransactionOutputImpl(1100000000l,
+            createFragment("76 A9 14 20 CA C8 9D 2F 1F C9 11 1B 38 BC 5F D7 27 8B E6 14 A7 89 C4 88 AC"));
+      List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
+      outputs.add(output1);
+      // Build the input
+      TransactionInputImpl input = new TransactionInputImpl(
+            new byte[] { 
+               0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0
+            }, 
+            0, createFragment("01 02 03 04"),0xFFFFFFFFl);
+      List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
+      inputs.add(input);
+      // Now build the transaction itself, the hash should be automaticall generated
+      TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
+      // Check whether coinbase
+      Assert.assertFalse(transaction.isCoinbase());
+   }
 }
 
