@@ -66,5 +66,11 @@ public class DifficultyTests
    {
       Assert.assertTrue( new Difficulty(0x1b0404cbl).compareTo(new Difficulty(0x1d00ffffl)) > 0 );
    }
+
+   public void testZeroDifficulty()
+   {
+      Assert.assertTrue( new Difficulty(0).compareTo(new Difficulty(0x1d00ffffl)) < 0 );
+   }
+
 }
 

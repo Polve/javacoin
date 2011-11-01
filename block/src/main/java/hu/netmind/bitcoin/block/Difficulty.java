@@ -53,8 +53,12 @@ public class Difficulty implements Comparable<Difficulty>
     */
    public Difficulty(byte[] target)
    {
-      difficulty = new BigDecimal(MAX_TARGET).divide(
-            new BigDecimal(new BigInteger(1,target)),BigDecimal.ROUND_DOWN);
+      BigDecimal targetNumber = new BigDecimal(new BigInteger(1,target));
+      if ( targetNumber.equals(BigDecimal.ZERO) )
+         difficulty = BigDecimal.ZERO;
+      else
+         difficulty = new BigDecimal(MAX_TARGET).divide(
+               targetNumber,BigDecimal.ROUND_DOWN);
       logger.debug("difficulty created with value: {}",difficulty);
    }
 
@@ -63,12 +67,10 @@ public class Difficulty implements Comparable<Difficulty>
     */
    public Difficulty(long compressedTarget)
    {
-      // First decompress the target
-      BigInteger target = 
-         BigInteger.valueOf(compressedTarget & 0x00FFFFFFl).shiftLeft(8*((int)(compressedTarget >> 24)-3));
-      // Then set
-      difficulty = new BigDecimal(MAX_TARGET).divide(new BigDecimal(target),BigDecimal.ROUND_DOWN);
-      logger.debug("difficulty created with value: {}",difficulty);
+      this(
+         BigInteger.valueOf(compressedTarget & 0x00FFFFFFl).
+         shiftLeft(8*((int)(compressedTarget >> 24)-3)).
+         toByteArray());
    }
 
    /**

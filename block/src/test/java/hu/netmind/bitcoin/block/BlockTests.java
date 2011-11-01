@@ -21,6 +21,7 @@ package hu.netmind.bitcoin.block;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionFilter;
 import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.VerificationException;
 import org.testng.annotations.Test;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -233,6 +234,95 @@ public class BlockTests
       MerkleTree treeReconstruction = new MerkleTree(tree.getOuterNodes(),transactionsReconstruction);
       Assert.assertEquals(HexUtil.toHexString(treeReconstruction.getRoot()),
             "3C 5A 5B E5 ED DF 0F 25 91 19 E8 4E 4F 36 9C 4E B5 D3 26 C0 BB F4 ED 2E 68 F5 EE EC C8 AC C0 4A");
+   }
+
+   public void testValidBlock()
+      throws BitCoinException, VerificationException
+   {
+      // Construct block with minimal transactions, that is only a coinbase
+      Transaction tx = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx.isCoinbase()).andReturn(true);
+      EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 });
+      tx.validate();
+      EasyMock.replay(tx);
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      transactions.add(tx);
+      // Create block
+      MerkleTree mTree = new MerkleTree(transactions);
+      BlockImpl block = new BlockImpl(transactions,null,0,0,0,null,mTree.getRoot(),
+            mTree,new byte[] { 0 });
+      block.validate();
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testEmptyTransactions()
+      throws BitCoinException, VerificationException
+   {
+      // Construct block with minimal transactions, that is only a coinbase
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      // Create block
+      BlockImpl block = new BlockImpl(transactions,null,0,0,0,null,null,null,new byte[] { 0 });
+      block.validate();
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testFalseDifficulty()
+      throws BitCoinException, VerificationException
+   {
+      // Construct block with minimal transactions, that is only a coinbase
+      Transaction tx = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx.isCoinbase()).andReturn(true);
+      EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 });
+      tx.validate();
+      EasyMock.replay(tx);
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      transactions.add(tx);
+      // Create block with false difficulty (hash is not as difficult as
+      // claimed).
+      MerkleTree tree = new MerkleTree(transactions);
+      BlockImpl block = new BlockImpl(transactions,
+            null,0,0,0x1b0404cbl,null,tree.getRoot(),tree,
+            HexUtil.toByteArray("00 00 00 00 00 04 04 DB 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"));
+      block.validate();
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testBlockWithInvalidTransaction()
+      throws BitCoinException, VerificationException
+   {
+      // Construct block with minimal transactions, that don't validate
+      Transaction tx = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx.isCoinbase()).andReturn(true);
+      EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 });
+      tx.validate();
+      EasyMock.expectLastCall().andThrow(new VerificationException("transaction failed validation (test)"));
+      EasyMock.replay(tx);
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      transactions.add(tx);
+      // Create block
+      MerkleTree mTree = new MerkleTree(transactions);
+      BlockImpl block = new BlockImpl(transactions,null,0,0,0,null,mTree.getRoot(),
+            mTree,new byte[] { 0 });
+      block.validate();
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testBlockWrongMerkleRoot()
+      throws BitCoinException, VerificationException
+   {
+      // Construct block with minimal transactions, that is only a coinbase
+      Transaction tx = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx.isCoinbase()).andReturn(true);
+      EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 });
+      tx.validate();
+      EasyMock.replay(tx);
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      transactions.add(tx);
+      // Create block
+      MerkleTree mTree = new MerkleTree(transactions);
+      BlockImpl block = new BlockImpl(transactions,null,0,0,0,null,new byte[] { 0 },
+            mTree,new byte[] { 0 });
+      block.validate();
    }
 
    private byte[] reverse(byte[] byteArray)

@@ -194,7 +194,6 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    {
       // This method goes over all the rules mentioned at:
       // https://en.bitcoin.it/wiki/Protocol_rules#.22block.22_messages
-      // Checks made 1- (except 2)
       
       // 1. Check syntactic correctness 
       //    Done: already done when block is parsed
