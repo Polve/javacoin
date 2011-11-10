@@ -18,8 +18,8 @@
 
 package hu.netmind.bitcoin.block;
 
-import java.math.BigInteger;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,14 +43,12 @@ import org.slf4j.LoggerFactory;
  */
 public class Difficulty implements Comparable<Difficulty>
 {
-   public static final BigInteger MAX_TARGET =
-         new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16);
-   public static final Difficulty MIN_VALUE = new Difficulty(MAX_TARGET.toByteArray());
-
    private static Logger logger = LoggerFactory.getLogger(Difficulty.class);
+   public static final Difficulty MIN_VALUE = new Difficulty(DifficultyTarget.MAX_TARGET);
+
    private BigDecimal difficulty;
 
-   private Difficulty(BigDecimal difficulty)
+   public Difficulty(BigDecimal difficulty)
    {
       this.difficulty=difficulty;
    }
@@ -58,34 +56,14 @@ public class Difficulty implements Comparable<Difficulty>
    /**
     * Construct the difficulty using the target directly.
     */
-   public Difficulty(BigInteger target)
+   public Difficulty(DifficultyTarget target)
    {
-      this(target.toByteArray());
-   }
-
-   /**
-    * Construct the difficulty object with the target number as bytes.
-    */
-   public Difficulty(byte[] target)
-   {
-      BigDecimal targetNumber = new BigDecimal(new BigInteger(1,target));
-      if ( targetNumber.equals(BigDecimal.ZERO) )
+      if ( target.getTarget().equals(BigInteger.ZERO) )
          difficulty = BigDecimal.ZERO;
       else
-         difficulty = new BigDecimal(MAX_TARGET).divide(
-               targetNumber,BigDecimal.ROUND_DOWN);
+         difficulty = new BigDecimal(DifficultyTarget.MAX_TARGET.getTarget()).divide(
+               new BigDecimal(target.getTarget()),BigDecimal.ROUND_DOWN);
       logger.debug("difficulty created with value: {}",difficulty);
-   }
-
-   /**
-    * Construct the difficulty with the compressed target number.
-    */
-   public Difficulty(long compressedTarget)
-   {
-      this(
-         BigInteger.valueOf(compressedTarget & 0x00FFFFFFl).
-         shiftLeft(8*((int)(compressedTarget >> 24)-3)).
-         toByteArray());
    }
 
    /**
@@ -105,15 +83,6 @@ public class Difficulty implements Comparable<Difficulty>
    public Difficulty add(Difficulty other)
    {
       return new Difficulty(difficulty.add(other.difficulty));
-   }
-
-   /**
-    * Get the target corresponding to the difficulty.
-    */
-   public BigInteger getTarget()
-   {
-      // TODO: rewrite to have exact representation of target
-      return null;
    }
 
    /**

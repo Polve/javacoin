@@ -213,10 +213,10 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       if ( transactions.isEmpty() )
          throw new VerificationException("block ("+this+") has no transactions");
       // 4. Block hash must satisfy claimed nBits proof of work 
-      Difficulty claimedDifficulty = new Difficulty(compressedTarget);
-      Difficulty hashDifficulty = new Difficulty(hash);
-      if ( hashDifficulty.compareTo(claimedDifficulty) < 0 )
-         throw new VerificationException("difficulty of block ("+this+") does not have claimed difficulty of: "+claimedDifficulty);
+      DifficultyTarget claimedTarget = new DifficultyTarget(compressedTarget);
+      DifficultyTarget hashTarget = new DifficultyTarget(hash);
+      if ( hashTarget.compareTo(claimedTarget) < 0 )
+         throw new VerificationException("difficulty of block ("+this+") does not have claimed difficulty of: "+claimedTarget);
       // 5. Block timestamp must not be more than two hours in the future 
       if ( creationTime > System.currentTimeMillis() + BLOCK_FUTURE_VALIDITY )
          throw new VerificationException("creation time of block ("+this+"): "+new Date(creationTime)+" is too far in future");

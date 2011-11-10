@@ -29,47 +29,76 @@ import java.math.BigInteger;
 @Test
 public class DifficultyTests
 {
+   public void testMaxTarget()
+   {
+      Assert.assertEquals(DifficultyTarget.MAX_TARGET.getTarget(),
+            new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16));
+      Assert.assertEquals(
+            Long.toHexString(DifficultyTarget.MAX_TARGET.getCompressedTarget()),
+            Long.toHexString(0x1d00ffffl));
+
+   }
+
+   public void testTargetDecompression()
+   {
+      DifficultyTarget target = new DifficultyTarget(0x1b0404cbl);
+      Assert.assertEquals(target.getTarget(),
+            new BigInteger("404CB000000000000000000000000000000000000000000000000",16));
+   }
+
+   public void testTargetCompression()
+   {
+      DifficultyTarget target = new DifficultyTarget(
+            new BigInteger("404CB000000000000000000000000000000000000000000000000",16));
+      Assert.assertEquals(Long.toHexString(target.getCompressedTarget()),
+            Long.toHexString(0x1b0404cbl));
+   }
+
    public void testMaxDifficulty()
    {
       Difficulty difficulty = new Difficulty(
-            new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16).toByteArray());
+            new DifficultyTarget(
+               new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16).toByteArray()));
       Assert.assertEquals(difficulty.getDifficulty().longValue(),1);
    }
 
    public void testSampleDifficulty()
    {
       Difficulty difficulty = new Difficulty(
-            new BigInteger("404CB000000000000000000000000000000000000000000000000",16).toByteArray());
+            new DifficultyTarget(
+               new BigInteger("404CB000000000000000000000000000000000000000000000000",16).toByteArray()));
       Assert.assertEquals(difficulty.getDifficulty().longValue(),16307);
    }
 
    public void testUncompressingMaxDifficulty()
    {
-      Difficulty difficulty = new Difficulty(0x1d00ffffl);
+      Difficulty difficulty = new Difficulty(new DifficultyTarget(0x1d00ffffl));
       Assert.assertEquals(difficulty.getDifficulty().longValue(),1);
    }
 
    public void testUncompressingSampleDifficulty()
    {
-      Difficulty difficulty = new Difficulty(0x1b0404cbl);
+      Difficulty difficulty = new Difficulty(new DifficultyTarget(0x1b0404cbl));
       Assert.assertEquals(difficulty.getDifficulty().longValue(),16307);
    }
 
    public void testAddDifficulties()
    {
-      Difficulty difficulty = new Difficulty(0x1b0404cbl);
-      difficulty.add(new Difficulty(0x1b0404cbl));
-      Assert.assertEquals(difficulty.getDifficulty().longValue(),16307*2);
+      Difficulty difficulty = new Difficulty(new DifficultyTarget(0x1b0404cbl));
+      Difficulty result = difficulty.add(new Difficulty(new DifficultyTarget(0x1b0404cbl)));
+      Assert.assertEquals(result.getDifficulty().longValue(),16307*2);
    }
 
    public void testCompareDifficulties()
    {
-      Assert.assertTrue( new Difficulty(0x1b0404cbl).compareTo(new Difficulty(0x1d00ffffl)) > 0 );
+      Assert.assertTrue( new Difficulty(new DifficultyTarget(0x1b0404cbl)).
+            compareTo(new Difficulty(new DifficultyTarget(0x1d00ffffl))) > 0 );
    }
 
    public void testZeroDifficulty()
    {
-      Assert.assertTrue( new Difficulty(0).compareTo(new Difficulty(0x1d00ffffl)) < 0 );
+      Assert.assertTrue( new Difficulty(new DifficultyTarget(0)).
+            compareTo(new Difficulty(new DifficultyTarget(0x1d00ffffl))) < 0 );
    }
 
 }

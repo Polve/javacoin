@@ -118,15 +118,16 @@ public class BlockChainImpl extends Observable implements BlockChain
       // Check 12: Check that nBits value matches the difficulty rules 
       logger.debug("checking whether block has the appropriate target...");
       block.setHeight(previousBlock.getHeight()+1);
-      Difficulty blockDifficulty = new Difficulty(block.getCompressedTarget());
+      DifficultyTarget blockTarget = new DifficultyTarget(block.getCompressedTarget());
+      Difficulty blockDifficulty = new Difficulty(blockTarget);
       block.setTotalDifficulty(previousBlock.getTotalDifficulty().add(blockDifficulty));
-      Difficulty calculatedDifficulty = getNextDifficulty(previousBlock);
-      if ( blockDifficulty.compareTo(calculatedDifficulty) != 0 )
+      DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousBlock);
+      if ( blockTarget.compareTo(calculatedTarget) != 0 )
       {
-         // Difficulty has to exactly match the one calculated, otherwise it is
+         // Target has to exactly match the one calculated, otherwise it is
          // considered invalid!
-         throw new VerificationException("block has wrong target "+blockDifficulty+
-               ", when calculated is: "+calculatedDifficulty);
+         throw new VerificationException("block has wrong target "+blockTarget+
+               ", when calculated is: "+calculatedTarget);
       }
       // TODO: rest of checks
    }
@@ -134,26 +135,26 @@ public class BlockChainImpl extends Observable implements BlockChain
    /**
     * Calculate the difficulty for the next block after the one supplied.
     */
-   public Difficulty getNextDifficulty(Block rawBlock)
+   public DifficultyTarget getNextDifficultyTarget(Block rawBlock)
    {
       BlockImpl block = (BlockImpl) rawBlock;
       // If we're calculating for the genesis block return
       // fixed difficulty
       if ( block == null )
-         return Difficulty.MIN_VALUE;
+         return DifficultyTarget.MAX_TARGET;
       // Look whether it's time to change the difficulty setting
       // (only change every TARGET_RECALC blocks). If not, return the
       // setting of this block, because the next one has to have the same
       // target.
       if ( (block.getHeight()+1) % TARGET_RECALC != 0 )
-         return new Difficulty(block.getCompressedTarget());
+         return new DifficultyTarget(block.getCompressedTarget());
       // We have to change the target. First collect the last TARGET_RECALC 
       // blocks (including the given block) 
       Block startBlock = block;
       for ( int i=0; (i<TARGET_RECALC-1) && (startBlock!=null); i++ )
          startBlock = getPreviousBlock(startBlock);
       if ( startBlock == null )
-         return Difficulty.MIN_VALUE; // This shouldn't happen, we reached genesis
+         return DifficultyTarget.MAX_TARGET; // This shouldn't happen, we reached genesis
       // Calculate the time the TARGET_RECALC blocks took
       long calculatedTimespan = block.getCreationTime() - startBlock.getCreationTime();
       if (calculatedTimespan < TARGET_TIMESPAN/4)
@@ -161,14 +162,15 @@ public class BlockChainImpl extends Observable implements BlockChain
       if (calculatedTimespan > TARGET_TIMESPAN*4)
          calculatedTimespan = TARGET_TIMESPAN*4;
       // Calculate new target, but allow no more than maximum target
-      Difficulty difficulty = new Difficulty(block.getCompressedTarget());
-      BigInteger target = difficulty.getTarget();
+      DifficultyTarget difficultyTarget = new DifficultyTarget(block.getCompressedTarget());
+      BigInteger target = difficultyTarget.getTarget();
       target = target.multiply(BigInteger.valueOf(calculatedTimespan));
       target = target.divide(BigInteger.valueOf(TARGET_TIMESPAN));
-      if ( target.compareTo(Difficulty.MAX_TARGET) > 0 )
-         target = Difficulty.MAX_TARGET;
       // Return the new difficulty setting
-      return new Difficulty(target);
+      DifficultyTarget resultTarget = new DifficultyTarget(target);
+      if ( resultTarget.compareTo(DifficultyTarget.MAX_TARGET) > 0 )
+         return DifficultyTarget.MAX_TARGET;
+      return resultTarget;
    }
 
    public Block getGenesisBlock()
