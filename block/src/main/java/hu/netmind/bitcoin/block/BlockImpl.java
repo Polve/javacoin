@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.AbstractList;
+import java.math.BigInteger;
+import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +56,7 @@ import org.slf4j.LoggerFactory;
  * the merkle tree. If transactions are removed later, the root can not be re-calculated. This
  * should not be a problem, if we can trust that all transactions validated already.
  * @author Robert Brautigam
+ * TODO: rethink filtering (shouldn't block be immutable?)
  */
 public class BlockImpl extends PrefilteredTransactionContainer implements Block
 {
@@ -68,6 +71,11 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    private byte[] previousBlockHash;
    private byte[] merkleRoot;
    private byte[] hash;
+
+   // Transient internal attributes
+   private boolean orphan;
+   private Difficulty totalDifficulty;
+   private long height;
    
    // Below are properties filled runtime (and potentially altered depending on chain changes,
    // or new blocks or filters)
@@ -259,5 +267,33 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    {
       return previousBlockHash;
    }
+
+   public boolean isOrphan()
+   {
+      return orphan;
+   }
+   public void setOrphan(boolean orphan)
+   {
+      this.orphan=orphan;
+   }
+
+   public Difficulty getTotalDifficulty()
+   {
+      return totalDifficulty;
+   }
+   public void setTotalDifficulty(Difficulty totalDifficulty)
+   {
+      this.totalDifficulty=totalDifficulty;
+   }
+
+   public long getHeight()
+   {
+      return height;
+   }
+   public void setHeight(long height)
+   {
+      this.height=height;
+   }
+
 }
 

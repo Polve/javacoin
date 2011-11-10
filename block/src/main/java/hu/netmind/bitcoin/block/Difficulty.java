@@ -43,13 +43,28 @@ import org.slf4j.LoggerFactory;
  */
 public class Difficulty implements Comparable<Difficulty>
 {
-   private static Logger logger = LoggerFactory.getLogger(Difficulty.class);
-   private static final BigInteger MAX_TARGET =
+   public static final BigInteger MAX_TARGET =
          new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16);
+   public static final Difficulty MIN_VALUE = new Difficulty(MAX_TARGET.toByteArray());
+
+   private static Logger logger = LoggerFactory.getLogger(Difficulty.class);
    private BigDecimal difficulty;
 
+   private Difficulty(BigDecimal difficulty)
+   {
+      this.difficulty=difficulty;
+   }
+
    /**
-    * Construct the difficulty object with the target number.
+    * Construct the difficulty using the target directly.
+    */
+   public Difficulty(BigInteger target)
+   {
+      this(target.toByteArray());
+   }
+
+   /**
+    * Construct the difficulty object with the target number as bytes.
     */
    public Difficulty(byte[] target)
    {
@@ -87,9 +102,18 @@ public class Difficulty implements Comparable<Difficulty>
     * Add another difficulty to this one. The total difficulty represented
     * will be the difficulty required to hit both targets after eachother.
     */
-   public void add(Difficulty other)
+   public Difficulty add(Difficulty other)
    {
-      difficulty = difficulty.add(other.difficulty);
+      return new Difficulty(difficulty.add(other.difficulty));
+   }
+
+   /**
+    * Get the target corresponding to the difficulty.
+    */
+   public BigInteger getTarget()
+   {
+      // TODO: rewrite to have exact representation of target
+      return null;
    }
 
    /**
