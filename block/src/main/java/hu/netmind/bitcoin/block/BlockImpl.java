@@ -215,7 +215,7 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       // 4. Block hash must satisfy claimed nBits proof of work 
       DifficultyTarget claimedTarget = new DifficultyTarget(compressedTarget);
       DifficultyTarget hashTarget = new DifficultyTarget(hash);
-      if ( hashTarget.compareTo(claimedTarget) < 0 )
+      if ( hashTarget.compareTo(claimedTarget) > 0 )
          throw new VerificationException("difficulty of block ("+this+") does not have claimed difficulty of: "+claimedTarget);
       // 5. Block timestamp must not be more than two hours in the future 
       if ( creationTime > System.currentTimeMillis() + BLOCK_FUTURE_VALIDITY )
