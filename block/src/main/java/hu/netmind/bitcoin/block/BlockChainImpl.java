@@ -23,6 +23,12 @@ import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.VerificationException;
 import java.math.BigInteger;
 import java.util.Observable;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ResourceBundle;
+import java.util.MissingResourceException;
+import java.util.Enumeration;
+import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +37,7 @@ import org.slf4j.LoggerFactory;
  * and also calculating the longest chain starting from the Genesis Block.
  * @author Robert Brautigam
  * TODO: use ? extends to make methods for implementation (don't have to cast)
+ * TODO: remove network type from keys
  */
 public class BlockChainImpl extends Observable implements BlockChain
 {
@@ -38,7 +45,10 @@ public class BlockChainImpl extends Observable implements BlockChain
    private static final long TARGET_TIMESPAN = 14*24*60*60*1000; // A target lasts 14 days
    private static final long TARGET_SPACING = 10*60*1000; // Spacing between two blocks 10 minutes
    private static final long TARGET_RECALC = TARGET_TIMESPAN / TARGET_SPACING;
+   private static final int MEDIAN_BLOCKS = 11;
 
+   private static Map<BigInteger,Map<Long,BigInteger>> knownHashes =
+      new HashMap<BigInteger,Map<Long,BigInteger>>();
    private BlockImpl genesisBlock = null;
    private BlockStorage blockStorage = null;
    private BlockChainListener listener = null;
@@ -129,7 +139,38 @@ public class BlockChainImpl extends Observable implements BlockChain
          throw new VerificationException("block has wrong target "+blockTarget+
                ", when calculated is: "+calculatedTarget);
       }
-      // TODO: rest of checks
+      // Check 13: Reject if timestamp is before the median time of the last 11 blocks
+      long medianTimestamp = getMedianTimestamp(previousBlock);
+      if ( block.getCreationTime() <= medianTimestamp )
+         throw new VerificationException("block's creation time ("+block.getCreationTime()+
+               ") is before median of previous blocks: "+medianTimestamp);
+      // Check 14: Check for known hashes
+      BigInteger genesisHash = new BigInteger(1,genesisBlock.getHash());
+      BigInteger blockHash = new BigInteger(1,block.getHash());
+      if ( knownHashes.containsKey(genesisHash) )
+      {
+         BigInteger knownHash = knownHashes.get(genesisHash).get(block.getHeight());
+         if ( (knownHash != null) && (!knownHash.equals(blockHash)) )
+            throw new VerificationException("block should have a hash we already know, but it doesn't, might indicate a tampering or attack");
+      }
+      else
+      {
+         logger.warn("known hashes don't exist for this chain, security checks for known blocks can not be made");
+      }
+   }
+
+   /**
+    * Calculate the median of the (some number of) blocks starting at the given block.
+    */
+   private long getMedianTimestamp(Block block)
+   {
+      long[] times = new long[MEDIAN_BLOCKS];
+      for ( int i=0; (block!=null) && (i<MEDIAN_BLOCKS); i++ )
+      {
+         times[i]=block.getCreationTime();
+         block = getPreviousBlock(block);
+      }
+      return times[MEDIAN_BLOCKS/2];
    }
 
    /**
@@ -183,5 +224,43 @@ public class BlockChainImpl extends Observable implements BlockChain
       return blockStorage.getLastBlock();
    }
 
+   static
+   {
+      logger.debug("reading known hashes...");
+      try
+      {
+         Map<Integer,BigInteger> idGenesis = new HashMap<Integer,BigInteger>();
+         ResourceBundle bundle = ResourceBundle.getBundle("chain-knownhashes");
+         Enumeration<String> keys = bundle.getKeys();
+         while ( keys.hasMoreElements() )
+         {
+            String key = keys.nextElement();
+            StringTokenizer tokens = new StringTokenizer(key,".");
+            tokens.nextToken();
+            int id = Integer.valueOf(tokens.nextToken());
+            long height = Long.valueOf(tokens.nextToken());
+            BigInteger hash = new BigInteger(bundle.getString(key).substring(2),16);
+            // Put into maps
+            if ( height == 0 )
+            {
+               // This is a genesis block, so rememeber and create maps
+               idGenesis.put(id,hash);
+               knownHashes.put(hash,new HashMap<Long,BigInteger>());
+            }
+            else
+            {
+               // This is a random height, so there should be a map for that
+               Map<Long, BigInteger> values = knownHashes.get(idGenesis.get(id));
+               if ( values == null )
+                  logger.warn("can not accept known value for id "+id+", height "+height+
+                        ", because genesis hash not yet defined");
+               else
+                  values.put(height,hash);
+            }
+         }
+      } catch ( MissingResourceException e ) {
+         logger.warn("can not read known hashes for the block chain, security might be impacted",e);
+      }
+   }
 }
 
