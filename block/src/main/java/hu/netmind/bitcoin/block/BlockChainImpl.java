@@ -20,8 +20,15 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.Block;
+import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.TransactionInput;
+import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
+import hu.netmind.bitcoin.NotAvailableException;
+import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.ScriptException;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Observable;
 import java.util.Map;
 import java.util.HashMap;
@@ -38,6 +45,8 @@ import org.slf4j.LoggerFactory;
  * @author Robert Brautigam
  * TODO: use ? extends to make methods for implementation (don't have to cast)
  * TODO: remove network type from keys
+ * TODO: clarify filtering and prefiltered transaction containers
+ * TODO: check that inside a transactions all inputs refer to different outputs
  */
 public class BlockChainImpl extends Observable implements BlockChain
 {
@@ -46,18 +55,34 @@ public class BlockChainImpl extends Observable implements BlockChain
    private static final long TARGET_SPACING = 10*60*1000; // Spacing between two blocks 10 minutes
    private static final long TARGET_RECALC = TARGET_TIMESPAN / TARGET_SPACING;
    private static final int MEDIAN_BLOCKS = 11;
+   private static final long COINBASE_MATURITY = 100;
+   private static final long INITIAL_COINBASE_VALUE = 50*100000;
+   private static final long COINBASE_VALUE_HALFTIME = 210000;
 
    private static Map<BigInteger,Map<Long,BigInteger>> knownHashes =
       new HashMap<BigInteger,Map<Long,BigInteger>>();
    private BlockImpl genesisBlock = null;
    private BlockStorage blockStorage = null;
    private BlockChainListener listener = null;
+   private ScriptFactory scriptFactory = null;
+   private boolean simplifedVerification = false;
 
-   public BlockChainImpl(BlockImpl genesisBlock, BlockStorage blockStorage)
+   /**
+    * Construct a new block chain.
+    * @param genesisBlock The valid genesis block for this chain.
+    * @param blockStorage The store to get/store the blocks.
+    * @param simplifedVerification Set to "true" to disable transaction checking. If this
+    * is disabled the bitcoin network (whoever supplies blocks) is trusted instead. You have to
+    * disable this check if you don't want to run a full node.
+    */
+   public BlockChainImpl(BlockImpl genesisBlock, BlockStorage blockStorage, 
+         ScriptFactory scriptFactory, boolean simplifedVerification)
       throws VerificationException
    {
       this.genesisBlock=genesisBlock;
       this.blockStorage=blockStorage;
+      this.scriptFactory=scriptFactory;
+      this.simplifedVerification=simplifedVerification;
       // Check if the genesis blocks equal, or add genesis block if storage is empty.
       // Here we assume that the storage is not tampered!
       BlockImpl storedGenesisBlock = blockStorage.getGenesisBlock();
@@ -97,12 +122,24 @@ public class BlockChainImpl extends Observable implements BlockChain
    public void addBlock(Block rawBlock)
       throws VerificationException
    {
+      addBlock(rawBlock,false);
+   }
+
+   /**
+    * Add a block to the chain. This call can be used to update orphan blocks.
+    * @param rawBlock The block to add.
+    * @param orphan Whether the block is an orphan block that needs re-checking.
+    */
+   private void addBlock(Block rawBlock, boolean orphan)
+      throws VerificationException
+   {
       logger.debug("adding block: {}",rawBlock);
       // For now, only allow the implementation from here
       BlockImpl block = (BlockImpl) rawBlock;
 
       // In this method we do all the necessary checks documented on the
-      // "protocol rules" section of the wiki.
+      // "protocol rules" section of the wiki at:
+      // https://en.bitcoin.it/wiki/Protocol_rules#Transactions
       
       // Checks 1-10, except 2: covered by the context independent
       // block validation.
@@ -157,6 +194,119 @@ public class BlockChainImpl extends Observable implements BlockChain
       {
          logger.warn("known hashes don't exist for this chain, security checks for known blocks can not be made");
       }
+      // Checks 15,16,17,18: Check the transactions in the block
+      // We diverge from the official list here since we don't maintain main and side branches
+      // separately, and we have to make sure block is 100% compliant if we want to add it to the
+      // tree (as non-orphan). Because of Block checks we know the first is a coinbase tx and
+      // the rest are not. So execute checks from point 16. (Checks 16.3-5 are not
+      // handles since they don't apply to this model)
+      try
+      {
+         // First go through non-coinbases
+         long inValue = 0;
+         long outValue = 0;
+         for ( int i=1; i<block.getAvailableTransactions().size(); i++ )
+         {
+            Transaction tx = block.getAvailableTransactions().get(i);
+            // Validate without context
+            tx.validate();
+            // Checks 16.1.1-7: Verify only if this is supposed to be a full node
+            if ( ! simplifedVerification )
+            {
+               inValue += verifyTransaction(previousBlock,block.getTransactions().get(i));
+               for ( TransactionOutput out : tx.getOutputs() )
+                  outValue += out.getValue();
+            }
+         }
+         // Verify coinbase if we have full verification
+         if ( ! simplifedVerification )
+         {
+            Transaction tx = block.getAvailableTransactions().get(0);
+            long coinbaseValue = 0;
+            for ( TransactionOutput out : tx.getOutputs() )
+               coinbaseValue += out.getValue();
+            // Check 16.2: Verify that the money produced is in the legal range
+            // Valid if coinbase value is not greater than mined value plus fees in tx
+            if ( inValue - outValue < 0 )
+               throw new VerificationException("fee in transaction "+tx+" is negative");
+            if ( coinbaseValue > getBlockCoinbaseValue(block)+(inValue-outValue) )
+               throw new VerificationException("coinbase transaction in tx "+tx+" claimed more coins than appropriate: "+
+                     coinbaseValue);
+         }
+      } catch ( NotAvailableException e ) {
+         throw new VerificationException("not all transactions are available from block, but simplified verification is not enabled in chain",e);
+      }
+      // Check 16.6: Relay block to our peers
+      // (Also: add the block first to storage, it's a valid block)
+      block.setOrphan(false);
+      blockStorage.addBlock(block);
+      if ( listener != null )
+         listener.notifyAddedBlock(block);
+      // Check 19: For each orphan block for which this block is its prev, 
+      // run all these steps (including this one) recursively on that orphan 
+      for ( BlockImpl nextBlock : blockStorage.getNextBlocks(block.getHash()) )
+         addBlock(nextBlock,true);
+   }
+
+   /**
+    * Get a Block's maximum coinbase value.
+    */
+   private long getBlockCoinbaseValue(BlockImpl block)
+   {
+      return (INITIAL_COINBASE_VALUE) >> (block.getHeight()/COINBASE_VALUE_HALFTIME);
+   }
+
+   /**
+    * Verify that a transaction is valid according to sub-rules applying to the block
+    * tree.
+    * @return The total value of the inputs after verification.
+    */
+   private long verifyTransaction(BlockImpl block, Transaction tx)
+      throws VerificationException, NotAvailableException
+   {
+      long value = 0;
+      for ( TransactionInput in : tx.getInputs() )
+      {
+         // Check 16.1.1: For each input, look in the [same] branch to find the 
+         // referenced output transaction. Reject if the output transaction is missing for any input. 
+         Transaction outTx = null;
+         BlockImpl outBlock = blockStorage.getClaimedBlock(block,in);
+         if ( outBlock != null )
+            for ( Transaction txCandidate : outBlock.getTransactions() )
+               if ( Arrays.equals(txCandidate.getHash(),in.getClaimedTransactionHash()) )
+                  outTx = txCandidate;
+         if ( outTx == null )
+            throw new VerificationException("transaction output not found for input: "+in);
+         // Check 16.1.2: For each input, if we are using the nth output of the 
+         // earlier transaction, but it has fewer than n+1 outputs, reject. 
+         if ( outTx.getOutputs().size() <= in.getClaimedOutputIndex() )
+            throw new VerificationException("transaction output index for input is out of range: "+
+                  (in.getClaimedOutputIndex()+1)+" vs. "+outTx.getOutputs().size());
+         // Check 16.1.3: For each input, if the referenced output transaction is coinbase,
+         // it must have at least COINBASE_MATURITY confirmations; else reject. 
+         if ( (outTx.isCoinbase()) && (outBlock.getHeight()+COINBASE_MATURITY >= block.getHeight()) )
+            throw new VerificationException("input ("+in+") referenced coinbase transaction "+outTx+" which was not mature enough (not old enough)");
+         // Check 16.1.4: Verify crypto signatures for each input; reject if any are bad 
+         TransactionOutput out = outTx.getOutputs().get(in.getClaimedOutputIndex());
+         value += out.getValue(); // Remember value that goes in from this out
+         try
+         {
+            if ( ! scriptFactory.createScript(in.getSignatureScript(),
+                     out.getScript()).execute(in) )
+               throw new VerificationException("verification script for input "+in+" returned 'false' for verification");
+         } catch ( ScriptException e ) {
+            throw new VerificationException("verification script for input "+in+" failed to execute",e);
+         }
+         // Check 16.1.5: For each input, if the referenced output has already been
+         // spent by a transaction in the [same] branch, reject 
+         BlockImpl claimerBlock = blockStorage.getClaimerBlock(block,in);
+         if ( claimerBlock != null )
+            throw new VerificationException("output claimed by "+in+" is already claimed in another block: "+claimerBlock);
+         // Check 16.1.6/7: Using the referenced output transactions to get 
+         // input values, check that each input value, as well as the sum, are in legal money range 
+         // Note: this is done by transaction verification, so we skip it here
+      }
+      return value;
    }
 
    /**

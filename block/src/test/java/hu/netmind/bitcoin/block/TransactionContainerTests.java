@@ -168,6 +168,11 @@ public class TransactionContainerTests
       {
          return transactions;
       }
+
+      public List<Transaction> getAvailableTransactions()
+      {
+         return transactions;
+      }
    }
 
 }

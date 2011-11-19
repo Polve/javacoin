@@ -151,6 +151,11 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       return transactions;
    }
 
+   public List<Transaction> getAvailableTransactions()
+   {
+      return transactions;
+   }
+
    protected void addStoredTransactions(List<Transaction> transactions)
    {
       throw new UnsupportedOperationException("Can not add transactions to block");
@@ -225,7 +230,7 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
          throw new VerificationException("block's first transaction was not coinbase: "+this);
       for ( int i=1; i<transactions.size(); i++ )
          if ( transactions.get(i).isCoinbase() )
-            throw new VerificationException("block's "+i+"th transaction is a coinbase, it should only be the first though");
+            throw new VerificationException("block's "+i+"the transaction is a coinbase, it should only be the first though");
       // 7. For each transaction, apply "tx" checks 2-4 
       //    Note: this does all the non-context aware checks for transactions
       for ( Transaction tx : transactions )

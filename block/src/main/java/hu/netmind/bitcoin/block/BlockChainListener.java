@@ -25,10 +25,15 @@ package hu.netmind.bitcoin.block;
 public interface BlockChainListener
 {
    /**
-    * Called if the chain receives a block for which the previous
+    * Called when the chain receives a block for which the previous
     * block does not exist. The block itself will be stored as
     * orphan.
     */
    void notifyMissingBlock(byte[] blockHash);
+
+   /**
+    * Called when a fully verified block enters a chain.
+    */
+   void notifyAddedBlock(BlockImpl block);
 }
 
