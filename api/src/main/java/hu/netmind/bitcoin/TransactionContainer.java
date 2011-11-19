@@ -22,6 +22,11 @@ import java.util.List;
 
 /**
  * This class can hold an ordered list of transactions with the ability to filter on them.
+ * A container can also discard some transactions it is holding based on rules employed by
+ * the implementation automatically anytime. In this case not all transactions will be 
+ * available anymore. The container does however need to be aware what transactions were
+ * discarded, and the methods react with <code>NotAvailableException</code> if the container
+ * thinks that the return value is modified because of descarding transactions.
  */
 public interface TransactionContainer
 {
@@ -34,6 +39,12 @@ public interface TransactionContainer
     */
    List<Transaction> getTransactions()
       throws NotAvailableException;
+
+   /**
+    * List all the available transactions from this container.
+    * @return The list of the transactions this container still remembers.
+    */
+   List<Transaction> getAvailableTransactions();
 
    /**
     * Get the filtered list of transactions from this container.
