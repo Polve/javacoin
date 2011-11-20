@@ -18,6 +18,8 @@
 
 package hu.netmind.bitcoin;
 
+import java.util.List;
+
 /**
  * A miner is responsible for creating new blocks into the BlockChain.
  * Creating Blocks is computationally difficult, it is in fact so
@@ -31,8 +33,13 @@ package hu.netmind.bitcoin;
  * transactions contain a "transaction fee" the Miner can also claim that.
  * @author Robert Brautigam
  */
-public interface Miner extends Observable, TransactionContainer
+public interface Miner extends Observable
 {
+   /**
+    * Get the transactions currently in the miner.
+    */
+   List<Transaction> getTransactions();
+
    /**
     * Add a transaction to the pool of "to be processed" transactions.
     * Note that only those transactions will be incorporated into blocks

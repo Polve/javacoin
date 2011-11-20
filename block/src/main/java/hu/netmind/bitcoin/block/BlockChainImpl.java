@@ -24,7 +24,6 @@ import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
-import hu.netmind.bitcoin.NotAvailableException;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.ScriptException;
 import java.math.BigInteger;
@@ -44,8 +43,8 @@ import org.slf4j.LoggerFactory;
  * and also calculating the longest chain starting from the Genesis Block.
  * @author Robert Brautigam
  * TODO: use ? extends to make methods for implementation (don't have to cast)
- * TODO: clarify filtering and prefiltered transaction containers
  * TODO: check that inside a transactions all inputs refer to different outputs
+ * TODO: block can have at most one coinbase but may be 0 (filtered)
  */
 public class BlockChainImpl extends Observable implements BlockChain
 {
@@ -199,41 +198,35 @@ public class BlockChainImpl extends Observable implements BlockChain
       // tree (as non-orphan). Because of Block checks we know the first is a coinbase tx and
       // the rest are not. So execute checks from point 16. (Checks 16.3-5 are not
       // handles since they don't apply to this model)
-      try
+      long inValue = 0;
+      long outValue = 0;
+      for ( int i=1; i<block.getTransactions().size(); i++ )
       {
-         // First go through non-coinbases
-         long inValue = 0;
-         long outValue = 0;
-         for ( int i=1; i<block.getAvailableTransactions().size(); i++ )
-         {
-            Transaction tx = block.getAvailableTransactions().get(i);
-            // Validate without context
-            tx.validate();
-            // Checks 16.1.1-7: Verify only if this is supposed to be a full node
-            if ( ! simplifedVerification )
-            {
-               inValue += verifyTransaction(previousBlock,block.getTransactions().get(i));
-               for ( TransactionOutput out : tx.getOutputs() )
-                  outValue += out.getValue();
-            }
-         }
-         // Verify coinbase if we have full verification
+         Transaction tx = block.getTransactions().get(i);
+         // Validate without context
+         tx.validate();
+         // Checks 16.1.1-7: Verify only if this is supposed to be a full node
          if ( ! simplifedVerification )
          {
-            Transaction tx = block.getAvailableTransactions().get(0);
-            long coinbaseValue = 0;
+            inValue += verifyTransaction(previousBlock,block.getTransactions().get(i));
             for ( TransactionOutput out : tx.getOutputs() )
-               coinbaseValue += out.getValue();
-            // Check 16.2: Verify that the money produced is in the legal range
-            // Valid if coinbase value is not greater than mined value plus fees in tx
-            if ( inValue - outValue < 0 )
-               throw new VerificationException("fee in transaction "+tx+" is negative");
-            if ( coinbaseValue > getBlockCoinbaseValue(block)+(inValue-outValue) )
-               throw new VerificationException("coinbase transaction in tx "+tx+" claimed more coins than appropriate: "+
-                     coinbaseValue);
+               outValue += out.getValue();
          }
-      } catch ( NotAvailableException e ) {
-         throw new VerificationException("not all transactions are available from block, but simplified verification is not enabled in chain",e);
+      }
+      // Verify coinbase if we have full verification
+      if ( ! simplifedVerification )
+      {
+         Transaction tx = block.getTransactions().get(0);
+         long coinbaseValue = 0;
+         for ( TransactionOutput out : tx.getOutputs() )
+            coinbaseValue += out.getValue();
+         // Check 16.2: Verify that the money produced is in the legal range
+         // Valid if coinbase value is not greater than mined value plus fees in tx
+         if ( inValue - outValue < 0 )
+            throw new VerificationException("fee in transaction "+tx+" is negative");
+         if ( coinbaseValue > getBlockCoinbaseValue(block)+(inValue-outValue) )
+            throw new VerificationException("coinbase transaction in tx "+tx+" claimed more coins than appropriate: "+
+                  coinbaseValue);
       }
       // Check 16.6: Relay block to our peers
       // (Also: add the block first to storage, it's a valid block)
@@ -261,7 +254,7 @@ public class BlockChainImpl extends Observable implements BlockChain
     * @return The total value of the inputs after verification.
     */
    private long verifyTransaction(BlockImpl block, Transaction tx)
-      throws VerificationException, NotAvailableException
+      throws VerificationException
    {
       long value = 0;
       for ( TransactionInput in : tx.getInputs() )

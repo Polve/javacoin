@@ -22,7 +22,6 @@ import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
-import hu.netmind.bitcoin.TransactionFilter;
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.node.p2p.BlockHeader;
 import hu.netmind.bitcoin.node.p2p.BitCoinOutputStream;
@@ -38,6 +37,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.AbstractList;
+import java.util.Collections;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import org.slf4j.Logger;
@@ -56,9 +56,8 @@ import org.slf4j.LoggerFactory;
  * the merkle tree. If transactions are removed later, the root can not be re-calculated. This
  * should not be a problem, if we can trust that all transactions validated already.
  * @author Robert Brautigam
- * TODO: rethink filtering (shouldn't block be immutable?)
  */
-public class BlockImpl extends PrefilteredTransactionContainer implements Block
+public class BlockImpl implements Block
 {
    private static final int BLOCK_VERSION = 1;
    private static final long BLOCK_FUTURE_VALIDITY = 2*60*60*1000; // 2 hrs millis
@@ -71,27 +70,29 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    private byte[] previousBlockHash;
    private byte[] merkleRoot;
    private byte[] hash;
+   private List<Transaction> transactions;
 
    // Transient internal attributes
    private boolean orphan;
    private Difficulty totalDifficulty;
    private long height;
    
-   // Below are properties filled runtime (and potentially altered depending on chain changes,
-   // or new blocks or filters)
-   private List<Transaction> transactions;
-   private MerkleTree merkleTree;
-
-   public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
+   /**
+    * Construct hash with basic data given, without hash (which will be calculated).
+    */
+   public BlockImpl(List<Transaction> transactions,
          long creationTime, long nonce, long compressedTarget, byte[] previousBlockHash, byte[] merkleRoot)
       throws BitCoinException
    {
-      this(transactions,preFilter,creationTime,nonce,compressedTarget,previousBlockHash,merkleRoot,null,null);
+      this(transactions,creationTime,nonce,compressedTarget,previousBlockHash,merkleRoot,null);
    }
 
-   public BlockImpl(List<Transaction> transactions, TransactionFilter preFilter,
+   /**
+    * Construct block with hash precalculated.
+    */
+   public BlockImpl(List<Transaction> transactions,
          long creationTime, long nonce, long compressedTarget, byte[] previousBlockHash, 
-         byte[] merkleRoot, MerkleTree merkleTree, byte[] hash)
+         byte[] merkleRoot, byte[] hash)
       throws BitCoinException
    {
       this.creationTime=creationTime;
@@ -99,66 +100,10 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       this.compressedTarget=compressedTarget;
       this.previousBlockHash=previousBlockHash;
       this.merkleRoot=merkleRoot;
-      this.merkleTree=merkleTree;
-      if ( merkleTree == null )
-         this.merkleTree = new MerkleTree(transactions);
       this.hash=hash;
       if ( hash == null )
          this.hash = calculateHash();
-      setPreFilter(preFilter);
-      this.transactions = new LinkedList<Transaction>(transactions);
-      prefilterTransactions();
-   }
-
-   /**
-    * Use the pre-filter to filter the transactions stored in this block. This is done on creation
-    * as an initial pre-filtering, but may be called regularly (for example if some filters are time
-    * or block depth dependent). As a result the filtered transactions will be removed, the merkle tree
-    * will be adjusted (compacted) accordingly.
-    */
-   void prefilterTransactions()
-   {
-      if ( getPreFilter() == null )
-         return;
-      // Run the filtering, but handle removed items
-      getPreFilter().filterTransactions(new AbstractList<Transaction>()
-            {
-               public Transaction get(int index)
-               {
-                  return transactions.get(index);
-               }
-
-               public int size()
-               {
-                  return transactions.size();
-               }
-
-               public Transaction remove(int index)
-               {
-                  // This is called when a transaction is removed
-                  Transaction removedTx = transactions.remove(index);
-                  merkleTree.removeTransaction(removedTx);
-                  return removedTx;
-               }
-            });
-   }
-
-   /**
-    * Get all the stored transactions.
-    */
-   protected List<Transaction> getStoredTransactions()
-   {
-      return transactions;
-   }
-
-   public List<Transaction> getAvailableTransactions()
-   {
-      return transactions;
-   }
-
-   protected void addStoredTransactions(List<Transaction> transactions)
-   {
-      throw new UnsupportedOperationException("Can not add transactions to block");
+      this.transactions = Collections.unmodifiableList(new LinkedList<Transaction>(transactions));
    }
 
    /**
@@ -240,8 +185,13 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
       // 9. Reject if sum of transaction sig opcounts > MAX_BLOCK_SIGOPS 
       //    Ommitted: transactions already check for script complexity
       // 10. Verify Merkle hash 
-      if ( ! Arrays.equals(merkleTree.getRoot(),merkleRoot) )
-         throw new VerificationException("block's ("+this+") merkle root does not match transaction hashes");
+      try
+      {
+         if ( ! Arrays.equals(new MerkleTree(transactions).getRoot(),merkleRoot) )
+            throw new VerificationException("block's ("+this+") merkle root does not match transaction hashes");
+      } catch ( BitCoinException e ) {
+         throw new VerificationException("unable to create merkle tree for block "+this,e);
+      }
    }
 
    public long getCreationTime()
@@ -259,10 +209,6 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    public byte[] getMerkleRoot()
    {
       return merkleRoot;
-   }
-   public MerkleTree getMerkleTree()
-   {
-      return merkleTree;
    }
    public byte[] getHash()
    {
@@ -298,6 +244,11 @@ public class BlockImpl extends PrefilteredTransactionContainer implements Block
    public void setHeight(long height)
    {
       this.height=height;
+   }
+
+   public List<Transaction> getTransactions()
+   {
+      return transactions;
    }
 
 }

@@ -39,7 +39,7 @@ import java.util.List;
  * </ul>
  * @author Robert Brautigam
  */
-public interface Block extends TransactionContainer
+public interface Block
 {
    /**
     * Get the creation time in millis.
@@ -70,6 +70,11 @@ public interface Block extends TransactionContainer
     * Return the hash of this block.
     */
    byte[] getHash();
+
+   /**
+    * Get the transactions in this block.
+    */
+   List<Transaction> getTransactions();
 
    /**
     * Validate that this block and all contained transactions
