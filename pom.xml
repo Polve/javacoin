@@ -14,6 +14,7 @@
     <module>node-p2p</module>
     <module>keyfactory-ecc</module>
     <module>script</module>
+    <module>filter</module>
     <module>block</module>
     <module>bcwallet</module>
     <module>integration-tests</module>
