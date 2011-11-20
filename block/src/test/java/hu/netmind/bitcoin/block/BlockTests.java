@@ -72,7 +72,6 @@ public class BlockTests
       block.validate();
    }
 
-   @Test(expectedExceptions=VerificationException.class)
    public void testEmptyTransactions()
       throws BitCoinException, VerificationException
    {

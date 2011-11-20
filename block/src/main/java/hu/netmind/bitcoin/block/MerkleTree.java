@@ -186,7 +186,9 @@ public class MerkleTree
          openNodes.add(createParent(node1,node2,node1.getStartIndex(),node2.getEndIndex()));
       }
       // When over, the nodes will only contain one entry (the root)
-      root = openNodes.iterator().next();
+      root = null;
+      if ( ! openNodes.isEmpty() )
+         root = openNodes.iterator().next();
    }
 
    private MerkleNode getParentNode(byte[] hash)
@@ -257,6 +259,8 @@ public class MerkleTree
    public byte[] getRoot()
    {
       buildTree();
+      if ( root == null )
+         return null;
       return root.getHash();
    }
 

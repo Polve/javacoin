@@ -158,10 +158,7 @@ public class BlockImpl implements Block
       // 2. Reject if duplicate of block we have in any of the three categories 
       //    Ommitted: needs context, and depends on the original client implementation
       // 3. Transaction list must be non-empty 
-      //    Note: we have to keep coinbase transactions anyway for now, so
-      //    one transaction must be there
-      if ( transactions.isEmpty() )
-         throw new VerificationException("block ("+this+") has no transactions");
+      //    Note: This is not true, we want to be able to filter, so no check is made
       // 4. Block hash must satisfy claimed nBits proof of work 
       DifficultyTarget claimedTarget = new DifficultyTarget(compressedTarget);
       DifficultyTarget hashTarget = new DifficultyTarget(hash);
@@ -171,11 +168,10 @@ public class BlockImpl implements Block
       if ( creationTime > System.currentTimeMillis() + BLOCK_FUTURE_VALIDITY )
          throw new VerificationException("creation time of block ("+this+"): "+new Date(creationTime)+" is too far in future");
       // 6. First transaction must be coinbase (i.e. only 1 input, with hash=0, n=-1), the rest must not be 
-      if ( ! transactions.get(0).isCoinbase() )
-         throw new VerificationException("block's first transaction was not coinbase: "+this);
+      // Note: Not true, instead the first and only the first transaction can be coinbase
       for ( int i=1; i<transactions.size(); i++ )
          if ( transactions.get(i).isCoinbase() )
-            throw new VerificationException("block's "+i+"the transaction is a coinbase, it should only be the first though");
+            throw new VerificationException("block's "+i+"the transaction is a coinbase, it should be the first transaction then");
       // 7. For each transaction, apply "tx" checks 2-4 
       //    Note: this does all the non-context aware checks for transactions
       for ( Transaction tx : transactions )

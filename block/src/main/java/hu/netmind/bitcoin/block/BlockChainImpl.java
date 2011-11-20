@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
  * @author Robert Brautigam
  * TODO: use ? extends to make methods for implementation (don't have to cast)
  * TODO: check that inside a transactions all inputs refer to different outputs
- * TODO: block can have at most one coinbase but may be 0 (filtered)
  */
 public class BlockChainImpl extends Observable implements BlockChain
 {
@@ -200,32 +199,33 @@ public class BlockChainImpl extends Observable implements BlockChain
       // handles since they don't apply to this model)
       long inValue = 0;
       long outValue = 0;
-      for ( int i=1; i<block.getTransactions().size(); i++ )
+      for ( Transaction tx : block.getTransactions() )
       {
-         Transaction tx = block.getTransactions().get(i);
          // Validate without context
          tx.validate();
          // Checks 16.1.1-7: Verify only if this is supposed to be a full node
-         if ( ! simplifedVerification )
+         if ( (!simplifedVerification) && (!tx.isCoinbase()) )
          {
-            inValue += verifyTransaction(previousBlock,block.getTransactions().get(i));
+            inValue += verifyTransaction(previousBlock,tx);
             for ( TransactionOutput out : tx.getOutputs() )
                outValue += out.getValue();
          }
       }
-      // Verify coinbase if we have full verification
-      if ( ! simplifedVerification )
+      // Verify coinbase if we have full verification and there is a coinbase
+      Transaction coinbaseTx = null;
+      if ( ! block.getTransactions().isEmpty() )
+         coinbaseTx = block.getTransactions().get(0);
+      if ( (!simplifedVerification) && (coinbaseTx.isCoinbase()) )
       {
-         Transaction tx = block.getTransactions().get(0);
          long coinbaseValue = 0;
-         for ( TransactionOutput out : tx.getOutputs() )
+         for ( TransactionOutput out : coinbaseTx.getOutputs() )
             coinbaseValue += out.getValue();
          // Check 16.2: Verify that the money produced is in the legal range
          // Valid if coinbase value is not greater than mined value plus fees in tx
          if ( inValue - outValue < 0 )
-            throw new VerificationException("fee in transaction "+tx+" is negative");
+            throw new VerificationException("fee in block "+block+" is negative");
          if ( coinbaseValue > getBlockCoinbaseValue(block)+(inValue-outValue) )
-            throw new VerificationException("coinbase transaction in tx "+tx+" claimed more coins than appropriate: "+
+            throw new VerificationException("coinbase transaction in block "+block+" claimed more coins than appropriate: "+
                   coinbaseValue);
       }
       // Check 16.6: Relay block to our peers
