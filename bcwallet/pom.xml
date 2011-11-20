@@ -8,6 +8,12 @@
    <packaging>apk</packaging>
    <name>BitCoin Wallet Android App</name>
 
+   <parent>
+      <groupId>hu.netmind.bitcoin</groupId>
+      <artifactId>bitcoin-parent</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+   </parent>
+
    <dependencies>
       <dependency>
          <groupId>hu.netmind.bitcoin</groupId>
