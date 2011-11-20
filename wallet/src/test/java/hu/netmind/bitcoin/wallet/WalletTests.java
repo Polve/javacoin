@@ -47,7 +47,8 @@ public class WalletTests
       miner = EasyMock.createMock(Miner.class);
       keyFactory = EasyMock.createMock(KeyFactory.class);
       // Create wallet
-      wallet = new WalletImpl(miner,balanceCalculator,transactionFactory,keyFactory);
+      wallet = new WalletImpl(miner,balanceCalculator,transactionFactory,keyFactory,
+            Address.Type.MAIN);
    }
 
    public void testBalanceChangedEvent()
@@ -56,7 +57,8 @@ public class WalletTests
       Capture<Observer> observerTrap = new Capture<Observer>();
       balanceCalculator.addObserver(EasyMock.capture(observerTrap));
       EasyMock.replay(balanceCalculator);
-      wallet = new WalletImpl(miner,balanceCalculator,transactionFactory,keyFactory);
+      wallet = new WalletImpl(miner,balanceCalculator,transactionFactory,keyFactory,
+            Address.Type.MAIN);
       // Register our own observer in wallet
       Observer walletObserver = EasyMock.createMock(Observer.class);
       walletObserver.update(wallet,Wallet.Event.BALANCE_CHANGE);

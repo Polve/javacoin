@@ -24,18 +24,6 @@ package hu.netmind.bitcoin;
  */
 public interface Key
 {
-   enum Type
-   {
-      MAIN,
-      TEST
-   };
-
-   /**
-    * Get the type of key. This indicates which network this key
-    * is supposed to be used in.
-    */
-   Type getType();
-
    /**
     * Sign a block of data with this private key.
     * @param data The data to sign.

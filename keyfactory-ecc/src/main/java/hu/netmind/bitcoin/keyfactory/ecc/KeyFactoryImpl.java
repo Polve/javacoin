@@ -32,17 +32,14 @@ import java.util.Collections;
 public class KeyFactoryImpl extends Observable implements KeyFactory
 {
    private KeyStore keyStore;
-   private Key.Type keyType;
 
    /**
     * Create this keystore with the storage implementation given.
     * @param keyStore The keyStore mechanism to use.
-    * @param keyType The type of keys to create, wether for live network or for test network.
     */
-   public KeyFactoryImpl(KeyStore keyStore, Key.Type keyType)
+   public KeyFactoryImpl(KeyStore keyStore)
    {
       this.keyStore=keyStore;
-      this.keyType=keyType;
    }
 
    /**
@@ -50,7 +47,7 @@ public class KeyFactoryImpl extends Observable implements KeyFactory
     */
    public Key createKey()
    {
-      KeyImpl key = new KeyImpl(keyType);
+      KeyImpl key = new KeyImpl();
       keyStore.addKey(key);
       setChanged();
       notifyObservers(Event.KEY_ADDED); 

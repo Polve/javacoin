@@ -48,7 +48,7 @@ public class TransactionVerificationITTests
       // and from the transaction of the output referenced in the input, hash:
       // 984f59a91a14c2b51181574a35f86af8363dc480f68bb2847d99fb49c184832b
 
-      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null,null));
+      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
       // First build the 2 outputs with script
       TransactionOutputImpl output1 = new TransactionOutputImpl(203000000,
          scriptFactory.createFragment(HexUtil.toByteArray(
@@ -100,7 +100,7 @@ public class TransactionVerificationITTests
       // The referenced output is in:
       // 945691940e0ccd9f526ee1edd57a77ce170804915749702f5564c49b1f70f330
 
-      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null,null));
+      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
       // First build the output with script
 
       TransactionOutputImpl output = new TransactionOutputImpl(10200000000l,

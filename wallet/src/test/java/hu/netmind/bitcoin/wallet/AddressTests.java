@@ -63,7 +63,7 @@ public class AddressTests
       Random rnd = new Random();
       rnd.nextBytes(keyHash);
       // Create an address
-      Address encode = new Address(Key.Type.MAIN,keyHash);
+      Address encode = new Address(Address.Type.MAIN,keyHash);
       logger.debug("generated address: "+encode.toString()+
             ", hashkey was: "+new BigInteger(1,keyHash).toString(16));
       // Now parse it back
@@ -81,7 +81,7 @@ public class AddressTests
            (byte)0xfe, (byte)0x01, (byte)0x4e, (byte)0x16, (byte)0x41, (byte)0x52, (byte)0x46, (byte)0xc0, (byte)0xf6, (byte)0x6f  };
       String exampleEncoded = "175tWpb8K1S7NmH4Zx6rewF9WQrcZv2456";
       // Check encoding
-      Address encoded = new Address(Key.Type.MAIN,exampleBytes);
+      Address encoded = new Address(Address.Type.MAIN,exampleBytes);
       Assert.assertEquals(encoded.toString(),exampleEncoded);
       // Check decoding
       Address decoded = new Address(exampleEncoded);

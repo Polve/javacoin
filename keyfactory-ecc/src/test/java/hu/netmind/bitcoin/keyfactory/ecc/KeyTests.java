@@ -41,7 +41,7 @@ public class KeyTests
       store.addKey((KeyImpl) EasyMock.anyObject());
       EasyMock.replay(store);
       // Call create
-      KeyFactoryImpl factory = new KeyFactoryImpl(store,Key.Type.MAIN);
+      KeyFactoryImpl factory = new KeyFactoryImpl(store);
       factory.createKey();
       // Check
       EasyMock.verify(store);
@@ -52,11 +52,10 @@ public class KeyTests
       long beforeTime = System.currentTimeMillis();
       // Create factory
       KeyStore store = EasyMock.createMock(KeyStore.class);
-      KeyFactoryImpl factory = new KeyFactoryImpl(store,Key.Type.MAIN);
+      KeyFactoryImpl factory = new KeyFactoryImpl(store);
       // Create key
       Key key = factory.createKey();
       // Check attributes
-      Assert.assertEquals(key.getType(),Key.Type.MAIN);
       Assert.assertTrue(key.getCreationTime() > beforeTime,"key creation time was in the past");
    }
 
@@ -64,7 +63,7 @@ public class KeyTests
    {
       // Create factory
       KeyStore store = EasyMock.createMock(KeyStore.class);
-      KeyFactoryImpl factory = new KeyFactoryImpl(store,Key.Type.MAIN);
+      KeyFactoryImpl factory = new KeyFactoryImpl(store);
       // Create key
       Key key = factory.createKey();
       // Get the public hash 
@@ -82,7 +81,7 @@ public class KeyTests
       byte[] data = new byte[] { 1,2,3,4,5,6,7,8,9,-1,-2,-3,-4,-5,-6,-7,-8,-9 };
       // Create factory
       KeyStore store = EasyMock.createMock(KeyStore.class);
-      KeyFactoryImpl factory = new KeyFactoryImpl(store,Key.Type.MAIN);
+      KeyFactoryImpl factory = new KeyFactoryImpl(store);
       // Create key
       Key key = factory.createKey();
       // Print values to debug
@@ -117,7 +116,7 @@ public class KeyTests
             "F6 92 45 63 64 2D 4A FE 9B F4 FE 28");
       // Now check that this signature is valid
       KeyStore store = EasyMock.createMock(KeyStore.class);
-      KeyFactoryImpl factory = new KeyFactoryImpl(store,Key.Type.MAIN);
+      KeyFactoryImpl factory = new KeyFactoryImpl(store);
       PublicKey key = factory.createPublicKey(publicKey);
       Assert.assertTrue(key.verify(data,signature),"couldn't verify real live data");
    }

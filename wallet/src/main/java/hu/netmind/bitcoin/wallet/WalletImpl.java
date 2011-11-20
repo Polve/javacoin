@@ -40,7 +40,8 @@ public class WalletImpl extends Observable implements Wallet
    private final Miner miner;                           // Miner is responsible for taking Transactions
    private final BalanceCalculator balanceCalculator;   // Maintains/calculates the balance
    private final TransactionFactory transactionFactory; // Creates transactions
-   private final KeyFactory keyFactory;                     // Holds all of our keys
+   private final KeyFactory keyFactory;                 // Holds all of our keys
+   private final Address.Type keyType;                  // The type of keys to generate
 
    /**
     * Initialize the Wallet with the block chain, key store and all algorithms.
@@ -49,12 +50,13 @@ public class WalletImpl extends Observable implements Wallet
     * @param balanceCalculator The calculator for the total balance.
     */
    public WalletImpl(Miner miner, BalanceCalculator balanceCalculator,
-         TransactionFactory transactionFactory, KeyFactory keyFactory)
+         TransactionFactory transactionFactory, KeyFactory keyFactory, Address.Type keyType)
    {
       this.miner=miner;
       this.balanceCalculator=balanceCalculator;
       this.transactionFactory=transactionFactory;
       this.keyFactory=keyFactory;
+      this.keyType=keyType;
       // Register listener to always call update when the balance might change
       balanceCalculator.addObserver(new Observer()
             {
@@ -105,7 +107,7 @@ public class WalletImpl extends Observable implements Wallet
       throws VerificationException
    {
       Key key = keyFactory.createKey();
-      return new Address(key.getType(),key.getPublicKey().getHash()).toString();
+      return new Address(keyType,key.getPublicKey().getHash()).toString();
    }
 }
 

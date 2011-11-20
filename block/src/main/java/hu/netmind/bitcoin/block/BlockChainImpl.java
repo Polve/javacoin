@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
  * and also calculating the longest chain starting from the Genesis Block.
  * @author Robert Brautigam
  * TODO: use ? extends to make methods for implementation (don't have to cast)
- * TODO: remove network type from keys
  * TODO: clarify filtering and prefiltered transaction containers
  * TODO: check that inside a transactions all inputs refer to different outputs
  */

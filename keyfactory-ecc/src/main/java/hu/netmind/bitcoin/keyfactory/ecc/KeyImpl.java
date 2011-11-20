@@ -57,7 +57,6 @@ public class KeyImpl implements Key
    private static SecureRandom random;
    private static ECDomainParameters domainParameters;
 
-   private Type type;
    private long creationTime;
    private BigInteger privateKey;
    private byte[] publicKey;
@@ -65,12 +64,11 @@ public class KeyImpl implements Key
    private PublicKeyImpl publicKeyObject;
 
    /**
-    * Create a key with the given type. With this constructor a new key will be
+    * Create a key. With this constructor a new key will be
     * actually generated.
     */
-   public KeyImpl(Type type)
+   public KeyImpl()
    {
-      this.type=type;
       // Initialize generator
       ECKeyPairGenerator generator = new ECKeyPairGenerator();
       generator.init(new ECKeyGenerationParameters(domainParameters,random));
@@ -89,19 +87,14 @@ public class KeyImpl implements Key
     * Create the key with all attributes supplied suitable for reconstructing an object
     * from storage. With this constructor, nothing will be calculated.
     */
-   public KeyImpl(Type type, BigInteger privateKey, byte[] publicKey, byte[] pubHash, long creationTime)
+   public KeyImpl(BigInteger privateKey, byte[] publicKey, byte[] pubHash, long creationTime)
    {
-      this.type=type;
       this.privateKey=privateKey;
       this.publicKey=publicKey;
       this.creationTime=creationTime;
       this.publicKeyObject = new PublicKeyImpl(publicKey,pubHash); // No need to generate hash
    }
    
-   public Type getType()
-   {
-      return type;
-   }
    public long getCreationTime()
    {
       return creationTime;

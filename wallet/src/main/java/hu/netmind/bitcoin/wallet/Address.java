@@ -29,7 +29,13 @@ import java.security.NoSuchAlgorithmException;
  */
 public class Address
 {
-   private Key.Type keyType;
+   public enum Type
+   {
+      MAIN,
+      TEST
+   };
+
+   private Type keyType;
    private byte[] keyHash;
    private String address;
 
@@ -44,9 +50,9 @@ public class Address
       // Parse
       byte[] decoded = Base58.decode(address);
       if ( decoded[0] == 0 )
-         keyType = Key.Type.MAIN;
+         keyType = Type.MAIN;
       else if ( decoded[0] == 111 )
-         keyType = Key.Type.TEST;
+         keyType = Type.TEST;
       else
          throw new VerificationException("tried to construct an address with key type "+decoded[0]+", which is not a known type");
       keyHash = new byte[decoded.length-5];
@@ -73,19 +79,19 @@ public class Address
 
    /**
     * Create the address by supplying the key hash.
-    * @param keyType The version number of the address.
+    * @param keyType The type of address to generate.
     * @param keyHash The key hash to represent.
     */
-   public Address(Key.Type keyType, byte[] keyHash)
+   public Address(Type keyType, byte[] keyHash)
       throws VerificationException
    {
       this.keyType=keyType;
       this.keyHash=keyHash;
       // Create string representation
       byte[] composite = new byte[1+keyHash.length+4];
-      if ( keyType == Key.Type.MAIN )
+      if ( keyType == Type.MAIN )
          composite[0] = 0;
-      else if ( keyType == Key.Type.TEST )
+      else if ( keyType == Type.TEST )
          composite[0] = 111;
       else
          throw new VerificationException("tried to construct an address with key type "+keyType+", which is not a known type");
@@ -120,7 +126,7 @@ public class Address
       return keyHash;
    }
 
-   public Key.Type getKeyType()
+   public Type getKeyType()
    {
       return keyType;
    }
