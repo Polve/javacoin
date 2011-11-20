@@ -19,6 +19,7 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.VerificationException;
 import org.testng.annotations.Test;
@@ -59,7 +60,7 @@ public class BlockTests
    {
       // Construct block with minimal transactions, that is only a coinbase
       Transaction tx = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx.isCoinbase()).andReturn(true);
+      EasyMock.expect(tx.getInputs()).andReturn(new ArrayList<TransactionInput>()).anyTimes();
       EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 }).anyTimes();
       tx.validate();
       EasyMock.replay(tx);
@@ -88,7 +89,7 @@ public class BlockTests
    {
       // Construct block with minimal transactions, that is only a coinbase
       Transaction tx = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx.isCoinbase()).andReturn(true);
+      EasyMock.expect(tx.getInputs()).andReturn(new ArrayList<TransactionInput>()).anyTimes();
       EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 });
       tx.validate();
       EasyMock.replay(tx);
@@ -109,7 +110,7 @@ public class BlockTests
    {
       // Construct block with minimal transactions, that don't validate
       Transaction tx = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx.isCoinbase()).andReturn(true);
+      EasyMock.expect(tx.getInputs()).andReturn(new ArrayList<TransactionInput>()).anyTimes();
       EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 });
       tx.validate();
       EasyMock.expectLastCall().andThrow(new VerificationException("transaction failed validation (test)"));
@@ -129,7 +130,7 @@ public class BlockTests
    {
       // Construct block with minimal transactions, that is only a coinbase
       Transaction tx = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx.isCoinbase()).andReturn(true);
+      EasyMock.expect(tx.getInputs()).andReturn(new ArrayList<TransactionInput>()).anyTimes();
       EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 });
       tx.validate();
       EasyMock.replay(tx);
@@ -138,6 +139,45 @@ public class BlockTests
       // Create block
       MerkleTree mTree = new MerkleTree(transactions);
       BlockImpl block = new BlockImpl(transactions,0,0,0,new byte[] { 0 },
+            new byte[] { 0 });
+      block.validate();
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testSameOutputTwice()
+      throws BitCoinException, VerificationException
+   {
+      // Create two inputs
+      TransactionInput input1 = EasyMock.createMock(TransactionInput.class);
+      EasyMock.expect(input1.getClaimedTransactionHash()).andReturn(new byte[] { 1 }).anyTimes();
+      EasyMock.expect(input1.getClaimedOutputIndex()).andReturn(2).anyTimes();
+      EasyMock.replay(input1);
+      List<TransactionInput> inputs1 = new ArrayList<TransactionInput>();
+      inputs1.add(input1);
+      TransactionInput input2 = EasyMock.createMock(TransactionInput.class);
+      EasyMock.expect(input2.getClaimedTransactionHash()).andReturn(new byte[] { 1 }).anyTimes();
+      EasyMock.expect(input2.getClaimedOutputIndex()).andReturn(2).anyTimes();
+      EasyMock.replay(input2);
+      List<TransactionInput> inputs2 = new ArrayList<TransactionInput>();
+      inputs2.add(input2);
+      // Construct block with minimal transactions, that is only a coinbase
+      Transaction tx1 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx1.getInputs()).andReturn(inputs1).anyTimes();
+      EasyMock.expect(tx1.getHash()).andReturn(new byte[] { 0 }).anyTimes();
+      tx1.validate();
+      EasyMock.replay(tx1);
+      Transaction tx2 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx2.getInputs()).andReturn(inputs1).anyTimes();
+      EasyMock.expect(tx2.getHash()).andReturn(new byte[] { 0 }).anyTimes();
+      EasyMock.expect(tx2.isCoinbase()).andReturn(false).anyTimes();
+      tx2.validate();
+      EasyMock.replay(tx2);
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      transactions.add(tx1);
+      transactions.add(tx2);
+      // Create block
+      MerkleTree mTree = new MerkleTree(transactions);
+      BlockImpl block = new BlockImpl(transactions,0,0,0,null,mTree.getRoot(),
             new byte[] { 0 });
       block.validate();
    }

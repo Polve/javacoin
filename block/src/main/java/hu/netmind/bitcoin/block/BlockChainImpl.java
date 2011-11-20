@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
  * and also calculating the longest chain starting from the Genesis Block.
  * @author Robert Brautigam
  * TODO: use ? extends to make methods for implementation (don't have to cast)
- * TODO: check that inside a transactions all inputs refer to different outputs
  */
 public class BlockChainImpl extends Observable implements BlockChain
 {

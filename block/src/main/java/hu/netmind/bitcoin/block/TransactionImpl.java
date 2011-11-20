@@ -21,6 +21,9 @@ package hu.netmind.bitcoin.block;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
 import java.math.BigInteger;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
@@ -255,6 +258,16 @@ public class TransactionImpl implements Transaction
             if ( (in.getClaimedOutputIndex() < 0) || 
                  (new BigInteger(1,inputs.get(0).getClaimedTransactionHash()).equals(BigInteger.ZERO)) )
                throw new VerificationException("input for transaction ("+this+") has wrong reference to previous transaction");
+      }
+      // Additional check: All inputs refer to a different output
+      Set<String> usedOuts = new HashSet<String>();
+      for ( TransactionInput in : getInputs() )
+      {
+         String referredOut = Arrays.toString(in.getClaimedTransactionHash())+"-"+
+            in.getClaimedOutputIndex();
+         if ( usedOuts.contains(referredOut) )
+            throw new VerificationException("transaction "+this+" referes twice to output: "+referredOut);
+         usedOuts.add(referredOut);
       }
    }
 

@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.AbstractList;
 import java.util.Collections;
+import java.util.Set;
+import java.util.HashSet;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import org.slf4j.Logger;
@@ -187,6 +189,19 @@ public class BlockImpl implements Block
             throw new VerificationException("block's ("+this+") merkle root does not match transaction hashes");
       } catch ( BitCoinException e ) {
          throw new VerificationException("unable to create merkle tree for block "+this,e);
+      }
+      // Additional check: All inputs refer to a different output
+      Set<String> usedOuts = new HashSet<String>();
+      for ( Transaction tx : transactions )
+      {
+         for ( TransactionInput in : tx.getInputs() )
+         {
+            String referredOut = Arrays.toString(in.getClaimedTransactionHash())+"-"+
+               in.getClaimedOutputIndex();
+            if ( usedOuts.contains(referredOut) )
+               throw new VerificationException("block "+this+" referes twice to output: "+referredOut);
+            usedOuts.add(referredOut);
+         }
       }
    }
 
