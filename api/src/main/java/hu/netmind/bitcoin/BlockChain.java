@@ -62,5 +62,12 @@ public interface BlockChain extends Observable
     * block.
     */
    Block getPreviousBlock(Block current);
+
+   /**
+    * Add a block to the chain. Block is first validated against
+    * BitCoin rules, then added if it passed all tests.
+    */
+   void addBlock(Block block)
+      throws VerificationException;
 }
 

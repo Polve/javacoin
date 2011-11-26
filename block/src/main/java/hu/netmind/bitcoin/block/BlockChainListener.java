@@ -18,6 +18,8 @@
 
 package hu.netmind.bitcoin.block;
 
+import hu.netmind.bitcoin.Block;
+
 /**
  * Used for listening for block chain internal events.
  * @author Robert Brautigam
@@ -34,6 +36,6 @@ public interface BlockChainListener
    /**
     * Called when a fully verified block enters a chain.
     */
-   void notifyAddedBlock(BlockImpl block);
+   void notifyAddedBlock(Block block);
 }
 

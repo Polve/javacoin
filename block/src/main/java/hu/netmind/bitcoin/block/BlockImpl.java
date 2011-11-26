@@ -74,11 +74,6 @@ public class BlockImpl implements Block
    private byte[] hash;
    private List<Transaction> transactions;
 
-   // Transient internal attributes
-   private boolean orphan;
-   private Difficulty totalDifficulty;
-   private long height;
-   
    /**
     * Construct hash with basic data given, without hash (which will be calculated).
     */
@@ -228,33 +223,6 @@ public class BlockImpl implements Block
    public byte[] getPreviousBlockHash()
    {
       return previousBlockHash;
-   }
-
-   public boolean isOrphan()
-   {
-      return orphan;
-   }
-   public void setOrphan(boolean orphan)
-   {
-      this.orphan=orphan;
-   }
-
-   public Difficulty getTotalDifficulty()
-   {
-      return totalDifficulty;
-   }
-   public void setTotalDifficulty(Difficulty totalDifficulty)
-   {
-      this.totalDifficulty=totalDifficulty;
-   }
-
-   public long getHeight()
-   {
-      return height;
-   }
-   public void setHeight(long height)
-   {
-      this.height=height;
    }
 
    public List<Transaction> getTransactions()

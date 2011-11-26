@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
  * The BlockChain is responsible for maintaining the list of valid Blocks
  * and also calculating the longest chain starting from the Genesis Block.
  * @author Robert Brautigam
- * TODO: use ? extends to make methods for implementation (don't have to cast)
  */
 public class BlockChainImpl extends Observable implements BlockChain
 {
@@ -57,8 +56,9 @@ public class BlockChainImpl extends Observable implements BlockChain
 
    private static Map<BigInteger,Map<Long,BigInteger>> knownHashes =
       new HashMap<BigInteger,Map<Long,BigInteger>>();
-   private BlockImpl genesisBlock = null;
-   private BlockStorage blockStorage = null;
+
+   private Block genesisBlock = null;
+   private BlockChainLinkStorage linkStorage = null;
    private BlockChainListener listener = null;
    private ScriptFactory scriptFactory = null;
    private boolean simplifedVerification = false;
@@ -66,27 +66,28 @@ public class BlockChainImpl extends Observable implements BlockChain
    /**
     * Construct a new block chain.
     * @param genesisBlock The valid genesis block for this chain.
-    * @param blockStorage The store to get/store the blocks.
+    * @param linkStorage The store to get/store the chain links.
     * @param simplifedVerification Set to "true" to disable transaction checking. If this
     * is disabled the bitcoin network (whoever supplies blocks) is trusted instead. You have to
     * disable this check if you don't want to run a full node.
     */
-   public BlockChainImpl(BlockImpl genesisBlock, BlockStorage blockStorage, 
+   public BlockChainImpl(Block genesisBlock, BlockChainLinkStorage linkStorage,
          ScriptFactory scriptFactory, boolean simplifedVerification)
       throws VerificationException
    {
-      this.genesisBlock=genesisBlock;
-      this.blockStorage=blockStorage;
+      this.linkStorage=linkStorage;
       this.scriptFactory=scriptFactory;
       this.simplifedVerification=simplifedVerification;
       // Check if the genesis blocks equal, or add genesis block if storage is empty.
       // Here we assume that the storage is not tampered!
-      BlockImpl storedGenesisBlock = blockStorage.getGenesisBlock();
-      if ( storedGenesisBlock == null )
+      BlockChainLink storedGenesisLink = linkStorage.getGenesisLink();
+      if ( storedGenesisLink == null )
       {
-         addBlock(genesisBlock);
+         BlockChainLink genesisLink = new BlockChainLink(genesisBlock,
+               new Difficulty(new DifficultyTarget(genesisBlock.getCompressedTarget())),1,false);
+         linkStorage.addLink(genesisLink);
       } else {
-         if ( ! storedGenesisBlock.equals(genesisBlock) )
+         if ( ! storedGenesisLink.getBlock().equals(genesisBlock) )
             throw new VerificationException("genesis block in storage is not the same as the block chain's");
       }
    }
@@ -105,7 +106,7 @@ public class BlockChainImpl extends Observable implements BlockChain
     */
    public Block getPreviousBlock(Block current)
    {
-      return blockStorage.getBlock(current.getPreviousBlockHash());
+      return linkStorage.getLink(current.getPreviousBlockHash()).getBlock();
    }
 
    /**
@@ -115,23 +116,21 @@ public class BlockChainImpl extends Observable implements BlockChain
     * when letting into the store, but they will not be cleaned when it turns out
     * they are not valid (so they can't be repeated). Potential DOS attack vector.
     */
-   public void addBlock(Block rawBlock)
+   public void addBlock(Block block)
       throws VerificationException
    {
-      addBlock(rawBlock,false);
+      addBlock(block,false);
    }
 
    /**
     * Add a block to the chain. This call can be used to update orphan blocks.
     * @param rawBlock The block to add.
-    * @param orphan Whether the block is an orphan block that needs re-checking.
+    * @param recheck Whether the block is an orphan block that needs re-checking.
     */
-   private void addBlock(Block rawBlock, boolean orphan)
+   private void addBlock(Block block, boolean recheck)
       throws VerificationException
    {
-      logger.debug("adding block: {}",rawBlock);
-      // For now, only allow the implementation from here
-      BlockImpl block = (BlockImpl) rawBlock;
+      logger.debug("adding block: {}",block);
 
       // In this method we do all the necessary checks documented on the
       // "protocol rules" section of the wiki at:
@@ -143,28 +142,38 @@ public class BlockChainImpl extends Observable implements BlockChain
       block.validate();
       // Check 2: Reject if duplicate of block we have in any of the three categories 
       // Note: we don't have three categories, but we can check every block we have easily
-      logger.debug("checking whether block is already known...");
-      if ( blockStorage.getBlock(block.getHash()) != null )
-         throw new VerificationException("block ("+block+") was already present in storage");
+      if ( ! recheck )
+      {
+         logger.debug("checking whether block is already known...");
+         if ( linkStorage.getLink(block.getHash()) != null )
+            throw new VerificationException("block ("+block+") was already present in storage");
+      } else {
+         logger.debug("block is an orphan block that needs rechecking...");
+      }
       // Check 11: Check whether block will be an orphan block, in which case notify
       // listener to try to get that block and stop
       logger.debug("checking whether block is orphan...");
-      BlockImpl previousBlock = blockStorage.getBlock(block.getPreviousBlockHash());
-      if ( (previousBlock == null) || (previousBlock.isOrphan()) )
+      BlockChainLink previousLink = linkStorage.getLink(block.getPreviousBlockHash());
+      if ( (previousLink == null) || (previousLink.isOrphan()) )
       {
-         block.setOrphan(true);
-         blockStorage.addBlock(block); // Store as orphan block
+         BlockChainLink link = new BlockChainLink(block,null,0,true);
+         if ( ! recheck )
+            linkStorage.addLink(link);
          // Notify listeners that we have a missing block
          if ( listener != null )
             listener.notifyMissingBlock(block.getPreviousBlockHash());
+         // Finish here for now, this link will be re-checked as soon as
+         // its parent will be non-orphan
+         return;
       }
       // Check 12: Check that nBits value matches the difficulty rules 
       logger.debug("checking whether block has the appropriate target...");
-      block.setHeight(previousBlock.getHeight()+1);
       DifficultyTarget blockTarget = new DifficultyTarget(block.getCompressedTarget());
       Difficulty blockDifficulty = new Difficulty(blockTarget);
-      block.setTotalDifficulty(previousBlock.getTotalDifficulty().add(blockDifficulty));
-      DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousBlock);
+      BlockChainLink link = new BlockChainLink(block, // Create link for block
+            previousLink.getTotalDifficulty().add(blockDifficulty),
+            previousLink.getHeight()+1,false);
+      DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousLink);
       if ( blockTarget.compareTo(calculatedTarget) != 0 )
       {
          // Target has to exactly match the one calculated, otherwise it is
@@ -173,7 +182,7 @@ public class BlockChainImpl extends Observable implements BlockChain
                ", when calculated is: "+calculatedTarget);
       }
       // Check 13: Reject if timestamp is before the median time of the last 11 blocks
-      long medianTimestamp = getMedianTimestamp(previousBlock);
+      long medianTimestamp = getMedianTimestamp(previousLink);
       if ( block.getCreationTime() <= medianTimestamp )
          throw new VerificationException("block's creation time ("+block.getCreationTime()+
                ") is before median of previous blocks: "+medianTimestamp);
@@ -182,7 +191,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       BigInteger blockHash = new BigInteger(1,block.getHash());
       if ( knownHashes.containsKey(genesisHash) )
       {
-         BigInteger knownHash = knownHashes.get(genesisHash).get(block.getHeight());
+         BigInteger knownHash = knownHashes.get(genesisHash).get(link.getHeight());
          if ( (knownHash != null) && (!knownHash.equals(blockHash)) )
             throw new VerificationException("block should have a hash we already know, but it doesn't, might indicate a tampering or attack");
       }
@@ -205,7 +214,7 @@ public class BlockChainImpl extends Observable implements BlockChain
          // Checks 16.1.1-7: Verify only if this is supposed to be a full node
          if ( (!simplifedVerification) && (!tx.isCoinbase()) )
          {
-            inValue += verifyTransaction(previousBlock,tx);
+            inValue += verifyTransaction(previousLink,tx);
             for ( TransactionOutput out : tx.getOutputs() )
                outValue += out.getValue();
          }
@@ -223,28 +232,27 @@ public class BlockChainImpl extends Observable implements BlockChain
          // Valid if coinbase value is not greater than mined value plus fees in tx
          if ( inValue - outValue < 0 )
             throw new VerificationException("fee in block "+block+" is negative");
-         if ( coinbaseValue > getBlockCoinbaseValue(block)+(inValue-outValue) )
+         if ( coinbaseValue > getBlockCoinbaseValue(link)+(inValue-outValue) )
             throw new VerificationException("coinbase transaction in block "+block+" claimed more coins than appropriate: "+
                   coinbaseValue);
       }
       // Check 16.6: Relay block to our peers
       // (Also: add the block first to storage, it's a valid block)
-      block.setOrphan(false);
-      blockStorage.addBlock(block);
+      linkStorage.addLink(link);
       if ( listener != null )
          listener.notifyAddedBlock(block);
       // Check 19: For each orphan block for which this block is its prev, 
       // run all these steps (including this one) recursively on that orphan 
-      for ( BlockImpl nextBlock : blockStorage.getNextBlocks(block.getHash()) )
-         addBlock(nextBlock,true);
+      for ( BlockChainLink nextLink : linkStorage.getNextLinks(block.getHash()) )
+         addBlock(nextLink.getBlock(),true);
    }
 
    /**
     * Get a Block's maximum coinbase value.
     */
-   private long getBlockCoinbaseValue(BlockImpl block)
+   private long getBlockCoinbaseValue(BlockChainLink link)
    {
-      return (INITIAL_COINBASE_VALUE) >> (block.getHeight()/COINBASE_VALUE_HALFTIME);
+      return (INITIAL_COINBASE_VALUE) >> (link.getHeight()/COINBASE_VALUE_HALFTIME);
    }
 
    /**
@@ -252,7 +260,7 @@ public class BlockChainImpl extends Observable implements BlockChain
     * tree.
     * @return The total value of the inputs after verification.
     */
-   private long verifyTransaction(BlockImpl block, Transaction tx)
+   private long verifyTransaction(BlockChainLink link, Transaction tx)
       throws VerificationException
    {
       long value = 0;
@@ -261,9 +269,9 @@ public class BlockChainImpl extends Observable implements BlockChain
          // Check 16.1.1: For each input, look in the [same] branch to find the 
          // referenced output transaction. Reject if the output transaction is missing for any input. 
          Transaction outTx = null;
-         BlockImpl outBlock = blockStorage.getClaimedBlock(block,in);
-         if ( outBlock != null )
-            for ( Transaction txCandidate : outBlock.getTransactions() )
+         BlockChainLink outLink = linkStorage.getClaimedLink(link,in);
+         if ( outLink != null )
+            for ( Transaction txCandidate : outLink.getBlock().getTransactions() )
                if ( Arrays.equals(txCandidate.getHash(),in.getClaimedTransactionHash()) )
                   outTx = txCandidate;
          if ( outTx == null )
@@ -275,7 +283,7 @@ public class BlockChainImpl extends Observable implements BlockChain
                   (in.getClaimedOutputIndex()+1)+" vs. "+outTx.getOutputs().size());
          // Check 16.1.3: For each input, if the referenced output transaction is coinbase,
          // it must have at least COINBASE_MATURITY confirmations; else reject. 
-         if ( (outTx.isCoinbase()) && (outBlock.getHeight()+COINBASE_MATURITY >= block.getHeight()) )
+         if ( (outTx.isCoinbase()) && (outLink.getHeight()+COINBASE_MATURITY >= link.getHeight()) )
             throw new VerificationException("input ("+in+") referenced coinbase transaction "+outTx+" which was not mature enough (not old enough)");
          // Check 16.1.4: Verify crypto signatures for each input; reject if any are bad 
          TransactionOutput out = outTx.getOutputs().get(in.getClaimedOutputIndex());
@@ -290,9 +298,9 @@ public class BlockChainImpl extends Observable implements BlockChain
          }
          // Check 16.1.5: For each input, if the referenced output has already been
          // spent by a transaction in the [same] branch, reject 
-         BlockImpl claimerBlock = blockStorage.getClaimerBlock(block,in);
-         if ( claimerBlock != null )
-            throw new VerificationException("output claimed by "+in+" is already claimed in another block: "+claimerBlock);
+         BlockChainLink claimerLink = linkStorage.getClaimerLink(link,in);
+         if ( claimerLink != null )
+            throw new VerificationException("output claimed by "+in+" is already claimed in another block: "+claimerLink);
          // Check 16.1.6/7: Using the referenced output transactions to get 
          // input values, check that each input value, as well as the sum, are in legal money range 
          // Note: this is done by transaction verification, so we skip it here
@@ -303,13 +311,14 @@ public class BlockChainImpl extends Observable implements BlockChain
    /**
     * Calculate the median of the (some number of) blocks starting at the given block.
     */
-   private long getMedianTimestamp(Block block)
+   private long getMedianTimestamp(BlockChainLink link)
    {
+      Block block = link.getBlock();
       long[] times = new long[MEDIAN_BLOCKS];
       for ( int i=0; (block!=null) && (i<MEDIAN_BLOCKS); i++ )
       {
          times[i]=block.getCreationTime();
-         block = getPreviousBlock(block);
+         block=getPreviousBlock(block);
       }
       return times[MEDIAN_BLOCKS/2];
    }
@@ -317,34 +326,33 @@ public class BlockChainImpl extends Observable implements BlockChain
    /**
     * Calculate the difficulty for the next block after the one supplied.
     */
-   public DifficultyTarget getNextDifficultyTarget(Block rawBlock)
+   public DifficultyTarget getNextDifficultyTarget(BlockChainLink link)
    {
-      BlockImpl block = (BlockImpl) rawBlock;
       // If we're calculating for the genesis block return
       // fixed difficulty
-      if ( block == null )
+      if ( link == null )
          return DifficultyTarget.MAX_TARGET;
       // Look whether it's time to change the difficulty setting
       // (only change every TARGET_RECALC blocks). If not, return the
       // setting of this block, because the next one has to have the same
       // target.
-      if ( (block.getHeight()+1) % TARGET_RECALC != 0 )
-         return new DifficultyTarget(block.getCompressedTarget());
+      if ( (link.getHeight()+1) % TARGET_RECALC != 0 )
+         return new DifficultyTarget(link.getBlock().getCompressedTarget());
       // We have to change the target. First collect the last TARGET_RECALC 
       // blocks (including the given block) 
-      Block startBlock = block;
+      Block startBlock = link.getBlock();
       for ( int i=0; (i<TARGET_RECALC-1) && (startBlock!=null); i++ )
          startBlock = getPreviousBlock(startBlock);
       if ( startBlock == null )
          return DifficultyTarget.MAX_TARGET; // This shouldn't happen, we reached genesis
       // Calculate the time the TARGET_RECALC blocks took
-      long calculatedTimespan = block.getCreationTime() - startBlock.getCreationTime();
+      long calculatedTimespan = link.getBlock().getCreationTime() - startBlock.getCreationTime();
       if (calculatedTimespan < TARGET_TIMESPAN/4)
          calculatedTimespan = TARGET_TIMESPAN/4;
       if (calculatedTimespan > TARGET_TIMESPAN*4)
          calculatedTimespan = TARGET_TIMESPAN*4;
       // Calculate new target, but allow no more than maximum target
-      DifficultyTarget difficultyTarget = new DifficultyTarget(block.getCompressedTarget());
+      DifficultyTarget difficultyTarget = new DifficultyTarget(link.getBlock().getCompressedTarget());
       BigInteger target = difficultyTarget.getTarget();
       target = target.multiply(BigInteger.valueOf(calculatedTimespan));
       target = target.divide(BigInteger.valueOf(TARGET_TIMESPAN));
@@ -362,7 +370,7 @@ public class BlockChainImpl extends Observable implements BlockChain
 
    public Block getLastBlock()
    {
-      return blockStorage.getLastBlock();
+      return linkStorage.getLastLink().getBlock();
    }
 
    static
