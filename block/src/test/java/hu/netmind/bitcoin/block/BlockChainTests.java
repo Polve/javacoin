@@ -22,10 +22,12 @@ import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.VerificationException;
 import org.testng.annotations.Test;
+import org.testng.annotations.DataProvider;
 import org.easymock.EasyMock;
 import org.easymock.Capture;
 import org.testng.Assert;
 import java.util.List;
+import java.util.Arrays;
 import java.util.ArrayList;
 
 /**
@@ -37,15 +39,10 @@ public class BlockChainTests
    public void testGenesisOk()
       throws VerificationException
    {
-      // Initialize storage with known block and link
-      Block genesisBlock = EasyMock.createMock(Block.class);
-      BlockChainLink genesisLink = EasyMock.createMock(BlockChainLink.class);
-      EasyMock.expect(genesisLink.getBlock()).andReturn(genesisBlock);
-      EasyMock.replay(genesisLink);
-      BlockChainLinkStorage storage = EasyMock.createMock(BlockChainLinkStorage.class);
-      EasyMock.expect(storage.getGenesisLink()).andReturn(genesisLink);
-      EasyMock.replay(storage);
-      // Construct block chain with known genesis block, should be ok
+      Block genesisBlock = BlockMock.createBlock(
+            "block 1234567 1 1b0404cb 00 010203 01;");
+      DummyStorage storage = new DummyStorage(genesisBlock);
+      // Check that construction works
       BlockChainImpl chain = new BlockChainImpl(genesisBlock,storage,null,false);
    }
 
@@ -53,38 +50,71 @@ public class BlockChainTests
    public void testWrongGenesis()
       throws VerificationException
    {
-      // Initialize storage with known block and link
-      Block genesisBlock = EasyMock.createMock(Block.class);
-      BlockChainLink genesisLink = EasyMock.createMock(BlockChainLink.class);
-      EasyMock.expect(genesisLink.getBlock()).andReturn(genesisBlock);
-      EasyMock.replay(genesisLink);
-      BlockChainLinkStorage storage = EasyMock.createMock(BlockChainLinkStorage.class);
-      EasyMock.expect(storage.getGenesisLink()).andReturn(genesisLink);
-      EasyMock.replay(storage);
-      // Construct block chain with known genesis block, should be ok
-      Block secondGenesisBlock = EasyMock.createMock(Block.class);
-      BlockChainImpl chain = new BlockChainImpl(secondGenesisBlock,storage,null,false);
+      Block genesisBlock = BlockMock.createBlock(
+            "block 1234567 1 1b0404cb 00 010203 01;");
+      DummyStorage storage = new DummyStorage(genesisBlock);
+      // Check that construction fails with other genesis
+      Block differentBlock = BlockMock.createBlock(
+            "block 1234567 1 1b0404cb 00 010203 02;");
+      BlockChainImpl chain = new BlockChainImpl(differentBlock,storage,null,false);
    }
 
    public void testGenesisInitialization()
       throws VerificationException
    {
-      Block genesisBlock = EasyMock.createMock(Block.class);
       // Initialize storage with nothing
-      BlockChainLinkStorage storage = EasyMock.createMock(BlockChainLinkStorage.class);
-      EasyMock.expect(storage.getGenesisLink()).andReturn(null);
-      Capture<BlockChainLink> genesisCapture = new Capture<BlockChainLink>();
-      storage.addLink( EasyMock.capture(genesisCapture) );
-      EasyMock.replay(storage);
+      DummyStorage storage = new DummyStorage();
       // Construct block chain with genesis block
+      Block genesisBlock = BlockMock.createBlock(
+            "block 1234567 1 1b0404cb 00 010203 01;");
       BlockChainImpl chain = new BlockChainImpl(genesisBlock,storage,null,false);
       // Verify genesis block
-      EasyMock.verify(storage); // Check that everything was called
-      BlockChainLink link = genesisCapture.getValue();
+      Assert.assertEquals(storage.getNewLinks().size(),1);
+      BlockChainLink link = storage.getNewLinks().get(0);
       Assert.assertEquals(link.getHeight(), 1);
       Assert.assertEquals(link.getBlock(), genesisBlock);
       Assert.assertFalse(link.isOrphan());
+      Assert.assertEquals(link.getBlock().getCreationTime(),1234567);
+      Assert.assertEquals(link.getBlock().getNonce(),1);
+      Assert.assertEquals(link.getBlock().getCompressedTarget(),0x1b0404cbl);
+      Assert.assertEquals(link.getBlock().getPreviousBlockHash(),new byte[] { 0 });
+      Assert.assertEquals(link.getBlock().getMerkleRoot(), new byte[] { 01, 02, 03 });
+      Assert.assertEquals(link.getBlock().getHash(),new byte[] { 01 });
    }
+
+   @Test(groups="current")
+   public void testAddValidBlock()
+      throws VerificationException
+   {
+      // Construct a block chain and storage
+      DummyStorage storage = new DummyStorage(BlockMock.createBlocks(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 1 999;"+
+            "      out 2000000;"+
+            "      out 3000000;"));
+      // Construct chain
+      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
+            storage,null,false);
+      // Add a valid block
+      Block newBlock = BlockMock.createBlock(
+            "block 1234569 1 1b0404cb 02 010203 03;"+
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990105 false;"+ // Using some money
+            "      in 990103 1 999;"+
+            "      out 2000000;");
+      chain.addBlock(newBlock);
+   }
+
 }
 
 

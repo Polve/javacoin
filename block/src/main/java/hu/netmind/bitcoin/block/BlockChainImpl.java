@@ -78,6 +78,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       this.linkStorage=linkStorage;
       this.scriptFactory=scriptFactory;
       this.simplifedVerification=simplifedVerification;
+      this.genesisBlock=genesisBlock;
       // Check if the genesis blocks equal, or add genesis block if storage is empty.
       // Here we assume that the storage is not tampered!
       BlockChainLink storedGenesisLink = linkStorage.getGenesisLink();
@@ -106,7 +107,10 @@ public class BlockChainImpl extends Observable implements BlockChain
     */
    public Block getPreviousBlock(Block current)
    {
-      return linkStorage.getLink(current.getPreviousBlockHash()).getBlock();
+      BlockChainLink link = linkStorage.getLink(current.getPreviousBlockHash());
+      if ( link == null )
+         return null;
+      return link.getBlock();
    }
 
    /**
