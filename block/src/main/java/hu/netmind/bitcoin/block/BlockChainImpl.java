@@ -212,11 +212,20 @@ public class BlockChainImpl extends Observable implements BlockChain
          // Validate without context
          tx.validate();
          // Checks 16.1.1-7: Verify only if this is supposed to be a full node
+         long localInValue = 0;
+         long localOutValue = 0;
          if ( (!simplifedVerification) && (!tx.isCoinbase()) )
          {
-            inValue += verifyTransaction(previousLink,tx);
+            localInValue = verifyTransaction(previousLink,tx);
             for ( TransactionOutput out : tx.getOutputs() )
-               outValue += out.getValue();
+               localOutValue += out.getValue();
+            inValue += localInValue;
+            outValue += localOutValue;
+            // Check 16.1.6: Using the referenced output transactions to get 
+            // input values, check that each input value, as well as the sum, are in legal money range 
+            // Check 16.1.7: Reject if the sum of input values < sum of output values 
+            if ( localInValue < localOutValue )
+               throw new VerificationException("more money spent then available in transaction: "+tx);
          }
       }
       // Verify coinbase if we have full verification and there is a coinbase
@@ -301,9 +310,6 @@ public class BlockChainImpl extends Observable implements BlockChain
          BlockChainLink claimerLink = linkStorage.getClaimerLink(link,in);
          if ( claimerLink != null )
             throw new VerificationException("output claimed by "+in+" is already claimed in another block: "+claimerLink);
-         // Check 16.1.6/7: Using the referenced output transactions to get 
-         // input values, check that each input value, as well as the sum, are in legal money range 
-         // Note: this is done by transaction verification, so we skip it here
       }
       return value;
    }
