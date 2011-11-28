@@ -21,6 +21,11 @@ package hu.netmind.bitcoin.block;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.VerificationException;
+import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.Script;
+import hu.netmind.bitcoin.ScriptFragment;
+import hu.netmind.bitcoin.ScriptException;
+import hu.netmind.bitcoin.TransactionInput;
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 import org.easymock.EasyMock;
@@ -36,6 +41,21 @@ import java.util.ArrayList;
 @Test
 public class BlockChainTests
 {
+   private ScriptFactory createScriptFactory(boolean successful)
+      throws ScriptException
+   {
+      Script script = EasyMock.createMock(Script.class);
+      EasyMock.expect(script.execute((TransactionInput)EasyMock.anyObject())).
+         andReturn(successful).anyTimes();
+      EasyMock.replay(script);
+      ScriptFactory scriptFactory = EasyMock.createMock(ScriptFactory.class);
+      EasyMock.expect(scriptFactory.createScript(
+               (ScriptFragment) EasyMock.anyObject(), (ScriptFragment) EasyMock.anyObject())).
+         andReturn(script).anyTimes();
+      EasyMock.replay(scriptFactory);
+      return scriptFactory;
+   }
+
    public void testGenesisOk()
       throws VerificationException
    {
@@ -84,7 +104,7 @@ public class BlockChainTests
 
    @Test(groups="current")
    public void testAddValidBlock()
-      throws VerificationException
+      throws BitCoinException
    {
       // Construct a block chain and storage
       DummyStorage storage = new DummyStorage(BlockMock.createBlocks(
@@ -102,7 +122,7 @@ public class BlockChainTests
             "      out 3000000;"));
       // Construct chain
       BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
-            storage,null,false);
+            storage,createScriptFactory(true),false);
       // Add a valid block
       Block newBlock = BlockMock.createBlock(
             "block 1234569 1 1b0404cb 02 010203 03;"+

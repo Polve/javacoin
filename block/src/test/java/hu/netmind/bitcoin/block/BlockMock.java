@@ -129,9 +129,11 @@ public class BlockMock
             EasyMock.expect(in.getClaimedTransactionHash()).andReturn(
                   toByteArray(params.get(0))).anyTimes();
             EasyMock.expect(in.getClaimedOutputIndex()).andReturn(
-                  Integer.parseInt(params.get(1)));
+                  Integer.parseInt(params.get(1))).anyTimes();
             EasyMock.expect(in.getSequence()).andReturn(
-                  Long.parseLong(params.get(2)));
+                  Long.parseLong(params.get(2))).anyTimes();
+            EasyMock.expect(in.getSignatureScript()).andReturn(null).anyTimes();
+            EasyMock.replay(in);
             // Add
             transaction.getInputs().add(in);
          }
@@ -142,7 +144,9 @@ public class BlockMock
             // New in
             TransactionOutput out = EasyMock.createMock(TransactionOutput.class);
             EasyMock.expect(out.getValue()).andReturn(
-                  Long.parseLong(params.get(0)));
+                  Long.parseLong(params.get(0))).anyTimes();
+            EasyMock.expect(out.getScript()).andReturn(null).anyTimes();
+            EasyMock.replay(out);
             // Add
             transaction.getOutputs().add(out);
          }
