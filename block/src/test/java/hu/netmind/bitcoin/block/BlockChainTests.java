@@ -151,7 +151,7 @@ public class BlockChainTests
             "      out 2000000;",true);
       Assert.assertEquals(storage.getNewLinks().size(),1);
       BlockChainLink newLink = storage.getNewLinks().get(0);
-      Assert.assertEquals(newLink.getHeight(),3);
+      Assert.assertEquals(newLink.getHeight(),2);
       Assert.assertEquals(newLink.isOrphan(),false);
    }
 
