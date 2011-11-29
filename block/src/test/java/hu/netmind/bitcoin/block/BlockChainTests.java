@@ -34,6 +34,8 @@ import org.testng.Assert;
 import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Robert Brautigam
@@ -41,6 +43,8 @@ import java.util.ArrayList;
 @Test
 public class BlockChainTests
 {
+   private static Logger logger = LoggerFactory.getLogger(BlockChainTests.class);
+
    private ScriptFactory createScriptFactory(boolean successful)
       throws ScriptException
    {
@@ -91,7 +95,7 @@ public class BlockChainTests
       // Verify genesis block
       Assert.assertEquals(storage.getNewLinks().size(),1);
       BlockChainLink link = storage.getNewLinks().get(0);
-      Assert.assertEquals(link.getHeight(), 1);
+      Assert.assertEquals(link.getHeight(), 0);
       Assert.assertEquals(link.getBlock(), genesisBlock);
       Assert.assertFalse(link.isOrphan());
       Assert.assertEquals(link.getBlock().getCreationTime(),1234567);
@@ -106,12 +110,18 @@ public class BlockChainTests
       throws BitCoinException
    {
       // Construct a block chain and storage
+      long startTime = System.currentTimeMillis();
       DummyStorage storage = new DummyStorage(BlockMock.createBlocks(chainBlocks));
+      long stopTime = System.currentTimeMillis();
+      logger.debug("created storage, lasted: "+(stopTime-startTime)+" ms");
       // Construct chain
       BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
             storage,createScriptFactory(scriptSuccess),false);
       // Add the block
+      startTime = System.currentTimeMillis();
       chain.addBlock(BlockMock.createBlock(newBlock));
+      stopTime = System.currentTimeMillis();
+      logger.debug("added block, lasted: "+(stopTime-startTime)+" ms");
       return storage;
    }
 
@@ -314,11 +324,51 @@ public class BlockChainTests
    public void testAddDifficultyChangedBlock()
       throws BitCoinException
    {
+      // Create a block chain that has 2016 blocks, so the next one
+      // will trigger a re-calculation. Make all blocks 9 minutes apart,
+      // which means the target at end should be recalculated to be 1.1
+      // times as much to arrive at the target 10 minutes.
+      // This is however not true, because the timespan is calculated
+      // for 2015 blocks, not for 2016 blocks in the difficulty calculation.
+      // So there is an "error" of 1/2016. The endresult should be thus:
+      // <original target>*(9/10)*(2015/2016)
+      StringBuilder blocks = new StringBuilder();
+      for ( int i=0; i<2016; i++ )
+         blocks.append(
+            "block "+(1000000+(i*9*60*1000))+" 1 1b0404cb "+i+" 010203 "+(i+1)+";"+
+            "   tx 1234567 990101 true;"+ // Tx doesn't matter here
+            "      in 00 -1 999;"+
+            "      out 5000000;");
+      // Now test with block which has adjusted difficulty. It should be
+      // accepted with no problems
+      testAddBlockTemplate(blocks.toString(),
+            "block "+(1000000+(2016*9*60*1000))+" 1 1b039d74 2016 010203 2017;"+
+            "   tx 1234567 990101 true;"+ // Tx doesn't matter here
+            "      in 00 -1 999;"+
+            "      out 5000000;",true);
    }
 
    public void testAddDifficultyExtremeSmallBlock()
       throws BitCoinException
    {
+      // Leave extremely small timeslots, and check that difficulty is not
+      // cranked up all the way. The rate of change should max out at 4 times
+      // the original value. That means target should be:
+      // <original target>/4
+      StringBuilder blocks = new StringBuilder();
+      for ( int i=0; i<2016; i++ )
+         blocks.append(
+            "block "+(1000000+(i*1*60*1000))+" 1 1b0404cb "+i+" 010203 "+(i+1)+";"+
+            "   tx 1234567 990101 true;"+ // Tx doesn't matter here
+            "      in 00 -1 999;"+
+            "      out 5000000;");
+      // Now test with block which has adjusted difficulty. It should be
+      // accepted with no problems
+      testAddBlockTemplate(blocks.toString(),
+            "block "+(1000000+(2016*1*60*1000))+" 1 1b010132 2016 010203 2017;"+
+            "   tx 1234567 990101 true;"+ // Tx doesn't matter here
+            "      in 00 -1 999;"+
+            "      out 5000000;",true);
    }
 }
 

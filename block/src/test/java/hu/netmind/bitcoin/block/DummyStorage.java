@@ -26,8 +26,11 @@ import hu.netmind.bitcoin.TransactionOutput;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.math.BigInteger;
 
 /**
  * A primitive implementation of a storage which stores all blocks
@@ -40,6 +43,7 @@ public class DummyStorage implements BlockChainLinkStorage
 
    private List<BlockChainLink> links = new ArrayList<BlockChainLink>();
    private List<BlockChainLink> newLinks = new ArrayList<BlockChainLink>();
+   private Map<BigInteger,BlockChainLink> linksMap = new HashMap<BigInteger,BlockChainLink>();
 
    public DummyStorage(Block genesisBlock)
    {
@@ -65,13 +69,13 @@ public class DummyStorage implements BlockChainLinkStorage
          if ( previousLink == null )
          {
             if ( links.isEmpty() )
-               links.add(new BlockChainLink(block,
-                        new Difficulty(new DifficultyTarget(block.getCompressedTarget())),1,false));
+               addLinkInternal(new BlockChainLink(block,
+                        new Difficulty(new DifficultyTarget(block.getCompressedTarget())),0,false));
             else
-               links.add(new BlockChainLink(block,
+               addLinkInternal(new BlockChainLink(block,
                         new Difficulty(new DifficultyTarget(block.getCompressedTarget())),0,true));
          } else {
-            links.add(new BlockChainLink(block,
+            addLinkInternal(new BlockChainLink(block,
                      previousLink.getTotalDifficulty().add(new Difficulty(
                            new DifficultyTarget(block.getCompressedTarget()))),
                      previousLink.getHeight()+1,false));
@@ -100,11 +104,7 @@ public class DummyStorage implements BlockChainLinkStorage
 
    public BlockChainLink getLink(byte[] hash)
    {
-      logger.debug("getting link for hash: {}",Arrays.toString(hash));
-      for ( BlockChainLink link : links )
-         if ( Arrays.equals(link.getBlock().getHash(),hash) )
-            return link;
-      return null;
+      return linksMap.get(new BigInteger(1,hash));
    }
 
    public List<BlockChainLink> getNextLinks(byte[] hash)
@@ -143,9 +143,15 @@ public class DummyStorage implements BlockChainLinkStorage
       return null;
    }
 
-   public void addLink(BlockChainLink link)
+   private void addLinkInternal(BlockChainLink link)
    {
       links.add(link);
+      linksMap.put(new BigInteger(1,link.getBlock().getHash()),link);
+   }
+
+   public void addLink(BlockChainLink link)
+   {
+      addLinkInternal(link);
       newLinks.add(link);
    }
 

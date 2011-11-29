@@ -85,7 +85,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       if ( storedGenesisLink == null )
       {
          BlockChainLink genesisLink = new BlockChainLink(genesisBlock,
-               new Difficulty(new DifficultyTarget(genesisBlock.getCompressedTarget())),1,false);
+               new Difficulty(new DifficultyTarget(genesisBlock.getCompressedTarget())),0,false);
          linkStorage.addLink(genesisLink);
       } else {
          if ( ! storedGenesisLink.getBlock().equals(genesisBlock) )
@@ -347,7 +347,10 @@ public class BlockChainImpl extends Observable implements BlockChain
       // setting of this block, because the next one has to have the same
       // target.
       if ( (link.getHeight()+1) % TARGET_RECALC != 0 )
+      {
+         logger.debug("previous height {}, not change in target",link.getHeight());
          return new DifficultyTarget(link.getBlock().getCompressedTarget());
+      }
       // We have to change the target. First collect the last TARGET_RECALC 
       // blocks (including the given block) 
       Block startBlock = link.getBlock();
@@ -370,6 +373,9 @@ public class BlockChainImpl extends Observable implements BlockChain
       DifficultyTarget resultTarget = new DifficultyTarget(target);
       if ( resultTarget.compareTo(DifficultyTarget.MAX_TARGET) > 0 )
          return DifficultyTarget.MAX_TARGET;
+      else
+         resultTarget = new DifficultyTarget(resultTarget.getCompressedTarget()); // Normalize
+      logger.debug("previous height {}, recalculated target is: {}",link.getHeight(),resultTarget);
       return resultTarget;
    }
 
