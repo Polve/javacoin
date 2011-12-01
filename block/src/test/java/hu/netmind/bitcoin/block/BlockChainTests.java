@@ -348,6 +348,27 @@ public class BlockChainTests
             "      out 5000000;",true);
    }
 
+   @Test(expectedExceptions=VerificationException.class)
+   public void testAddWrongDifficultyChangedBlock()
+      throws BitCoinException
+   {
+      // Just as testAddDifficultyChangedBlock() but wrong block to add
+      StringBuilder blocks = new StringBuilder();
+      for ( int i=0; i<2016; i++ )
+         blocks.append(
+            "block "+(1000000+(i*9*60*1000))+" 1 1b0404cb "+i+" 010203 "+(i+1)+";"+
+            "   tx 1234567 990101 true;"+ // Tx doesn't matter here
+            "      in 00 -1 999;"+
+            "      out 5000000;");
+      // Now test with block which has adjusted difficulty-1, so it shouldn't
+      // be accepted
+      testAddBlockTemplate(blocks.toString(),
+            "block "+(1000000+(2016*9*60*1000))+" 1 1b039d73 2016 010203 2017;"+
+            "   tx 1234567 990101 true;"+ // Tx doesn't matter here
+            "      in 00 -1 999;"+
+            "      out 5000000;",true);
+   }
+
    public void testAddDifficultyExtremeSmallBlock()
       throws BitCoinException
    {
@@ -366,6 +387,45 @@ public class BlockChainTests
       // accepted with no problems
       testAddBlockTemplate(blocks.toString(),
             "block "+(1000000+(2016*1*60*1000))+" 1 1b010132 2016 010203 2017;"+
+            "   tx 1234567 990101 true;"+ // Tx doesn't matter here
+            "      in 00 -1 999;"+
+            "      out 5000000;",true);
+   }
+
+   public void testRightMedianBlock()
+      throws BitCoinException
+   {
+      StringBuilder blocks = new StringBuilder();
+      long[] times = new long[] { 100, 10, 20, 30, 40, 50, 200, 300, 400, 500, 1000 };
+      for ( int i=0; i<11; i++ )
+         blocks.append(
+            "block "+times[i]+" 1 1b0404cb "+i+" 010203 "+(i+1)+";"+
+            "   tx 1234567 990101 true;"+ // Tx doesn't matter here
+            "      in 00 -1 999;"+
+            "      out 5000000;");
+      // Add block with exactly the median+1, which should be ok
+      testAddBlockTemplate(blocks.toString(),
+            "block 101 1 1b0404cb 11 010203 12;"+
+            "   tx 1234567 990101 true;"+ // Tx doesn't matter here
+            "      in 00 -1 999;"+
+            "      out 5000000;",true);
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testWrongMedianBlock()
+      throws BitCoinException
+   {
+      StringBuilder blocks = new StringBuilder();
+      long[] times = new long[] { 100, 10, 20, 30, 40, 50, 200, 300, 400, 500, 1000 };
+      for ( int i=0; i<11; i++ )
+         blocks.append(
+            "block "+times[i]+" 1 1b0404cb "+i+" 010203 "+(i+1)+";"+
+            "   tx 1234567 990101 true;"+ // Tx doesn't matter here
+            "      in 00 -1 999;"+
+            "      out 5000000;");
+      // Add block with exactly the median should fail
+      testAddBlockTemplate(blocks.toString(),
+            "block 100 1 1b0404cb 11 010203 12;"+
             "   tx 1234567 990101 true;"+ // Tx doesn't matter here
             "      in 00 -1 999;"+
             "      out 5000000;",true);

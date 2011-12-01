@@ -28,6 +28,9 @@ import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.ScriptException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
+import java.util.LinkedList;
+import java.util.Collections;
 import java.util.Observable;
 import java.util.Map;
 import java.util.HashMap;
@@ -187,9 +190,10 @@ public class BlockChainImpl extends Observable implements BlockChain
       }
       // Check 13: Reject if timestamp is before the median time of the last 11 blocks
       long medianTimestamp = getMedianTimestamp(previousLink);
+      logger.debug("checking timestamp {} against median {}",block.getCreationTime(),medianTimestamp);
       if ( block.getCreationTime() <= medianTimestamp )
          throw new VerificationException("block's creation time ("+block.getCreationTime()+
-               ") is before median of previous blocks: "+medianTimestamp);
+               ") is not after median of previous blocks: "+medianTimestamp);
       // Check 14: Check for known hashes
       BigInteger genesisHash = new BigInteger(1,genesisBlock.getHash());
       BigInteger blockHash = new BigInteger(1,block.getHash());
@@ -323,14 +327,17 @@ public class BlockChainImpl extends Observable implements BlockChain
     */
    private long getMedianTimestamp(BlockChainLink link)
    {
+      if ( link == null )
+         return 0;
       Block block = link.getBlock();
-      long[] times = new long[MEDIAN_BLOCKS];
+      List<Long> times = new LinkedList<Long>();
       for ( int i=0; (block!=null) && (i<MEDIAN_BLOCKS); i++ )
       {
-         times[i]=block.getCreationTime();
+         times.add(block.getCreationTime());
          block=getPreviousBlock(block);
       }
-      return times[MEDIAN_BLOCKS/2];
+      Collections.sort(times);
+      return times.get(times.size()/2);
    }
 
    /**
