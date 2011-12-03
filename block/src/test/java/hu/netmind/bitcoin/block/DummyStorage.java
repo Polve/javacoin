@@ -49,7 +49,7 @@ public class DummyStorage implements BlockChainLinkStorage
    {
       List<Block> blocks = new ArrayList<Block>();
       blocks.add(genesisBlock);
-      init(blocks);
+      init(blocks,0);
    }
 
    public DummyStorage()
@@ -58,10 +58,15 @@ public class DummyStorage implements BlockChainLinkStorage
 
    public DummyStorage(List<Block> blocks)
    {
-      init(blocks);
+      init(blocks,0);
    }
 
-   private void init(List<Block> blocks)
+   public DummyStorage(List<Block> blocks, long blockOffset)
+   {
+      init(blocks,blockOffset);
+   }
+
+   private void init(List<Block> blocks, long blockOffset)
    {
       for ( Block block : blocks )
       {
@@ -70,10 +75,10 @@ public class DummyStorage implements BlockChainLinkStorage
          {
             if ( links.isEmpty() )
                addLinkInternal(new BlockChainLink(block,
-                        new Difficulty(new DifficultyTarget(block.getCompressedTarget())),0,false));
+                        new Difficulty(new DifficultyTarget(block.getCompressedTarget())),blockOffset,false));
             else
                addLinkInternal(new BlockChainLink(block,
-                        new Difficulty(new DifficultyTarget(block.getCompressedTarget())),0,true));
+                        new Difficulty(new DifficultyTarget(block.getCompressedTarget())),blockOffset,true));
          } else {
             addLinkInternal(new BlockChainLink(block,
                      previousLink.getTotalDifficulty().add(new Difficulty(

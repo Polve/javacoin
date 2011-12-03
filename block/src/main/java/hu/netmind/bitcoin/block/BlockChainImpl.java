@@ -247,8 +247,6 @@ public class BlockChainImpl extends Observable implements BlockChain
             coinbaseValue += out.getValue();
          // Check 16.2: Verify that the money produced is in the legal range
          // Valid if coinbase value is not greater than mined value plus fees in tx
-         if ( inValue - outValue < 0 )
-            throw new VerificationException("fee in block "+block+" is negative");
          if ( coinbaseValue > getBlockCoinbaseValue(link)+(inValue-outValue) )
             throw new VerificationException("coinbase transaction in block "+block+" claimed more coins than appropriate: "+
                   coinbaseValue);
