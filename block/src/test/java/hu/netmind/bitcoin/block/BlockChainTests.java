@@ -704,6 +704,102 @@ public class BlockChainTests
             "      in 990 0 999;"+ // From coinbase of genesis
             "      out 5000000;",true);
    }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testAddTransactionWithWrongScript()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 03;"+
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990105 false;"+ // Using some money
+            "      in 990103 0 999;"+
+            "      out 2000000;",false); // Let script return false
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testSpendAlreadySpentOutput()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;"+
+            "block 1234568 1 1b0404cb 02 010203 06;"+ // Next block (spends previous)
+            "   tx 123458 990106 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990107 false;"+ // A normal tx spending money from 1st block
+            "      in 990103 0 999;"+
+            "      in 990103 1 999;"+
+            "      out 5000000;",
+
+            "block 1234569 1 1b0404cb 06 010203 07;"+ // This block will come after 2nd
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990105 false;"+ // Spend 1st blocks output
+            "      in 990103 0 999;"+ 
+            "      out 2000000;",true);
+   }
+
+   public void testSpendAlreadySpentOutputOnOtherBranch()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;"+
+            "block 1234568 1 1b0404cb 02 010203 06;"+ // Next block (spends previous)
+            "   tx 123458 990106 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990107 false;"+ // A normal tx spending money from 1st block
+            "      in 990103 0 999;"+
+            "      in 990103 1 999;"+
+            "      out 5000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 03;"+ // This block will be parallel to 2nd block
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990105 false;"+ // Spend 1st transaction
+            "      in 990103 0 999;"+ 
+            "      out 2000000;",true);
+   }
 }
 
 
