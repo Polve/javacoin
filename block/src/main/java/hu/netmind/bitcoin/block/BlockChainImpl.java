@@ -259,7 +259,14 @@ public class BlockChainImpl extends Observable implements BlockChain
       // Check 19: For each orphan block for which this block is its prev, 
       // run all these steps (including this one) recursively on that orphan 
       for ( BlockChainLink nextLink : linkStorage.getNextLinks(block.getHash()) )
-         addBlock(nextLink.getBlock(),true);
+      {
+         try
+         {
+            addBlock(nextLink.getBlock(),true);
+         } catch ( VerificationException e ) {
+            logger.warn("orhpan block was rechecked (because parent appeared), but is not valid",e);
+         }
+      }
    }
 
    /**

@@ -919,6 +919,49 @@ public class BlockChainTests
             "      out 5000000;",true,209998);
    }
 
+   public void testActivateOrphanChain()
+      throws BitCoinException
+   {
+      DummyStorage storage = testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234569 1 1b0404cb 99 010203 02;"+ // Orphan
+            "   tx 123459 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;",
+
+            "block 1234568 1 1b0404cb 01 010203 99;"+ // Block between the two
+            "   tx 1234568 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;",true);
+      BlockChainLink orphanLink = storage.getLink(new byte[] { 02 });
+      Assert.assertNotNull(orphanLink);
+      Assert.assertFalse(orphanLink.isOrphan());
+   }
+
+   public void testActivateInvalidOrphan()
+      throws BitCoinException
+   {
+      DummyStorage storage = testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234569 1 1b0404cb 99 010203 02;"+ // Orphan
+            "   tx 123459 990102 true WrongTransaction;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;",
+
+            "block 1234568 1 1b0404cb 01 010203 99;"+ // Block between the two
+            "   tx 1234568 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;",true);
+      BlockChainLink orphanLink = storage.getLink(new byte[] { 02 });
+      Assert.assertNotNull(orphanLink);
+      Assert.assertTrue(orphanLink.isOrphan());
+   }
 }
 
 
