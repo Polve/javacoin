@@ -201,7 +201,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       {
          BigInteger knownHash = knownHashes.get(genesisHash).get(link.getHeight());
          if ( (knownHash != null) && (!knownHash.equals(blockHash)) )
-            throw new VerificationException("block should have a hash we already know, but it doesn't, might indicate a tampering or attack");
+            throw new VerificationException("block should have a hash we already know, but it doesn't, might indicate a tampering or attack at depth: "+link.getHeight());
       }
       else
       {
