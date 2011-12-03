@@ -138,7 +138,7 @@ public class BlockChainTests
             "      in 00 -1 999;"+
             "      out 5000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
-            "      in 990101 1 999;"+
+            "      in 990101 0 999;"+
             "      out 2000000;"+
             "      out 3000000;",
 
@@ -169,7 +169,7 @@ public class BlockChainTests
             "      in 00 -1 999;"+
             "      out 5000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
-            "      in 990101 1 999;"+
+            "      in 990101 0 999;"+
             "      out 2000000;"+
             "      out 3000000;",
 
@@ -196,7 +196,7 @@ public class BlockChainTests
             "      in 00 -1 999;"+
             "      out 5000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
-            "      in 990101 1 999;"+
+            "      in 990101 0 999;"+
             "      out 2000000;"+
             "      out 3000000;",
 
@@ -222,7 +222,7 @@ public class BlockChainTests
             "      in 00 -1 999;"+
             "      out 5000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
-            "      in 990101 1 999;"+
+            "      in 990101 0 999;"+
             "      out 2000000;"+
             "      out 3000000;",
 
@@ -251,7 +251,7 @@ public class BlockChainTests
             "      in 00 -1 999;"+
             "      out 5000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
-            "      in 990101 1 999;"+
+            "      in 990101 0 999;"+
             "      out 2000000;"+
             "      out 3000000;",
 
@@ -281,7 +281,7 @@ public class BlockChainTests
             "      in 00 -1 999;"+
             "      out 5000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
-            "      in 990101 1 999;"+
+            "      in 990101 0 999;"+
             "      out 2000000;"+
             "      out 3000000;",
 
@@ -308,7 +308,7 @@ public class BlockChainTests
             "      in 00 -1 999;"+
             "      out 5000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
-            "      in 990101 1 999;"+
+            "      in 990101 0 999;"+
             "      out 2000000;"+
             "      out 3000000;",
 
@@ -444,7 +444,7 @@ public class BlockChainTests
             "      in 00 -1 999;"+
             "      out 5000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
-            "      in 990101 1 999;"+
+            "      in 990101 0 999;"+
             "      out 2000000;"+
             "      out 3000000;",
 
@@ -471,7 +471,7 @@ public class BlockChainTests
             "      in 00 -1 999;"+
             "      out 5000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
-            "      in 990101 1 999;"+
+            "      in 990101 0 999;"+
             "      out 2000000;"+
             "      out 3000000;",
 
@@ -483,7 +483,229 @@ public class BlockChainTests
             "      in 990103 1 999;"+
             "      out 2000000;",true);
    }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testInvalidTransactionAdd()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 03;"+
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990105 false Invalidtransaction;"+ // Invalid transaction
+            "      in 990103 1 999;"+
+            "      out 2000000;",true);
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testOutputIsMoreThanInput()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 03;"+
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990105 false;"+ // Invalid transaction
+            "      in 990103 0 999;"+
+            "      out 2000001;",true);
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testOutputsAreMoreThanInput()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 03;"+
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990105 false;"+ // Invalid transaction
+            "      in 990103 0 999;"+
+            "      out 2000000;"+
+            "      out 1;",true);
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testNoTransactionReferredExists()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 03;"+
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990105 false;"+ // Invalid transaction
+            "      in 990106 0 999;"+ // Here is the wrong reference
+            "      out 2000000;",true);
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testReferredTransactionExistsInSideBranch()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;"+
+            "block 1234568 1 1b0404cb 01 010203 06;"+ // Next block (side branch)
+            "   tx 123458 990106 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990107 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 03;"+
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990107 false;"+ // Invalid transaction
+            "      in 990106 0 999;"+ // Here is the wrong reference
+            "      out 2000000;",true);
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testReferToNonExistingOutput()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 03;"+
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990105 false;"+ // Using some money
+            "      in 990103 2 999;"+
+            "      out 2000000;",true);
+   }
+
+   @Test(expectedExceptions=VerificationException.class)
+   public void testReferToYoungCoinbase()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 03;"+
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 990105 false;"+ // Using some money
+            "      in 990102 0 999;"+ // From coinbase
+            "      out 5000000;",true);
+   }
+
+   public void testUseOldCoinbaseOutput()
+      throws BitCoinException
+   {
+      // Construct a chain with sufficient length to use the coinbase (which is
+      // 100 blocks, about 16 hours)
+      StringBuilder blocks = new StringBuilder();
+      for ( int i=0; i<101; i++ )
+         blocks.append(
+            "block "+(1000000+(i*1*60*1000))+" 1 1b0404cb "+i+" 010203 "+(i+1)+";"+
+            "   tx 1234567 99"+i+" true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;");
+      // Now test to add the block which claims the coinbase output of genesis
+      testAddBlockTemplate(blocks.toString(),
+            "block "+(1000000+(100*1*60*1000))+" 1 1b0404cb 101 010203 102;"+
+            "   tx 1234567 99102 true;"+ 
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234580 99103 false;"+ // Using some money
+            "      in 990 0 999;"+ // From coinbase of genesis
+            "      out 5000000;",true);
+   }
 }
+
 
 
 

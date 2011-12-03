@@ -233,7 +233,7 @@ public class BlockChainImpl extends Observable implements BlockChain
             // input values, check that each input value, as well as the sum, are in legal money range 
             // Check 16.1.7: Reject if the sum of input values < sum of output values 
             if ( localInValue < localOutValue )
-               throw new VerificationException("more money spent then available in transaction: "+tx);
+               throw new VerificationException("more money spent ("+localOutValue+") then available ("+localInValue+") in transaction: "+tx);
          }
       }
       // Verify coinbase if we have full verification and there is a coinbase
@@ -300,8 +300,8 @@ public class BlockChainImpl extends Observable implements BlockChain
                   (in.getClaimedOutputIndex()+1)+" vs. "+outTx.getOutputs().size());
          // Check 16.1.3: For each input, if the referenced output transaction is coinbase,
          // it must have at least COINBASE_MATURITY confirmations; else reject. 
-         if ( (outTx.isCoinbase()) && (outLink.getHeight()+COINBASE_MATURITY >= link.getHeight()) )
-            throw new VerificationException("input ("+in+") referenced coinbase transaction "+outTx+" which was not mature enough (not old enough)");
+         if ( (outTx.isCoinbase()) && (outLink.getHeight()+COINBASE_MATURITY > link.getHeight()) )
+            throw new VerificationException("input ("+in+") referenced coinbase transaction "+outTx+" which was not mature enough (only "+(link.getHeight()-outLink.getHeight()+1)+" blocks before)");
          // Check 16.1.4: Verify crypto signatures for each input; reject if any are bad 
          TransactionOutput out = outTx.getOutputs().get(in.getClaimedOutputIndex());
          value += out.getValue(); // Remember value that goes in from this out
