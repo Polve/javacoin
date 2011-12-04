@@ -226,8 +226,8 @@ public class MessageTests
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
       InventoryItem item = message.getInventoryItems().get(0);
       Assert.assertEquals(item.getType(),1);
-      Assert.assertEquals(item.getHash(),new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+      Assert.assertEquals(item.getHash(),new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
    }
 
    public void testInvSerialize()
@@ -235,8 +235,8 @@ public class MessageTests
    {
       // Setup an inv message
       InventoryItem item = new InventoryItem(InventoryItem.TYPE_TX,
-            new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+            new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
       List<InventoryItem> items = new ArrayList<InventoryItem>();
       items.add(item);
       InvMessage inv = new InvMessage(Message.MAGIC_MAIN,items);
@@ -282,8 +282,8 @@ public class MessageTests
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
       InventoryItem item = message.getInventoryItems().get(0);
       Assert.assertEquals(item.getType(),1);
-      Assert.assertEquals(item.getHash(),new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+      Assert.assertEquals(item.getHash(),new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
    }
 
    public void testGetDataSerialize()
@@ -291,8 +291,8 @@ public class MessageTests
    {
       // Setup message
       InventoryItem item = new InventoryItem(InventoryItem.TYPE_TX,
-            new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+            new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
       List<InventoryItem> items = new ArrayList<InventoryItem>();
       items.add(item);
       GetDataMessage getdata = new GetDataMessage(Message.MAGIC_MAIN,items);
@@ -336,10 +336,10 @@ public class MessageTests
       Assert.assertEquals(message.getCommand(),"getblocks");
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
       Assert.assertEquals(message.getHashStarts().size(),1);
-      Assert.assertEquals(message.getHashStarts().get(0),new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
-      Assert.assertEquals(message.getHashStop(),new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+      Assert.assertEquals(message.getHashStarts().get(0),new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
+      Assert.assertEquals(message.getHashStop(),new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
    }
 
    public void testGetBlocksSerialize()
@@ -348,11 +348,11 @@ public class MessageTests
       // Setup message
       List<byte[]> hashStarts = new ArrayList<byte[]>();
       hashStarts.add(
-            new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+            new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
       byte[] hashStop = 
-            new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 };
+            new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 };
       GetBlocksMessage getblocks = new GetBlocksMessage(Message.MAGIC_MAIN,hashStarts,hashStop);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
@@ -394,10 +394,10 @@ public class MessageTests
       Assert.assertEquals(message.getCommand(),"getheaders");
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
       Assert.assertEquals(message.getHashStarts().size(),1);
-      Assert.assertEquals(message.getHashStarts().get(0),new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
-      Assert.assertEquals(message.getHashStop(),new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+      Assert.assertEquals(message.getHashStarts().get(0),new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
+      Assert.assertEquals(message.getHashStop(),new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
    }
 
    public void testGetHeadersSerialize()
@@ -406,11 +406,11 @@ public class MessageTests
       // Setup message
       List<byte[]> hashStarts = new ArrayList<byte[]>();
       hashStarts.add(
-            new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 });
+            new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
       byte[] hashStop = 
-            new byte[] { 0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
-                         18,19,20,21,22,23,24,25,26,27,28,29,30,31 };
+            new byte[] 
+            { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 };
       GetHeadersMessage getheaders = new GetHeadersMessage(Message.MAGIC_MAIN,hashStarts,hashStop);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
@@ -513,8 +513,8 @@ public class MessageTests
       // Setup message
       TxIn in1 = new TxIn(
             HexUtil.toByteArray(
-                "6D BD DB 08 5B 1D 8A F7 51 84 F0 BC 01 FA D5 8D "+   // previous output (outpoint)
-                "12 66 E9 B6 3B 50 88 19 90 E4 B4 0D 6A EE 36 29 "),0,
+                "29 36 EE 6A 0D B4 E4 90 19 88 50 3B B6 E9 66 12 "+   // previous output (outpoint)
+                "8D D5 FA 01 BC F0 84 51 F7 8A 1D 5B 08 DB BD 6D "),0,
             HexUtil.toByteArray(
                 "48 30 45 02 21 00 F3 58 1E 19 72 AE 8A C7 C7 36 "+   // signature script (scriptSig)
                 "7A 7A 25 3B C1 13 52 23 AD B9 A4 68 BB 3A 59 23 "+
@@ -584,8 +584,8 @@ public class MessageTests
       // Setup message
       TxIn in1 = new TxIn(
             HexUtil.toByteArray(
-                "6D BD DB 08 5B 1D 8A F7 51 84 F0 BC 01 FA D5 8D "+   // previous output (outpoint)
-                "12 66 E9 B6 3B 50 88 19 90 E4 B4 0D 6A EE 36 29 "),0,
+                "29 36 EE 6A 0D B4 E4 90 19 88 50 3B B6 E9 66 12 "+   // previous output (outpoint)
+                "8D D5 FA 01 BC F0 84 51 F7 8A 1D 5B 08 DB BD 6D "),0,
             HexUtil.toByteArray(
                 "48 30 45 02 21 00 F3 58 1E 19 72 AE 8A C7 C7 36 "+   // signature script (scriptSig)
                 "7A 7A 25 3B C1 13 52 23 AD B9 A4 68 BB 3A 59 23 "+
@@ -615,11 +615,11 @@ public class MessageTests
       BlockMessage block = new BlockMessage(Message.MAGIC_MAIN,
             new BlockHeader(1,
             HexUtil.toByteArray(
-               "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
-               "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
+               "1F 1E 1D 1C 1B 1A 19 18 17 16 15 14 13 12 11 10 "+
+               "0F 0E 0D 0C 0B 0A 09 08 07 06 05 04 03 02 01 00"),
             HexUtil.toByteArray(
-               "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
-               "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
+               "1F 1E 1D 1C 1B 1A 19 18 17 16 15 14 13 12 11 10 "+
+               "0F 0E 0D 0C 0B 0A 09 08 07 06 05 04 03 02 01 00"),
             123000,22,33),
             transactions);
       // Serialize it
@@ -744,11 +744,11 @@ public class MessageTests
       // Setup message
       BlockHeader header = new BlockHeader(1,
             HexUtil.toByteArray(
-               "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
-               "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
+               "1F 1E 1D 1C 1B 1A 19 18 17 16 15 14 13 12 11 10 "+
+               "0F 0E 0D 0C 0B 0A 09 08 07 06 05 04 03 02 01 00"),
             HexUtil.toByteArray(
-               "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+
-               "10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "),
+               "1F 1E 1D 1C 1B 1A 19 18 17 16 15 14 13 12 11 10 "+
+               "0F 0E 0D 0C 0B 0A 09 08 07 06 05 04 03 02 01 00"),
             123000,22,33);
       List<BlockHeader> headers = new ArrayList<BlockHeader>();
       headers.add(header);

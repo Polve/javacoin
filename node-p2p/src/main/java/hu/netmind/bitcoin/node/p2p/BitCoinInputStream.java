@@ -245,6 +245,18 @@ public class BitCoinInputStream extends InputStream
       return result;
    }
 
+   /**
+    * Read a byte array in reverse byte order.
+    */
+   public byte[] readReverseBytes(int length)
+      throws IOException
+   {
+      byte[] result = new byte[length];
+      for ( int i=0; i<length; i++ )
+         result[length-1-i]=(byte) readU();
+      return result;
+   }
+
    public interface Listener
    {
       void update(int value);

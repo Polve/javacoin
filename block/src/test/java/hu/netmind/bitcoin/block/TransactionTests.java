@@ -71,7 +71,7 @@ public class TransactionTests
       // Build the input
       TransactionInputImpl input = new TransactionInputImpl(
             HexUtil.toByteArray(
-            "2B 83 84 C1 49 FB 99 7D 84 B2 8B F6 80 C4 3D 36 F8 6A F8 35 4A 57 81 11 B5 C2 14 1A A9 59 4F 98"),
+            "98 4F 59 A9 1A 14 C2 B5 11 81 57 4A 35 F8 6A F8 36 3D C4 80 F6 8B B2 84 7D 99 FB 49 C1 84 83 2B"),
             1,
             createFragment(
             "47 "+ // Start of sig
@@ -93,7 +93,7 @@ public class TransactionTests
       TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
       // Check generated hash
       Assert.assertEquals(HexUtil.toHexString(transaction.getHash()), 
-               "56 A7 70 66 9E 44 51 4E 5D 7E 44 01 22 EC 82 50 5B 5E 3F A5 15 66 63 AA E7 05 11 CC 88 E0 19 47");
+               "47 19 E0 88 CC 11 05 E7 AA 63 66 15 A5 3F 5E 5B 50 82 EC 22 01 44 7E 5D 4E 51 44 9E 66 70 A7 56");
    }
 
    public void testTransactionSignatureHashingAll()
@@ -114,7 +114,7 @@ public class TransactionTests
       // Build the inputs
       TransactionInputImpl input1 = new TransactionInputImpl(
          HexUtil.toByteArray(
-            "30 F3 70 1F 9B C4 64 55 2F 70 49 57 91 04 08 17 CE 77 7A D5 ED E1 6E 52 9F CD 0C 0E 94 91 56 94"),
+            "94 56 91 94 0E 0C CD 9F 52 6E E1 ED D5 7A 77 CE 17 08 04 91 57 49 70 2F 55 64 C4 9B 1F 70 F3 30"),
          0,
          createFragment(
             "49 "+ // Start of sig
@@ -132,7 +132,7 @@ public class TransactionTests
          0xFFFFFFFFl);
       TransactionInputImpl input2 = new TransactionInputImpl(
          HexUtil.toByteArray(
-            "72 14 2B F7 68 6C E9 2C 6D E5 B7 33 65 BF B9 D5 9B B6 0C 2C 80 98 2D 59 58 C1 E6 A3 B0 8E A6 89"),
+            "89 A6 8E B0 A3 E6 C1 58 59 2D 98 80 2C 0C B6 9B D5 B9 BF 65 33 B7 E5 6D 2C E9 6C 68 F7 2B 14 72"),
          0,
          createFragment(
             "49 "+ // Start of sig
@@ -144,7 +144,7 @@ public class TransactionTests
          0xFFFFFFFFl);
       TransactionInputImpl input3 = new TransactionInputImpl(
          HexUtil.toByteArray(
-            "D2 81 28 BB B6 20 7C 1C 3D 0A 63 0C C6 19 DC 7E 7B EA 56 AC 19 A1 DA B1 27 C6 2C 78 FA 1B 63 2C"),
+            "2C 63 1B FA 78 2C C6 27 B1 DA A1 19 AC 56 EA 7B 7E DC 19 C6 0C 63 0A 3D 1C 7C 20 B6 BB 28 81 D2"),
          0,
          createFragment(
             "49 "+ // Start of sig

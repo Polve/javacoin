@@ -46,7 +46,7 @@ public class TxIn
    void readFrom(BitCoinInputStream input)
       throws IOException
    {
-      referencedTxHash = input.readBytes(32);
+      referencedTxHash = input.readReverseBytes(32);
       referencedTxOutIndex = input.readUInt32();
       long scriptLength = input.readUIntVar();
       if ( scriptLength >= Integer.MAX_VALUE )
@@ -58,7 +58,7 @@ public class TxIn
    void writeTo(BitCoinOutputStream output)
       throws IOException
    {
-      output.write(referencedTxHash);
+      output.writeReverse(referencedTxHash);
       output.writeUInt32(referencedTxOutIndex);
       output.writeUIntVar(signatureScript.length);
       output.write(signatureScript);

@@ -51,8 +51,8 @@ public class GetBlocksMessage extends ChecksummedMessage
       long size = input.readUIntVar();
       hashStarts = new ArrayList<byte[]>();
       for ( long i=0; i<size; i++ )
-         hashStarts.add(input.readBytes(32));
-      hashStop = input.readBytes(32);
+         hashStarts.add(input.readReverseBytes(32));
+      hashStop = input.readReverseBytes(32);
    }
 
    void writeTo(BitCoinOutputStream output, long version)
@@ -61,8 +61,8 @@ public class GetBlocksMessage extends ChecksummedMessage
       super.writeTo(output,version);
       output.writeUIntVar(hashStarts.size());
       for ( byte[] hash : hashStarts )
-         output.write(hash);
-      output.write(hashStop);
+         output.writeReverse(hash);
+      output.writeReverse(hashStop);
    }
 
    public String toString()

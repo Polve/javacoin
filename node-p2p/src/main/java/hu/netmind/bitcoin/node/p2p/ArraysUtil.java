@@ -18,57 +18,20 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import java.io.IOException;
-
 /**
  * @author Robert Brautigam
  */
-public class InventoryItem
+public class ArraysUtil
 {
-   public static final int TYPE_ERROR = 0;
-   public static final int TYPE_TX = 1;
-   public static final int TYPE_BLOCK = 2;
-
-   private int type = TYPE_ERROR;
-   private byte[] hash;
-
-   public InventoryItem(int type, byte[] hash)
+   /**
+    * Reverse an array.
+    */
+   public static byte[] reverse(byte[] b)
    {
-      this.type=type;
-      this.hash=hash;
-   }
-
-   InventoryItem()
-   {
-   }
-
-   void readFrom(BitCoinInputStream input)
-      throws IOException
-   {
-      type = (int) input.readUInt32();
-      hash = input.readReverseBytes(32);
-   }
-
-   void writeTo(BitCoinOutputStream output)
-      throws IOException
-   {
-      output.writeUInt32(type);
-      output.writeReverse(hash);
-   }
-
-   public String toString()
-   {
-      return type+":"+HexUtil.toHexString(hash);
-   }
-
-   public int getType()
-   {
-      return type;
-   }
-
-   public byte[] getHash()
-   {
-      return hash;
+      byte[] b2 = new byte[b.length];
+      for ( int i=0; i<b.length; i++ )
+         b2[b.length-1-i]=b[i];
+      return b2;
    }
 }
 

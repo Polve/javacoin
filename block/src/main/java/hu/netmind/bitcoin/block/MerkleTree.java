@@ -20,6 +20,7 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.node.p2p.ArraysUtil;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.LinkedList;
@@ -98,11 +99,12 @@ public class MerkleTree
    {
       // Generate new hash
       digest.reset();
-      digest.update(node1.getHash());
-      digest.update(node2.getHash());
+      digest.update(ArraysUtil.reverse(node1.getHash()));
+      digest.update(ArraysUtil.reverse(node2.getHash()));
       byte[] firstHash = digest.digest();
       digest.reset();
-      MerkleNode parent = new MerkleNode(digest.digest(firstHash), startIndex, endIndex,
+      MerkleNode parent = new MerkleNode(
+            ArraysUtil.reverse(digest.digest(firstHash)), startIndex, endIndex,
             new MerkleNode[] { node1, node2 },false);
       return parent;
    }
@@ -124,29 +126,37 @@ public class MerkleTree
       // Go through all open leafs and position them into the sorted
       // open nodes list. Find spots from the open nodes where there is
       // place for new nodes.
-      while ( ! openLeafNodes.isEmpty() )
+      if ( openLeafNodes.size() == 1 )
       {
-         // Find the first spot the open nodes don't cover
-         int startIndex = 0;
-         Iterator<MerkleNode> openIterator = openNodes.iterator();
-         while ( openIterator.hasNext() )
-         {
-            MerkleNode openNode = openIterator.next();
-            if ( openNode.getStartIndex() > startIndex )
-               break; // Next node starts later
-            startIndex = openNode.getEndIndex(); // Next slot possibility
-         }
-         // Now merge the next two open lead nodes together to create
-         // a node here
-         MerkleNode node1 = openLeafNodes.remove(0);
-         MerkleNode node2 = null;
-         if ( openLeafNodes.isEmpty() )
-            node2 = node1;
-         else
-            node2 = openLeafNodes.remove(0);
-         MerkleNode parent = createParent(node1,node2,startIndex,startIndex+2);
+         // If only a single transaction is there, just let it continue
+         MerkleNode parent = new MerkleNode(openLeafNodes.iterator().next().getHash(),
+               0,1,new MerkleNode[] {},false);
          openNodes.add(parent);
-         logger.debug("merging open leafs at index: {}, open leafs left: {}",startIndex,openLeafNodes);
+      } else {
+         while ( ! openLeafNodes.isEmpty() )
+         {
+            // Find the first spot the open nodes don't cover
+            int startIndex = 0;
+            Iterator<MerkleNode> openIterator = openNodes.iterator();
+            while ( openIterator.hasNext() )
+            {
+               MerkleNode openNode = openIterator.next();
+               if ( openNode.getStartIndex() > startIndex )
+                  break; // Next node starts later
+               startIndex = openNode.getEndIndex(); // Next slot possibility
+            }
+            // Now merge the next two open lead nodes together to create
+            // a node here
+            MerkleNode node1 = openLeafNodes.remove(0);
+            MerkleNode node2 = null;
+            if ( openLeafNodes.isEmpty() )
+               node2 = node1;
+            else
+               node2 = openLeafNodes.remove(0);
+            MerkleNode parent = createParent(node1,node2,startIndex,startIndex+2);
+            openNodes.add(parent);
+            logger.debug("merging open leafs at index: {}, open leafs left: {}",startIndex,openLeafNodes);
+         }
       }
       // After processing all leafs, the open nodes should contain non-leaf nodes
       // in-order, but on separate levels. Merge them until only the root is left

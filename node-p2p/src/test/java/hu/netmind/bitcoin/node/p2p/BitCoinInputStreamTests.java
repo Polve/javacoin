@@ -183,6 +183,17 @@ public class BitCoinInputStreamTests
       Assert.assertEquals(result[2] & 0xff, 0xa3);
    }
 
+   public void testReadReverseByteArray()
+      throws IOException
+   {
+      BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray("04 FF A3")));
+      byte[] result = input.readReverseBytes(3);
+      Assert.assertEquals(result.length, 3);
+      Assert.assertEquals(result[0] & 0xff, 0xa3);
+      Assert.assertEquals(result[1] & 0xff, 0xff);
+      Assert.assertEquals(result[2] & 0xff, 0x04);
+   }
+
    public void testListener()
       throws IOException
    {

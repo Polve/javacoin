@@ -41,6 +41,7 @@ import hu.netmind.bitcoin.node.p2p.TxOut;
 import hu.netmind.bitcoin.node.p2p.Tx;
 import hu.netmind.bitcoin.node.p2p.BitCoinOutputStream;
 import hu.netmind.bitcoin.node.p2p.HexUtil;
+import hu.netmind.bitcoin.node.p2p.ArraysUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +88,7 @@ public class TransactionImpl implements Transaction
       this.hash=hash;
       // If no hash given, then calculate it
       if ( hash == null )
-         calculateHash(null);
+         this.hash = calculateHash(null);
       // Make all inputs and outputs be a part of this transaction
       for ( TransactionInputImpl input : inputs )
          input.setTransaction(this);
@@ -143,7 +144,7 @@ public class TransactionImpl implements Transaction
    /**
     * Calculate the hash of the whole transaction, with some optional additional bytes.
     */
-   void calculateHash(byte[] postfix)
+   byte[] calculateHash(byte[] postfix)
       throws BitCoinException
    {
       try
@@ -164,7 +165,10 @@ public class TransactionImpl implements Transaction
          MessageDigest digest = MessageDigest.getInstance("SHA-256");
          byte[] firstHash = digest.digest(txBytes);
          digest.reset();
-         hash = digest.digest(firstHash);
+         byte[] result = ArraysUtil.reverse(digest.digest(firstHash));
+         if ( logger.isDebugEnabled() )
+            logger.debug("hashed to: {}",HexUtil.toHexString(result));
+         return result;
       } catch ( NoSuchAlgorithmException e ) {
          throw new BitCoinException("can not find sha-256 algorithm for hash calculation",e);
       } catch ( IOException e ) {

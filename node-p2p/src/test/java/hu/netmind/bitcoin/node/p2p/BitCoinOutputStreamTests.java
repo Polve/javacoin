@@ -169,5 +169,23 @@ public class BitCoinOutputStreamTests
       output.writeString("ABCD");
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"04 41 42 43 44");
    }
+
+   public void testWriteByteArray()
+      throws IOException
+   {
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      output.write(new byte[] { (byte)0x04, (byte)0x10, (byte)0xFF });
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"04 10 FF");
+   }
+
+   public void testWriteReverseByteArray()
+      throws IOException
+   {
+      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      output.writeReverse(new byte[] { (byte)0x04, (byte)0x10, (byte)0xFF });
+      Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"FF 10 04");
+   }
 }
 

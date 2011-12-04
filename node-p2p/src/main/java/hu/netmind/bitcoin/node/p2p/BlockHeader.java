@@ -53,8 +53,8 @@ public class BlockHeader
       throws IOException
    {
       version = input.readUInt32();
-      prevBlock = input.readBytes(32);
-      rootHash = input.readBytes(32);
+      prevBlock = input.readReverseBytes(32);
+      rootHash = input.readReverseBytes(32);
       timestamp = input.readUInt32()*1000;
       difficulty = input.readUInt32();
       nonce = input.readUInt32();
@@ -64,8 +64,8 @@ public class BlockHeader
       throws IOException
    {
       output.writeUInt32(version);
-      output.write(prevBlock);
-      output.write(rootHash);
+      output.writeReverse(prevBlock);
+      output.writeReverse(rootHash);
       output.writeUInt32(timestamp/1000);
       output.writeUInt32(difficulty);
       output.writeUInt32(nonce);

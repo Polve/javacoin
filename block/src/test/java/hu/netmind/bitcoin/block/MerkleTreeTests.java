@@ -33,12 +33,18 @@ import java.util.ArrayList;
 @Test
 public class MerkleTreeTests
 {
-   public static byte[] reverse(byte[] byteArray)
+   public void testSingleTransactionMerkleRoot()
+      throws BitCoinException
    {
-      byte[] result = new byte[byteArray.length];
-      for ( int i=0; i<byteArray.length; i++ )
-         result[i]=byteArray[byteArray.length-1-i];
-      return result;
+      Transaction tx1 = EasyMock.createMock(Transaction.class);
+      EasyMock.expect(tx1.getHash()).andReturn(
+            HexUtil.toByteArray("F0 3B 56 C4 DF CA 0E 4D 53 B0 7C D4 7C B5 8F C4 75 66 58 12 39 68 80 63 D3 D4 A0 37 CC AB C3 14 "));
+      EasyMock.replay(tx1);
+      List<Transaction> transactions = new ArrayList<Transaction>();
+      transactions.add(tx1);
+      // Check merkle root
+      Assert.assertEquals(HexUtil.toHexString(new MerkleTree(transactions).getRoot()),
+            "F0 3B 56 C4 DF CA 0E 4D 53 B0 7C D4 7C B5 8F C4 75 66 58 12 39 68 80 63 D3 D4 A0 37 CC AB C3 14");
    }
 
    public void testBlockMerkleRootCalculation()
@@ -52,23 +58,23 @@ public class MerkleTreeTests
       // from the block explorer.
       Transaction tx1 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx1.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("F0 3B 56 C4 DF CA 0E 4D 53 B0 7C D4 7C B5 8F C4 75 66 58 12 39 68 80 63 D3 D4 A0 37 CC AB C3 14 ")));
+            HexUtil.toByteArray("F0 3B 56 C4 DF CA 0E 4D 53 B0 7C D4 7C B5 8F C4 75 66 58 12 39 68 80 63 D3 D4 A0 37 CC AB C3 14 "));
       EasyMock.replay(tx1);
       Transaction tx2 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx2.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("C5 D1 11 7E A2 2E 83 15 54 E4 39 4F E8 E1 59 16 1C 6D 01 D0 A5 D7 6A B7 5B BD 90 5E D4 C6 7A 54 ")));
+            HexUtil.toByteArray("C5 D1 11 7E A2 2E 83 15 54 E4 39 4F E8 E1 59 16 1C 6D 01 D0 A5 D7 6A B7 5B BD 90 5E D4 C6 7A 54 "));
       EasyMock.replay(tx2);
       Transaction tx3 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx3.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("0D 7D 45 88 E6 69 21 E5 79 5D 41 1C A1 43 1C 07 8C CC D3 16 03 0C 06 74 C6 F8 0F DB 82 D6 DB ED ")));
+            HexUtil.toByteArray("0D 7D 45 88 E6 69 21 E5 79 5D 41 1C A1 43 1C 07 8C CC D3 16 03 0C 06 74 C6 F8 0F DB 82 D6 DB ED "));
       EasyMock.replay(tx3);
       Transaction tx4 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx4.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("FD A5 B0 A6 7F C3 AE D0 53 EC C3 65 CB 31 77 02 BA 0C 74 EA AB EF 8B 84 3C A0 27 E0 2A 1D 50 35 ")));
+            HexUtil.toByteArray("FD A5 B0 A6 7F C3 AE D0 53 EC C3 65 CB 31 77 02 BA 0C 74 EA AB EF 8B 84 3C A0 27 E0 2A 1D 50 35 "));
       EasyMock.replay(tx4);
       Transaction tx5 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx5.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("29 88 48 31 F9 C8 8B C0 49 7F 41 9E 7E 79 AF FA 91 B9 40 82 48 3C 0B 72 81 F3 A6 05 CF 32 A9 AD ")));
+            HexUtil.toByteArray("29 88 48 31 F9 C8 8B C0 49 7F 41 9E 7E 79 AF FA 91 B9 40 82 48 3C 0B 72 81 F3 A6 05 CF 32 A9 AD "));
       EasyMock.replay(tx5);
       List<Transaction> transactions = new ArrayList<Transaction>();
       transactions.add(tx1);
@@ -78,7 +84,7 @@ public class MerkleTreeTests
       transactions.add(tx5);
       // Check merkle root
       Assert.assertEquals(HexUtil.toHexString(new MerkleTree(transactions).getRoot()),
-            "3C 5A 5B E5 ED DF 0F 25 91 19 E8 4E 4F 36 9C 4E B5 D3 26 C0 BB F4 ED 2E 68 F5 EE EC C8 AC C0 4A");
+            "4A C0 AC C8 EC EE F5 68 2E ED F4 BB C0 26 D3 B5 4E 9C 36 4F 4E E8 19 91 25 0F DF ED E5 5B 5A 3C");
    }
 
    public void testMerkleRootAllTransactionsRemoved()
@@ -86,23 +92,23 @@ public class MerkleTreeTests
    {
       Transaction tx1 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx1.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("F0 3B 56 C4 DF CA 0E 4D 53 B0 7C D4 7C B5 8F C4 75 66 58 12 39 68 80 63 D3 D4 A0 37 CC AB C3 14 "))).anyTimes();
+            HexUtil.toByteArray("F0 3B 56 C4 DF CA 0E 4D 53 B0 7C D4 7C B5 8F C4 75 66 58 12 39 68 80 63 D3 D4 A0 37 CC AB C3 14 ")).anyTimes();
       EasyMock.replay(tx1);
       Transaction tx2 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx2.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("C5 D1 11 7E A2 2E 83 15 54 E4 39 4F E8 E1 59 16 1C 6D 01 D0 A5 D7 6A B7 5B BD 90 5E D4 C6 7A 54 "))).anyTimes();
+            HexUtil.toByteArray("C5 D1 11 7E A2 2E 83 15 54 E4 39 4F E8 E1 59 16 1C 6D 01 D0 A5 D7 6A B7 5B BD 90 5E D4 C6 7A 54 ")).anyTimes();
       EasyMock.replay(tx2);
       Transaction tx3 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx3.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("0D 7D 45 88 E6 69 21 E5 79 5D 41 1C A1 43 1C 07 8C CC D3 16 03 0C 06 74 C6 F8 0F DB 82 D6 DB ED "))).anyTimes();
+            HexUtil.toByteArray("0D 7D 45 88 E6 69 21 E5 79 5D 41 1C A1 43 1C 07 8C CC D3 16 03 0C 06 74 C6 F8 0F DB 82 D6 DB ED ")).anyTimes();
       EasyMock.replay(tx3);
       Transaction tx4 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx4.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("FD A5 B0 A6 7F C3 AE D0 53 EC C3 65 CB 31 77 02 BA 0C 74 EA AB EF 8B 84 3C A0 27 E0 2A 1D 50 35 "))).anyTimes();
+            HexUtil.toByteArray("FD A5 B0 A6 7F C3 AE D0 53 EC C3 65 CB 31 77 02 BA 0C 74 EA AB EF 8B 84 3C A0 27 E0 2A 1D 50 35 ")).anyTimes();
       EasyMock.replay(tx4);
       Transaction tx5 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx5.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("29 88 48 31 F9 C8 8B C0 49 7F 41 9E 7E 79 AF FA 91 B9 40 82 48 3C 0B 72 81 F3 A6 05 CF 32 A9 AD "))).anyTimes();
+            HexUtil.toByteArray("29 88 48 31 F9 C8 8B C0 49 7F 41 9E 7E 79 AF FA 91 B9 40 82 48 3C 0B 72 81 F3 A6 05 CF 32 A9 AD ")).anyTimes();
       EasyMock.replay(tx5);
       List<Transaction> transactions = new ArrayList<Transaction>();
       transactions.add(tx1);
@@ -113,7 +119,7 @@ public class MerkleTreeTests
       // Create merkle tree
       MerkleTree tree = new MerkleTree(transactions);
       Assert.assertEquals(HexUtil.toHexString(tree.getRoot()),
-            "3C 5A 5B E5 ED DF 0F 25 91 19 E8 4E 4F 36 9C 4E B5 D3 26 C0 BB F4 ED 2E 68 F5 EE EC C8 AC C0 4A");
+            "4A C0 AC C8 EC EE F5 68 2E ED F4 BB C0 26 D3 B5 4E 9C 36 4F 4E E8 19 91 25 0F DF ED E5 5B 5A 3C");
       // Remove all transactions
       tree.removeTransaction(tx1);
       tree.removeTransaction(tx2);
@@ -125,7 +131,7 @@ public class MerkleTreeTests
       // Construct back the merkle tree with no transactions but the root
       MerkleTree treeReconstruction = new MerkleTree(tree.getOuterNodes(),new ArrayList<Transaction>());
       Assert.assertEquals(HexUtil.toHexString(treeReconstruction.getRoot()),
-            "3C 5A 5B E5 ED DF 0F 25 91 19 E8 4E 4F 36 9C 4E B5 D3 26 C0 BB F4 ED 2E 68 F5 EE EC C8 AC C0 4A");
+            "4A C0 AC C8 EC EE F5 68 2E ED F4 BB C0 26 D3 B5 4E 9C 36 4F 4E E8 19 91 25 0F DF ED E5 5B 5A 3C");
    }
 
    public void testMerkleRootPartialReconstruction()
@@ -133,23 +139,23 @@ public class MerkleTreeTests
    {
       Transaction tx1 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx1.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("F0 3B 56 C4 DF CA 0E 4D 53 B0 7C D4 7C B5 8F C4 75 66 58 12 39 68 80 63 D3 D4 A0 37 CC AB C3 14 "))).anyTimes();
+            HexUtil.toByteArray("F0 3B 56 C4 DF CA 0E 4D 53 B0 7C D4 7C B5 8F C4 75 66 58 12 39 68 80 63 D3 D4 A0 37 CC AB C3 14 ")).anyTimes();
       EasyMock.replay(tx1);
       Transaction tx2 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx2.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("C5 D1 11 7E A2 2E 83 15 54 E4 39 4F E8 E1 59 16 1C 6D 01 D0 A5 D7 6A B7 5B BD 90 5E D4 C6 7A 54 "))).anyTimes();
+            HexUtil.toByteArray("C5 D1 11 7E A2 2E 83 15 54 E4 39 4F E8 E1 59 16 1C 6D 01 D0 A5 D7 6A B7 5B BD 90 5E D4 C6 7A 54 ")).anyTimes();
       EasyMock.replay(tx2);
       Transaction tx3 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx3.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("0D 7D 45 88 E6 69 21 E5 79 5D 41 1C A1 43 1C 07 8C CC D3 16 03 0C 06 74 C6 F8 0F DB 82 D6 DB ED "))).anyTimes();
+            HexUtil.toByteArray("0D 7D 45 88 E6 69 21 E5 79 5D 41 1C A1 43 1C 07 8C CC D3 16 03 0C 06 74 C6 F8 0F DB 82 D6 DB ED ")).anyTimes();
       EasyMock.replay(tx3);
       Transaction tx4 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx4.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("FD A5 B0 A6 7F C3 AE D0 53 EC C3 65 CB 31 77 02 BA 0C 74 EA AB EF 8B 84 3C A0 27 E0 2A 1D 50 35 "))).anyTimes();
+            HexUtil.toByteArray("FD A5 B0 A6 7F C3 AE D0 53 EC C3 65 CB 31 77 02 BA 0C 74 EA AB EF 8B 84 3C A0 27 E0 2A 1D 50 35 ")).anyTimes();
       EasyMock.replay(tx4);
       Transaction tx5 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx5.getHash()).andReturn(
-            reverse(HexUtil.toByteArray("29 88 48 31 F9 C8 8B C0 49 7F 41 9E 7E 79 AF FA 91 B9 40 82 48 3C 0B 72 81 F3 A6 05 CF 32 A9 AD "))).anyTimes();
+            HexUtil.toByteArray("29 88 48 31 F9 C8 8B C0 49 7F 41 9E 7E 79 AF FA 91 B9 40 82 48 3C 0B 72 81 F3 A6 05 CF 32 A9 AD ")).anyTimes();
       EasyMock.replay(tx5);
       List<Transaction> transactions = new ArrayList<Transaction>();
       transactions.add(tx1);
@@ -160,7 +166,7 @@ public class MerkleTreeTests
       // Create merkle tree
       MerkleTree tree = new MerkleTree(transactions);
       Assert.assertEquals(HexUtil.toHexString(tree.getRoot()),
-            "3C 5A 5B E5 ED DF 0F 25 91 19 E8 4E 4F 36 9C 4E B5 D3 26 C0 BB F4 ED 2E 68 F5 EE EC C8 AC C0 4A");
+            "4A C0 AC C8 EC EE F5 68 2E ED F4 BB C0 26 D3 B5 4E 9C 36 4F 4E E8 19 91 25 0F DF ED E5 5B 5A 3C");
       // Remove 2 transactions from the beginning
       tree.removeTransaction(tx1);
       tree.removeTransaction(tx2);
@@ -173,7 +179,7 @@ public class MerkleTreeTests
       transactionsReconstruction.add(tx5);
       MerkleTree treeReconstruction = new MerkleTree(tree.getOuterNodes(),transactionsReconstruction);
       Assert.assertEquals(HexUtil.toHexString(treeReconstruction.getRoot()),
-            "3C 5A 5B E5 ED DF 0F 25 91 19 E8 4E 4F 36 9C 4E B5 D3 26 C0 BB F4 ED 2E 68 F5 EE EC C8 AC C0 4A");
+            "4A C0 AC C8 EC EE F5 68 2E ED F4 BB C0 26 D3 B5 4E 9C 36 4F 4E E8 19 91 25 0F DF ED E5 5B 5A 3C");
    }
 
 }

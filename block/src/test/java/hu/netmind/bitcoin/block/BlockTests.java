@@ -41,18 +41,12 @@ public class BlockTests
    {
       // This example is from the real block:
       // 00000000000000ed4c7dea403573c2dbddd505daef6e3aee0e9cf855686aad00
-      Transaction tx1 = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx1.getHash()).andReturn(
-            MerkleTreeTests.reverse(HexUtil.toByteArray("F0 3B 56 C4 DF CA 0E 4D 53 B0 7C D4 7C B5 8F C4 75 66 58 12 39 68 80 63 D3 D4 A0 37 CC AB C3 14 ")));
-      EasyMock.replay(tx1);
-      List<Transaction> transactions = new ArrayList<Transaction>();
-      transactions.add(tx1);
-      BlockImpl block = new BlockImpl(transactions,
+      BlockImpl block = new BlockImpl(new ArrayList<Transaction>(),
             1310891749000l, 3999553309l, 436911055l, 
-            HexUtil.toByteArray("19 49 7C 77 6F 0E FD 5A 01 8E 2D 8E 73 BC B1 E2 85 CD C9 A2 CD 52 30 BC CF 04 00 00 00 00 00 00"),
-            HexUtil.toByteArray("AE 52 FE 5C EC D5 7E B1 BA 4C A0 A2 FD 1E A9 DE 4B 6E 08 46 3B 34 69 C1 82 7C 2F 67 7D BC 9D FE"));
+            HexUtil.toByteArray("00 00 00 00 00 00 04 CF BC 30 52 CD A2 C9 CD 85 E2 B1 BC 73 8E 2D 8E 01 5A FD 0E 6F 77 7C 49 19"),
+            HexUtil.toByteArray("FE 9D BC 7D 67 2F 7C 82 C1 69 34 3B 46 08 6E 4B DE A9 1E FD A2 A0 4C BA B1 7E D5 EC 5C FE 52 AE"));
       Assert.assertEquals(HexUtil.toHexString(block.getHash()),
-            "00 AD 6A 68 55 F8 9C 0E EE 3A 6E EF DA 05 D5 DD DB C2 73 35 40 EA 7D 4C ED 00 00 00 00 00 00 00");
+            "00 00 00 00 00 00 00 ED 4C 7D EA 40 35 73 C2 DB DD D5 05 DA EF 6E 3A EE 0E 9C F8 55 68 6A AD 00");
    }
 
    public void testValidBlock()
@@ -182,5 +176,21 @@ public class BlockTests
       block.validate();
    }
 
+   @Test(groups="current")
+   public void testMainGenesisBlock()
+      throws BitCoinException
+   {
+      // First copy over details so we can calculate hash
+      BlockImpl genesis = BlockImpl.MAIN_GENESIS;
+      BlockImpl copy = new BlockImpl(genesis.getTransactions(),
+            genesis.getCreationTime(),genesis.getNonce(),genesis.getCompressedTarget(),
+            genesis.getPreviousBlockHash(),genesis.getMerkleRoot());
+      // First verify block consistency
+      copy.validate();
+      // Verify the hash of block to match its known value
+      Assert.assertEquals(
+            HexUtil.toByteArray("00 00 00 00 00 19 D6 68 9C 08 5A E1 65 83 1E 93 4F F7 63 AE 46 A2 A6 C1 72 B3 F1 B6 0A 8C E2 6F "),
+            copy.getHash());
+   }
 }
 

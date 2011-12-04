@@ -26,6 +26,7 @@ import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
+import hu.netmind.bitcoin.node.p2p.ArraysUtil;
 
 /**
  * @author Robert Brautigam
@@ -156,9 +157,10 @@ public class TransactionInputImpl implements TransactionInput
       // the type added
       TransactionImpl txCopy = new TransactionImpl(
             inputs,outputs,transaction.getLockTime(),new byte[] {});
-      txCopy.calculateHash(new byte[] { (byte)hashType, 0, 0, 0});
+      byte[] hash = txCopy.calculateHash(new byte[] { (byte)hashType, 0, 0, 0});
       // Return the hash of this specially created transaction with the type added
-      return txCopy.getHash();
+      // We have to reverse this signature hash back to original "BitCoin" order.
+      return ArraysUtil.reverse(hash);
    }
 
 }

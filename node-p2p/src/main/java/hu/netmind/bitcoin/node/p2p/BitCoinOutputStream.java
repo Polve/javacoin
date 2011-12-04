@@ -57,6 +57,15 @@ public class BitCoinOutputStream extends OutputStream
    }
 
    /**
+    * Write the array in reversed byte order.
+    */
+   public void writeReverse(byte[] array)
+      throws IOException
+   {
+      output.write(ArraysUtil.reverse(array));
+   }
+
+   /**
     * Forward flush call to underlying stream.
     */
    public void flush()
