@@ -41,13 +41,31 @@ public class chaintester
 
    private Node node = null;
    private BlockChain chain = null;
+   private SimpleSqlStorage storage = null;
 
    public static void main(String[] argv)
       throws Exception
    {
       chaintester app = new chaintester();
-      app.init();
-      app.run();
+      try
+      {
+         logger.debug("init...");
+         app.init();
+         logger.debug("run...");
+         app.run();
+      } finally {
+         logger.debug("close...");
+         app.close();
+      }
+   }
+
+   /**
+    * Free used resources.
+    */
+   public void close()
+   {
+      if ( storage != null )
+         storage.close();
    }
 
    /**
@@ -58,10 +76,13 @@ public class chaintester
    {
       logger.debug("initializing...");
       // Initialize the chain
+      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
+      storage = new SimpleSqlStorage(scriptFactory,"data");
       chain = new BlockChainImpl(BlockImpl.MAIN_GENESIS,
-            new SimpleSqlStorage("data"),
-            new ScriptFactoryImpl(new KeyFactoryImpl(null)),
-            false);
+            storage,scriptFactory,false);
+      // Introduce a small check here that we can read back the genesis block correctly
+      storage.getGenesisLink().getBlock().validate();
+      logger.info("initialized chain, last link height: "+storage.getLastLink().getHeight());
       // Initialize p2p node
       node = new Node();
       node.setMinConnections(2);
@@ -75,7 +96,6 @@ public class chaintester
     */
    public void run()
    {
-      logger.debug("starting...");
    }
 }
 
