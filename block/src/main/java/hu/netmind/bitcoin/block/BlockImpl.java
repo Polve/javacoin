@@ -239,6 +239,20 @@ public class BlockImpl implements Block
       return transactions;
    }
 
+   public int hashCode()
+   {
+      return Arrays.hashCode(hash);
+   }
+
+   public boolean equals(Object o)
+   {
+      if ( o == null )
+         return false;
+      if ( !(o instanceof BlockImpl) )
+         return false;
+      return Arrays.equals(((BlockImpl) o).hash,hash);
+   }
+
    static
    {
       try
