@@ -816,23 +816,23 @@ public class BlockChainTests
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
             "   tx 1234567 990101 true;"+ // Coinbase
             "      in 00 -1 999;"+
-            "      out 5000000;"+
+            "      out 5000000000;"+
             "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
             "   tx 123458 990102 true;"+ // Coinbase
             "      in 00 -1 999;"+
-            "      out 5000000;"+
+            "      out 5000000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
             "      in 990101 0 999;"+
-            "      out 2000000;"+
-            "      out 3000000;",
+            "      out 2000000000;"+
+            "      out 3000000000;",
 
             "block 1234569 1 1b0404cb 02 010203 03;"+
             "   tx 1234569 990104 true;"+ // Coinbase
             "      in 00 -1 999;"+
-            "      out 5000001;"+
+            "      out 5000000001;"+
             "   tx 1234580 990105 false;"+ // Using some money
             "      in 990103 0 999;"+
-            "      out 2000000;",true);
+            "      out 2000000000;",true);
    }
 
    @Test(expectedExceptions=VerificationException.class)
@@ -843,23 +843,23 @@ public class BlockChainTests
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
             "   tx 1234567 990101 true;"+ // Coinbase
             "      in 00 -1 999;"+
-            "      out 5000000;"+
+            "      out 5000000000;"+
             "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
             "   tx 123458 990102 true;"+ // Coinbase
             "      in 00 -1 999;"+
-            "      out 5000000;"+
+            "      out 5000000000;"+
             "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
             "      in 990101 0 999;"+
-            "      out 2000000;"+
-            "      out 3000000;",
+            "      out 2000000000;"+
+            "      out 3000000000;",
 
             "block 1234569 1 1b0404cb 02 010203 03;"+
             "   tx 1234569 990104 true;"+ // Coinbase
             "      in 00 -1 999;"+
-            "      out 5000002;"+
+            "      out 5000000002;"+
             "   tx 1234580 990105 false;"+ // Using some money
             "      in 990103 0 999;"+
-            "      out 1999999;",true);
+            "      out 1999999999;",true);
    }
 
    public void testUseFeesInCoinbase()
@@ -896,12 +896,12 @@ public class BlockChainTests
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
             "   tx 1234567 990101 true;"+ // Coinbase
             "      in 00 -1 999;"+
-            "      out 5000000;",
+            "      out 5000000000;",
 
             "block 1234569 1 1b0404cb 01 010203 02;"+
             "   tx 1234569 990104 true;"+ // Coinbase
             "      in 00 -1 999;"+
-            "      out 5000001;",true,209999);
+            "      out 5000000001;",true,209999);
    }
 
    public void testUseExactMiningAmountRightBeforeChange()

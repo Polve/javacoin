@@ -54,7 +54,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    private static final long TARGET_RECALC = TARGET_TIMESPAN / TARGET_SPACING;
    private static final int MEDIAN_BLOCKS = 11;
    private static final long COINBASE_MATURITY = 100;
-   private static final long INITIAL_COINBASE_VALUE = 50*100000;
+   private static final long INITIAL_COINBASE_VALUE = 50*100000000;
    private static final long COINBASE_VALUE_HALFTIME = 210000;
 
    private static Map<BigInteger,Map<Long,BigInteger>> knownHashes =
