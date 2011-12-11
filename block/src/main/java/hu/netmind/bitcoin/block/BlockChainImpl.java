@@ -49,13 +49,13 @@ import org.slf4j.LoggerFactory;
 public class BlockChainImpl extends Observable implements BlockChain
 {
    private static Logger logger = LoggerFactory.getLogger(BlockChainImpl.class);
-   private static final long TARGET_TIMESPAN = 14*24*60*60*1000; // A target lasts 14 days
-   private static final long TARGET_SPACING = 10*60*1000; // Spacing between two blocks 10 minutes
+   private static final long TARGET_TIMESPAN = 14l*24l*60l*60l*1000l; // A target lasts 14 days
+   private static final long TARGET_SPACING = 10l*60l*1000l; // Spacing between two blocks 10 minutes
    private static final long TARGET_RECALC = TARGET_TIMESPAN / TARGET_SPACING;
    private static final int MEDIAN_BLOCKS = 11;
    private static final long COINBASE_MATURITY = 100;
-   private static final long INITIAL_COINBASE_VALUE = 50*100000000;
-   private static final long COINBASE_VALUE_HALFTIME = 210000;
+   private static final long INITIAL_COINBASE_VALUE = 5000000000l;
+   private static final long COINBASE_VALUE_HALFTIME = 210000l;
 
    private static Map<BigInteger,Map<Long,BigInteger>> knownHashes =
       new HashMap<BigInteger,Map<Long,BigInteger>>();
@@ -247,9 +247,11 @@ public class BlockChainImpl extends Observable implements BlockChain
             coinbaseValue += out.getValue();
          // Check 16.2: Verify that the money produced is in the legal range
          // Valid if coinbase value is not greater than mined value plus fees in tx
-         if ( coinbaseValue > getBlockCoinbaseValue(link)+(inValue-outValue) )
+         long coinbaseValid = getBlockCoinbaseValue(link);
+         if ( coinbaseValue > coinbaseValid+(inValue-outValue) )
             throw new VerificationException("coinbase transaction in block "+block+" claimed more coins than appropriate: "+
-                  coinbaseValue);
+                  coinbaseValue+" vs. "+(coinbaseValid+(inValue-outValue))+
+                  " (coinbase: "+coinbaseValid+", in: "+inValue+", out: "+outValue+")");
       }
       // Check 16.6: Relay block to our peers
       // (Also: add the block first to storage, it's a valid block)
