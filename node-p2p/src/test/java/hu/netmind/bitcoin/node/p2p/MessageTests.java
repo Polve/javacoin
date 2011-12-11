@@ -321,8 +321,9 @@ public class MessageTests
       BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "67 65 74 62 6C 6F 63 6B 73 00 00 00 "+             // "getblocks"
-          "41 00 00 00 "+                                     // payload 65 bytes long
-          "56 4A 69 A5 "+                                     // checksum
+          "45 00 00 00 "+                                     // payload length
+          "B7 B6 9A 31 "+                                     // checksum
+          "01 02 03 04 "+                                     // message version
           "01 "+                                              // 1 start hash
           "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
           "00 01 02 03 04 05 06 07 08 09 0A "+                // end hash
@@ -334,6 +335,7 @@ public class MessageTests
       // Check
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"getblocks");
+      Assert.assertEquals(message.getMessageVersion(),0x04030201l);
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
       Assert.assertEquals(message.getHashStarts().size(),1);
       Assert.assertEquals(message.getHashStarts().get(0),new byte[] 
@@ -353,7 +355,7 @@ public class MessageTests
       byte[] hashStop = 
             new byte[] 
             { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 };
-      GetBlocksMessage getblocks = new GetBlocksMessage(Message.MAGIC_MAIN,hashStarts,hashStop);
+      GetBlocksMessage getblocks = new GetBlocksMessage(Message.MAGIC_MAIN,0x04030201l,hashStarts,hashStop);
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
@@ -363,8 +365,9 @@ public class MessageTests
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
           "F9 BE B4 D9 "+                                     // Main network magic bytes
           "67 65 74 62 6C 6F 63 6B 73 00 00 00 "+             // "getblocks"
-          "41 00 00 00 "+                                     // payload 65 bytes long
-          "56 4A 69 A5 "+                                     // checksum
+          "45 00 00 00 "+                                     // payload length
+          "B7 B6 9A 31 "+                                     // checksum
+          "01 02 03 04 "+                                     // message version
           "01 "+                                              // 1 start hash
           "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F "+
           "00 01 02 03 04 05 06 07 08 09 0A "+                // end hash

@@ -27,13 +27,21 @@ import java.util.ArrayList;
  */
 public class GetBlocksMessage extends ChecksummedMessage
 {
+   private static final byte[] ZERO_HASH = new byte[] { 
+      0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0 };
+
    private List<byte[]> hashStarts;
    private byte[] hashStop;
+   private long messageVersion;
 
-   public GetBlocksMessage(long magic, List<byte[]> hashStarts, byte[] hashStop)
+   public GetBlocksMessage(long magic, long messageVersion, List<byte[]> hashStarts, byte[] hashStop)
       throws IOException
    {
       super(magic,"getblocks");
+      this.messageVersion=messageVersion;
       this.hashStarts=hashStarts;
       this.hashStop=hashStop;
    }
@@ -48,6 +56,7 @@ public class GetBlocksMessage extends ChecksummedMessage
       throws IOException
    {
       super.readFrom(input,version,param);
+      messageVersion = input.readUInt32();
       long size = input.readUIntVar();
       hashStarts = new ArrayList<byte[]>();
       for ( long i=0; i<size; i++ )
@@ -59,10 +68,14 @@ public class GetBlocksMessage extends ChecksummedMessage
       throws IOException
    {
       super.writeTo(output,version);
+      output.writeUInt32(messageVersion);
       output.writeUIntVar(hashStarts.size());
       for ( byte[] hash : hashStarts )
          output.writeReverse(hash);
-      output.writeReverse(hashStop);
+      if ( hashStop == null )
+         output.writeReverse(ZERO_HASH);
+      else
+         output.writeReverse(hashStop);
    }
 
    public String toString()
@@ -78,6 +91,11 @@ public class GetBlocksMessage extends ChecksummedMessage
    public byte[] getHashStop()
    {
       return hashStop;
+   }
+
+   public long getMessageVersion()
+   {
+      return messageVersion;
    }
 }
 
