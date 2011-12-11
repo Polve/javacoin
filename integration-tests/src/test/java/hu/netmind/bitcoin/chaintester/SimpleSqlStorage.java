@@ -428,7 +428,7 @@ public class SimpleSqlStorage implements BlockChainLinkStorage
          // Now do the actual query, this needs a join
          pstmt = connection.prepareStatement(
                "select link.hash from link, txout where "+
-               "link.hash = txout.linkhash and link.left < ? and link.right > ? and "+
+               "link.hash = txout.linkhash and link.leftmarker < ? and link.rightmarker > ? and "+
                "txout.txhash = ? and txout.index = ?");
          pstmt.setLong(1,leftmarker);
          pstmt.setLong(2,rightmarker);
@@ -472,7 +472,7 @@ public class SimpleSqlStorage implements BlockChainLinkStorage
          // Now do the actual query, this needs a join
          pstmt = connection.prepareStatement(
                "select link.hash from link, txin where "+
-               "link.hash = txin.linkhash and link.left < ? and link.right > ? and "+
+               "link.hash = txin.linkhash and link.leftmarker < ? and link.rightmarker > ? and "+
                "txin.claimedhash = ? and txin.claimedindex = ?");
          pstmt.setLong(1,leftmarker);
          pstmt.setLong(2,rightmarker);
