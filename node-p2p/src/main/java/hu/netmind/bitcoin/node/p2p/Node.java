@@ -100,8 +100,6 @@ public class Node
       // Start listening
       nodeListener = new NodeListener();
       nodeListener.start();
-      // Add initial workers to the node
-      bootstrapWorkers();
    }
 
    /**
@@ -116,25 +114,27 @@ public class Node
          return; // No address source
       }
       List<InetSocketAddress> addresses = addressSource.getAddresses();
-      synchronized ( workers )
+      for ( InetSocketAddress address : addresses )
       {
-         for ( InetSocketAddress address : addresses )
+         // If enough nodes are there, stop
+         synchronized ( workers )
          {
-            // If enough nodes are there, stop
             if ( workers.size() >= minConnections )
                return;
-            // Connect
-            try
-            {
-               Socket socket = new Socket();
-               socket.connect(address,connectTimeout);
-               if ( ! addWorker(socket) )
-                  socket.close();
-               else
-                  logger.debug("worker added for address {}, current number of workers {}",address,workers.size());
-            } catch ( IOException e ) {
-               logger.error("error connecting to address: {}",address);
-            }
+         }
+         // Connect. Node this is outside the synchronization,
+         // so there is a possibility that we end up with more
+         // workers than minimum.
+         try
+         {
+            Socket socket = new Socket();
+            socket.connect(address,connectTimeout);
+            if ( ! addWorker(socket) )
+               socket.close();
+            else
+               logger.debug("worker added for address {}, current number of workers {}",address,workers.size());
+         } catch ( IOException e ) {
+            logger.error("error connecting to address: {}",address);
          }
       }
    }
@@ -301,6 +301,8 @@ public class Node
             // Wait for new connections
             while ( running )
             {
+               // First, try to make sure we have enough nodes connected
+               bootstrapWorkers();
                // Accept a new socket from outside
                Socket socket = null;
                try
@@ -324,15 +326,6 @@ public class Node
                         socket.close();
                   } catch ( IOException ioe ) {
                      logger.error("could not close socket {}",socket,ioe);
-                  }
-               }
-               // At the end, if there are not enough workers, try to recruit
-               if ( running )
-               {
-                  synchronized ( workers )
-                  {
-                     if ( workers.size() < minConnections )
-                        bootstrapWorkers();
                   }
                }
             }

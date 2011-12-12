@@ -25,6 +25,8 @@ import java.util.Enumeration;
 import java.util.ResourceBundle;
 import java.util.Collections;
 import java.net.InetSocketAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This address source delivers the static fallback nodes listed on the
@@ -33,6 +35,8 @@ import java.net.InetSocketAddress;
  */
 public class FallbackNodesSource implements AddressSource
 {
+   private static Logger logger = LoggerFactory.getLogger(FallbackNodesSource.class);
+
    private List<InetSocketAddress> addresses;
 
    public FallbackNodesSource()
@@ -41,10 +45,12 @@ public class FallbackNodesSource implements AddressSource
       addresses = new ArrayList<InetSocketAddress>();
       ResourceBundle bundle = ResourceBundle.getBundle("fallback-nodes");
       Enumeration<String> keys = bundle.getKeys();
+      logger.debug("started resolving hosts...");
       while ( keys.hasMoreElements() )
          addresses.add(new InetSocketAddress(bundle.getString(keys.nextElement()),8333));
       // Randomize
       Collections.shuffle(addresses);
+      logger.debug("hosts resolved and randomized.");
    }
 
    public List<InetSocketAddress> getAddresses()
