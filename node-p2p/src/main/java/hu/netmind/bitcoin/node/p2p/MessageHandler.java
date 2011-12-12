@@ -32,7 +32,7 @@ public interface MessageHandler
     * There is a possibility to send a message to a new node on a join.
     * @param conn The connection object to node.
     */
-   Message onJoin(Connection conn)
+   void onJoin(Connection conn)
       throws IOException;
 
    /**
@@ -47,10 +47,8 @@ public interface MessageHandler
     * to reply to the incoming message by returning a message.
     * @param addr The address of the node who disconnected.
     * @param message The incoming message.
-    * @return A message to reply to only the source node for the
-    * incoming message, or null if no reply is needed.
     */
-   Message onMessage(Connection conn, Message message)
+   void onMessage(Connection conn, Message message)
       throws IOException;
 }
 

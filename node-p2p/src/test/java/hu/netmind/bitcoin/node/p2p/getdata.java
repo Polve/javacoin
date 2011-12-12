@@ -53,7 +53,7 @@ public class getdata
       node.setMaxConnections(1);
       node.setAddressSource(new FallbackNodesSource());
       node.addHandler(new MessageHandler() {
-               public Message onJoin(Connection conn)
+               public void onJoin(Connection conn)
                {
                   System.out.println("Connected to "+conn.getRemoteAddress()+" (from: "+conn.getLocalAddress()+")");
                   // Send our version information
@@ -62,7 +62,7 @@ public class getdata
                      new NodeAddress(1,new InetSocketAddress(((InetSocketAddress)conn.getLocalAddress()).getAddress(),node.getPort())),
                      123,"",0);
                   System.out.println("Sending handshake version: "+version);
-                  return version;
+                  conn.send(version);
                }
 
                public void onLeave(Connection conn)
@@ -70,7 +70,7 @@ public class getdata
                   System.out.println("Disconnected from "+conn.getRemoteAddress()+" (on local: "+conn.getLocalAddress()+")");
                }
 
-               public Message onMessage(Connection conn, Message message)
+               public void onMessage(Connection conn, Message message)
                   throws IOException
                {
                   System.out.println("Incoming ("+conn.getRemoteAddress()+"): "+message);
@@ -79,7 +79,7 @@ public class getdata
                      // Let's answer version, so we get more messages
                      VerackMessage verack = new VerackMessage(Message.MAGIC_MAIN);
                      System.out.println("Answering: "+verack);
-                     return verack;
+                     conn.send(verack);
                   }
                   if ( message instanceof VerackMessage )
                   {
@@ -89,7 +89,7 @@ public class getdata
                      items.add(item);
                      GetDataMessage getdataMessage =  new GetDataMessage(Message.MAGIC_MAIN,items);
                      System.out.println("Sending a request to get data: "+getdataMessage);
-                     return getdataMessage;
+                     conn.send(getdataMessage);
                   }
                   if ( (message instanceof TxMessage) || (message instanceof BlockMessage) )
                   {
@@ -103,7 +103,6 @@ public class getdata
                      // We got our answer, stop node
                      conn.close();
                   }
-                  return null;
                }
             });
       // Start node, then wait indefinitly

@@ -57,6 +57,11 @@ public interface Connection
    void setVersion(long version);
 
    /**
+    * Send a message to this connection.
+    */
+   void send(Message message);
+
+   /**
     * Terminate this connection. If a handler wants to terminate
     * the connection to the node for whatever reason, it can use
     * this method.

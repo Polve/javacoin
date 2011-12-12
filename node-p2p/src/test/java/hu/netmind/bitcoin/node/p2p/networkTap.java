@@ -38,7 +38,7 @@ public class networkTap
       node.setMaxConnections(1);
       node.setAddressSource(new FallbackNodesSource());
       node.addHandler(new MessageHandler() {
-               public Message onJoin(Connection conn)
+               public void onJoin(Connection conn)
                {
                   System.out.println("Connected to "+conn.getRemoteAddress()+" (from: "+conn.getLocalAddress()+")");
                   // Send our version information
@@ -47,7 +47,7 @@ public class networkTap
                      new NodeAddress(1,new InetSocketAddress(((InetSocketAddress)conn.getLocalAddress()).getAddress(),node.getPort())),
                      123,"",0);
                   System.out.println("Sending handshake version: "+version);
-                  return version;
+                  conn.send(version);
                }
 
                public void onLeave(Connection conn)
@@ -55,7 +55,7 @@ public class networkTap
                   System.out.println("Disconnected from "+conn.getRemoteAddress()+" (on local: "+conn.getLocalAddress()+")");
                }
 
-               public Message onMessage(Connection conn, Message message)
+               public void onMessage(Connection conn, Message message)
                {
                   System.out.println("Incoming ("+conn.getRemoteAddress()+"): "+message);
                   if ( message instanceof VersionMessage )
@@ -63,9 +63,8 @@ public class networkTap
                      // Let's answer version, so we get more messages
                      VerackMessage verack = new VerackMessage(Message.MAGIC_MAIN);
                      System.out.println("Answering: "+verack);
-                     return verack;
+                     conn.send(verack);
                   }
-                  return null;
                }
             });
       // Start node, then wait indefinitly

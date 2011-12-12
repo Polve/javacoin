@@ -85,6 +85,7 @@ public class NodeTests
    @AfterMethod
    public void cleanup()
    {
+      logger.debug("running cleanup...");
       // Stop node if it was created with createNode()
       if ( node != null )
          node.stop();
@@ -103,7 +104,9 @@ public class NodeTests
       // Check that everything really stopped
       StackTraceElement[] stack = getNodeStackTraceElements();
       if ( stack != null )
+      {
          Assert.fail("there are node related threads still active after test, stack: "+Arrays.toString(stack));
+      }
    }
 
    private StackTraceElement[] getNodeStackTraceElements()
@@ -111,7 +114,10 @@ public class NodeTests
       Map<Thread,StackTraceElement[]> traces = Thread.getAllStackTraces();
       for ( Map.Entry<Thread,StackTraceElement[]> entry : traces.entrySet() )
          if ( entry.getKey().getName().contains("BitCoin") )
+         {
+            logger.debug("found running BitCoin thread: "+entry.getKey().getName()+", stacktrace: "+Arrays.toString(entry.getValue()));
             return entry.getValue();
+         }
       return null;
    }
 
@@ -145,7 +151,7 @@ public class NodeTests
       List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
-      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
       EasyMock.replay(source);
       // Create node
       Node node = createNode();
@@ -164,7 +170,7 @@ public class NodeTests
       List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
-      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
       EasyMock.replay(source);
       // Create node
       Node node = createNode();
@@ -195,7 +201,7 @@ public class NodeTests
       for ( int i=0; i<dummyNodes.length; i++ )
          addresses.add(dummyNodes[i].getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
-      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
       EasyMock.replay(source);
       // Create node
       Node node = createNode();
@@ -226,7 +232,7 @@ public class NodeTests
       addresses.add(dummyNode.getAddress());
       addresses.add(dummyNode.getAddress()); // 2nd time
       AddressSource source = EasyMock.createMock(AddressSource.class);
-      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
       EasyMock.replay(source);
       // Create node
       Node node = createNode();
@@ -271,7 +277,7 @@ public class NodeTests
       List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
-      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
       EasyMock.replay(source);
       // Create node
       Node node = createNode();
@@ -301,7 +307,7 @@ public class NodeTests
       List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
-      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
       EasyMock.replay(source);
       // Create node
       Node node = createNode();
@@ -331,7 +337,7 @@ public class NodeTests
       Message message = dummyNode2.read();
    }
 
-   public void testSingleHandlerReply()
+   public void testMultiHandlerReply()
       throws IOException
    {
       DummyNode dummyNode = createDummyNode();
@@ -339,7 +345,7 @@ public class NodeTests
       List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
-      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
       EasyMock.replay(source);
       // Create node
       Node node = createNode();
@@ -349,9 +355,10 @@ public class NodeTests
       node.addHandler(new MessageRepeaterHandler());
       // Create a mock to make sure all handlers are invoked
       MessageHandler signalHandler = EasyMock.createMock(MessageHandler.class);
-      EasyMock.expect(signalHandler.onJoin((Connection) EasyMock.anyObject())).andReturn(null);
-      EasyMock.expect(signalHandler.onMessage( // Whether this is once or twice depends on timing, so we only need at least once to make sure it is invoked
-               (Connection) EasyMock.anyObject(),(Message) EasyMock.anyObject())).andReturn(null).atLeastOnce();
+      signalHandler.onJoin((Connection) EasyMock.anyObject());
+      signalHandler.onMessage( // Whether this is once or twice depends on timing, so we only need at least once to make sure it is invoked
+               (Connection) EasyMock.anyObject(),(Message) EasyMock.anyObject());
+      EasyMock.expectLastCall().anyTimes();
       signalHandler.onLeave((Connection) EasyMock.anyObject()); 
       EasyMock.expectLastCall().anyTimes(); // This depends on timing whether it is actually invoked from cleanup()
       EasyMock.replay(signalHandler);
@@ -368,6 +375,10 @@ public class NodeTests
       AlertMessage incoming = (AlertMessage) dummyNode.read();
       Assert.assertEquals(incoming.getMessage(),"Message1");
       incoming = (AlertMessage) dummyNode.read();
+      Assert.assertEquals(incoming.getMessage(),"Message1");
+      incoming = (AlertMessage) dummyNode.read();
+      Assert.assertEquals(incoming.getMessage(),"Message2");
+      incoming = (AlertMessage) dummyNode.read();
       Assert.assertEquals(incoming.getMessage(),"Message2");
       // Check that the last handler is invoked even if some other handler before it already replied
       EasyMock.verify(signalHandler);
@@ -382,16 +393,16 @@ public class NodeTests
       List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
-      EasyMock.expect(source.getAddresses()).andReturn(addresses);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
       EasyMock.replay(source);
       // Create node
       Node node = createNode();
       node.setAddressSource(source);
       // Create a repeater handler
       node.addHandler(new MessageRepeaterHandler() {
-               public Message onJoin(Connection conn)
+               public void onJoin(Connection conn)
                {
-                  return new VerackMessage(Message.MAGIC_TEST);
+                  conn.send(new VerackMessage(Message.MAGIC_TEST));
                }
             });
       // Start node
@@ -520,14 +531,13 @@ public class NodeTests
       private boolean joined = false;
       private Object joinWaiter = new Object();
 
-      public Message onJoin(Connection conn)
+      public void onJoin(Connection conn)
       {
          synchronized ( joinWaiter )
          {
             joined = true;
             joinWaiter.notifyAll();
          }
-         return null;
       }
 
       public void onLeave(Connection conn)
@@ -544,26 +554,23 @@ public class NodeTests
          }
       }
 
-      public Message onMessage(Connection conn, Message message)
+      public void onMessage(Connection conn, Message message)
       {
-         return null;
       }
    }
    public class MessageRepeaterHandler implements MessageHandler
    {
-      public Message onJoin(Connection conn)
+      public void onJoin(Connection conn)
       {
-         return null;
       }
 
       public void onLeave(Connection conn)
       {
       }
 
-      public Message onMessage(Connection conn, Message message)
+      public void onMessage(Connection conn, Message message)
       {
-         // Send right back
-         return message;
+         conn.send(message);
       }
    }
 }

@@ -116,25 +116,23 @@ public class Node
       List<InetSocketAddress> addresses = addressSource.getAddresses();
       for ( InetSocketAddress address : addresses )
       {
-         // If enough nodes are there, stop
          synchronized ( workers )
          {
-            if ( workers.size() >= minConnections )
+            // If enough nodes are there, stop
+            if ( (workers.size() >= minConnections) || (!running) )
                return;
-         }
-         // Connect. Node this is outside the synchronization,
-         // so there is a possibility that we end up with more
-         // workers than minimum.
-         try
-         {
-            Socket socket = new Socket();
-            socket.connect(address,connectTimeout);
-            if ( ! addWorker(socket) )
-               socket.close();
-            else
-               logger.debug("worker added for address {}, current number of workers {}",address,workers.size());
-         } catch ( IOException e ) {
-            logger.error("error connecting to address: {}",address);
+            // Connect to new worker
+            try
+            {
+               Socket socket = new Socket();
+               socket.connect(address,connectTimeout);
+               if ( ! addWorker(socket) )
+                  socket.close();
+               else
+                  logger.debug("worker added for address {}, current number of workers {}",address,workers.size());
+            } catch ( IOException e ) {
+               logger.error("error connecting to address: {}",address);
+            }
          }
       }
    }
@@ -375,7 +373,7 @@ public class Node
       public void start()
       {
          // Start worker
-         workerThread = new Thread(this,"BitCoin Node Connection");
+         workerThread = new Thread(this,"BitCoin Node Connection ("+getAddress()+")");
          workerThread.setDaemon(true);
          workerThread.start();
          // Invoke listeners
@@ -383,9 +381,7 @@ public class Node
          {
             try
             {
-               Message message = handler.onJoin(connection);
-               if ( message != null )
-                  send(message);
+               handler.onJoin(connection);
             } catch ( IOException e ) {
                logger.error("failed to handle join by handler {}",handler);
             }
@@ -424,7 +420,7 @@ public class Node
       public void stop()
       {
          stopInternal();
-         logger.debug("stopped node worker.");
+         logger.debug("stopped node worker thread: "+workerThread.getName());
          // Wait for thread to stop
          try
          {
@@ -468,17 +464,11 @@ public class Node
                replied = false;
                for ( MessageHandler handler : handlers )
                {
-                  Message reply = null;
                   try
                   {
-                     reply = handler.onMessage(connection,message);
+                     handler.onMessage(connection,message);
                   } catch ( IOException e ) {
                      logger.error("handler "+handler+" failed to handle message",e);
-                  }
-                  if ( (!replied) && (reply != null) )
-                  {
-                     send(reply);
-                     replied = true; // Only reply once, but ask all handlers nontheless
                   }
                }
             }
@@ -523,6 +513,16 @@ public class Node
          public void setVersion(long version)
          {
             marshaller.setVersion(version);
+         }
+
+         public void send(Message message)
+         {
+            try
+            {
+               NodeWorker.this.send(message);
+            } catch ( IOException e ) {
+               logger.error("could not send message: "+message+", to: "+getRemoteAddress(),e);
+            }
          }
 
          public void close()
