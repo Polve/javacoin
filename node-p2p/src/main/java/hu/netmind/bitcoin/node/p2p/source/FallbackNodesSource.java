@@ -20,11 +20,15 @@ package hu.netmind.bitcoin.node.p2p.source;
 
 import hu.netmind.bitcoin.node.p2p.AddressSource;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Enumeration;
 import java.util.ResourceBundle;
 import java.util.Collections;
+import java.util.StringTokenizer;
 import java.net.InetSocketAddress;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.math.BigInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,27 +39,36 @@ import org.slf4j.LoggerFactory;
  */
 public class FallbackNodesSource implements AddressSource
 {
+   private static final int DEFAULT_PORT = 8333;
    private static Logger logger = LoggerFactory.getLogger(FallbackNodesSource.class);
 
    private List<InetSocketAddress> addresses;
 
    public FallbackNodesSource()
    {
+      addresses = new LinkedList<InetSocketAddress>();
       // Read addresses from properties file
-      addresses = new ArrayList<InetSocketAddress>();
-      ResourceBundle bundle = ResourceBundle.getBundle("fallback-nodes");
-      Enumeration<String> keys = bundle.getKeys();
-      logger.debug("started resolving hosts...");
-      while ( keys.hasMoreElements() )
-         addresses.add(new InetSocketAddress(bundle.getString(keys.nextElement()),8333));
+      String addressesString = ResourceBundle.getBundle("fallback-nodes").getString("seed.addresses");
+      StringTokenizer tokens = new StringTokenizer(addressesString,",");
+      while ( tokens.hasMoreTokens() )
+      {
+         String token = tokens.nextToken().trim().substring(2); // In the form of 0x1ddb1032
+         byte[] tokenBytes = new BigInteger(token,16).toByteArray();
+         try
+         {
+            addresses.add(new InetSocketAddress(InetAddress.getByAddress(tokenBytes),DEFAULT_PORT));
+         } catch ( UnknownHostException e ) {
+            logger.warn("could not parse to address: "+token,e);
+         }
+      }
       // Randomize
       Collections.shuffle(addresses);
-      logger.debug("hosts resolved and randomized.");
+      logger.debug("fallback hosts read");
    }
 
    public List<InetSocketAddress> getAddresses()
    {
-      return addresses;
+      return Collections.unmodifiableList(addresses);
    }
 }
 
