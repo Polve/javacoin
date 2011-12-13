@@ -54,20 +54,22 @@ public class FallbackNodesSource implements AddressSource
       {
          String token = tokens.nextToken().trim().substring(2); // In the form of 0x1ddb1032
          byte[] tokenBytes = new BigInteger(token,16).toByteArray();
+         byte[] networkBytes = new byte[4];
+         System.arraycopy(tokenBytes,tokenBytes.length-4,networkBytes,0,4);
          try
          {
-            addresses.add(new InetSocketAddress(InetAddress.getByAddress(tokenBytes),DEFAULT_PORT));
+            addresses.add(new InetSocketAddress(InetAddress.getByAddress(networkBytes),DEFAULT_PORT));
          } catch ( UnknownHostException e ) {
             logger.warn("could not parse to address: "+token,e);
          }
       }
       // Randomize
-      Collections.shuffle(addresses);
       logger.debug("fallback hosts read");
    }
 
    public List<InetSocketAddress> getAddresses()
    {
+      Collections.shuffle(addresses);
       return Collections.unmodifiableList(addresses);
    }
 }
