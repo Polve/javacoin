@@ -18,7 +18,7 @@
 
 package hu.netmind.bitcoin.node.p2p;
 
-import hu.netmind.bitcoin.node.p2p.source.FallbackNodesSource;
+import hu.netmind.bitcoin.node.p2p.source.DNSFallbackNodesSource;
 import java.net.SocketAddress;
 import java.net.InetSocketAddress;
 
@@ -36,7 +36,7 @@ public class networkTap
       final Node node = new Node();
       node.setMinConnections(1);
       node.setMaxConnections(1);
-      node.setAddressSource(new FallbackNodesSource());
+      node.setAddressSource(new DNSFallbackNodesSource());
       node.addHandler(new MessageHandler() {
                public void onJoin(Connection conn)
                {
