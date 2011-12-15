@@ -20,7 +20,7 @@ package hu.netmind.bitcoin.chaintester;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import hu.netmind.bitcoin.node.p2p.source.FallbackNodesSource;
+import hu.netmind.bitcoin.node.p2p.source.DNSFallbackNodesSource;
 import hu.netmind.bitcoin.node.p2p.Node;
 import hu.netmind.bitcoin.node.p2p.MessageHandler;
 import hu.netmind.bitcoin.node.p2p.Connection;
@@ -112,7 +112,7 @@ public class chaintester
       node = new Node();
       node.setMinConnections(2);
       node.setMaxConnections(10);
-      node.setAddressSource(new FallbackNodesSource());
+      node.setAddressSource(new DNSFallbackNodesSource());
       node.addHandler(new DownloaderHandler());
    }
 
@@ -144,7 +144,7 @@ public class chaintester
       private long lastRequestTime = 0; // Last time getblocks was sent
       private long lastRequestHeight = 0; // Last max height when request was sent
 
-      public Message onJoin(Connection conn)
+      public void onJoin(Connection conn)
          throws IOException
       {
          logger.debug("connected to "+conn.getRemoteAddress()+" (from: "+conn.getLocalAddress()+")");
@@ -154,7 +154,7 @@ public class chaintester
                new NodeAddress(1,new InetSocketAddress(((InetSocketAddress)conn.getLocalAddress()).getAddress(),node.getPort())),
                123,"NetMind BitCoin/1.0.0-SNAPSHOT",storage.getLastLink().getHeight());
          logger.debug("sending version information: "+version);
-         return version;
+         conn.send(version);
       }
 
       public void onLeave(Connection conn)
@@ -163,7 +163,7 @@ public class chaintester
          logger.debug("disconnected from "+conn.getRemoteAddress()+" (on local: "+conn.getLocalAddress()+")");
       }
 
-      public Message onMessage(Connection conn, Message message)
+      public void onMessage(Connection conn, Message message)
          throws IOException
       {
          logger.debug("incoming ("+conn.getRemoteAddress()+"): "+message);
@@ -176,7 +176,7 @@ public class chaintester
             // Let's answer version, so we get more messages
             VerackMessage verack = new VerackMessage(Message.MAGIC_MAIN);
             logger.debug("answering: "+verack);
-            return verack;
+            conn.send(verack);
          }
          if ( message instanceof InvMessage )
          {
@@ -193,7 +193,7 @@ public class chaintester
             }
             // Do the request for all blocks remaining
             if ( ! items.isEmpty() )
-               return new GetDataMessage(Message.MAGIC_MAIN,items);
+               conn.send(new GetDataMessage(Message.MAGIC_MAIN,items));
          }
          if ( message instanceof BlockMessage )
          {
@@ -244,9 +244,9 @@ public class chaintester
          {
             BlockChainLink link = storage.getLastLink();
             if ( link.getHeight() < lastRequestHeight )
-               return null; // Height changed, so download may be still in progress
+               return; // Height changed, so download may be still in progress
             if ( knownHighestBlock <= link.getHeight() )
-               return null; // As far as we know we know everything, so no need to send anything
+               return; // As far as we know we know everything, so no need to send anything
             // Set indicators
             lastRequestTime = currentTime;
             lastRequestHeight = link.getHeight();
@@ -257,7 +257,6 @@ public class chaintester
             GetBlocksMessage getBlocks = new GetBlocksMessage(Message.MAGIC_MAIN,BC_PROTOCOL_VERSION,startBlocks,null);
             node.broadcast(getBlocks);
          }
-         return null;
       }
    }
 }
