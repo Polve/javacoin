@@ -54,6 +54,14 @@ public class Difficulty implements Comparable<Difficulty>
    }
 
    /**
+    * Construct with no difficulty.
+    */
+   public Difficulty()
+   {
+      difficulty = BigDecimal.ZERO;
+   }
+
+   /**
     * Construct the difficulty using the target directly.
     */
    public Difficulty(DifficultyTarget target)

@@ -163,7 +163,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       BlockChainLink previousLink = linkStorage.getLink(block.getPreviousBlockHash());
       if ( (previousLink == null) || (previousLink.isOrphan()) )
       {
-         BlockChainLink link = new BlockChainLink(block,null,0,true);
+         BlockChainLink link = new BlockChainLink(block,new Difficulty(),0,true);
          if ( ! recheck )
             linkStorage.addLink(link);
          // Notify listeners that we have a missing block
