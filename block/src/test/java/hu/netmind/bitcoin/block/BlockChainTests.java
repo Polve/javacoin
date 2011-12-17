@@ -962,6 +962,35 @@ public class BlockChainTests
       Assert.assertNotNull(orphanLink);
       Assert.assertTrue(orphanLink.isOrphan());
    }
+
+   public void testReferToSameBlock()
+      throws BitCoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 200000000;"+
+            "      out 300000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 03;"+
+            "   tx 1234569 990104 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "   tx 1234580 990105 false;"+ // Using some money
+            "      in 990103 1 999;"+
+            "      out 200000000;"+
+            "   tx 1234581 990106 false;"+ // Using some money from the previous tx in same block
+            "      in 990105 0 999;"+
+            "      out 200000000;",true);
+   }
 }
 
 

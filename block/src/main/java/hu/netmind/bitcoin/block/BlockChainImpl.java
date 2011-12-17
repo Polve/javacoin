@@ -224,7 +224,7 @@ public class BlockChainImpl extends Observable implements BlockChain
          long localOutValue = 0;
          if ( (!simplifedVerification) && (!tx.isCoinbase()) )
          {
-            localInValue = verifyTransaction(previousLink,tx);
+            localInValue = verifyTransaction(previousLink,block,tx);
             for ( TransactionOutput out : tx.getOutputs() )
                localOutValue += out.getValue();
             inValue += localInValue;
@@ -280,11 +280,27 @@ public class BlockChainImpl extends Observable implements BlockChain
    }
 
    /**
+    * Search for a specific transaction in a block.
+    * @param block The block to search transaction in.
+    * @param txHash The transaction hash to match.
+    * @return The transaction in the block which has the given hash, null otherwise.
+    */
+   private Transaction getTransaction(Block block, byte[] txHash)
+   {
+      for ( Transaction txCandidate : block.getTransactions() )
+         if ( Arrays.equals(txCandidate.getHash(),txHash) )
+            return txCandidate;
+      return null;
+   }
+
+   /**
     * Verify that a transaction is valid according to sub-rules applying to the block
     * tree.
+    * @param link The link that represents the branch if the new transaction.
+    * @param block The block we're trying to add.
     * @return The total value of the inputs after verification.
     */
-   private long verifyTransaction(BlockChainLink link, Transaction tx)
+   private long verifyTransaction(BlockChainLink link, Block block, Transaction tx)
       throws VerificationException
    {
       long value = 0;
@@ -294,10 +310,10 @@ public class BlockChainImpl extends Observable implements BlockChain
          // referenced output transaction. Reject if the output transaction is missing for any input. 
          Transaction outTx = null;
          BlockChainLink outLink = linkStorage.getClaimedLink(link,in);
-         if ( outLink != null )
-            for ( Transaction txCandidate : outLink.getBlock().getTransactions() )
-               if ( Arrays.equals(txCandidate.getHash(),in.getClaimedTransactionHash()) )
-                  outTx = txCandidate;
+         if ( outLink != null ) // Check in chain before
+            outTx = getTransaction(outLink.getBlock(),in.getClaimedTransactionHash());
+         if ( outTx == null ) // Check in this block if not yet found
+            outTx = getTransaction(block,in.getClaimedTransactionHash());
          if ( outTx == null )
             throw new VerificationException("transaction output not found for input: "+in);
          // Check 16.1.2: For each input, if we are using the nth output of the 

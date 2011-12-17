@@ -176,7 +176,6 @@ public class BlockTests
       block.validate();
    }
 
-   @Test(groups="current")
    public void testMainGenesisBlock()
       throws BitCoinException
    {

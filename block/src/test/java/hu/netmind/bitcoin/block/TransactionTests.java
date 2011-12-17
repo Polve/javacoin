@@ -574,5 +574,31 @@ public class TransactionTests
       transaction.validate();
    }
 
+   @Test(expectedExceptions = VerificationException.class)
+   public void testSelfReference()
+      throws BitCoinException
+   {
+      // First build the 2 outputs with script
+      TransactionOutputImpl output1 = new TransactionOutputImpl(203000000,
+            createFragment("76 A9 14 20 CA C8 9D 2F 1F C9 11 1B 38 BC 5F D7 27 8B E6 14 A7 89 C4 88 AC"));
+      TransactionOutputImpl output2 = new TransactionOutputImpl(300000000,
+            createFragment("76 A9 14 17 BE E5 04 89 99 BC 6D 7C CD B0 62 AE 06 C8 FD F8 E0 0B 17 88 AC"));
+      List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
+      outputs.add(output1);
+      outputs.add(output2);
+      // Build the input
+      TransactionInputImpl input = new TransactionInputImpl(
+            HexUtil.toByteArray("98 4F 59 A9 1A 14 C2 B5 11 81 57 4A 35 F8 6A F8 36 3D C4 80 F6 8B B2 84 7D 99 FB 49 C1 84 83 2B"),
+            1,
+            createFragment("47"),
+            0xFFFFFFFFl);
+      List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
+      inputs.add(input);
+      // Now build the transaction itself, the hash should be automaticall generated
+      TransactionImpl transaction = new TransactionImpl(inputs,outputs,0,
+            HexUtil.toByteArray("98 4F 59 A9 1A 14 C2 B5 11 81 57 4A 35 F8 6A F8 36 3D C4 80 F6 8B B2 84 7D 99 FB 49 C1 84 83 2B"));
+      // Verify whether transaction is valid
+      transaction.validate();      
+   }
 }
 

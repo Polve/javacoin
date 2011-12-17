@@ -273,6 +273,16 @@ public class TransactionImpl implements Transaction
             throw new VerificationException("transaction "+this+" referes twice to output: "+referredOut);
          usedOuts.add(referredOut);
       }
+      // Additional check: No inputs refer to self.
+      // Note: although this is hard to produce (because you would have to hash the hash too),
+      // you only have to find one good solution to assign any money to yourself. This is automatically
+      // avoided in the clients because they only check preceding transactions. Doesn't hurt to
+      // check though explicitly.
+      for ( TransactionInput in : getInputs() )
+      {
+         if ( Arrays.equals(in.getClaimedTransactionHash(),hash) )
+            throw new VerificationException("transaction input "+in+", refers to the containing transaction");
+      }
    }
 
    public boolean isCoinbase()
