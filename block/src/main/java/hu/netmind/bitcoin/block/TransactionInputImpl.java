@@ -27,6 +27,7 @@ import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.node.p2p.ArraysUtil;
+import hu.netmind.bitcoin.node.p2p.HexUtil;
 
 /**
  * @author Robert Brautigam
@@ -163,5 +164,9 @@ public class TransactionInputImpl implements TransactionInput
       return ArraysUtil.reverse(hash);
    }
 
+   public String toString()
+   {
+      return "In (seq "+sequence+") from "+HexUtil.toHexString(claimedTransactionHash)+"/"+claimedOutputIndex;
+   }
 }
 

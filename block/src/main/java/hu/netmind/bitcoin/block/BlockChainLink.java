@@ -73,5 +73,10 @@ public class BlockChainLink
    {
       return height;
    }
+
+   public String toString()
+   {
+      return "Link at height "+height+", block: "+block;
+   }
 }
 

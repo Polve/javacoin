@@ -281,5 +281,11 @@ public class TransactionImpl implements Transaction
          (inputs.get(0).getClaimedOutputIndex()==-1) &&
          (new BigInteger(1,inputs.get(0).getClaimedTransactionHash()).equals(BigInteger.ZERO));
    }
+
+   public String toString()
+   {
+      return "Transaction (hash: "+HexUtil.toHexString(hash)+", locked: "+lockTime+") has ins: "+
+         inputs+", outs: "+outputs;
+   }
 }
 

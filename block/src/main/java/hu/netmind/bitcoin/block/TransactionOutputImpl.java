@@ -69,5 +69,10 @@ public class TransactionOutputImpl implements TransactionOutput
    {
       this.transaction=transaction;
    }
+
+   public String toString()
+   {
+      return "Out #"+index+": "+value+" units";
+   }
 }
 

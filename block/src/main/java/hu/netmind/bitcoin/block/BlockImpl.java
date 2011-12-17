@@ -311,5 +311,10 @@ public class BlockImpl implements Block
          logger.error("can not construct main genesis block, main network will not be usable",e);
       }
    }
+
+   public String toString()
+   {
+      return "Block (hash "+HexUtil.toHexString(hash)+") created at "+new Date(creationTime)+", transactions: "+transactions;
+   }
 }
 
