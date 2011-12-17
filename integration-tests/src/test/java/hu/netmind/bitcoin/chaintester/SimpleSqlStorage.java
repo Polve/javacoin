@@ -98,6 +98,28 @@ public class SimpleSqlStorage implements BlockChainLinkStorage
       }
    }
 
+   public void updateLink(BlockChainLink link)
+   {
+      logger.debug("updating link at depth: "+link.getHeight());
+      try
+      {
+         try
+         {
+            PreparedStatement pstmt = connection.prepareStatement(
+                  "update link set orphan = ?, height = ?, totaldifficulty = ? where hash = ?");
+            pstmt.setBoolean(1,link.isOrphan());
+            pstmt.setLong(2,link.getHeight());
+            pstmt.setObject(3,link.getTotalDifficulty().getDifficulty());
+            pstmt.setBytes(4,link.getBlock().getHash());
+            pstmt.executeUpdate();
+         } finally {
+            connection.commit();
+         }
+      } catch ( SQLException e ) {
+         throw new RuntimeException("error while adding link: "+link,e);
+      }
+   }
+
    public void addLink(BlockChainLink link)
    {
       logger.debug("inserting link at depth: "+link.getHeight());

@@ -53,6 +53,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Arrays;
 
 /**
  * This application downloads all th blocks available on the 
@@ -110,8 +111,8 @@ public class chaintester
       logger.info("initialized chain, last link height: "+storage.getLastLink().getHeight());
       // Initialize p2p node
       node = new Node();
-      node.setMinConnections(2);
-      node.setMaxConnections(10);
+      node.setMinConnections(1);
+      node.setMaxConnections(1);
       node.setAddressSource(new DNSFallbackNodesSource());
       node.addHandler(new DownloaderHandler());
    }
@@ -138,11 +139,9 @@ public class chaintester
    public class DownloaderHandler implements MessageHandler
    {
       private long knownHighestBlock = 0;
-      // Don't flood nodes with requests all the time, so control state
-      // with the following variables
-      private static final long REQUEST_INTERVAL = 20000; // Make at max 1 request per 20 sec
-      private long lastRequestTime = 0; // Last time getblocks was sent
-      private long lastRequestHeight = 0; // Last max height when request was sent
+      private byte[] highestHashKnownBeforeRequest = null;
+      private byte[] highestHashPromised = null;
+      private boolean downloading = false;
 
       public void onJoin(Connection conn)
          throws IOException
@@ -166,7 +165,7 @@ public class chaintester
       public void onMessage(Connection conn, Message message)
          throws IOException
       {
-         logger.debug("incoming ("+conn.getRemoteAddress()+"): "+message);
+         logger.debug("incoming ("+conn.getRemoteAddress()+"): "+message.getClass());
          if ( message instanceof VersionMessage )
          {
             VersionMessage version = (VersionMessage) message;
@@ -180,10 +179,11 @@ public class chaintester
          }
          if ( message instanceof InvMessage )
          {
+            InvMessage invMessage = (InvMessage) message;
             // Received inv message, request the data for all blocks,
             // drop transactions (we don't care)
             List<InventoryItem> items = new LinkedList<InventoryItem>(
-                  ((InvMessage) message).getInventoryItems());
+                  invMessage.getInventoryItems());
             Iterator<InventoryItem> itemIterator = items.iterator();
             while ( itemIterator.hasNext() )
             {
@@ -191,6 +191,9 @@ public class chaintester
                if ( item.getType() != InventoryItem.TYPE_BLOCK )
                   itemIterator.remove();
             }
+            // Determine the last promised block, so we know later when we're finished
+            if ( highestHashPromised == null )
+               highestHashPromised = invMessage.getInventoryItems().get(invMessage.getInventoryItems().size()-1).getHash();
             // Do the request for all blocks remaining
             if ( ! items.isEmpty() )
                conn.send(new GetDataMessage(Message.MAGIC_MAIN,items));
@@ -233,27 +236,32 @@ public class chaintester
                chain.addBlock(block);
                long stopTime = System.currentTimeMillis();
                logger.debug("added block in "+(stopTime-startTime)+" ms");
+               // Check whether we are finished with the download
+               if ( Arrays.equals(highestHashPromised,block.getHash()) )
+               {
+                  logger.debug("download finished for batch...");
+                  // Download stops
+                  downloading = false;
+                  highestHashPromised = null;
+                  highestHashKnownBeforeRequest = null;
+               }
             } catch ( BitCoinException e ) {
                logger.warn("block could not be added",e);
             }
          }
          // This is a logic to download all blocks. It is driven by event received
          // from other blocks (it could actually run in a separate thread)
-         long currentTime = System.currentTimeMillis();
-         if ( currentTime>REQUEST_INTERVAL+lastRequestTime )
+         if ( ! downloading )
          {
             BlockChainLink link = storage.getLastLink();
-            if ( link.getHeight() < lastRequestHeight )
-               return; // Height changed, so download may be still in progress
             if ( knownHighestBlock <= link.getHeight() )
                return; // As far as we know we know everything, so no need to send anything
-            // Set indicators
-            lastRequestTime = currentTime;
-            lastRequestHeight = link.getHeight();
+            highestHashKnownBeforeRequest = link.getBlock().getHash();
+            downloading = true;
             // Send the request
             logger.debug("sending getblocks, we are at "+link.getHeight()+", while known max is: "+knownHighestBlock);
             List<byte[]> startBlocks = new LinkedList<byte[]>();
-            startBlocks.add(link.getBlock().getHash());
+            startBlocks.add(highestHashKnownBeforeRequest);
             GetBlocksMessage getBlocks = new GetBlocksMessage(Message.MAGIC_MAIN,BC_PROTOCOL_VERSION,startBlocks,null);
             node.broadcast(getBlocks);
          }
