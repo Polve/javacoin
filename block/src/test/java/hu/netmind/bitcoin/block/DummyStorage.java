@@ -160,6 +160,11 @@ public class DummyStorage implements BlockChainLinkStorage
       newLinks.add(link);
    }
 
+   public void updateLink(BlockChainLink link)
+   {
+      addLink(link);
+   }
+
    public List<BlockChainLink> getNewLinks()
    {
       return newLinks;

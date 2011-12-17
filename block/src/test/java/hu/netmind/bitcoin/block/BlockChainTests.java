@@ -189,10 +189,10 @@ public class BlockChainTests
             "      out 2000000;",true);
    }
 
-   @Test(expectedExceptions = VerificationException.class)
    public void testAddExisting()
       throws BitCoinException
    {
+      // Block will be ignore, shouldn't throw exception
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
             "   tx 1234567 990101 true;"+ // Coinbase

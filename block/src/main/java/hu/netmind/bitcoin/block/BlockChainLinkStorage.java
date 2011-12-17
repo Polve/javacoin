@@ -75,5 +75,10 @@ public interface BlockChainLinkStorage
     * Save a link into the storage. If the link exists, it will be overwritten.
     */
    void addLink(BlockChainLink link);
+
+   /**
+    * Update an orphan block to make it non-orphan.
+    */
+   void updateLink(BlockChainLink link);
 }
 

@@ -148,12 +148,12 @@ public class BlockChainImpl extends Observable implements BlockChain
       logger.debug("validating block internally...");
       block.validate();
       // Check 2: Reject if duplicate of block we have in any of the three categories 
-      // Note: we don't have three categories, but we can check every block we have easily
+      // Note: we don't have three categories, so just do nothing, it is not an error
       if ( ! recheck )
       {
          logger.debug("checking whether block is already known...");
          if ( linkStorage.getLink(block.getHash()) != null )
-            throw new VerificationException("block ("+block+") was already present in storage");
+            return; // Do nothing, block is already there
       } else {
          logger.debug("block is an orphan block that needs rechecking...");
       }
@@ -254,10 +254,15 @@ public class BlockChainImpl extends Observable implements BlockChain
                   " (coinbase: "+coinbaseValid+", in: "+inValue+", out: "+outValue+")");
       }
       // Check 16.6: Relay block to our peers
-      // (Also: add the block first to storage, it's a valid block)
-      linkStorage.addLink(link);
-      if ( listener != null )
-         listener.notifyAddedBlock(block);
+      // (Also: add or update the link in storage, and only relay if it's really new)
+      if ( recheck )
+      {
+         linkStorage.updateLink(link);
+      } else {
+         linkStorage.addLink(link);
+         if ( listener != null )
+            listener.notifyAddedBlock(block);
+      }
       // Check 19: For each orphan block for which this block is its prev, 
       // run all these steps (including this one) recursively on that orphan 
       for ( BlockChainLink nextLink : linkStorage.getNextLinks(block.getHash()) )
