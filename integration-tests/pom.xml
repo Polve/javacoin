@@ -63,11 +63,12 @@
         <scope>test</scope>
      </dependency>
      <dependency>
-        <groupId>postgresql</groupId>
-        <artifactId>postgresql</artifactId>
-        <version>8.4-702.jdbc4</version>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <version>1.3.162</version>
         <scope>test</scope>
      </dependency>
+                 
   </dependencies>
 
 </project>

@@ -60,11 +60,11 @@ public class SimpleSqlStorage implements BlockChainLinkStorage
       try
       {
          // Initialize the sql storage to the path given
-         connection = DriverManager.getConnection("jdbc:postgresql://localhost/bitcoin","chaintester","");
+         connection = DriverManager.getConnection("jdbc:h2:data/bitcoin");
          connection.setAutoCommit(false);
          logger.debug("get connection to database: "+connection.getMetaData().getDatabaseProductName());
          // Create the schema if not already present
-         ResultSet tables = connection.getMetaData().getTables(null,null,"link",new String[] {"TABLE"});
+         ResultSet tables = connection.getMetaData().getTables(null,null,"LINK",new String[] {"TABLE"});
          if ( ! tables.next() )
          {
             logger.debug("schema doesn't exists yet in database, creating...");
