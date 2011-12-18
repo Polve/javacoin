@@ -191,12 +191,14 @@ public class chaintester
                if ( item.getType() != InventoryItem.TYPE_BLOCK )
                   itemIterator.remove();
             }
-            // Determine the last promised block, so we know later when we're finished
-            if ( highestHashPromised == null )
-               highestHashPromised = invMessage.getInventoryItems().get(invMessage.getInventoryItems().size()-1).getHash();
             // Do the request for all blocks remaining
             if ( ! items.isEmpty() )
+            {
+               // Determine the last promised block, so we know later when we're finished
+               if ( highestHashPromised == null )
+                  highestHashPromised = invMessage.getInventoryItems().get(invMessage.getInventoryItems().size()-1).getHash();
                conn.send(new GetDataMessage(Message.MAGIC_MAIN,items));
+            }
          }
          if ( message instanceof BlockMessage )
          {
@@ -231,12 +233,7 @@ public class chaintester
                BlockImpl block = new BlockImpl(txs,blockMessage.getHeader().getTimestamp(),
                      blockMessage.getHeader().getNonce(), blockMessage.getHeader().getDifficulty(),
                      blockMessage.getHeader().getPrevBlock(),blockMessage.getHeader().getRootHash());
-               // Now add to chain
-               long startTime = System.currentTimeMillis();
-               chain.addBlock(block);
-               long stopTime = System.currentTimeMillis();
-               logger.debug("added block in "+(stopTime-startTime)+" ms");
-               // Check whether we are finished with the download
+               // Check whether we are finished with the download, even before trying to add
                if ( Arrays.equals(highestHashPromised,block.getHash()) )
                {
                   logger.debug("download finished for batch...");
@@ -245,6 +242,11 @@ public class chaintester
                   highestHashPromised = null;
                   highestHashKnownBeforeRequest = null;
                }
+               // Now add to chain
+               long startTime = System.currentTimeMillis();
+               chain.addBlock(block);
+               long stopTime = System.currentTimeMillis();
+               logger.debug("added block in "+(stopTime-startTime)+" ms");
             } catch ( BitCoinException e ) {
                logger.warn("block could not be added",e);
             }
