@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Arrays;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.DatabaseMetaData;
@@ -54,13 +55,17 @@ public class SimpleSqlStorage implements BlockChainLinkStorage
    private Connection connection = null;
    private ScriptFactoryImpl scriptFactory = null;
 
+   private BlockChainLink lastAddedLink = null;
+   private long lastAddedLinkLeftMarker = 0;
+   private long lastAddedLinkRightMarker = 0;
+
    public SimpleSqlStorage(ScriptFactoryImpl scriptFactory)
    {
       this.scriptFactory=scriptFactory;
       try
       {
          // Initialize the sql storage to the path given
-         connection = DriverManager.getConnection("jdbc:h2:data/bitcoin");
+         connection = DriverManager.getConnection("jdbc:h2:data/bitcoin;CACHE_SIZE=500000");
          connection.setAutoCommit(false);
          logger.debug("get connection to database: "+connection.getMetaData().getDatabaseProductName());
          // Create the schema if not already present
@@ -101,6 +106,7 @@ public class SimpleSqlStorage implements BlockChainLinkStorage
    public void updateLink(BlockChainLink link)
    {
       logger.debug("updating link at depth: "+link.getHeight());
+      lastAddedLink = null; // May be a child of an inserted link
       try
       {
          try
@@ -127,42 +133,55 @@ public class SimpleSqlStorage implements BlockChainLinkStorage
       {
          PreparedStatement pstmt = null;
          ResultSet rs = null;
+         long left = 0;
+         long right = 0;
          try
          {
-            // First calculate where in the hierarchy this node should go
-            pstmt = connection.prepareStatement(
-                  "select leftmarker, rightmarker from link where hash = ?");
-            pstmt.setBytes(1,link.getBlock().getPreviousBlockHash());
-            rs = pstmt.executeQuery();
-            long left = 0;
-            long right = 0;
-            if ( rs.next() )
+            // First calculate where in the hierarchy this node should go. If
+            // the parent is the previously newly inserted link, then use that information,
+            // otherwise find out.
+            if ( (lastAddedLink!=null) && (Arrays.equals(lastAddedLink.getBlock().getHash(),
+                        link.getBlock().getPreviousBlockHash())) )
             {
-               // We found the previous link
-               left = rs.getLong(1);
-               right = rs.getLong(2);
-               // Let's see what is still free
-               rs.close();
-               pstmt.close();
+               left = lastAddedLinkLeftMarker;
+               right = lastAddedLinkRightMarker;
+            } else {
                pstmt = connection.prepareStatement(
-                     "select max(rightmarker) from link where previoushash = ?");
+                     "select leftmarker, rightmarker from link where hash = ?");
                pstmt.setBytes(1,link.getBlock().getPreviousBlockHash());
                rs = pstmt.executeQuery();
                if ( rs.next() )
-                  if ( rs.getLong(1) > left )
-                     left = rs.getLong(1);
+               {
+                  // We found the previous link
+                  left = rs.getLong(1);
+                  right = rs.getLong(2);
+                  // Let's see what is still free
+                  rs.close();
+                  pstmt.close();
+                  pstmt = connection.prepareStatement(
+                        "select max(rightmarker) from link where previoushash = ?");
+                  pstmt.setBytes(1,link.getBlock().getPreviousBlockHash());
+                  rs = pstmt.executeQuery();
+                  if ( rs.next() )
+                     if ( rs.getLong(1) > left )
+                        left = rs.getLong(1);
+               }
+               rs.close();
+               pstmt.close();
+            }
+            if ( (left>0) && (right>0) )
+            {
                // Now advance
                left++;
                right--;
                // If we don't have enough space left, extend
                if ( left >= right )
                {
-                  rs.close();
-                  pstmt.close();
                   pstmt = connection.prepareStatement(
                         "update link set rightmarker = rightmarker+1000 where rightmarker > ?");
                   pstmt.setLong(1,right);
                   pstmt.executeUpdate();
+                  pstmt.close();
                   right += 1000;
                }
             } else {
@@ -179,8 +198,6 @@ public class SimpleSqlStorage implements BlockChainLinkStorage
                   right = 1000;
                }
             }
-            rs.close();
-            pstmt.close();
             logger.debug("calculated link hierarchy position as ("+left+","+right+")");
             // First add the link so it can be referenced
             pstmt = connection.prepareStatement(
@@ -247,8 +264,10 @@ public class SimpleSqlStorage implements BlockChainLinkStorage
             }
          } finally {
             connection.commit();
-            pstmt.close();
-            rs.close();
+            // Remember link if successful add
+            lastAddedLink = link;
+            lastAddedLinkLeftMarker = left;
+            lastAddedLinkRightMarker = right;
          }
       } catch ( SQLException e ) {
          throw new RuntimeException("error while adding link: "+link,e);
