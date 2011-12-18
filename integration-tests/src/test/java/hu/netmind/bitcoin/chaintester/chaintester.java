@@ -103,7 +103,7 @@ public class chaintester
    {
       // Initialize the chain
       scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
-      storage = new SimpleSqlStorage(scriptFactory,"data");
+      storage = new SimpleSqlStorage(scriptFactory);
       chain = new BlockChainImpl(BlockImpl.MAIN_GENESIS,
             storage,scriptFactory,false);
       // Introduce a small check here that we can read back the genesis block correctly

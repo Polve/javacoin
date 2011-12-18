@@ -54,39 +54,39 @@ public class SimpleSqlStorage implements BlockChainLinkStorage
    private Connection connection = null;
    private ScriptFactoryImpl scriptFactory = null;
 
-   public SimpleSqlStorage(ScriptFactoryImpl scriptFactory, String path)
+   public SimpleSqlStorage(ScriptFactoryImpl scriptFactory)
    {
       this.scriptFactory=scriptFactory;
       try
       {
          // Initialize the sql storage to the path given
-         connection = DriverManager.getConnection("jdbc:hsqldb:file:"+path+"/bitcoin", "SA", "");
+         connection = DriverManager.getConnection("jdbc:postgresql://localhost/bitcoin","chaintester","");
          connection.setAutoCommit(false);
          logger.debug("get connection to database: "+connection.getMetaData().getDatabaseProductName());
          // Create the schema if not already present
-         ResultSet tables = connection.getMetaData().getTables(null,null,"LINK",new String[] {"TABLE"});
+         ResultSet tables = connection.getMetaData().getTables(null,null,"link",new String[] {"TABLE"});
          if ( ! tables.next() )
          {
             logger.debug("schema doesn't exists yet in database, creating...");
             connection.prepareStatement(
-                  "create table link ( hash binary(32) not null, creationtime bigint, "+
-                  "nonce bigint, compressedtarget bigint, previoushash binary(32), "+
-                  "merkleroot binary(32), orphan boolean, height bigint, "+
+                  "create table link ( hash bytea not null, creationtime bigint, "+
+                  "nonce bigint, compressedtarget bigint, previoushash bytea, "+
+                  "merkleroot bytea, orphan boolean, height bigint, "+
                   "totaldifficulty numeric(80,0), "+
                   "leftmarker bigint, rightmarker bigint, "+ // Stores structure (tree)
                   "primary key ( hash ))").executeUpdate();
             connection.prepareStatement(
-                  "create table tx ( hash binary(32) not null, linkhash binary(32), index integer, locktime bigint, "+
+                  "create table tx ( hash bytea not null, linkhash bytea, index integer, locktime bigint, "+
                   "primary key ( linkhash, hash ), "+
                   "foreign key ( linkhash ) references link ( hash ) )").executeUpdate();
             connection.prepareStatement(
-                  "create table txout ( linkhash binary(32) not null, txhash binary(32) not null, index integer not null, value bigint not null, script varbinary(1024), "+
+                  "create table txout ( linkhash bytea not null, txhash bytea not null, index integer not null, value bigint not null, script bytea, "+
                   "primary key ( txhash, index ), "+
                   "foreign key ( linkhash, txhash ) references tx ( linkhash, hash ), "+
                   "foreign key ( linkhash ) references link ( hash ) )").executeUpdate();
             connection.prepareStatement(
-                  "create table txin ( linkhash binary(32), txhash binary(32) not null, index integer not null, claimedhash binary(32), "+
-                  "claimedindex integer, script varbinary(1024), sequence bigint, "+
+                  "create table txin ( linkhash bytea, txhash bytea not null, index integer not null, claimedhash bytea, "+
+                  "claimedindex integer, script bytea, sequence bigint, "+
                   "primary key ( txhash, index ), "+
                   "foreign key ( linkhash, txhash ) references tx ( linkhash, hash ), "+
                   "foreign key ( linkhash ) references link ( hash ) )").executeUpdate();
