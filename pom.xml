@@ -16,6 +16,7 @@
     <module>keyfactory-ecc</module>
     <module>script</module>
     <module>block</module>
+    <module>bdb-link-storage</module>
     <module>bcwallet</module>
     <module>integration-tests</module>
   </modules>
