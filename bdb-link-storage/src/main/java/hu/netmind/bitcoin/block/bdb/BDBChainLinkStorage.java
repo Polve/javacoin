@@ -95,7 +95,10 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       EnvironmentConfig environmentConfig = new EnvironmentConfig();
       environmentConfig.setAllowCreate(autoCreate);
       environmentConfig.setTransactional(transactional);
-      environment = new Environment(new File(dbPath), environmentConfig);
+      File dbFile = new File(dbPath);
+      if ( autoCreate )
+         dbFile.mkdirs();
+      environment = new Environment(dbFile, environmentConfig);
       runner = new TransactionRunner(environment);
    }
 
