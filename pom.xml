@@ -10,15 +10,15 @@
   <description>The parent module for all BitCoin related modules.</description>
 
   <modules>
-    <module>api</module>
-    <module>wallet</module>
-    <module>node-p2p</module>
-    <module>keyfactory-ecc</module>
-    <module>script</module>
-    <module>block</module>
+    <module>core/api</module>
+    <module>core/wallet</module>
+    <module>core/node-p2p</module>
+    <module>core/keyfactory-ecc</module>
+    <module>core/script</module>
+    <module>core/block</module>
+    <module>core/integration-tests</module>
     <module>bdb-link-storage</module>
-    <module>bcwallet</module>
-    <module>integration-tests</module>
+    <module>android/bcwallet</module>
   </modules>
 
   <!-- Project meta-data -->
