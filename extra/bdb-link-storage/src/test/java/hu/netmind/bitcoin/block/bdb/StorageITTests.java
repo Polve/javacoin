@@ -32,8 +32,6 @@ import java.io.File;
 @Test
 public class StorageITTests
 {
-   BDBChainLinkStorage storage = null;
-
    private StorageProvider<BDBChainLinkStorage> createProvider()
    {
       return new StorageProvider<BDBChainLinkStorage>() {
