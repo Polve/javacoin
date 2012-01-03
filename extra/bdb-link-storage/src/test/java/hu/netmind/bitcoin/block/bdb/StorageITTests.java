@@ -18,15 +18,11 @@
 
 package hu.netmind.bitcoin.block.bdb;
 
-import hu.netmind.bitcoin.block.BlockImpl;
-import hu.netmind.bitcoin.block.Difficulty;
-import hu.netmind.bitcoin.block.BlockChainLink;
+import hu.netmind.bitcoin.block.TestSuiteFactory;
+import hu.netmind.bitcoin.block.StorageProvider;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
-import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.BitCoinException;
 import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Factory;
 import org.testng.Assert;
 import java.io.File;
 
@@ -38,47 +34,41 @@ public class StorageITTests
 {
    BDBChainLinkStorage storage = null;
 
-   @BeforeMethod
-   protected void setupStorage()
+   private StorageProvider<BDBChainLinkStorage> createProvider()
    {
-      File dbFile = new File("target/bitcoin-db");
-      if ( dbFile.isDirectory() )
-      {
-         File[] files = dbFile.listFiles();
-         for ( File file : files )
-            file.delete();
-      }
-      storage = new BDBChainLinkStorage(new ScriptFactoryImpl(null));
-      storage.setDbPath("target/bitcoin-db");
-      storage.init();
+      return new StorageProvider<BDBChainLinkStorage>() {
+         public BDBChainLinkStorage newStorage()
+         {
+            BDBChainLinkStorage storage = new BDBChainLinkStorage(new ScriptFactoryImpl(null));
+            storage.setDbPath("target/bitcoin-db");
+            storage.init();
+            return storage;
+         }
+
+         public void closeStorage(BDBChainLinkStorage storage)
+         {
+            if ( storage != null )
+               storage.close();
+         }
+
+         public void cleanStorage()
+         {
+            File dbFile = new File("target/bitcoin-db");
+            if ( dbFile.isDirectory() )
+            {
+               File[] files = dbFile.listFiles();
+               for ( File file : files )
+                  file.delete();
+            }
+         }
+      };
    }
 
-   @AfterMethod
-   protected void closeStorage()
+   @Factory
+   public Object[] createTestSuite()
    {
-      if ( storage != null )
-         storage.close();
+      return TestSuiteFactory.getTestSuite(createProvider());
    }
 
-   public void testGenesisStoreRecall()
-      throws BitCoinException
-   {
-      // Store
-      BlockChainLink genesisLink = new BlockChainLink(BlockImpl.MAIN_GENESIS,
-            new Difficulty(),1,false);
-      storage.addLink(genesisLink);
-      // Recall
-      BlockChainLink readLink = storage.getLink(BlockImpl.MAIN_GENESIS.getHash());
-      // Check link data
-      Assert.assertEquals(readLink.getHeight(),1);
-      Assert.assertFalse(readLink.isOrphan());
-      // Check block integrity
-      Block readBlock = readLink.getBlock();
-      readBlock.validate();
-      BlockImpl copy = new BlockImpl(readBlock.getTransactions(),
-            readBlock.getCreationTime(),readBlock.getNonce(),readBlock.getCompressedTarget(),
-            readBlock.getPreviousBlockHash(),readBlock.getMerkleRoot());
-      copy.validate();
-   }
 }
 
