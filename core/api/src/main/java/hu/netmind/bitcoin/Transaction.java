@@ -19,6 +19,7 @@
 package hu.netmind.bitcoin;
 
 import java.util.List;
+import java.io.Serializable;
 
 /**
  * A Transaction represents a transfer of BitCoin money. There are
@@ -40,7 +41,7 @@ import java.util.List;
  * actually the sender itself (this is called the "change").
  * @author Robert Brautigam
  */
-public interface Transaction
+public interface Transaction extends Serializable
 {
    /**
     * Get the all the transaction input specifications. These are the sources

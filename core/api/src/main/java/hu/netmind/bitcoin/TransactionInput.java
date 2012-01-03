@@ -18,6 +18,8 @@
 
 package hu.netmind.bitcoin;
 
+import java.io.Serializable;
+
 /**
  * A single input definition for a transaction. An input references exactly
  * one output of a previous transaction (in another Block usually), and provides
@@ -25,7 +27,7 @@ package hu.netmind.bitcoin;
  * that output is legitimate.
  * @author Robert Brautigam
  */
-public interface TransactionInput
+public interface TransactionInput extends Serializable
 {
    enum SignatureHashType
    {

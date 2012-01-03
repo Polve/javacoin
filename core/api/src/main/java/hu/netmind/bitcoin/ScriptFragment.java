@@ -18,12 +18,14 @@
 
 package hu.netmind.bitcoin;
 
+import java.io.Serializable;
+
 /**
  * A fragment of a script. A fragment alone can not be executed, it has to
  * be completed by other fragments.
  * @author Robert Brautigam
  */
-public interface ScriptFragment
+public interface ScriptFragment extends Serializable
 {
    /**
     * Get the "subscript" from this fragment of script. A subscript is needed

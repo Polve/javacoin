@@ -19,6 +19,7 @@
 package hu.netmind.bitcoin;
 
 import java.util.List;
+import java.io.Serializable;
 
 /**
  * A Block is an already accepted collection of transactions in the
@@ -39,7 +40,7 @@ import java.util.List;
  * </ul>
  * @author Robert Brautigam
  */
-public interface Block
+public interface Block extends Serializable
 {
    /**
     * Get the creation time in millis.

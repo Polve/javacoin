@@ -18,13 +18,15 @@
 
 package hu.netmind.bitcoin;
 
+import java.io.Serializable;
+
 /**
  * A single output of one transaction. The output does not directly refer
  * to a target address, but contains a script which decided how the funds
  * from the transaction may be used.
  * @author Robert Brautigam
  */
-public interface TransactionOutput
+public interface TransactionOutput extends Serializable
 {
    /**
     * Get the transaction this output is a part of.
