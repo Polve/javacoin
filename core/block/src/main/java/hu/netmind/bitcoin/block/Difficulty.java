@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.Serializable;
 
 /**
  * This object holds the difficulty value for a block, or the
@@ -41,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * </ul>
  * @author Robert Brautigam
  */
-public class Difficulty implements Comparable<Difficulty>
+public class Difficulty implements Comparable<Difficulty>, Serializable
 {
    private static Logger logger = LoggerFactory.getLogger(Difficulty.class);
    public static final Difficulty MIN_VALUE = new Difficulty(DifficultyTarget.MAX_TARGET);

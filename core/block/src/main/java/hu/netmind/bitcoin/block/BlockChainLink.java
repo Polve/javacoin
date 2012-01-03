@@ -19,6 +19,7 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Block;
+import java.io.Serializable;
 
 /**
  * One link in a block chain. The representation of a link
@@ -29,7 +30,7 @@ import hu.netmind.bitcoin.Block;
  * are allowed.
  * @author Robert Brautigam
  */
-public class BlockChainLink
+public class BlockChainLink implements Serializable
 {
    private Block block;
    private boolean orphan;
