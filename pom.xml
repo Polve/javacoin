@@ -79,6 +79,18 @@
             </execution>
          </executions>
       </plugin>
+      <plugin>
+         <groupId>com.googlecode.maven-overview-plugin</groupId>
+         <artifactId>maven-overview-plugin</artifactId>
+         <version>1.6</version>
+         <configuration>
+            <includes>hu.netmind.bitcoin</includes>
+            <scopes>
+               <scope>compile</scope>
+               <scope>runtime</scope>
+            </scopes>
+         </configuration>
+      </plugin>
     </plugins>
   </build>
 
