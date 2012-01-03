@@ -23,7 +23,7 @@ import hu.netmind.bitcoin.BitCoinException;
 import org.testng.annotations.Test;
 import org.easymock.EasyMock;
 import org.testng.Assert;
-import hu.netmind.bitcoin.node.p2p.HexUtil;
+import hu.netmind.bitcoin.net.HexUtil;
 import java.util.List;
 import java.util.ArrayList;
 

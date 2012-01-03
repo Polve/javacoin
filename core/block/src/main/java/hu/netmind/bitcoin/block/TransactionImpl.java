@@ -36,12 +36,12 @@ import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.ScriptException;
-import hu.netmind.bitcoin.node.p2p.TxIn;
-import hu.netmind.bitcoin.node.p2p.TxOut;
-import hu.netmind.bitcoin.node.p2p.Tx;
-import hu.netmind.bitcoin.node.p2p.BitCoinOutputStream;
-import hu.netmind.bitcoin.node.p2p.HexUtil;
-import hu.netmind.bitcoin.node.p2p.ArraysUtil;
+import hu.netmind.bitcoin.net.TxIn;
+import hu.netmind.bitcoin.net.TxOut;
+import hu.netmind.bitcoin.net.Tx;
+import hu.netmind.bitcoin.net.BitCoinOutputStream;
+import hu.netmind.bitcoin.net.HexUtil;
+import hu.netmind.bitcoin.net.ArraysUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

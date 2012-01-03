@@ -29,7 +29,7 @@
   <dependencies>
      <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
-        <artifactId>bitcoin-node-p2p</artifactId>
+        <artifactId>bitcoin-net-p2p</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <type>jar</type>
         <scope>test</scope>

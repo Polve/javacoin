@@ -20,7 +20,7 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.node.p2p.ArraysUtil;
+import hu.netmind.bitcoin.net.ArraysUtil;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.LinkedList;

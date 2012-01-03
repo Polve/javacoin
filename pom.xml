@@ -12,7 +12,8 @@
   <modules>
     <module>core/api</module>
     <module>core/wallet</module>
-    <module>core/node-p2p</module>
+    <module>core/net</module>
+    <module>core/net-p2p</module>
     <module>core/keyfactory-ecc</module>
     <module>core/script</module>
     <module>core/block</module>
