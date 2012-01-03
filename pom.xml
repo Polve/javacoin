@@ -17,7 +17,7 @@
     <module>core/script</module>
     <module>core/block</module>
     <module>core/integration-tests</module>
-    <module>bdb-link-storage</module>
+    <module>extra/bdb-link-storage</module>
     <module>android/bcwallet</module>
   </modules>
 
