@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -32,6 +33,8 @@ import java.io.FileOutputStream;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.Block;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This storage simply keeps a map of links and serializes this map to
@@ -41,7 +44,8 @@ import hu.netmind.bitcoin.Block;
  */
 public class SimpleSerializingStorage implements BlockChainLinkStorage
 {
-   private Map<byte[], BlockChainLink> links = new HashMap<byte[], BlockChainLink>();
+   private static Logger logger = LoggerFactory.getLogger(SimpleSerializingStorage.class);
+   private Map<List<Byte>, BlockChainLink> links = new HashMap<List<Byte>, BlockChainLink>();
    private String dbFileName = null;
 
    public void init(String dbFileName)
@@ -53,8 +57,9 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
          {
             // File is there, so read it
             ObjectInputStream objectInput = new ObjectInputStream(new FileInputStream(dbFileName));
-            links = (Map<byte[],BlockChainLink>) objectInput.readObject();
+            links = (Map<List<Byte>,BlockChainLink>) objectInput.readObject();
             objectInput.close();
+            logger.debug("initialized storage with "+links.size()+" links from disk: "+links);
          }
       } catch ( Exception e ) {
          throw new RuntimeException("error while reading serialized db",e);
@@ -68,6 +73,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
          ObjectOutputStream objectOutput = new ObjectOutputStream(new FileOutputStream(dbFileName));
          objectOutput.writeObject(links);
          objectOutput.close();
+         logger.debug("written storage with "+links.size()+" links to disk: "+links);
       } catch ( Exception e ) {
          throw new RuntimeException("error while writing serialized db",e);
       }
@@ -92,7 +98,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
 
    public BlockChainLink getLink(byte[] hash)
    {
-      return links.get(hash);
+      return links.get(toByteList(hash));
    }
 
    public List<BlockChainLink> getNextLinks(byte[] hash)
@@ -132,12 +138,20 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
 
    public void addLink(BlockChainLink link)
    {
-      links.put(link.getBlock().getHash(),link);
+      links.put(toByteList(link.getBlock().getHash()),link);
    }
 
    public void updateLink(BlockChainLink link)
    {
       addLink(link);
+   }
+
+   private List<Byte> toByteList(byte[] hash)
+   {
+      List<Byte> byteList = new ArrayList<Byte>(hash.length);
+      for ( byte v : hash )
+         byteList.add(v);
+      return byteList;
    }
 }
 

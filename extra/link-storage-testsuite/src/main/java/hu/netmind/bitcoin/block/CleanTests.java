@@ -154,5 +154,61 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       Assert.assertEquals(readLink.getBlock().getHash(),link.getBlock().getHash());
       validateBlock(readLink.getBlock());
    }
+
+   public void testComplicatedBlockStoreRecallWithRestart()
+      throws BitCoinException
+   {
+      List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
+      List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
+      List<Transaction> txs = new LinkedList<Transaction>();
+      inputs.add(new TransactionInputImpl(new byte[] {
+               0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
+               16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },1,
+               scriptFactory.createFragment(new byte[] { 0,1,2,3,4,5,6,7 }),44l));
+      inputs.add(new TransactionInputImpl(new byte[] {
+               1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
+               16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },2,
+               scriptFactory.createFragment(new byte[] { 2,1,2,3,4,5,6,7 }),45l));
+      inputs.add(new TransactionInputImpl(new byte[] {
+               3,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
+               16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },5,
+               scriptFactory.createFragment(new byte[] { -1,1,2,3,4,5,6,7 }),46l));
+      outputs.add(new TransactionOutputImpl(100000,scriptFactory.createFragment(
+                  new byte[] { 10,11,12,13,14,15 })));
+      outputs.add(new TransactionOutputImpl(100001,scriptFactory.createFragment(
+                  new byte[] { 10,11,12,13,14,15 })));
+      txs.add(new TransactionImpl(inputs,outputs,1));
+      inputs = new LinkedList<TransactionInputImpl>();
+      inputs.add(new TransactionInputImpl(new byte[] {
+               0,6,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
+               16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },1,
+               scriptFactory.createFragment(new byte[] { 0,1,2,3,6,5,6,7 }),47l));
+      inputs.add(new TransactionInputImpl(new byte[] {
+               1,1,7,3,4,5,6,7,8,9,10,11,12,13,14,15,
+               16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },2,
+               scriptFactory.createFragment(new byte[] { 2,1,2,3,22,5,6,7 }),48l));
+      outputs = new LinkedList<TransactionOutputImpl>();
+      outputs.add(new TransactionOutputImpl(100002,scriptFactory.createFragment(
+                  new byte[] { 10,11,12,13,14,17 })));
+      txs.add(new TransactionImpl(inputs,outputs,2));
+      BlockImpl block = new BlockImpl(txs,123456,654321,0x1b0404cbl, new byte[] {
+               11,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
+               16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 }, new byte[] {
+               111,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
+               16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 });
+      BlockChainLink link = new BlockChainLink(block,new Difficulty(),1,false);
+      // Store -> Restart -> Recall
+      storage.addLink(link);
+      getProvider().closeStorage(storage);
+      storage = getProvider().newStorage();
+      BlockChainLink readLink = storage.getLink(link.getBlock().getHash());
+      // Check link data
+      Assert.assertNotNull(readLink,"link not found in storage after restart");
+      Assert.assertEquals(readLink.getHeight(),1);
+      Assert.assertFalse(readLink.isOrphan());
+      // Check block integrity
+      Assert.assertEquals(readLink.getBlock().getHash(),link.getBlock().getHash());
+      validateBlock(readLink.getBlock());
+   }
 }
 
