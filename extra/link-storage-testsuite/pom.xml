@@ -28,6 +28,12 @@
         <type>jar</type>
      </dependency>
      <dependency>
+        <groupId>hu.netmind.bitcoin</groupId>
+        <artifactId>bitcoin-script</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <type>jar</type>
+     </dependency>
+     <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
         <version>5.10</version>
