@@ -91,7 +91,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
    {
       BlockChainLink last = null;
       for ( BlockChainLink link : links.values() )
-         if ( (last==null) || (link.getTotalDifficulty().compareTo(last.getTotalDifficulty())>0) )
+         if ( (!link.isOrphan()) && ((last==null) || (!link.isOrphan()) && (link.getTotalDifficulty().compareTo(last.getTotalDifficulty())>0)) )
             last = link;
       return last;
    }

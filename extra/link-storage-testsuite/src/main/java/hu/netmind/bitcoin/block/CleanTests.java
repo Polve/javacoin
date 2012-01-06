@@ -36,6 +36,7 @@ import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import java.util.List;
 import java.util.LinkedList;
+import java.math.BigDecimal;
 
 /**
  * Tests requiring clean storage to run.
@@ -195,34 +196,103 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGenesisNormalBlocks()
       throws BitCoinException
    {
-      addLink(23,0,0,new Difficulty(),false);
-      addLink(24,23,1,new Difficulty(),false);
-      addLink(25,24,2,new Difficulty(),false);
-      addLink(26,25,3,new Difficulty(),false);
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
       assertHash(storage.getGenesisLink(),23);
    }
 
    public void testGenesisOrphanBlocks()
       throws BitCoinException
    {
-      addLink(24,0,0,new Difficulty(),true);
-      addLink(25,0,1,new Difficulty(),true);
-      addLink(26,0,2,new Difficulty(),true);
-      addLink(23,0,0,new Difficulty(),false);
+      addLink(24,0,0,1,true);
+      addLink(25,0,1,2,true);
+      addLink(26,0,2,3,true);
+      addLink(23,0,0,4,false);
       assertHash(storage.getGenesisLink(),23);
+   }
+
+   public void testLastLinkEmpty()
+      throws BitCoinException
+   {
+      Assert.assertNull(storage.getLastLink());      
+   }
+
+   public void testLastLinkConcept()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      assertHash(storage.getLastLink(),26);
+   }
+
+   public void testNoLastLinkFromOrphans()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,true);
+      addLink(24,23,1,2,true);
+      addLink(25,24,2,3,true);
+      addLink(26,25,3,4,true);
+      Assert.assertNull(storage.getLastLink());      
+   }
+
+   public void testLastLinkOnShorterBranch()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,10,false); // This is the most difficult
+
+      addLink(26,23,1,2,false);
+      addLink(27,26,2,3,false);
+      addLink(28,27,3,4,false);
+      addLink(29,28,4,5,false);
+
+      assertHash(storage.getLastLink(),25);
+   }
+
+   public void testLastLinkWithHigherDifficultyOrphan()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,26,4,5,true);
+      assertHash(storage.getLastLink(),26);
+   }
+
+   public void testLastLinkConpetingBranches()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+
+      addLink(26,23,1,2,false);
+      addLink(27,26,2,3,false);
+      addLink(28,27,3,4,false);
+      addLink(29,28,4,5,false);
+
+      assertHash(storage.getLastLink(),29);
    }
 
    /**
     * Add a link to the storage with any block data, only hash is given.
     */
-   private void addLink(int hash, int prevHash, long height, Difficulty totalDifficulty, boolean orphan)
+   private void addLink(int hash, int prevHash, long height, long totalDifficulty, boolean orphan)
       throws BitCoinException
    {
       BlockImpl block = new BlockImpl(new LinkedList<Transaction>(),11223344l,11223344l,0x1b0404cbl,
             new byte[] { (byte)prevHash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
             new byte[] { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
             new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
-      BlockChainLink link = new BlockChainLink(block,totalDifficulty,height,orphan);
+      BlockChainLink link = new BlockChainLink(block,new Difficulty(new BigDecimal(""+totalDifficulty)),height,orphan);
       storage.addLink(link);
    }
 
