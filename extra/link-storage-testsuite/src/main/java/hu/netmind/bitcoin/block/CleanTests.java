@@ -78,7 +78,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       validateBlock(readLink.getBlock());
    }
 
-   public void testComplicatedBlockStoreRecall()
+   public void testAllAttributesCorrectlyRecalled()
       throws BitCoinException
    {
       List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
@@ -131,7 +131,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       validateBlock(readLink.getBlock());
    }
 
-   public void testComplicatedBlockStoreRecallWithRestart()
+   public void testAllAttributesCorrectlyRecalledAfterRestart()
       throws BitCoinException
    {
       List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
@@ -282,6 +282,35 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       assertHash(storage.getLastLink(),29);
    }
 
+   public void testGetLinkConcept()
+      throws BitCoinException
+   {
+      for ( int i=0; i<5; i++ )
+         addLink(i+1,i,i+1,i+1,false);
+      for ( int i=0; i<5; i++ )
+         Assert.assertNotNull(getLink(i+1));
+   }
+
+   public void testGetLinkAfterRestart()
+      throws BitCoinException
+   {
+      for ( int i=0; i<5; i++ )
+         addLink(i+1,i,i+1,i+1,false);
+      getProvider().closeStorage(storage);
+      storage = getProvider().newStorage();
+      for ( int i=0; i<5; i++ )
+         Assert.assertNotNull(getLink(i+1));
+   }
+
+   public void testGetSomeOrphanLinks()
+      throws BitCoinException
+   {
+      for ( int i=0; i<5; i++ )
+         addLink(i+1,i,i+1,i+1,i%2==0);
+      for ( int i=0; i<5; i++ )
+         Assert.assertNotNull(getLink(i+1));
+   }
+
    /**
     * Add a link to the storage with any block data, only hash is given.
     */
@@ -294,6 +323,12 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
             new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
       BlockChainLink link = new BlockChainLink(block,new Difficulty(new BigDecimal(""+totalDifficulty)),height,orphan);
       storage.addLink(link);
+   }
+
+   private BlockChainLink getLink(int hash)
+   {
+      return storage.getLink(
+            new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
    }
 
    private void assertHash(BlockChainLink link, int hash)
