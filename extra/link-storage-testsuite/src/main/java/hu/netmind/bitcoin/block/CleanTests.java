@@ -484,6 +484,18 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(11,99)));
    }
 
+   public void testUpdateOrphanLink()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,true);
+      BlockChainLink link = getLink(23);
+      Assert.assertTrue(link.isOrphan());
+      link.clearOrphan();
+      storage.updateLink(link);
+      link = getLink(23);
+      Assert.assertFalse(link.isOrphan());
+   }
+
    private TransactionInputImpl createInput(int claimedTxHash, int claimedOutputIndex)
    {
       return new TransactionInputImpl(
