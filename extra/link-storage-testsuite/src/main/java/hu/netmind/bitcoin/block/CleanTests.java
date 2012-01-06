@@ -408,6 +408,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(26,24,2,3,false,11,-1);
       addLink(27,25,3,4,false);
       Assert.assertNull(storage.getClaimedLink(getLink(27),createInput(11,0)));
+      Assert.assertNotNull(storage.getClaimedLink(getLink(26),createInput(11,0)));
    }
 
    public void testGetClaimedLinkNotEnoughOutputs()
@@ -418,6 +419,69 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(25,24,2,3,false,11,-1);
       addLink(26,25,3,4,false);
       assertHash(storage.getClaimedLink(getLink(26),createInput(11,99)),25);
+   }
+
+   public void testGetClaimerLinkConcept()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false,11,1);
+      addLink(26,25,3,4,false);
+      assertHash(storage.getClaimerLink(getLink(26),createInput(11,1)),25);
+   }
+
+   public void testGetClaimerLinkIsLastInBranch()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false,11,1);
+      assertHash(storage.getClaimerLink(getLink(26),createInput(11,1)),26);
+   }
+
+   public void testGetClaimerLinkDoesNotExist()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(11,1)));
+   }
+
+   public void testGetClaimerLinkOnMultipleBranches()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false,11,1);
+      addLink(26,24,2,3,false,11,1);
+      addLink(27,25,3,4,false);
+      assertHash(storage.getClaimerLink(getLink(27),createInput(11,1)),25);
+   }
+
+   public void testGetClaimerLinkOnlyOnOtherBranch()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,24,2,3,false,11,1);
+      addLink(27,25,3,4,false);
+      Assert.assertNull(storage.getClaimerLink(getLink(27),createInput(11,1)));
+      Assert.assertNotNull(storage.getClaimerLink(getLink(26),createInput(11,1)));
+   }
+
+   public void testGetClaimerLinkDifferingOutputs()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false,11,1);
+      addLink(26,25,3,4,false);
+      Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(11,99)));
    }
 
    private TransactionInputImpl createInput(int claimedTxHash, int claimedOutputIndex)
