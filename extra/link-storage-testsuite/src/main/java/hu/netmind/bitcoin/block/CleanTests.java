@@ -311,6 +311,51 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
          Assert.assertNotNull(getLink(i+1));
    }
 
+   public void testGetNextLinksNonExistentHash()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      Assert.assertNotNull(getNextLinks(99));
+      Assert.assertTrue(getNextLinks(99).isEmpty());
+   }
+
+   public void testGetNextLinksConcept()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      Assert.assertEquals(getNextLinks(24).size(),1);
+      assertHash(getNextLinks(24).get(0),25);
+   }
+
+   public void testGetNextLinksMultipleBranches()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,24,2,3,false);
+      addLink(28,24,2,3,false);
+      Assert.assertEquals(getNextLinks(24).size(),3);
+   }
+
+   public void testGetNextLinkOrphan()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,true);
+      addLink(26,25,3,4,true);
+      Assert.assertEquals(getNextLinks(24).size(),1);
+      assertHash(getNextLinks(24).get(0),25);
+   }
+
    /**
     * Add a link to the storage with any block data, only hash is given.
     */
@@ -328,6 +373,12 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    private BlockChainLink getLink(int hash)
    {
       return storage.getLink(
+            new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
+   }
+
+   private List<BlockChainLink> getNextLinks(int hash)
+   {
+      return storage.getNextLinks(
             new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
    }
 
