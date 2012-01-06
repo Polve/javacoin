@@ -36,6 +36,7 @@ import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import java.util.List;
 import java.util.LinkedList;
+import java.util.Random;
 import java.math.BigDecimal;
 
 /**
@@ -47,6 +48,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 {
    private ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(null);
    private T storage = null;
+   private Random rnd = new Random();
 
    @BeforeMethod
    public void setupStorage()
@@ -356,18 +358,127 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       assertHash(getNextLinks(24).get(0),25);
    }
 
-   /**
-    * Add a link to the storage with any block data, only hash is given.
-    */
-   private void addLink(int hash, int prevHash, long height, long totalDifficulty, boolean orphan)
+   public void testGetClaimedLinkConcept()
       throws BitCoinException
    {
-      BlockImpl block = new BlockImpl(new LinkedList<Transaction>(),11223344l,11223344l,0x1b0404cbl,
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false,11,-1);
+      addLink(26,25,3,4,false);
+      assertHash(storage.getClaimedLink(getLink(26),createInput(11,0)),25);
+   }
+
+   public void testGetClaimedLinkIsLastInBranch()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false,11,-1);
+      assertHash(storage.getClaimedLink(getLink(26),createInput(11,0)),26);
+   }
+
+   public void testGetClaimedLinkDoesNotExist()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      Assert.assertNull(storage.getClaimedLink(getLink(26),createInput(11,0)));
+   }
+
+   public void testGetClaimedLinkOnMultipleBranches()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false,11,-1);
+      addLink(26,24,2,3,false,11,-1);
+      addLink(27,25,3,4,false);
+      assertHash(storage.getClaimedLink(getLink(27),createInput(11,0)),25);
+   }
+
+   public void testGetClaimedLinkOnlyOnOtherBranch()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,24,2,3,false,11,-1);
+      addLink(27,25,3,4,false);
+      Assert.assertNull(storage.getClaimedLink(getLink(27),createInput(11,0)));
+   }
+
+   public void testGetClaimedLinkNotEnoughOutputs()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false,11,-1);
+      addLink(26,25,3,4,false);
+      assertHash(storage.getClaimedLink(getLink(26),createInput(11,99)),25);
+   }
+
+   private TransactionInputImpl createInput(int claimedTxHash, int claimedOutputIndex)
+   {
+      return new TransactionInputImpl(
+            new byte[] { (byte)claimedTxHash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+            claimedOutputIndex, scriptFactory.createFragment(new byte[] {}), 0l);
+   }
+
+   /**
+    * Add a link to the storage with some block data filled. The claimed txhash and output index
+    * will be included in one of the many transactions randomly generated into the block.
+    */
+   private void addLink(int hash, int prevHash, long height, long totalDifficulty, boolean orphan,
+         int claimedTxHash, int claimedOutputIndex)
+      throws BitCoinException
+   {
+      // Generate random transactions (these are not even referentially valid)
+      List<Transaction> transactions = new LinkedList<Transaction>();
+      for ( int t=0; t<rnd.nextInt(5)+5; t++ )
+      {
+         List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
+         for ( int i=0; i<rnd.nextInt(3)+1; i++ )
+            inputs.add(new TransactionInputImpl(
+               new byte[] { (byte)rnd.nextInt(255),1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },0,
+               scriptFactory.createFragment(new byte[] {}),1));
+         List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
+         outputs.add(new TransactionOutputImpl(100,scriptFactory.createFragment(new byte[] {})));
+         transactions.add(new TransactionImpl(inputs,outputs,0));
+      }
+      // If a tx hash is supplied, add a transaction with that hash
+      if ( (claimedTxHash>0) && (claimedOutputIndex<0) )
+      {
+         transactions.add(new TransactionImpl(new LinkedList<TransactionInputImpl>(),
+                  new LinkedList<TransactionOutputImpl>(),0,
+            new byte[] { (byte)claimedTxHash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }));
+      }
+      // If a claimedtxhash and output index is supplied, then add an input which claims those
+      if ( (claimedTxHash>0) && (claimedOutputIndex>0) )
+      {
+         List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
+         inputs.add(new TransactionInputImpl(
+                  new byte[] { (byte)claimedTxHash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },claimedOutputIndex,
+                  scriptFactory.createFragment(new byte[] {}),1l));
+         List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
+         outputs.add(new TransactionOutputImpl(100,scriptFactory.createFragment(new byte[] {})));
+         transactions.add(new TransactionImpl(inputs,outputs,0));
+      }
+      // Create block
+      BlockImpl block = new BlockImpl(transactions,11223344l,11223344l,0x1b0404cbl,
             new byte[] { (byte)prevHash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
             new byte[] { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
             new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
       BlockChainLink link = new BlockChainLink(block,new Difficulty(new BigDecimal(""+totalDifficulty)),height,orphan);
       storage.addLink(link);
+   }
+
+   private void addLink(int hash, int prevHash, long height, long totalDifficulty, boolean orphan)
+      throws BitCoinException
+   {
+      addLink(hash,prevHash,height,totalDifficulty,orphan,0,0);
    }
 
    private BlockChainLink getLink(int hash)
