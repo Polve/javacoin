@@ -83,7 +83,7 @@ public interface BlockChainLinkStorage
    void addLink(BlockChainLink link);
 
    /**
-    * Update an orphan block to make it non-orphan.
+    * Update an orphan block to make it non-orphan. All other use-cases are undefined.
     */
    void updateLink(BlockChainLink link);
 }
