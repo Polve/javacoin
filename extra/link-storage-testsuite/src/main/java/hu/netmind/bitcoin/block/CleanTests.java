@@ -60,31 +60,6 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       getProvider().closeStorage(storage);
    }
 
-   /**
-    * This method validates that a block is consistent by re-generating all hashes.
-    */
-   private void validateBlock(Block block)
-      throws BitCoinException
-   {
-      // Copy
-      List<Transaction> transactions = new LinkedList<Transaction>();
-      for ( Transaction tx : block.getTransactions() )
-      {
-         List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
-         for ( TransactionInput txIn : tx.getInputs() )
-            inputs.add(new TransactionInputImpl(txIn.getClaimedTransactionHash(),
-                     txIn.getClaimedOutputIndex(),txIn.getSignatureScript(), txIn.getSequence()));
-         List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
-         for ( TransactionOutput txOut : tx.getOutputs() )
-            outputs.add(new TransactionOutputImpl(txOut.getValue(),txOut.getScript()));
-         transactions.add(new TransactionImpl(inputs,outputs,tx.getLockTime()));
-      }
-      BlockImpl copy = new BlockImpl(transactions,block.getCreationTime(),block.getNonce(),
-            block.getCompressedTarget(),block.getPreviousBlockHash(),block.getMerkleRoot());
-      // Validate that hashes (of all data) equal
-      Assert.assertEquals(copy.getHash(),block.getHash());
-   }
-
    public void testGenesisStoreRecall()
       throws BitCoinException
    {
@@ -210,5 +185,76 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       Assert.assertEquals(readLink.getBlock().getHash(),link.getBlock().getHash());
       validateBlock(readLink.getBlock());
    }
+
+   public void testGenesisEmpty()
+      throws BitCoinException
+   {
+      Assert.assertNull(storage.getGenesisLink());      
+   }
+
+   public void testGenesisNormalBlocks()
+      throws BitCoinException
+   {
+      addLink(23,0,0,new Difficulty(),false);
+      addLink(24,23,1,new Difficulty(),false);
+      addLink(25,24,2,new Difficulty(),false);
+      addLink(26,25,3,new Difficulty(),false);
+      assertHash(storage.getGenesisLink(),23);
+   }
+
+   public void testGenesisOrphanBlocks()
+      throws BitCoinException
+   {
+      addLink(24,0,0,new Difficulty(),true);
+      addLink(25,0,1,new Difficulty(),true);
+      addLink(26,0,2,new Difficulty(),true);
+      addLink(23,0,0,new Difficulty(),false);
+      assertHash(storage.getGenesisLink(),23);
+   }
+
+   /**
+    * Add a link to the storage with any block data, only hash is given.
+    */
+   private void addLink(int hash, int prevHash, long height, Difficulty totalDifficulty, boolean orphan)
+      throws BitCoinException
+   {
+      BlockImpl block = new BlockImpl(new LinkedList<Transaction>(),11223344l,11223344l,0x1b0404cbl,
+            new byte[] { (byte)prevHash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+            new byte[] { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+            new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
+      BlockChainLink link = new BlockChainLink(block,totalDifficulty,height,orphan);
+      storage.addLink(link);
+   }
+
+   private void assertHash(BlockChainLink link, int hash)
+   {
+      Assert.assertEquals(link.getBlock().getHash()[0],(byte)hash);
+   }
+
+   /**
+    * This method validates that a block is consistent by re-generating all hashes.
+    */
+   private void validateBlock(Block block)
+      throws BitCoinException
+   {
+      // Copy
+      List<Transaction> transactions = new LinkedList<Transaction>();
+      for ( Transaction tx : block.getTransactions() )
+      {
+         List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
+         for ( TransactionInput txIn : tx.getInputs() )
+            inputs.add(new TransactionInputImpl(txIn.getClaimedTransactionHash(),
+                     txIn.getClaimedOutputIndex(),txIn.getSignatureScript(), txIn.getSequence()));
+         List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
+         for ( TransactionOutput txOut : tx.getOutputs() )
+            outputs.add(new TransactionOutputImpl(txOut.getValue(),txOut.getScript()));
+         transactions.add(new TransactionImpl(inputs,outputs,tx.getLockTime()));
+      }
+      BlockImpl copy = new BlockImpl(transactions,block.getCreationTime(),block.getNonce(),
+            block.getCompressedTarget(),block.getPreviousBlockHash(),block.getMerkleRoot());
+      // Validate that hashes (of all data) equal
+      Assert.assertEquals(copy.getHash(),block.getHash());
+   }
+
 }
 
