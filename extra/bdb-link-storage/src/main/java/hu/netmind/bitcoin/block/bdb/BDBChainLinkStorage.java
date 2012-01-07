@@ -211,8 +211,8 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
                StoredLink link = difficultyLinks.get(difficultyLinks.firstKey());
                if ( link == null )
                   return null;
-               if ( link.getLink().getHeight() != 1 )
-                  throw new BDBStorageException("genesis link in database did not have height of 1");
+               if ( link.getLink().getHeight() != BlockChainLink.ROOT_HEIGHT )
+                  throw new BDBStorageException("genesis link in database did not have height of "+BlockChainLink.ROOT_HEIGHT);
                return link.getLink();
             }
          });
@@ -305,7 +305,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
             public void doWork()
             {
                StoredLink previousLink = getStoredLink(link.getBlock().getPreviousBlockHash());
-               if ( (previousLink==null) && (!link.isOrphan()) && (link.getHeight()!=1) )
+               if ( (previousLink==null) && (!link.isOrphan()) && (link.getHeight()!=BlockChainLink.ROOT_HEIGHT) )
                   throw new BDBStorageException("could not find previous link on add, but link added is not marked as orphan: "+link);
                Path path = new Path();
                if ( previousLink != null )

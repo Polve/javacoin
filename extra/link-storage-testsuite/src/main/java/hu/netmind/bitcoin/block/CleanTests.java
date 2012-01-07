@@ -68,12 +68,12 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    {
       // Store
       BlockChainLink genesisLink = new BlockChainLink(BlockImpl.MAIN_GENESIS,
-            new Difficulty(),1,false);
+            new Difficulty(),BlockChainLink.ROOT_HEIGHT,false);
       storage.addLink(genesisLink);
       // Recall
       BlockChainLink readLink = storage.getLink(BlockImpl.MAIN_GENESIS.getHash());
       // Check link data
-      Assert.assertEquals(readLink.getHeight(),1);
+      Assert.assertEquals(readLink.getHeight(),BlockChainLink.ROOT_HEIGHT);
       Assert.assertFalse(readLink.isOrphan());
       // Check block integrity
       Assert.assertEquals(readLink.getBlock().getHash(),BlockImpl.MAIN_GENESIS.getHash());
@@ -121,12 +121,12 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 }, new byte[] {
                111,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 });
-      BlockChainLink link = new BlockChainLink(block,new Difficulty(),1,false);
+      BlockChainLink link = new BlockChainLink(block,new Difficulty(),BlockChainLink.ROOT_HEIGHT,false);
       // Store & Recall
       storage.addLink(link);
       BlockChainLink readLink = storage.getLink(link.getBlock().getHash());
       // Check link data
-      Assert.assertEquals(readLink.getHeight(),1);
+      Assert.assertEquals(readLink.getHeight(),BlockChainLink.ROOT_HEIGHT);
       Assert.assertFalse(readLink.isOrphan());
       // Check block integrity
       Assert.assertEquals(readLink.getBlock().getHash(),link.getBlock().getHash());
@@ -174,7 +174,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 }, new byte[] {
                111,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 });
-      BlockChainLink link = new BlockChainLink(block,new Difficulty(),1,false);
+      BlockChainLink link = new BlockChainLink(block,new Difficulty(),BlockChainLink.ROOT_HEIGHT,false);
       // Store -> Restart -> Recall
       storage.addLink(link);
       getProvider().closeStorage(storage);
@@ -182,7 +182,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       BlockChainLink readLink = storage.getLink(link.getBlock().getHash());
       // Check link data
       Assert.assertNotNull(readLink,"link not found in storage after restart");
-      Assert.assertEquals(readLink.getHeight(),1);
+      Assert.assertEquals(readLink.getHeight(),BlockChainLink.ROOT_HEIGHT);
       Assert.assertFalse(readLink.isOrphan());
       // Check block integrity
       Assert.assertEquals(readLink.getBlock().getHash(),link.getBlock().getHash());
@@ -295,7 +295,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       throws BitCoinException
    {
       for ( int i=0; i<5; i++ )
-         addLink(i+1,i,i+1,i+1,false);
+         addLink(i+1,i,i,i+1,false);
       for ( int i=0; i<5; i++ )
          Assert.assertNotNull(getLink(i+1));
    }
@@ -304,7 +304,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       throws BitCoinException
    {
       for ( int i=0; i<5; i++ )
-         addLink(i+1,i,i+1,i+1,false);
+         addLink(i+1,i,i,i+1,false);
       getProvider().closeStorage(storage);
       storage = getProvider().newStorage();
       for ( int i=0; i<5; i++ )
@@ -315,7 +315,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       throws BitCoinException
    {
       for ( int i=0; i<5; i++ )
-         addLink(i+1,i,i+1,i+1,i%2==0);
+         addLink(i+1,i,i,i+1,i%2==0);
       for ( int i=0; i<5; i++ )
          Assert.assertNotNull(getLink(i+1));
    }
