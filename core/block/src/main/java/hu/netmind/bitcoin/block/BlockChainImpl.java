@@ -88,7 +88,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       if ( storedGenesisLink == null )
       {
          BlockChainLink genesisLink = new BlockChainLink(genesisBlock,
-               new Difficulty(new DifficultyTarget(genesisBlock.getCompressedTarget())),1,false);
+               new Difficulty(new DifficultyTarget(genesisBlock.getCompressedTarget())),BlockChainLink.ROOT_HEIGHT,false);
          linkStorage.addLink(genesisLink);
       } else {
          if ( ! storedGenesisLink.getBlock().equals(genesisBlock) )

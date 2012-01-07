@@ -95,7 +95,7 @@ public class BlockChainTests
       // Verify genesis block
       Assert.assertEquals(storage.getNewLinks().size(),1);
       BlockChainLink link = storage.getNewLinks().get(0);
-      Assert.assertEquals(link.getHeight(), 1);
+      Assert.assertEquals(link.getHeight(), 0);
       Assert.assertEquals(link.getBlock(), genesisBlock);
       Assert.assertFalse(link.isOrphan());
       Assert.assertEquals(link.getBlock().getCreationTime(),1234567);

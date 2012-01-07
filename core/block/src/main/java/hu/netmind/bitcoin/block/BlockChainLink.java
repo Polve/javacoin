@@ -32,6 +32,8 @@ import java.io.Serializable;
  */
 public class BlockChainLink implements Serializable
 {
+   public static final long ROOT_HEIGHT = 0;
+
    private Block block;
    private boolean orphan;
    private Difficulty totalDifficulty;
