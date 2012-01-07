@@ -189,6 +189,13 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       validateBlock(readLink.getBlock());
    }
 
+   public void testNonExistentGet()
+      throws BitCoinException
+   {
+      Assert.assertNull(storage.getLink(
+            new byte[] { 1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }));
+   }
+
    public void testGenesisEmpty()
       throws BitCoinException
    {

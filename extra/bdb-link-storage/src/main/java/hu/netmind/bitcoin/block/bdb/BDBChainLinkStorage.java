@@ -245,7 +245,10 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
 
    public BlockChainLink getLink(final byte[] hash)
    {
-      return getStoredLink(hash).getLink();
+      StoredLink link = getStoredLink(hash);
+      if ( link == null )
+         return null;
+      return link.getLink();
    }
 
    public List<BlockChainLink> getNextLinks(final byte[] hash)

@@ -48,6 +48,7 @@ import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
+import hu.netmind.bitcoin.block.bdb.BDBChainLinkStorage;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -67,7 +68,7 @@ public class chaintester
 
    private Node node = null;
    private BlockChain chain = null;
-   private SimpleSqlStorage storage = null;
+   private BDBChainLinkStorage storage = null;
    private ScriptFactoryImpl scriptFactory = null;
 
    public static void main(String[] argv)
@@ -103,7 +104,9 @@ public class chaintester
    {
       // Initialize the chain
       scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
-      storage = new SimpleSqlStorage(scriptFactory);
+      storage = new BDBChainLinkStorage(scriptFactory);
+      storage.setDbPath("data");
+      storage.init();
       chain = new BlockChainImpl(BlockImpl.MAIN_GENESIS,
             storage,scriptFactory,false);
       // Introduce a small check here that we can read back the genesis block correctly
@@ -198,6 +201,7 @@ public class chaintester
                if ( highestHashPromised == null )
                   highestHashPromised = invMessage.getInventoryItems().get(invMessage.getInventoryItems().size()-1).getHash();
                conn.send(new GetDataMessage(Message.MAGIC_MAIN,items));
+               logger.debug("sent getdata, waiting for blocks...");
             }
          }
          if ( message instanceof BlockMessage )
