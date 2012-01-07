@@ -386,7 +386,7 @@ public class Node
             try
             {
                handler.onJoin(connection);
-            } catch ( IOException e ) {
+            } catch ( Exception e ) {
                logger.error("failed to handle join by handler {}",handler);
             }
          }
@@ -415,7 +415,7 @@ public class Node
             try
             {
                handler.onLeave(connection);
-            } catch ( IOException e ) {
+            } catch ( Exception e ) {
                logger.error("handler "+handler+" could not execute onLeave()",e);
             }
          }
@@ -471,7 +471,7 @@ public class Node
                   try
                   {
                      handler.onMessage(connection,message);
-                  } catch ( IOException e ) {
+                  } catch ( Exception e ) {
                      logger.error("handler "+handler+" failed to handle message",e);
                   }
                }
