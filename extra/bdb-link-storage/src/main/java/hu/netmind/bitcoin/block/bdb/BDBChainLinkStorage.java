@@ -36,6 +36,7 @@ import com.sleepycat.collections.StoredMap;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.collections.TransactionRunner;
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
@@ -55,6 +56,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
    private static final String LINK_DB_NAME = "link";
    private static final String NEXTHASH_DB_NAME = "nexthash-index";
    private static final String DIFFICULTY_DB_NAME = "difficulty-index";
+   private static final String TXHASH_DB_NAME = "txhash-index";
    private static Logger logger = LoggerFactory.getLogger(BDBChainLinkStorage.class);
 
    private boolean autoCreate = DEFAULT_AUTOCREATE;
@@ -66,11 +68,13 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
    private Database linkDatabase = null;
    private SecondaryDatabase nexthashDatabase = null;
    private SecondaryDatabase difficultyDatabase = null;
+   private SecondaryDatabase txhashDatabase = null;
    private TransactionRunner runner = null;
 
    private StoredMap<byte[],StoredLink> links = null;
    private StoredMap<byte[],StoredLink> nextLinks = null;
    private StoredSortedMap<Difficulty,StoredLink> difficultyLinks = null;
+   private StoredMap<byte[],StoredLink> txhashLinks = null;
 
    public BDBChainLinkStorage(ScriptFactory scriptFactory)
    {
@@ -135,6 +139,13 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       secondaryConfig.setKeyCreator(new DifficultyIndexCreator(scriptFactory));
       secondaryConfig.setBtreeComparator(DifficultyComparator.class);
       difficultyDatabase = environment.openSecondaryDatabase(null, DIFFICULTY_DB_NAME, linkDatabase, secondaryConfig);
+      // Txhash index
+      secondaryConfig = new SecondaryConfig();
+      secondaryConfig.setAllowCreate(autoCreate);
+      secondaryConfig.setTransactional(transactional);
+      secondaryConfig.setSortedDuplicates(true);
+      secondaryConfig.setMultiKeyCreator(new TxHashIndexCreator(scriptFactory));
+      txhashDatabase = environment.openSecondaryDatabase(null, TXHASH_DB_NAME, linkDatabase, secondaryConfig);
    }
 
    private void initializeViews()
@@ -147,6 +158,8 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       nextLinks = new StoredMap(nexthashDatabase,bytesBinding,linkBinding,false);
       // Difficulty view
       difficultyLinks = new StoredSortedMap(difficultyDatabase,new DifficultyBinding(),linkBinding,false);
+      // Txhash view
+      txhashLinks = new StoredMap(txhashDatabase,bytesBinding,linkBinding,false);
    }
 
    /**
@@ -154,6 +167,8 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
     */
    public void close()
    {
+      if ( txhashDatabase != null )
+         txhashDatabase.close();
       if ( difficultyDatabase != null )
          difficultyDatabase.close();
       if ( nexthashDatabase != null )
@@ -237,9 +252,21 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
          });
    }
 
-   public BlockChainLink getClaimedLink(BlockChainLink link, TransactionInput in)
+   public BlockChainLink getClaimedLink(final BlockChainLink link, final TransactionInput in)
    {
-      throw new BDBStorageException("not implemented");
+      return executeWork(new ReturnTransactionWorker<BlockChainLink>() {
+            public BlockChainLink doReturnWork()
+            {
+               StoredLink branchLink = getStoredLink(link.getBlock().getHash());
+               if ( branchLink == null )
+                  throw new BDBStorageException("branch link not found in database: "+link);
+               Collection<StoredLink> potentialLinks = txhashLinks.duplicates(in.getClaimedTransactionHash());
+               for ( StoredLink potentialLink : potentialLinks )
+                  if ( branchLink.getPath().isPrefix(potentialLink.getPath()) )
+                     return potentialLink.getLink();
+               return null;
+            }
+         });
    }
 
    public BlockChainLink getClaimerLink(BlockChainLink link, TransactionInput in)
