@@ -82,7 +82,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
    public BlockChainLink getGenesisLink()
    {
       for ( BlockChainLink link : links.values() )
-         if ( (link.getHeight()==1) && (!link.isOrphan()) )
+         if ( (link.getHeight()==BlockChainLink.ROOT_HEIGHT) && (!link.isOrphan()) )
             return link;
       return null;
    }
