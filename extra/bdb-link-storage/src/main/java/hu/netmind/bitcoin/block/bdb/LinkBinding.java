@@ -42,7 +42,7 @@ import static hu.netmind.bitcoin.block.bdb.BytesBinding.readBytes;
  * Serializes and deserialized links as using the "tuple" serialization methods.
  * @author Robert Brautigam
  */
-public class LinkBinding extends TupleBinding<BlockChainLink>
+public class LinkBinding extends TupleBinding<StoredLink>
 {
    private ScriptFactory scriptFactory;
 
@@ -51,7 +51,17 @@ public class LinkBinding extends TupleBinding<BlockChainLink>
       this.scriptFactory=scriptFactory;
    }
 
-   public BlockChainLink entryToObject(TupleInput in)
+   public StoredLink entryToObject(TupleInput in)
+   {
+      BlockChainLink link = readLink(in);
+      int junctionCount = in.readInt();
+      List<Path.Junction> junctions = new LinkedList<Path.Junction>();
+      for ( int i=0; i<junctionCount; i++ )
+         junctions.add(new Path.Junction(in.readLong(),in.readInt()));
+      return new StoredLink(link,new Path(junctions,link.getHeight()));
+   }
+
+   private BlockChainLink readLink(TupleInput in)
    {
       Block block = readBlock(in);
       boolean orphan = in.readBoolean();
@@ -121,7 +131,19 @@ public class LinkBinding extends TupleBinding<BlockChainLink>
             scriptFactory.createFragment(script));
    }
 
-   public void objectToEntry(BlockChainLink link, TupleOutput out)
+   public void objectToEntry(StoredLink link, TupleOutput out)
+   {
+      write(link.getLink(),out);
+      List<Path.Junction> junctions = link.getPath().getJunctions();
+      out.writeInt(junctions.size());
+      for ( Path.Junction junction : junctions )
+      {
+         out.writeLong(junction.getHeight());
+         out.writeInt(junction.getIndex());
+      }
+   }
+
+   private void write(BlockChainLink link, TupleOutput out)
    {
       write(link.getBlock(),out);
       out.writeBoolean(link.isOrphan());

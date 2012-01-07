@@ -43,7 +43,7 @@ import java.util.Collections;
 public class Path
 {
    private List<Junction> junctions = new ArrayList<Junction>();
-   private long height;
+   private long height = 1;
 
    /**
     * Create a path to the root node.
@@ -101,6 +101,11 @@ public class Path
            (getJunctions().get(prefix.getJunctions().size()).getHeight() < prefix.getHeight()) )
          return false;
       return true;
+   }
+
+   public String toString()
+   {
+      return junctions.toString();
    }
 
    public static class Junction

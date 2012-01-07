@@ -28,11 +28,14 @@ import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.Database;
+import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.DatabaseConfig;
+import com.sleepycat.je.SecondaryConfig;
 import com.sleepycat.collections.StoredMap;
 import com.sleepycat.collections.TransactionRunner;
 import java.io.File;
 import java.util.List;
+import java.util.LinkedList;
 import java.util.ResourceBundle;
 import java.util.MissingResourceException;
 
@@ -48,6 +51,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
    private static final boolean DEFAULT_TRANSACTIONAL = true;
    private static final String DEFAULT_DB_PATH = "./bitcoin-db";
    private static final String LINK_DB_NAME = "link";
+   private static final String NEXTHASH_DB_NAME = "nexthash-index";
    private static Logger logger = LoggerFactory.getLogger(BDBChainLinkStorage.class);
 
    private boolean autoCreate = DEFAULT_AUTOCREATE;
@@ -57,9 +61,11 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
    private ScriptFactory scriptFactory = null;
    private Environment environment = null;
    private Database linkDatabase = null;
+   private SecondaryDatabase nexthashDatabase = null;
    private TransactionRunner runner = null;
 
-   private StoredMap<byte[],BlockChainLink> links = null;
+   private StoredMap<byte[],StoredLink> links = null;
+   private StoredMap<byte[],StoredLink> nextLinks = null;
 
    public BDBChainLinkStorage(ScriptFactory scriptFactory)
    {
@@ -104,17 +110,28 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
 
    private void initializeDatabases()
    {
+      // Main
       DatabaseConfig databaseConfig = new DatabaseConfig();
       databaseConfig.setAllowCreate(autoCreate);
       databaseConfig.setTransactional(transactional);
       linkDatabase = environment.openDatabase(null, LINK_DB_NAME, databaseConfig);
+      // Next hash index
+      SecondaryConfig secondaryConfig = new SecondaryConfig();
+      secondaryConfig.setAllowCreate(autoCreate);
+      secondaryConfig.setTransactional(transactional);
+      secondaryConfig.setSortedDuplicates(true);
+      secondaryConfig.setKeyCreator(new NextHashIndexCreator(scriptFactory));
+      nexthashDatabase = environment.openSecondaryDatabase(null, NEXTHASH_DB_NAME, linkDatabase, secondaryConfig);
    }
 
    private void initializeViews()
    {
       LinkBinding linkBinding = new LinkBinding(scriptFactory);
       BytesBinding bytesBinding = new BytesBinding();
+      // Main view
       links = new StoredMap(linkDatabase,bytesBinding,linkBinding,true);
+      // Next blocks view
+      nextLinks = new StoredMap(nexthashDatabase,bytesBinding,linkBinding,false);
    }
 
    /**
@@ -122,6 +139,8 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
     */
    public void close()
    {
+      if ( nexthashDatabase != null )
+         nexthashDatabase.close();
       if ( linkDatabase != null )
          linkDatabase.close();
       if ( environment != null )
@@ -151,19 +170,32 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       throw new BDBStorageException("not implemented");
    }
 
-   public BlockChainLink getLink(final byte[] hash)
+   public StoredLink getStoredLink(final byte[] hash)
    {
-      return executeWork(new ReturnTransactionWorker<BlockChainLink>() {
-            public BlockChainLink doReturnWork()
+      return executeWork(new ReturnTransactionWorker<StoredLink>() {
+            public StoredLink doReturnWork()
             {
                return links.get(hash);
             }
          });
    }
 
-   public List<BlockChainLink> getNextLinks(byte[] hash)
+   public BlockChainLink getLink(final byte[] hash)
    {
-      throw new BDBStorageException("not implemented");
+      return getStoredLink(hash).getLink();
+   }
+
+   public List<BlockChainLink> getNextLinks(final byte[] hash)
+   {
+      return executeWork(new ReturnTransactionWorker<List<BlockChainLink>>() {
+            public List<BlockChainLink> doReturnWork()
+            {
+               List<BlockChainLink> chainLinks = new LinkedList<BlockChainLink>();
+               for ( StoredLink link : nextLinks.duplicates(hash) )
+                  chainLinks.add(link.getLink());
+               return chainLinks;
+            }
+         });
    }
 
    public BlockChainLink getClaimedLink(BlockChainLink link, TransactionInput in)
@@ -176,12 +208,21 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       throw new BDBStorageException("not implemented");
    }
 
-   public void addLink(final BlockChainLink link)
+   public synchronized void addLink(final BlockChainLink link)
    {
       executeWork(new ReturnTransactionWorker() {
             public void doWork()
             {
-               links.put(link.getBlock().getHash(),link);
+               StoredLink previousLink = getStoredLink(link.getBlock().getPreviousBlockHash());
+               if ( (previousLink==null) && (!link.isOrphan()) && (link.getHeight()!=1) )
+                  throw new BDBStorageException("could not find previous link on add, but link added is not marked as orphan: "+link);
+               Path path = new Path();
+               if ( previousLink != null )
+               {
+                  List<BlockChainLink> nextLinks = getNextLinks(previousLink.getLink().getBlock().getHash());
+                  path = previousLink.getPath().createPath(nextLinks.size());
+               }
+               links.put(link.getBlock().getHash(),new StoredLink(link,path));
             }
          });
    }
