@@ -39,9 +39,10 @@ public class ClaimIndexCreator extends TupleMultiSecondaryKeyCreator<Claim,Store
    public List<Claim> createSecondaryKeys(StoredLink link)
    {
       List<Claim> resultKeys = new LinkedList<Claim>();
-      for ( Transaction tx : link.getLink().getBlock().getTransactions() )
-         for ( TransactionInput in : tx.getInputs() )
-            resultKeys.add(new Claim(in.getClaimedTransactionHash(),in.getClaimedOutputIndex()));
+      if ( ! link.getLink().isOrphan() )
+         for ( Transaction tx : link.getLink().getBlock().getTransactions() )
+            for ( TransactionInput in : tx.getInputs() )
+               resultKeys.add(new Claim(in.getClaimedTransactionHash(),in.getClaimedOutputIndex()));
       return resultKeys;
    }
 }
