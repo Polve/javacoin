@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Robert Brautigam
  */
-public class TransactionImpl implements Transaction
+public class TransactionImpl implements Transaction, Hashable
 {
    private static final int TX_VERSION = 1;
    private static final long MAX_BLOCK_SIZE = 1000000;
@@ -57,6 +57,7 @@ public class TransactionImpl implements Transaction
    private static final long MAX_MONEY = 21000000l * COIN;
    
    private static Logger logger = LoggerFactory.getLogger(TransactionImpl.class);
+   private static KnownExceptions exceptions = new KnownExceptions();
 
    private List<TransactionInputImpl> inputs;
    private List<TransactionOutputImpl> outputs;
@@ -182,6 +183,8 @@ public class TransactionImpl implements Transaction
    public void validate()
       throws VerificationException
    {
+      if ( logger.isDebugEnabled() )
+         logger.debug("validating transaction: "+this);
       // This method goes over all the rules mentioned at:
       // https://en.bitcoin.it/wiki/Protocol_rules#cite_note-1
       // Note: only those checks are made which need no context (1-7, except 5)
@@ -236,12 +239,15 @@ public class TransactionImpl implements Transaction
       //    Note: only implemented dos attack on sig check (count the number of sigchecks)
       try
       {
-         for ( TransactionOutput out : outputs )
-            if ( out.getScript().isComputationallyExpensive() )
-               throw new VerificationException("transaction ("+this+") has computationally too expensive output: "+out);
-         for ( TransactionInput in : inputs )
-            if ( in.getSignatureScript().isComputationallyExpensive() )
-               throw new VerificationException("transaction ("+this+") has computationally too expensive input: "+in);
+         if ( !exceptions.isExempt(this,ValidationCategory.Complexity) )
+         {
+            for ( TransactionOutput out : outputs )
+               if ( out.getScript().isComputationallyExpensive() )
+                  throw new VerificationException("transaction ("+this+") has computationally too expensive output: "+out);
+            for ( TransactionInput in : inputs )
+               if ( in.getSignatureScript().isComputationallyExpensive() )
+                  throw new VerificationException("transaction ("+this+") has computationally too expensive input: "+in);
+         }
       } catch ( ScriptException e ) {
          throw new VerificationException("could not parse script fragment",e);
       }

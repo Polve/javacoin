@@ -59,13 +59,14 @@ import org.slf4j.LoggerFactory;
  * should not be a problem, if we can trust that all transactions validated already.
  * @author Robert Brautigam
  */
-public class BlockImpl implements Block
+public class BlockImpl implements Block, Hashable
 {
    public static BlockImpl MAIN_GENESIS;
 
    private static final int BLOCK_VERSION = 1;
    private static final long BLOCK_FUTURE_VALIDITY = 2*60*60*1000 ; // 2 hrs millis
    private static Logger logger = LoggerFactory.getLogger(BlockImpl.class);
+   private static KnownExceptions exceptions = new KnownExceptions();
 
    // These are unalterable properties of the block
    private long creationTime;

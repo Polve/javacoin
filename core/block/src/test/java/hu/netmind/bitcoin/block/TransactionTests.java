@@ -600,5 +600,72 @@ public class TransactionTests
       // Verify whether transaction is valid
       transaction.validate();      
    }
+
+   @Test(expectedExceptions = VerificationException.class)
+   public void testTooComplexOutputTransaction()
+      throws BitCoinException
+   {
+      // First build the output
+      TransactionOutputImpl output = new TransactionOutputImpl(203000000,
+            createFragment("76 A9 14 20 CA C8 9D 2F 1F C9 11 1B 38 BC 5F D7 27 8B E6 14 A7 89 C4 88 AC",true));
+      List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
+      outputs.add(output);
+      // Build the input
+      TransactionInputImpl input = new TransactionInputImpl(
+            new byte[] { 1, 2, 3}, 0, 
+            createFragment(
+            "47 "+ // Start of sig
+            "30 44 02 20 15 78 04 17 3F 7E 25 82 65 7B 9C 40 "+
+            "26 CC 72 9E F8 12 3E 2E 38 79 8D 3F 6A 9A 9B 54 "+
+            "A0 C6 9A 28 02 20 49 EA EC 3E DD F5 FB 2B 4F 35 "+
+            "77 F1 0F 9D 9A 3C 94 5B B0 CE 6C 1C 15 D1 4D 3B "+
+            "03 23 B5 77 71 70 01 "+
+            "41 "+ // Pub key
+            "04 DE E1 6D 9F 0B 55 44 33 0C C8 00 C4 48 3F F9 "+
+            "03 6F 5F B4 FF A6 F8 D7 36 77 17 DC E3 A6 F4 46 "+
+            "17 FE E3 1F 19 59 37 2D 9C 56 AD F2 B3 DA FD 87 "+
+            "37 2C D8 2D 21 8C D0 73 97 D7 F5 8D DF DE 9A 42 "+
+            "F3"),
+            0xFFFFFFFFl);
+      List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
+      inputs.add(input);
+      // Now build the transaction itself, the hash should be automaticall generated
+      TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
+      // Verify whether transaction is valid
+      transaction.validate();      
+   }
+
+   public void testTooComplexOutputButExemptTransaction()
+      throws BitCoinException
+   {
+      // First build the output
+      TransactionOutputImpl output = new TransactionOutputImpl(201000000,
+            createFragment("76 A9 14 20 CA C8 9D 2F 1F C9 11 1B 38 BC 5F D7 27 8B E6 14 A7 89 C4 88 AC",true));
+      List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
+      outputs.add(output);
+      // Build the input
+      TransactionInputImpl input = new TransactionInputImpl(
+            new byte[] { 1, 2, 3, 99, 99}, 0, 
+            createFragment(
+            "47 "+ // Start of sig
+            "30 44 02 20 15 78 04 17 3F 7E 25 82 65 7B 9C 40 "+
+            "26 CC 72 9E F8 12 3E 2E 38 79 8D 3F 6A 9A 9B 54 "+
+            "A0 C6 9A 28 02 20 49 EA EC 3E DD F5 FB 2B 4F 35 "+
+            "77 F1 0F 9D 9A 3C 94 5B B0 CE 6C 1C 15 D1 4D 3B "+
+            "03 23 B5 77 71 70 01 "+
+            "41 "+ // Pub key
+            "04 DE E1 6D 9F 0B 55 44 33 0C C8 00 C4 48 3F F9 "+
+            "03 6F 5F B4 FF A6 F8 D7 36 77 17 DC E3 A6 F4 46 "+
+            "17 FE E3 1F 19 59 37 2D 9C 56 AD F2 B3 DA FD 87 "+
+            "37 2C D8 2D 21 8C D0 73 97 D7 F5 8D DF DE 9A 42 "+
+            "F3"),
+            0xFFFFFFFFl);
+      List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
+      inputs.add(input);
+      // Now build the transaction itself, the hash should be automaticall generated
+      TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
+      // Verify whether transaction is valid
+      transaction.validate();      
+   }
 }
 
