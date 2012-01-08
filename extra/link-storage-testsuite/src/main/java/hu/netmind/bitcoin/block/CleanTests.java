@@ -498,7 +498,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(24,23,1,2,false);
       addLink(25,24,2,3,false);
       addLink(26,25,3,4,false);
-      addLink(27,25,0,3,true,11,1);
+      addLink(27,99,0,3,true,11,1);
       Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(11,1)));
    }
 
