@@ -109,7 +109,7 @@ public class InstructionInputStream extends InputStream
          {
             int readCount = input.read(data,count,parameterLength-count);
             if ( readCount < 0 )
-               throw new IOException("could not read parameter to operation because stream ended");
+               throw new IOException("could not read parameter to operation "+operations.get(opcode)+" because stream ended");
             count += readCount;
          }
       }

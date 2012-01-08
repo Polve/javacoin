@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.math.BigInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,9 +108,9 @@ public class ScriptFragmentImpl implements ScriptFragment
     */
    public String toString()
    {
+      StringBuilder builder = new StringBuilder();
       try
       {
-         StringBuilder builder = new StringBuilder();
          InstructionInputStream input = getInstructionInput();
          Instruction instruction = null;
          while ( (instruction=input.readInstruction()) != null )
@@ -134,7 +135,7 @@ public class ScriptFragmentImpl implements ScriptFragment
          return builder.toString();
       } catch ( IOException e ) {
          logger.error("error with script couldn't generate string representation",e);
-         return "[Script error: "+e.getMessage()+"]";
+         return "[Unparseable script ("+e.getMessage()+"): "+builder.toString()+"...]";
       }
    }
 
@@ -162,7 +163,7 @@ public class ScriptFragmentImpl implements ScriptFragment
          }
          return sigCount > byteArray.length / 14;
       } catch ( IOException e ) {
-         throw new ScriptException("could not parse script fragment to determine complexity",e);
+         throw new ScriptException("could not parse script fragment to determine complexity: "+this,e);
       }
    }
 }
