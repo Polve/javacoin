@@ -221,6 +221,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       // tree (as non-orphan). Because of Block checks we know the first is a coinbase tx and
       // the rest are not. So execute checks from point 16. (Checks 16.3-5 are not
       // handles since they don't apply to this model)
+      logger.debug("checking transactions...");
       long inValue = 0;
       long outValue = 0;
       for ( Transaction tx : block.getTransactions() )
@@ -245,6 +246,7 @@ public class BlockChainImpl extends Observable implements BlockChain
          }
       }
       // Verify coinbase if we have full verification and there is a coinbase
+      logger.debug("verifying coinbase...");
       Transaction coinbaseTx = null;
       if ( ! block.getTransactions().isEmpty() )
          coinbaseTx = block.getTransactions().get(0);
@@ -263,6 +265,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       }
       // Check 16.6: Relay block to our peers
       // (Also: add or update the link in storage, and only relay if it's really new)
+      logger.debug("adding block to storage...");
       if ( recheck )
       {
          linkStorage.updateLink(link);
@@ -273,6 +276,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       }
       // Check 19: For each orphan block for which this block is its prev, 
       // run all these steps (including this one) recursively on that orphan 
+      logger.debug("re-visiting potential orphan next links...");
       for ( BlockChainLink nextLink : linkStorage.getNextLinks(block.getHash()) )
       {
          try

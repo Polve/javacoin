@@ -125,8 +125,9 @@ public class BlockChainTests
       BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
             storage,createScriptFactory(scriptSuccess),false);
       // Add the block
+      Block block = BlockMock.createBlock(newBlock);
       startTime = System.currentTimeMillis();
-      chain.addBlock(BlockMock.createBlock(newBlock));
+      chain.addBlock(block);
       stopTime = System.currentTimeMillis();
       logger.debug("added block, lasted: "+(stopTime-startTime)+" ms");
       return storage;
