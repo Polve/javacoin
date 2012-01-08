@@ -148,12 +148,20 @@ public class BlockChainImpl extends Observable implements BlockChain
       logger.debug("validating block internally...");
       block.validate();
       // Check 2: Reject if duplicate of block we have in any of the three categories 
-      // Note: we don't have three categories, so just do nothing, it is not an error
+      // Note: we don't have three categories, so this differs from original client
       if ( ! recheck )
       {
          logger.debug("checking whether block is already known...");
-         if ( linkStorage.getLink(block.getHash()) != null )
-            return; // Do nothing, block is already there
+         BlockChainLink link = linkStorage.getLink(block.getHash());
+         if ( link != null )
+         {
+            // Block already exists, if it is orphan, recheck original version
+            // of block (do not take block from outside). If not orphan that we
+            // already know this block well enough.
+            if ( link.isOrphan() )
+               addBlock(link.getBlock(),true);
+            return; // End here
+         }
       } else {
          logger.debug("block is an orphan block that needs rechecking...");
       }
