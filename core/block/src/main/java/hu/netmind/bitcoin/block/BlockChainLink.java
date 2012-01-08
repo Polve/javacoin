@@ -79,7 +79,7 @@ public class BlockChainLink implements Serializable
 
    public String toString()
    {
-      return "Link at height "+height+", block: "+block;
+      return "Link at height "+height+" (orphan: "+orphan+"), block: "+block;
    }
 }
 
