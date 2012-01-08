@@ -491,6 +491,17 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(11,99)));
    }
 
+   public void testGetOrphanClaimerLink()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,25,0,3,true,11,1);
+      Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(11,1)));
+   }
+
    public void testUpdateOrphanLink()
       throws BitCoinException
    {
