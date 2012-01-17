@@ -708,6 +708,9 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       TransactionInput.SignatureHashType sigType = null;
       switch ( (sig[sig.length-1] & 0xff) )
       {
+         case 0x00:
+            // TODO: This is a workaround for block 110300 which has 00 as type. In
+            // reality ANYONECANPAY can be conbined with ALL, NONE and SINGLE (is a flag)
          case 0x01:
             sigType = TransactionInput.SignatureHashType.SIGHASH_ALL;
             break;
