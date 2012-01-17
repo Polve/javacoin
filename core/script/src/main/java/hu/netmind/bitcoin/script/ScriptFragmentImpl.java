@@ -135,7 +135,7 @@ public class ScriptFragmentImpl implements ScriptFragment
          return builder.toString();
       } catch ( IOException e ) {
          logger.error("error with script couldn't generate string representation",e);
-         return "[Unparseable script ("+e.getMessage()+"): "+builder.toString()+"...]";
+         return "Unparseable script ("+e.getMessage()+"): "+builder.toString()+"...";
       }
    }
 

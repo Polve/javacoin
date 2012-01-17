@@ -673,7 +673,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
             }
          }
       } catch ( IOException e ) {
-         throw new ScriptException("error reading instructions",e);
+         throw new ScriptException("error reading instructions "+toString(),e);
       }
       // Determine whether it was successful (top item is TRUE)
       return popBoolean(stack,"determining script result");
@@ -721,7 +721,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
             sigType = TransactionInput.SignatureHashType.SIGHASH_ANYONECANPAY;
             break;
          default:
-            throw new ScriptException("found unknown signature type on while checking signature: "+(pubKey[pubKey.length-1]&0xff));
+            throw new ScriptException("found unknown signature type on while checking signature: "+Integer.toString(sig[sig.length-1]&0xff,16)+", in "+toString());
       }
       // Remove last byte from sig
       byte[] sigRaw = new byte[sig.length-1];
