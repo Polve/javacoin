@@ -705,27 +705,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       throws ScriptException
    {
       // Determine hash type first (last byte of pubKey)
-      TransactionInput.SignatureHashType sigType = null;
-      switch ( (sig[sig.length-1] & 0xff) )
-      {
-         case 0x00:
-            // TODO: This is a workaround for block 110300 which has 00 as type. In
-            // reality ANYONECANPAY can be conbined with ALL, NONE and SINGLE (is a flag)
-         case 0x01:
-            sigType = TransactionInput.SignatureHashType.SIGHASH_ALL;
-            break;
-         case 0x02:
-            sigType = TransactionInput.SignatureHashType.SIGHASH_NONE;
-            break;
-         case 0x03:
-            sigType = TransactionInput.SignatureHashType.SIGHASH_SINGLE;
-            break;
-         case 0x80:
-            sigType = TransactionInput.SignatureHashType.SIGHASH_ANYONECANPAY;
-            break;
-         default:
-            throw new ScriptException("found unknown signature type on while checking signature: "+Integer.toString(sig[sig.length-1]&0xff,16)+", in "+toString());
-      }
+      SignatureHashTypeImpl signatureType = new SignatureHashTypeImpl(sig[sig.length-1] & 0xff);
       // Remove last byte from sig
       byte[] sigRaw = new byte[sig.length-1];
       System.arraycopy(sig,0,sigRaw,0,sigRaw.length);
@@ -735,9 +715,9 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       byte[] transactionHash = null;
       try
       {
-         transactionHash = txIn.getSignatureHash(sigType,subscript);
+         transactionHash = txIn.getSignatureHash(signatureType,subscript);
          if ( logger.isDebugEnabled() )
-            logger.debug("running verification, tx signature hash is {}, for type: {}",new BigInteger(1,transactionHash).toString(16),sigType);
+            logger.debug("running verification, tx signature hash is {}, for type: {}",new BigInteger(1,transactionHash).toString(16),signatureType);
       } catch ( BitCoinException e ) {
          throw new ScriptException("could not generate signature hash");
       }

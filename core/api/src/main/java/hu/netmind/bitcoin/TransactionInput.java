@@ -29,14 +29,6 @@ import java.io.Serializable;
  */
 public interface TransactionInput extends Serializable
 {
-   enum SignatureHashType
-   {
-      SIGHASH_ALL,
-      SIGHASH_NONE,
-      SIGHASH_SINGLE,
-      SIGHASH_ANYONECANPAY
-   };
-
    /**
     * Get the transaction this input is a part of.
     */

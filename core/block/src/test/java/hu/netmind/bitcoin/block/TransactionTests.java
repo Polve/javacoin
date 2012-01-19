@@ -31,6 +31,7 @@ import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.SignatureHashType;
 
 /**
  * @author Robert Brautigam
@@ -161,11 +162,24 @@ public class TransactionTests
       // Now build the transaction itself
       TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
       // Check generated signature hash
-      Assert.assertEquals(HexUtil.toHexString(input1.getSignatureHash(TransactionInput.SignatureHashType.SIGHASH_ALL,
+      Assert.assertEquals(HexUtil.toHexString(
+               input1.getSignatureHash(getSignatureHashType(SignatureHashType.InputSignatureHashType.SIGHASH_ALL,
+                     SignatureHashType.OutputSignatureHashType.SIGHASH_ALL,1),
                   createFragment(
                     "76 A9 14 02 BF 4B 28 89 C6 AD A8 19 0C 25 2E 70 "+
                     "BD E1 A1 90 9F 96 17 88 AC"))),
                "E8 A8 75 B4 A6 B2 3E 50 7C DA D5 6D 1D 74 28 5F 22 FE C0 5B FD 6B E2 F7 37 92 3C 43 FC C2 39 87");
+   }
+
+   private SignatureHashType getSignatureHashType(SignatureHashType.InputSignatureHashType inputType,
+         SignatureHashType.OutputSignatureHashType outputType, int value)
+   {
+      SignatureHashType type = EasyMock.createMock(SignatureHashType.class);
+      EasyMock.expect(type.getValue()).andReturn(value);
+      EasyMock.expect(type.getInputType()).andReturn(inputType);
+      EasyMock.expect(type.getOutputType()).andReturn(outputType);
+      EasyMock.replay(type);
+      return type;
    }
 
    public void testValidTransaction()

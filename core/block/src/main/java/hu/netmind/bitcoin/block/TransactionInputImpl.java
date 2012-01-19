@@ -26,6 +26,7 @@ import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
+import hu.netmind.bitcoin.SignatureHashType;
 import hu.netmind.bitcoin.net.ArraysUtil;
 import hu.netmind.bitcoin.net.HexUtil;
 
@@ -89,12 +90,10 @@ public class TransactionInputImpl implements TransactionInput
    {
       List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
       List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
-      int hashType = 0;
-      // Now create the transaction copy based on the hash type
-      switch ( type )
+      // Create the inputs
+      switch ( type.getInputType() )
       {
          case SIGHASH_ALL:
-            hashType=1;
             // In this mode everything is hashed in other than the scripts in the other inputs,
             // meaning nothing can essentially change after the hash is signed.
             for ( TransactionInput input : getTransaction().getInputs() )
@@ -104,31 +103,35 @@ public class TransactionInputImpl implements TransactionInput
                else
                   inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
                            input.getClaimedOutputIndex(),null,input.getSequence()));
+            break;
+         case SIGHASH_ALLOWUPDATE:
+            // Allow updates to other inputs (hash with sequence set to 0, in addition to null script)
+            for ( TransactionInput input : getTransaction().getInputs() )
+               if ( input == this )
+                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
+                           input.getClaimedOutputIndex(),subscript,sequence));
+               else
+                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
+                           input.getClaimedOutputIndex(),null,0));
+            break;
+         case SIGHASH_ANYONECANPAY:
+            // Only hash this input, which makes it possible to add any number of new inputs,
+            // leaving the possibility open for others to contribute to the same (hashed) outputs and
+            // amount.
+            inputs.add(new TransactionInputImpl(claimedTransactionHash,
+                     claimedOutputIndex,subscript,sequence));
+            break;
+      }
+      // Make the outputs
+      switch ( type.getOutputType() )
+      {
+         case SIGHASH_ALL:
+            // All outputs are fixed, no other spending is allowed than expected when input
+            // was created
             for ( TransactionOutput output : getTransaction().getOutputs() )
                outputs.add(new TransactionOutputImpl(output.getValue(),output.getScript()));
             break;
-         case SIGHASH_NONE:
-            hashType=2;
-            // Allow updates to other inputs (hash with sequence set to 0, in addition to null script)
-            for ( TransactionInput input : getTransaction().getInputs() )
-               if ( input == this )
-                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
-                           input.getClaimedOutputIndex(),subscript,sequence));
-               else
-                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
-                           input.getClaimedOutputIndex(),null,0));
-            // Allow any spending of the inputs (do not hash in outputs)
-            break;
          case SIGHASH_SINGLE:
-            hashType=3;
-            // Allow updates to other inputs (hash with sequence set to 0, in addition to null script)
-            for ( TransactionInput input : getTransaction().getInputs() )
-               if ( input == this )
-                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
-                           input.getClaimedOutputIndex(),subscript,sequence));
-               else
-                  inputs.add(new TransactionInputImpl(input.getClaimedTransactionHash(),
-                           input.getClaimedOutputIndex(),null,0));
             // Now remove all outputs with higher index than this input (don't copy those)
             // (maybe this assumes each input will have exactly one output in these
             // kinds of transactions?) Also blank out lower outputs, so scripts
@@ -142,23 +145,15 @@ public class TransactionInputImpl implements TransactionInput
             TransactionOutput pairedOutput = getTransaction().getOutputs().get(inputIndex); // Copy output at same index
             outputs.add(new TransactionOutputImpl(pairedOutput.getValue(),pairedOutput.getScript()));
             break;
-         case SIGHASH_ANYONECANPAY:
-            hashType=0x80;
-            // Only hash this input, which makes it possible to add any number of new inputs,
-            // leaving the possibility open for others to contribute to the same (hashed) outputs and
-            // amount.
-            inputs.add(new TransactionInputImpl(claimedTransactionHash,
-                     claimedOutputIndex,subscript,sequence));
-            // Copy over all outputs unmodified
-            for ( TransactionOutput output : getTransaction().getOutputs() )
-               outputs.add(new TransactionOutputImpl(output.getValue(),output.getScript()));
+         case SIGHASH_NONE:
+            // Copy no outputs here, any spending is allowed
             break;
       }
       // Now create the transaction copy with the modified inputs and outputs and calculate hash with
       // the type added
       TransactionImpl txCopy = new TransactionImpl(
             inputs,outputs,transaction.getLockTime(),new byte[] {});
-      byte[] hash = txCopy.calculateHash(new byte[] { (byte)hashType, 0, 0, 0});
+      byte[] hash = txCopy.calculateHash(new byte[] { (byte)type.getValue(), 0, 0, 0});
       // Return the hash of this specially created transaction with the type added
       // We have to reverse this signature hash back to original "BitCoin" order.
       return ArraysUtil.reverse(hash);

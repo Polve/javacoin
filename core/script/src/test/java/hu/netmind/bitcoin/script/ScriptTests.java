@@ -512,7 +512,7 @@ public class ScriptTests
       // Create transaction mock and return hash
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
-               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
+               EasyMock.eq(SignatureHashTypeImpl.SIGHASH_ALL), 
                EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("0A 2C 2A 35 0C 03 01 01 01 01 01 AC")))
                )).andReturn(hash);
       EasyMock.replay(txIn);
@@ -546,7 +546,7 @@ public class ScriptTests
       // Create transaction mock and return hash
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
-               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
+               EasyMock.eq(new SignatureHashTypeImpl(0)), 
                EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("0A 2C 2A 35 0C 03 01 01 01 01 01 AC")))
                )).andReturn(hash);
       EasyMock.replay(txIn);
@@ -580,7 +580,7 @@ public class ScriptTests
       // Create transaction mock and return hash
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
-               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
+               EasyMock.eq(SignatureHashTypeImpl.SIGHASH_ALL), 
                EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("00 0A 2C 2A 35 0C 03 01 01 01 01 01 AD")))
                )).andReturn(hash);
       EasyMock.replay(txIn);
@@ -614,7 +614,7 @@ public class ScriptTests
       // Create transaction mock and return hash
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
-               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
+               EasyMock.eq(SignatureHashTypeImpl.SIGHASH_ALL), 
                EasyMock.eq(new ScriptFragmentImpl(HexUtil.toByteArray("0A 2C 2A 35 0C 03 01 01 01 01 01 AC")))
                )).andReturn(hash);
       EasyMock.replay(txIn);
@@ -651,7 +651,7 @@ public class ScriptTests
       // Create transaction mock and return hash
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
-               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
+               EasyMock.eq(SignatureHashTypeImpl.SIGHASH_ALL), 
                (ScriptFragment) EasyMock.anyObject()
                )).andReturn(hash).times(3);
       EasyMock.replay(txIn);
@@ -702,7 +702,7 @@ public class ScriptTests
       // Create transaction mock and return hash
       TransactionInput txIn = EasyMock.createMock(TransactionInput.class);
       EasyMock.expect(txIn.getSignatureHash(
-               EasyMock.eq(TransactionInput.SignatureHashType.SIGHASH_ALL), 
+               EasyMock.eq(SignatureHashTypeImpl.SIGHASH_ALL), 
                (ScriptFragment) EasyMock.anyObject()
                )).andReturn(hash).times(3);
       EasyMock.replay(txIn);
