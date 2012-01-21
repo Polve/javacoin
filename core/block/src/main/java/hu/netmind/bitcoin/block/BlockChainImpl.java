@@ -25,6 +25,7 @@ import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.Script;
 import hu.netmind.bitcoin.ScriptException;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -347,9 +348,10 @@ public class BlockChainImpl extends Observable implements BlockChain
          value += out.getValue(); // Remember value that goes in from this out
          try
          {
-            if ( ! scriptFactory.createScript(in.getSignatureScript(),
-                     out.getScript()).execute(in) )
-               throw new VerificationException("verification script for input "+in+" returned 'false' for verification");
+            Script script = scriptFactory.createScript(in.getSignatureScript(),
+                     out.getScript());
+            if ( ! script.execute(in) )
+               throw new VerificationException("verification script for input "+in+" returned 'false' for verification, script was: "+script);
          } catch ( ScriptException e ) {
             throw new VerificationException("verification script for input "+in+" failed to execute",e);
          }
