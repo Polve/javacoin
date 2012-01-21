@@ -213,9 +213,13 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                case OP_VERIFY:
                   condition = popBoolean(stack,"executing OP_VERIFY");
                   if ( ! condition )
+                  {
+                     logger.debug("exiting script with false on failed OP_VERIF condition from stack");
                      return false; // Script fails
+                  }
                   break;
                case OP_RETURN:
+                  logger.debug("exiting on OP_RETURN statement");
                   return false; // Fail script
                case OP_TOALTSTACK:
                   altStack.push(stack.pop());
@@ -400,7 +404,10 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   {
                      // If VERIFY is called exit on false, and DON'T leave true in stack
                      if ( ! equalResult )
+                     {
+                        logger.debug("exiting script with false because of OP_EQUALVERIFY failed");
                         return false;
+                     }
                   }
                   else
                   {
@@ -493,7 +500,10 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   b = popInt(stack,"executing OP_NUMEQUALVERIFY");
                   a = popInt(stack,"executing OP_NUMEQUALVERIFY");
                   if ( a != b )
+                  {
+                     logger.debug("existing with false on failed OP_NUMEQUALVERIFY with "+a+" vs. "+b);
                      return false; // Abort
+                  }
                   break;
                case OP_NUMNOTEQUAL:
                   b = popInt(stack,"executing OP_NUMNOTEQUAL");
@@ -599,7 +609,10 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   sig = popData(stack,"executing OP_CHECKSIGVERIFY");
                   // Abort if it does not verify
                   if ( ! verify(sig,pubKey,txIn,fragment(blockPointer).getSubscript(sig)) )
+                  {
+                     logger.debug("exiting with false because of failed OP_CHECKSIGVERIFY");
                      return false;
+                  }
                   break;
                case OP_CHECKMULTISIG:
                case OP_CHECKMULTISIGVERIFY:
@@ -632,7 +645,10 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   if ( instruction.getOperation()==Operation.OP_CHECKMULTISIGVERIFY )
                   {
                      if ( currentSig < sigCount )
+                     {
+                        logger.debug("exiting with false because of failed sig counts on OP_CHECKMULTISIGVERIFY: "+currentSig+" vs. "+sigCount);
                         return false; // Not all signatures were verified, so exit
+                     }
                   }
                   else
                   {
@@ -676,6 +692,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
          throw new ScriptException("error reading instructions "+toString(),e);
       }
       // Determine whether it was successful (top item is TRUE)
+      logger.debug("exiting with final result on stack");
       return popBoolean(stack,"determining script result");
    }
 
