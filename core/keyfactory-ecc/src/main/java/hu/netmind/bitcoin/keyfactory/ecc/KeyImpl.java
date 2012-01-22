@@ -224,14 +224,9 @@ public class KeyImpl implements Key
       try
       {
          random = new SecureRandom();
-         // Per specification BitCoin uses the secp256k1 curve, unfortunately
-         // that is not available by default, so we have to reflect. This might
-         // cause some problems when upgrading bouncycastle!
-         Field secp256k1Field = SECNamedCurves.class.getDeclaredField("secp256k1");
-         secp256k1Field.setAccessible(true);
-         X9ECParameters params =  ((X9ECParametersHolder) secp256k1Field.get(null)).getParameters();
-         logger.debug("x9ec parameters: "+params);
          // Create domain parameters out of the ec parameters
+         X9ECParameters params = SECNamedCurves.getByName("secp256k1");
+         logger.debug("x9ec parameters: "+params);
          domainParameters = new ECDomainParameters(params.getCurve(), params.getG(), 
                params.getN(),  params.getH(), params.getSeed());
       } catch ( Exception e ) {
