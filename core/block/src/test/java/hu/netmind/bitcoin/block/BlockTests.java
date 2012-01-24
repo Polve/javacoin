@@ -22,10 +22,16 @@ import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.VerificationException;
+import hu.netmind.bitcoin.ScriptFragment;
+import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.ScriptException;
+import hu.netmind.bitcoin.Script;
 import org.testng.annotations.Test;
+import java.io.IOException;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import hu.netmind.bitcoin.net.HexUtil;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
@@ -41,7 +47,7 @@ public class BlockTests
    {
       // This example is from the real block:
       // 00000000000000ed4c7dea403573c2dbddd505daef6e3aee0e9cf855686aad00
-      BlockImpl block = new BlockImpl(new ArrayList<Transaction>(),
+      BlockImpl block = new BlockImpl(new ArrayList<TransactionImpl>(),
             1310891749000l, 3999553309l, 436911055l, 
             HexUtil.toByteArray("00 00 00 00 00 00 04 CF BC 30 52 CD A2 C9 CD 85 E2 B1 BC 73 8E 2D 8E 01 5A FD 0E 6F 77 7C 49 19"),
             HexUtil.toByteArray("FE 9D BC 7D 67 2F 7C 82 C1 69 34 3B 46 08 6E 4B DE A9 1E FD A2 A0 4C BA B1 7E D5 EC 5C FE 52 AE"));
@@ -53,12 +59,11 @@ public class BlockTests
       throws BitCoinException, VerificationException
    {
       // Construct block with minimal transactions, that is only a coinbase
-      Transaction tx = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx.getInputs()).andReturn(new ArrayList<TransactionInput>()).anyTimes();
-      EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 }).anyTimes();
-      tx.validate();
-      EasyMock.replay(tx);
-      List<Transaction> transactions = new ArrayList<Transaction>();
+      TransactionImpl tx = new TransactionImpl(
+            Arrays.asList(new TransactionInputImpl[] { new TransactionInputImpl(new byte[] {1}, 0, createMockScript(), 1) }),
+            Arrays.asList(new TransactionOutputImpl[] { new TransactionOutputImpl(10,createMockScript()) }),
+            0);
+      List<TransactionImpl> transactions = new ArrayList<TransactionImpl>();
       transactions.add(tx);
       // Create block
       MerkleTree mTree = new MerkleTree(transactions);
@@ -71,7 +76,7 @@ public class BlockTests
       throws BitCoinException, VerificationException
    {
       // Construct block with minimal transactions, that is only a coinbase
-      List<Transaction> transactions = new ArrayList<Transaction>();
+      List<TransactionImpl> transactions = new ArrayList<TransactionImpl>();
       // Create block
       BlockImpl block = new BlockImpl(transactions,0,0,0,null,null,new byte[] { 0 });
       block.validate();
@@ -82,13 +87,7 @@ public class BlockTests
       throws BitCoinException, VerificationException
    {
       // Construct block with minimal transactions, that is only a coinbase
-      Transaction tx = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx.getInputs()).andReturn(new ArrayList<TransactionInput>()).anyTimes();
-      EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 });
-      tx.validate();
-      EasyMock.replay(tx);
-      List<Transaction> transactions = new ArrayList<Transaction>();
-      transactions.add(tx);
+      List<TransactionImpl> transactions = new ArrayList<TransactionImpl>();
       // Create block with false difficulty (hash is not as difficult as
       // claimed).
       MerkleTree tree = new MerkleTree(transactions);
@@ -103,18 +102,16 @@ public class BlockTests
       throws BitCoinException, VerificationException
    {
       // Construct block with minimal transactions, that don't validate
-      Transaction tx = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx.getInputs()).andReturn(new ArrayList<TransactionInput>()).anyTimes();
-      EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 });
-      tx.validate();
-      EasyMock.expectLastCall().andThrow(new VerificationException("transaction failed validation (test)"));
-      EasyMock.replay(tx);
-      List<Transaction> transactions = new ArrayList<Transaction>();
+      TransactionImpl tx = new TransactionImpl(
+            Arrays.asList(new TransactionInputImpl[] { new TransactionInputImpl(new byte[] {1}, 0, createMockScript(), 1) }),
+            Arrays.asList(new TransactionOutputImpl[] { new TransactionOutputImpl(10,null) }),
+            0);
+      List<TransactionImpl> transactions = new ArrayList<TransactionImpl>();
       transactions.add(tx);
       // Create block
       MerkleTree mTree = new MerkleTree(transactions);
       BlockImpl block = new BlockImpl(transactions,0,0,0,mTree.getRoot(),
-            new byte[] { 0 });
+            new byte[] { 0 }, new byte[] { 0 });
       block.validate();
    }
 
@@ -123,17 +120,16 @@ public class BlockTests
       throws BitCoinException, VerificationException
    {
       // Construct block with minimal transactions, that is only a coinbase
-      Transaction tx = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx.getInputs()).andReturn(new ArrayList<TransactionInput>()).anyTimes();
-      EasyMock.expect(tx.getHash()).andReturn(new byte[] { 0 });
-      tx.validate();
-      EasyMock.replay(tx);
-      List<Transaction> transactions = new ArrayList<Transaction>();
+      TransactionImpl tx = new TransactionImpl(
+            Arrays.asList(new TransactionInputImpl[] { new TransactionInputImpl(new byte[] {1}, 0, createMockScript(), 1) }),
+            Arrays.asList(new TransactionOutputImpl[] { new TransactionOutputImpl(10,createMockScript()) }),
+            0);
+      List<TransactionImpl> transactions = new ArrayList<TransactionImpl>();
       transactions.add(tx);
       // Create block
       MerkleTree mTree = new MerkleTree(transactions);
       BlockImpl block = new BlockImpl(transactions,0,0,0,new byte[] { 0 },
-            new byte[] { 0 });
+            new byte[] { 0 }, new byte[] { 0 });
       block.validate();
    }
 
@@ -141,32 +137,15 @@ public class BlockTests
    public void testSameOutputTwice()
       throws BitCoinException, VerificationException
    {
-      // Create two inputs
-      TransactionInput input1 = EasyMock.createMock(TransactionInput.class);
-      EasyMock.expect(input1.getClaimedTransactionHash()).andReturn(new byte[] { 1 }).anyTimes();
-      EasyMock.expect(input1.getClaimedOutputIndex()).andReturn(2).anyTimes();
-      EasyMock.replay(input1);
-      List<TransactionInput> inputs1 = new ArrayList<TransactionInput>();
-      inputs1.add(input1);
-      TransactionInput input2 = EasyMock.createMock(TransactionInput.class);
-      EasyMock.expect(input2.getClaimedTransactionHash()).andReturn(new byte[] { 1 }).anyTimes();
-      EasyMock.expect(input2.getClaimedOutputIndex()).andReturn(2).anyTimes();
-      EasyMock.replay(input2);
-      List<TransactionInput> inputs2 = new ArrayList<TransactionInput>();
-      inputs2.add(input2);
-      // Construct block with minimal transactions, that is only a coinbase
-      Transaction tx1 = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx1.getInputs()).andReturn(inputs1).anyTimes();
-      EasyMock.expect(tx1.getHash()).andReturn(new byte[] { 0 }).anyTimes();
-      tx1.validate();
-      EasyMock.replay(tx1);
-      Transaction tx2 = EasyMock.createMock(Transaction.class);
-      EasyMock.expect(tx2.getInputs()).andReturn(inputs1).anyTimes();
-      EasyMock.expect(tx2.getHash()).andReturn(new byte[] { 0 }).anyTimes();
-      EasyMock.expect(tx2.isCoinbase()).andReturn(false).anyTimes();
-      tx2.validate();
-      EasyMock.replay(tx2);
-      List<Transaction> transactions = new ArrayList<Transaction>();
+      TransactionImpl tx1 = new TransactionImpl(
+            Arrays.asList(new TransactionInputImpl[] { new TransactionInputImpl(new byte[] {1,2,3}, 2, createMockScript(), 1) }),
+            Arrays.asList(new TransactionOutputImpl[] { new TransactionOutputImpl(10,createMockScript()) }),
+            0);
+      TransactionImpl tx2 = new TransactionImpl(
+            Arrays.asList(new TransactionInputImpl[] { new TransactionInputImpl(new byte[] {1,2,3}, 2, createMockScript(), 1) }),
+            Arrays.asList(new TransactionOutputImpl[] { new TransactionOutputImpl(20,createMockScript()) }),
+            0);
+      List<TransactionImpl> transactions = new ArrayList<TransactionImpl>();
       transactions.add(tx1);
       transactions.add(tx2);
       // Create block
@@ -179,17 +158,84 @@ public class BlockTests
    public void testMainGenesisBlock()
       throws BitCoinException
    {
-      // First copy over details so we can calculate hash
       BlockImpl genesis = BlockImpl.MAIN_GENESIS;
-      BlockImpl copy = new BlockImpl(genesis.getTransactions(),
-            genesis.getCreationTime(),genesis.getNonce(),genesis.getCompressedTarget(),
-            genesis.getPreviousBlockHash(),genesis.getMerkleRoot());
-      // First verify block consistency
-      copy.validate();
+      byte[] hash = genesis.calculateHash();
       // Verify the hash of block to match its known value
       Assert.assertEquals(
             HexUtil.toByteArray("00 00 00 00 00 19 D6 68 9C 08 5A E1 65 83 1E 93 4F F7 63 AE 46 A2 A6 C1 72 B3 F1 B6 0A 8C E2 6F "),
-            copy.getHash());
+            hash);
    }
+
+   public void testConvertToMessageAndBack()
+      throws BitCoinException, IOException
+   {
+      // Construct a non-trivial valid block
+      TransactionImpl tx1 = new TransactionImpl(
+            Arrays.asList(new TransactionInputImpl[] { 
+               new TransactionInputImpl(new byte[] {1,2,3}, 0, createMockScript(), 1),
+               new TransactionInputImpl(new byte[] {4,5,6}, 1, createMockScript(), 1),
+               new TransactionInputImpl(new byte[] {5,6,7}, 0, createMockScript(), 1),
+            }),
+            Arrays.asList(new TransactionOutputImpl[] { 
+               new TransactionOutputImpl(5,createMockScript()),
+               new TransactionOutputImpl(10,createMockScript()),
+            }),
+            0);
+      TransactionImpl tx2 = new TransactionImpl(
+            Arrays.asList(new TransactionInputImpl[] { 
+               new TransactionInputImpl(new byte[] {1,6,3}, 2, createMockScript(), 1),
+               new TransactionInputImpl(new byte[] {4,2,6}, 3, createMockScript(), 1),
+            }),
+            Arrays.asList(new TransactionOutputImpl[] { new TransactionOutputImpl(10,createMockScript()) }),
+            0);
+      List<TransactionImpl> transactions = new ArrayList<TransactionImpl>();
+      transactions.add(tx1);
+      transactions.add(tx2);
+      MerkleTree tree = new MerkleTree(transactions);
+      BlockImpl block = new BlockImpl(transactions,0,0,0,new byte[] { 0 }, tree.getRoot());
+      // Convert and convert back
+      BlockImpl backBlock = BlockImpl.createBlock(createMockScriptFactory(),block.createBlockMessage(123));
+      // Assert that the block that came back has exactly the same data
+      Assert.assertEquals(block.getHash(),backBlock.getHash());
+   }
+
+   private ScriptFactory createMockScriptFactory()
+   {
+      return new ScriptFactory() {
+         public ScriptFragment createFragment(byte[] script)
+         {
+            return createMockScript(script);
+         }
+         public Script createScript(ScriptFragment sigScript, ScriptFragment pubScript)
+         {
+            return null;
+         }
+      };
+   }
+
+   private ScriptFragment createMockScript()
+   {
+      return createMockScript(new byte[] {
+               0,1,2,3,4,5,6,7,8,9,
+               10,11,12,13,14,15,16,17,18,19,
+               20,21,22,23,24,25,26,27,28,29,
+               30,31,32,33,34,35,63,37,38,39 
+            });
+   }
+
+   private ScriptFragment createMockScript(byte[] scriptBytes)
+   {
+      try
+      {
+         ScriptFragment script = EasyMock.createMock(ScriptFragment.class);
+         EasyMock.expect(script.toByteArray()).andReturn(scriptBytes).anyTimes();
+         EasyMock.expect(script.isComputationallyExpensive()).andReturn(false).anyTimes();
+         EasyMock.replay(script);
+         return script;
+      } catch ( ScriptException e ) {
+         throw new RuntimeException("could not create script mock",e);
+      }
+   }
+
 }
 

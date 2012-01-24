@@ -19,6 +19,7 @@
 package hu.netmind.bitcoin.block;
 
 import java.util.List;
+import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
@@ -36,6 +37,7 @@ import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.ScriptException;
+import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.net.TxIn;
 import hu.netmind.bitcoin.net.TxOut;
 import hu.netmind.bitcoin.net.Tx;
@@ -124,7 +126,7 @@ public class TransactionImpl implements Transaction, Hashable
    /**
     * Convert this transaction object into a protocol transaction object.
     */
-   private Tx getTx()
+   public Tx createTx()
    {
       // Create txouts
       List<TxOut> outs = new ArrayList<TxOut>();
@@ -142,6 +144,31 @@ public class TransactionImpl implements Transaction, Hashable
       return tx;
    }
 
+   public static TransactionImpl createTransaction(ScriptFactory scriptFactory, Tx tx)
+      throws BitCoinException
+   {
+      // First outs
+      List<TransactionOutputImpl> outs = new LinkedList<TransactionOutputImpl>();
+      for ( TxOut txOut : tx.getOutputs() )
+      {
+         TransactionOutputImpl out = new TransactionOutputImpl(txOut.getValue(),
+               scriptFactory.createFragment(txOut.getScript()));
+         outs.add(out);
+      }
+      // Then ins
+      List<TransactionInputImpl> ins = new LinkedList<TransactionInputImpl>();
+      for ( TxIn txIn : tx.getInputs() )
+      {
+         TransactionInputImpl in = new TransactionInputImpl(txIn.getReferencedTxHash(),
+               (int)txIn.getReferencedTxOutIndex(),scriptFactory.createFragment(
+                  txIn.getSignatureScript()),txIn.getSequence());
+         ins.add(in);
+      }
+      // Create tx
+      TransactionImpl transaction = new TransactionImpl(ins,outs,tx.getLockTime());
+      return transaction;
+   }
+
    /**
     * Calculate the hash of the whole transaction, with some optional additional bytes.
     */
@@ -150,7 +177,7 @@ public class TransactionImpl implements Transaction, Hashable
    {
       try
       {
-         Tx tx = getTx();
+         Tx tx = createTx();
          // Now serialize this to byte array
          ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
          BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
@@ -199,7 +226,7 @@ public class TransactionImpl implements Transaction, Hashable
       // 3. Size in bytes < MAX_BLOCK_SIZE
       try
       {
-         Tx tx = getTx();
+         Tx tx = createTx();
          // Now serialize this to byte array
          ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
          BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);

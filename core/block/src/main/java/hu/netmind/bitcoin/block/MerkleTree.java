@@ -55,11 +55,11 @@ public class MerkleTree
 
    private MerkleNode root;
 
-   private List<Transaction> transactions;
+   private List<? extends Transaction> transactions;
    private List<MerkleNode> outerNodes;
    private MessageDigest digest = null;
 
-   public MerkleTree(List<Transaction> transactions)
+   public MerkleTree(List<? extends Transaction> transactions)
       throws BitCoinException
    {
       this(null,transactions);
@@ -70,7 +70,7 @@ public class MerkleTree
     * and the start and end indices.
     * @param transactions Transactions to build the tree with.
     */
-   public MerkleTree(List<MerkleNode> outerNodes, List<Transaction> transactions)
+   public MerkleTree(List<MerkleNode> outerNodes, List<? extends Transaction> transactions)
       throws BitCoinException
    {
       this.outerNodes=outerNodes;

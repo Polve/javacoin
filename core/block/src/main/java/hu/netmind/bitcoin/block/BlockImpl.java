@@ -23,7 +23,10 @@ import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.net.BlockHeader;
+import hu.netmind.bitcoin.net.Tx;
+import hu.netmind.bitcoin.net.BlockMessage;
 import hu.netmind.bitcoin.net.BitCoinOutputStream;
 import hu.netmind.bitcoin.net.HexUtil;
 import hu.netmind.bitcoin.net.ArraysUtil;
@@ -75,12 +78,12 @@ public class BlockImpl implements Block, Hashable
    private byte[] previousBlockHash;
    private byte[] merkleRoot;
    private byte[] hash;
-   private List<Transaction> transactions;
+   private List<TransactionImpl> transactions;
 
    /**
     * Construct hash with basic data given, without hash (which will be calculated).
     */
-   public BlockImpl(List<Transaction> transactions,
+   public BlockImpl(List<TransactionImpl> transactions,
          long creationTime, long nonce, long compressedTarget, byte[] previousBlockHash, byte[] merkleRoot)
       throws BitCoinException
    {
@@ -90,7 +93,7 @@ public class BlockImpl implements Block, Hashable
    /**
     * Construct block with hash precalculated.
     */
-   public BlockImpl(List<Transaction> transactions,
+   public BlockImpl(List<TransactionImpl> transactions,
          long creationTime, long nonce, long compressedTarget, byte[] previousBlockHash, 
          byte[] merkleRoot, byte[] hash)
       throws BitCoinException
@@ -103,13 +106,13 @@ public class BlockImpl implements Block, Hashable
       this.hash=hash;
       if ( hash == null )
          this.hash = calculateHash();
-      this.transactions = Collections.unmodifiableList(new LinkedList<Transaction>(transactions));
+      this.transactions = Collections.unmodifiableList(new LinkedList<TransactionImpl>(transactions));
    }
 
    /**
     * Get the network block header representation of this Block.
     */
-   private BlockHeader getBlockHeader()
+   public BlockHeader createBlockHeader()
    {
       return new BlockHeader(BLOCK_VERSION,previousBlockHash,merkleRoot,creationTime,
             compressedTarget,nonce);
@@ -118,12 +121,12 @@ public class BlockImpl implements Block, Hashable
    /**
     * Calculate the hash of this block.
     */
-   private byte[] calculateHash()
+   protected byte[] calculateHash()
       throws BitCoinException
    {
       try
       {
-         BlockHeader blockHeader = getBlockHeader();
+         BlockHeader blockHeader = createBlockHeader();
          // Now serialize this to byte array
          ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
          BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
@@ -186,7 +189,7 @@ public class BlockImpl implements Block, Hashable
       // 10 . Verify Merkle hash 
       try
       {
-         MerkleTree tree = new MerkleTree(transactions);
+         MerkleTree tree = new MerkleTree(getTransactions());
          if ( ! Arrays.equals(tree.getRoot(),merkleRoot) )
             throw new VerificationException("block's ("+this+") merkle root ("+HexUtil.toHexString(merkleRoot)+") does not match transaction hashes root: "+
                   HexUtil.toHexString(tree.getRoot()));
@@ -237,7 +240,7 @@ public class BlockImpl implements Block, Hashable
 
    public List<Transaction> getTransactions()
    {
-      return transactions;
+      return Collections.<Transaction>unmodifiableList(transactions);
    }
 
    public int hashCode()
@@ -252,6 +255,28 @@ public class BlockImpl implements Block, Hashable
       if ( !(o instanceof BlockImpl) )
          return false;
       return Arrays.equals(((BlockImpl) o).hash,hash);
+   }
+
+   public static BlockImpl createBlock(ScriptFactory scriptFactory, BlockMessage blockMessage)
+      throws BitCoinException
+   {
+      List<TransactionImpl> txs = new LinkedList<TransactionImpl>();
+      for ( Tx tx : blockMessage.getTransactions() )
+         txs.add(TransactionImpl.createTransaction(scriptFactory,tx));
+      BlockImpl block = new BlockImpl(txs,blockMessage.getHeader().getTimestamp(),
+            blockMessage.getHeader().getNonce(), blockMessage.getHeader().getDifficulty(),
+            blockMessage.getHeader().getPrevBlock(),blockMessage.getHeader().getRootHash());
+      return block;
+   }
+
+   public BlockMessage createBlockMessage(long magic)
+      throws IOException
+   {
+      List<Tx> txs = new LinkedList<Tx>();
+      for ( TransactionImpl transaction : transactions )
+         txs.add(transaction.createTx());
+      BlockMessage message = new BlockMessage(magic,createBlockHeader(),txs);
+      return message;
    }
 
    static
@@ -300,8 +325,8 @@ public class BlockImpl implements Block, Hashable
                   }
                });
          outs.add(output);
-         List<Transaction> transactions = new LinkedList<Transaction>();
-         Transaction tx = new TransactionImpl(ins,outs,0l);
+         List<TransactionImpl> transactions = new LinkedList<TransactionImpl>();
+         TransactionImpl tx = new TransactionImpl(ins,outs,0l);
          transactions.add(tx);
          // Create the main network genesis block as a constant
          MAIN_GENESIS = new BlockImpl(transactions,1231006505000l,2083236893l,0x1d00ffffl,

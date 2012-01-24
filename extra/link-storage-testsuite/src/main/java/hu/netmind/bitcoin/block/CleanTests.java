@@ -85,7 +85,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    {
       List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
       List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
-      List<Transaction> txs = new LinkedList<Transaction>();
+      List<TransactionImpl> txs = new LinkedList<TransactionImpl>();
       inputs.add(new TransactionInputImpl(new byte[] {
                0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },1,
@@ -138,7 +138,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    {
       List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
       List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
-      List<Transaction> txs = new LinkedList<Transaction>();
+      List<TransactionImpl> txs = new LinkedList<TransactionImpl>();
       inputs.add(new TransactionInputImpl(new byte[] {
                0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },1,
@@ -530,7 +530,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       throws BitCoinException
    {
       // Generate random transactions (these are not even referentially valid)
-      List<Transaction> transactions = new LinkedList<Transaction>();
+      List<TransactionImpl> transactions = new LinkedList<TransactionImpl>();
       for ( int t=0; t<rnd.nextInt(5)+5; t++ )
       {
          List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
@@ -599,7 +599,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       throws BitCoinException
    {
       // Copy
-      List<Transaction> transactions = new LinkedList<Transaction>();
+      List<TransactionImpl> transactions = new LinkedList<TransactionImpl>();
       for ( Transaction tx : block.getTransactions() )
       {
          List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();

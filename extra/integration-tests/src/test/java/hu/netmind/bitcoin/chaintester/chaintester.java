@@ -208,35 +208,7 @@ public class chaintester
          {
             try
             {
-               BlockMessage blockMessage = (BlockMessage) message;
-               // Convert block from message to block impl
-               List<Transaction> txs = new LinkedList<Transaction>();
-               for ( Tx tx : blockMessage.getTransactions() )
-               {
-                  // First outs
-                  List<TransactionOutputImpl> outs = new LinkedList<TransactionOutputImpl>();
-                  for ( TxOut txOut : tx.getOutputs() )
-                  {
-                     TransactionOutputImpl out = new TransactionOutputImpl(txOut.getValue(),
-                           scriptFactory.createFragment(txOut.getScript()));
-                     outs.add(out);
-                  }
-                  // Then ins
-                  List<TransactionInputImpl> ins = new LinkedList<TransactionInputImpl>();
-                  for ( TxIn txIn : tx.getInputs() )
-                  {
-                     TransactionInputImpl in = new TransactionInputImpl(txIn.getReferencedTxHash(),
-                           (int)txIn.getReferencedTxOutIndex(),scriptFactory.createFragment(
-                              txIn.getSignatureScript()),txIn.getSequence());
-                     ins.add(in);
-                  }
-                  // Create tx
-                  TransactionImpl transaction = new TransactionImpl(ins,outs,tx.getLockTime());
-                  txs.add(transaction);
-               }
-               BlockImpl block = new BlockImpl(txs,blockMessage.getHeader().getTimestamp(),
-                     blockMessage.getHeader().getNonce(), blockMessage.getHeader().getDifficulty(),
-                     blockMessage.getHeader().getPrevBlock(),blockMessage.getHeader().getRootHash());
+               BlockImpl block = BlockImpl.createBlock(scriptFactory, (BlockMessage) message);
                // Check whether we are finished with the download, even before trying to add
                if ( Arrays.equals(highestHashPromised,block.getHash()) )
                {
