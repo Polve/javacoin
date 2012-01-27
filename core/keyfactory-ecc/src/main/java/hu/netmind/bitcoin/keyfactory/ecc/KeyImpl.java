@@ -196,8 +196,8 @@ public class KeyImpl implements Key
             // First, get back the "r" and "s" values from the concatenated DER signature
             ASN1InputStream derInput = new ASN1InputStream(signature);
             DERSequence sequence = (DERSequence) derInput.readObject();
-            BigInteger r = ((DERInteger)sequence.getObjectAt(0)).getValue();
-            BigInteger s = ((DERInteger)sequence.getObjectAt(1)).getValue();
+            BigInteger r = ((DERInteger)sequence.getObjectAt(0)).getPositiveValue();
+            BigInteger s = ((DERInteger)sequence.getObjectAt(1)).getPositiveValue();
             derInput.close();
             // Now verify
             ECDSASigner signer = new ECDSASigner();
