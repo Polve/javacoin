@@ -104,7 +104,7 @@ public class BlockTests
       // Construct block with minimal transactions, that don't validate
       TransactionImpl tx = new TransactionImpl(
             Arrays.asList(new TransactionInputImpl[] { new TransactionInputImpl(new byte[] {1}, 0, createMockScript(), 1) }),
-            Arrays.asList(new TransactionOutputImpl[] { new TransactionOutputImpl(10,null) }),
+            Arrays.asList(new TransactionOutputImpl[] { }),
             0);
       List<TransactionImpl> transactions = new ArrayList<TransactionImpl>();
       transactions.add(tx);

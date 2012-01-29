@@ -54,7 +54,6 @@ public class TransactionImpl implements Transaction, Hashable
 {
    private static final int TX_VERSION = 1;
    private static final long MAX_BLOCK_SIZE = 1000000;
-   private static final long MIN_BLOCK_SIZE = 100;
    private static final long COIN = 100000000;
    private static final long MAX_MONEY = 21000000l * COIN;
    
@@ -235,8 +234,6 @@ public class TransactionImpl implements Transaction, Hashable
          int totalSize = byteOutput.toByteArray().length;
          if ( totalSize > MAX_BLOCK_SIZE )
             throw new VerificationException("transaction ("+this+") is bigger than: "+MAX_BLOCK_SIZE+" bytes: "+totalSize);
-         if ( totalSize < MIN_BLOCK_SIZE )
-            throw new VerificationException("transaction ("+this+") is smaller than: "+MIN_BLOCK_SIZE+" bytes: "+totalSize);
       } catch ( IOException e ) {
          throw new VerificationException("can not serialize transaction: "+this);
       }
@@ -266,7 +263,7 @@ public class TransactionImpl implements Transaction, Hashable
       //    Note: only implemented dos attack on sig check (count the number of sigchecks)
       try
       {
-         if ( !exceptions.isExempt(this,ValidationCategory.Complexity) )
+         if ( (!isCoinbase()) && (!exceptions.isExempt(this,ValidationCategory.Complexity)) )
          {
             for ( TransactionOutput out : outputs )
                if ( out.getScript().isComputationallyExpensive() )
