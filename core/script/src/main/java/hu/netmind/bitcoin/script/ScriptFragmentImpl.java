@@ -161,7 +161,7 @@ public class ScriptFragmentImpl implements ScriptFragment
                   (instruction.getOperation() == Operation.OP_CHECKMULTISIGVERIFY) )
                sigCount+=20; // This is somehow assumed in the original client
          }
-         return sigCount > byteArray.length / 14;
+         return sigCount > (byteArray.length / 14)+1;
       } catch ( IOException e ) {
          throw new ScriptException("could not parse script fragment to determine complexity: "+this,e);
       }

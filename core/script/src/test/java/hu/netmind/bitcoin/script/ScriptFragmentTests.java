@@ -88,7 +88,7 @@ public class ScriptFragmentTests
    {
       ScriptFragmentImpl fragment = new ScriptFragmentImpl(HexUtil.toByteArray(
                "76 A9 14 1A A0 CD 1C BE A6 E7 45 8A 7A BA D5 12 "+
-               "A9 D9 EA 1A FB 22 5E 88 AC AC"));
+               "A9 D9 EA 1A FB 22 5E 88 AC AC AC"));
       Assert.assertTrue(fragment.isComputationallyExpensive());
    }
 }
