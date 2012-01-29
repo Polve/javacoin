@@ -36,11 +36,11 @@ public interface Wallet extends Observable
    /**
     * Get the current balance of the Wallet. In the BitCoin network "having"
     * a balance is not black-and-white. The balance actually contains transactions
-    * with different risks associated (risk is that the transaction will acutally
-    * "fail", because of double spending). It is left to the implementation to 
-    * acutally define the risk level associated with this method's return value.
-    * @return The total balance in this wallet (unconfirmed balance
-    * included). Note: 100,000,000 (one hundred million) of units is considered 1 BTC.
+    * with different risks associated (risks that the transaction mat be rolled back).
+    * It is left to the implementation to define the risk level associated with 
+    * this method's return value.
+    * @return The total balance in this wallet.
+    * Note: 100,000,000 (one hundred million) of units is considered 1 BTC.
     */
    long getBalance();
 
@@ -50,8 +50,7 @@ public interface Wallet extends Observable
     * @param amount The amount to send from this wallet to the destination
     * address. Note: 100,000,000 (one hundred million) of units is considered 1 BTC.
     * @throws NotEnoughMoneyException If not enough funds could be collected to cover
-    * to amount specified. This can happen when trying to spend money from transactions
-    * not yet in the longest branch.
+    * to amount specified.
     */
    void sendMoney(String to, long amount)
       throws NotEnoughMoneyException, VerificationException;
