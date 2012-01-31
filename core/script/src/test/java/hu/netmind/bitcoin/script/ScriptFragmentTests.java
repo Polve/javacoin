@@ -83,6 +83,24 @@ public class ScriptFragmentTests
       Assert.assertFalse(fragment.isComputationallyExpensive());
    }
 
+   public void testNotComplexScriptWithMultisig()
+      throws ScriptException
+   {
+      ScriptFragmentImpl fragment = new ScriptFragmentImpl(HexUtil.toByteArray(
+               "76 A9 14 1A A0 CD 1C BE A6 E7 45 8A 7A BA D5 12 "+
+               "A9 D9 EA 1A FB 22 5E 88 51 AE"));
+      Assert.assertFalse(fragment.isComputationallyExpensive());
+   }
+
+   public void testComplexScriptWithMultisig()
+      throws ScriptException
+   {
+      ScriptFragmentImpl fragment = new ScriptFragmentImpl(HexUtil.toByteArray(
+               "76 A9 14 1A A0 CD 1C BE A6 E7 45 8A 7A BA D5 12 "+
+               "A9 D9 EA 1A FB 22 5E 88 AE"));
+      Assert.assertTrue(fragment.isComputationallyExpensive());
+   }
+
    public void testComplexScript()
       throws ScriptException
    {

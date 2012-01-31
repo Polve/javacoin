@@ -151,6 +151,7 @@ public class ScriptFragmentImpl implements ScriptFragment
       {
          int sigCount = 0;
          InstructionInputStream input = getInstructionInput();
+         Instruction prevInstruction = null;
          Instruction instruction = null;
          while ( (instruction=input.readInstruction()) != null )
          {
@@ -159,7 +160,15 @@ public class ScriptFragmentImpl implements ScriptFragment
                sigCount++;
             if ( (instruction.getOperation() == Operation.OP_CHECKMULTISIG) ||
                   (instruction.getOperation() == Operation.OP_CHECKMULTISIGVERIFY) )
-               sigCount+=20; // This is somehow assumed in the original client
+            {
+               if ((prevInstruction!=null) && 
+                     (prevInstruction.getOperation().getCode()>=Operation.OP_1.getCode()) &&
+                     (prevInstruction.getOperation().getCode()<=Operation.OP_16.getCode()) )
+                  sigCount+=prevInstruction.getOperation().getCode()-Operation.OP_1.getCode()+1;
+               else
+                  sigCount+=20; // This is somehow assumed in the original client
+            }
+            prevInstruction = instruction;
          }
          return sigCount > (byteArray.length / 14)+1;
       } catch ( IOException e ) {
