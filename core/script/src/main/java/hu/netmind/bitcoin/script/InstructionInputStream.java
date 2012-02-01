@@ -60,7 +60,9 @@ public class InstructionInputStream extends InputStream
    public int read(byte[] b, int off, int len)
       throws IOException
    {
-      return input.read(b,off,len);
+      int readCount = input.read(b,off,len);
+      pointer+=readCount;
+      return readCount;
    }
 
    /**
@@ -107,7 +109,7 @@ public class InstructionInputStream extends InputStream
          int count = 0;
          while ( count < parameterLength )
          {
-            int readCount = input.read(data,count,parameterLength-count);
+            int readCount = read(data,count,parameterLength-count);
             if ( readCount < 0 )
                throw new IOException("could not read parameter to operation "+operations.get(opcode)+" because stream ended");
             count += readCount;

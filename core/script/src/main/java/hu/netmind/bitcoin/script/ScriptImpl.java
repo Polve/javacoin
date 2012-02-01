@@ -591,7 +591,8 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   stack.push(digestMessage(digestMessage(data,"SHA-256"),"SHA-256"));
                   break;
                case OP_CODESEPARATOR:
-                  blockPointer = input.getPointer(); // Remember the position
+                  if ( input.getPointer() > blockPointer )
+                     blockPointer = input.getPointer(); // Remember the position
                   break;
                case OP_CHECKSIG:
                   // Get input
