@@ -652,6 +652,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   }
                   else
                   {
+                     stack.pop(); // Because of a bug in the original client, there is 1 plus value
                      if ( currentSig < sigCount )
                         stack.push(0);
                      else
