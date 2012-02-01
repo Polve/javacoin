@@ -672,6 +672,7 @@ public class ScriptTests
       EasyMock.replay(keyFactory);
       // Create script
       ScriptImpl scriptImpl = new ScriptImpl(toScript(
+               "OP_0 "+
                "CONSTANT <"+HexUtil.toHexString(signature2)+" 01> "+
                "CONSTANT <"+HexUtil.toHexString(signature1)+" 01> "+
                "OP_2 "+
@@ -723,6 +724,7 @@ public class ScriptTests
       EasyMock.replay(keyFactory);
       // Create script
       ScriptImpl scriptImpl = new ScriptImpl(toScript(
+               "OP_0 "+
                "CONSTANT <"+HexUtil.toHexString(signature2)+" 01> "+
                "CONSTANT <"+HexUtil.toHexString(signature1)+" 01> "+
                "OP_2 "+

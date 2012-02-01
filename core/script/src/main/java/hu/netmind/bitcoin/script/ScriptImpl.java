@@ -736,6 +736,8 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
          transactionHash = txIn.getSignatureHash(signatureType,subscript);
          if ( logger.isDebugEnabled() )
             logger.debug("running verification, tx signature hash is {}, for type: {}",new BigInteger(1,transactionHash).toString(16),signatureType);
+         if ( logger.isDebugEnabled() )
+            logger.debug("running verification, signature script: {}",subscript);
       } catch ( BitCoinException e ) {
          throw new ScriptException("could not generate signature hash");
       }
