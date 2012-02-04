@@ -107,7 +107,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       // Create script runtime
       Stack stack = new Stack();
       Stack altStack = new Stack();
-      int blockPointer = pubScriptPointer;
+      int lastSeparator = 0;
       // Run the script
       try
       {
@@ -591,15 +591,14 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   stack.push(digestMessage(digestMessage(data,"SHA-256"),"SHA-256"));
                   break;
                case OP_CODESEPARATOR:
-                  if ( input.getPointer() > blockPointer )
-                     blockPointer = input.getPointer(); // Remember the position
+                  lastSeparator = input.getPointer();
                   break;
                case OP_CHECKSIG:
                   // Get input
                   byte[] pubKey = popData(stack,"executing OP_CHECKSIG");
                   byte[] sig = popData(stack,"executing OP_CHECKSIG");
                   // Push result to stack
-                  if ( verify(sig,pubKey,txIn,fragment(blockPointer).getSubscript(sig)) )
+                  if ( verify(sig,pubKey,txIn,fragment(lastSeparator,pubScriptPointer,input.getPointer()).getSubscript(sig)) )
                      stack.push(1);
                   else
                      stack.push(0);
@@ -609,7 +608,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   pubKey = popData(stack,"executing OP_CHECKSIGVERIFY");
                   sig = popData(stack,"executing OP_CHECKSIGVERIFY");
                   // Abort if it does not verify
-                  if ( ! verify(sig,pubKey,txIn,fragment(blockPointer).getSubscript(sig)) )
+                  if ( ! verify(sig,pubKey,txIn,fragment(lastSeparator,pubScriptPointer,input.getPointer()).getSubscript(sig)) )
                   {
                      logger.debug("exiting with false because of failed OP_CHECKSIGVERIFY");
                      return false;
@@ -629,7 +628,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                      sigs[i] = popData(stack,"executing OP_CHECKMULTISIG/OP_CHECKMULTISIGVERIFY");
                   logger.debug("found {} public keys and {} signatures",pubKeyCount, sigCount);
                   // Prepare subscript (remove all sigs)
-                  ScriptFragment subscript = fragment(blockPointer).getSubscript(sigs);
+                  ScriptFragment subscript = fragment(lastSeparator,pubScriptPointer,input.getPointer()).getSubscript(sigs);
                   // Verify signatures now. Note that all signatures must verify, but not
                   // all public keys must correspond to signatures (there are more public keys
                   // than signatures). Also, public keys and signatures should be ordered, so no need
@@ -752,12 +751,24 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       }
    }
 
-   private ScriptFragmentImpl fragment(int position)
+   private ScriptFragmentImpl fragment(int lastSeparator, int pubScriptPointer, int currentPosition)
    {
-      if ( position == 0 )
-         return this;
-      byte[] fragment = new byte[toByteArray().length-position];
-      System.arraycopy(toByteArray(),position,fragment,0,fragment.length);
+      int startIndex = 0;
+      int endIndex = toByteArray().length;
+      if ( currentPosition <= pubScriptPointer )
+      {
+         // We are in the first fragment
+         startIndex = lastSeparator;
+         endIndex = pubScriptPointer;
+      } else {
+         // We are in the second fragment
+         if ( lastSeparator <  pubScriptPointer )
+            startIndex = pubScriptPointer;
+         else
+            startIndex = lastSeparator;
+      }
+      byte[] fragment = new byte[endIndex-startIndex];
+      System.arraycopy(toByteArray(),startIndex,fragment,0,fragment.length);
       return new ScriptFragmentImpl(fragment);
    }
 }
