@@ -165,5 +165,58 @@ public class TransactionVerificationITTests
       logger.debug("running verification script: "+verificationScript);
       Assert.assertTrue(verificationScript.execute(input1));
    }
+
+   public void testTransactionVerificationWithCodeSeparatorAndMultiCheck()
+      throws Exception
+   {
+      // Data is taken from transaction:
+      // eb3b82c0884e3efa6d8b0be55b4915eb20be124c9766245bcc7f34fdac32bccb
+      // This transaction failed at first, so it was added to IT tests
+      
+      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
+
+      TransactionOutputImpl output1 = new TransactionOutputImpl(1900000l,
+         scriptFactory.createFragment(HexUtil.toByteArray(
+            "76 A9 14 38 0C B3 C5 94 DE 4E 7E 9B 8E 18 DB 18 29 87 BE BB 5A 4F 70 88 AC")));
+      TransactionOutputImpl output2 = new TransactionOutputImpl(3000000l,
+         scriptFactory.createFragment(HexUtil.toByteArray(
+            "14 2A 9B C5 44 7D 66 4C 1D 01 41 39 2A 84 2D 23 DB A4 5C 4F 13 B1 75")));
+      List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
+      outputs.add(output1);
+      outputs.add(output2);
+
+      TransactionInputImpl input1 = new TransactionInputImpl(
+         HexUtil.toByteArray(
+            "B8 FD 63 3E 77 13 A4 3D 5A C8 72 66 AD C7 84 44 66 9B 98 7A 56 B3 A6 5F B9 2D 58 C2 C4 B0 E8 4D"),
+         0,
+         scriptFactory.createFragment(HexUtil.toByteArray(
+            "48 "+ // Start of sig
+            "30 45 02 20 5B 28 2F BC 9B 06 4F 3B C8 23 A2 3E DC C0 04 8C BB 17 47 54 E7 AA 74 2E 3C 9F 48 3E BE 02 91 1C 02 21 00 E4 B0 B3 A1 17 D3 6C AB 5A 67 40 4D DD BF 43 DB 7B EA 3C 15 30 E0 FE 12 8E BC 15 62 1B D6 9A 3B 01 "+
+            "21 "+ // Pub key
+            "03 5A A9 8D 5F 77 CD 9A 2D 88 71 0E 6F C6 62 12 AF F8 20 02 6F 0D AD 8F 32 D1 F7 CE 87 45 7D DE 50")),
+         0xFFFFFFFFl);
+      TransactionInputImpl input2 = new TransactionInputImpl(
+         HexUtil.toByteArray(
+            "B8 FD 63 3E 77 13 A4 3D 5A C8 72 66 AD C7 84 44 66 9B 98 7A 56 B3 A6 5F B9 2D 58 C2 C4 B0 E8 4D"),
+         1,
+         scriptFactory.createFragment(HexUtil.toByteArray(
+               "00 47 "+
+               "30 44 02 20 27 6D 6D AD 3D EF A3 7B 5F 81 AD D3 99 2D 51 0D 2F 44 A3 17 FD 85 E0 4F 93 A1 E2 DA EA 64 66 02 02 20 0F 86 2A 0D A6 84 24 93 22 CE B8 ED 84 2F B8 C8 59 C0 CB 94 C8 1E 1C 53 08 B4 86 81 57 A4 28 EE 01 "+
+               "AB 51 21 "+
+               "02 32 AB DC 89 3E 7F 06 31 36 4D 7F D0 1C B3 3D 24 DA 45 32 9A 00 35 7B 3A 78 86 21 1A B4 14 D5 5A "+
+               "51 AE")),
+         0xFFFFFFFFl);
+      List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
+      inputs.add(input1);
+      inputs.add(input2);
+      // Now build the transaction itself
+      TransactionImpl transaction = new TransactionImpl(inputs,outputs,0);
+      // Now try to validate
+      Script verificationScript = scriptFactory.createScript(input2.getSignatureScript(),
+         scriptFactory.createFragment(HexUtil.toByteArray( // Claimed output 1 script
+            "14 2A 9B C5 44 7D 66 4C 1D 01 41 39 2A 84 2D 23 DB A4 5C 4F 13 B1 75")));
+      logger.debug("running verification script: "+verificationScript);
+      Assert.assertTrue(verificationScript.execute(input2));
+   }
 }
 
