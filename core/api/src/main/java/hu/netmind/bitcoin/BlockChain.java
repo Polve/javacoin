@@ -54,6 +54,13 @@ public interface BlockChain extends Observable
    Block getLastBlock();
 
    /**
+    * Get a block from its hash.
+    * @return The block in the chain that has the specified hash, null
+    * if not found.
+    */
+   Block getBlock(byte[] hash);
+
+   /**
     * Get the block preceding the given block.
     * @return The Block that is referenced from the
     * given block in the chain, or null if no such block

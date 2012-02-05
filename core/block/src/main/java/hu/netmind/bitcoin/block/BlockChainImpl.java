@@ -106,15 +106,20 @@ public class BlockChainImpl extends Observable implements BlockChain
       return listener;
    }
 
+   public Block getBlock(byte[] hash)
+   {
+      BlockChainLink link = linkStorage.getLink(hash);
+      if ( link == null )
+         return null;
+      return link.getBlock();
+   }
+
    /**
     * Get the previous block.
     */
    public Block getPreviousBlock(Block current)
    {
-      BlockChainLink link = linkStorage.getLink(current.getPreviousBlockHash());
-      if ( link == null )
-         return null;
-      return link.getBlock();
+      return getBlock(current.getPreviousBlockHash());
    }
 
    /**

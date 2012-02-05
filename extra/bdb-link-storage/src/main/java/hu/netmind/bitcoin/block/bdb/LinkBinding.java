@@ -75,7 +75,7 @@ public class LinkBinding extends TupleBinding<StoredLink>
       try
       {
          int transactionCount = in.readInt();
-         List<Transaction> transactions = new LinkedList<Transaction>();
+         List<TransactionImpl> transactions = new LinkedList<TransactionImpl>();
          for ( int i=0; i<transactionCount; i++ )
             transactions.add(readTransaction(in));
          long creationTime = in.readLong();
@@ -91,7 +91,7 @@ public class LinkBinding extends TupleBinding<StoredLink>
       }
    }
 
-   private Transaction readTransaction(TupleInput in)
+   private TransactionImpl readTransaction(TupleInput in)
    {
       try
       {
