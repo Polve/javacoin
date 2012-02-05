@@ -18,51 +18,34 @@
 
 package hu.netmind.bitcoin;
 
+import java.util.List;
+
 /**
- * Wallet is a high level logical construct of the BitCoin infrastructure,
- * providing services to query and handle money transfers. The functions
- * supported by this interface are targeted to normal "consumer" usage,
- * and therefore are simplified and do not offer all capabilities of the
- * BitCoin network.
+ * A Wallet is a high-level construct which contains Coins representing
+ * the total value the owner has. This class does not reflect the tree
+ * of block chains, rather it must follow the changes in the block chain
+ * and represent a single consistent view of coins on all calls. This means
+ * that the number and value of coins can change without warning, although
+ * after the change the COIN_CHANGE event is always sent.
  * @author Robert Brautigam
  */
 public interface Wallet extends Observable
 {
    enum Event
    {
-      BALANCE_CHANGE
+      COIN_CHANGE
    };
 
    /**
-    * Get the current balance of the Wallet. In the BitCoin network "having"
-    * a balance is not black-and-white. The balance actually contains transactions
-    * with different risks associated (risks that the transaction mat be rolled back).
-    * It is left to the implementation to define the risk level associated with 
-    * this method's return value.
-    * @return The total balance in this wallet.
-    * Note: 100,000,000 (one hundred million) of units is considered 1 BTC.
+    * Get all the coins in this wallet.
     */
-   long getBalance();
+   List<Coin> getCoins();
 
    /**
-    * Send money to a given address.
-    * @param to The string representation of the destination address.
-    * @param amount The amount to send from this wallet to the destination
-    * address. Note: 100,000,000 (one hundred million) of units is considered 1 BTC.
-    * @throws NotEnoughMoneyException If not enough funds could be collected to cover
-    * to amount specified.
+    * Recreate all the coins in this wallet. Use this method to
+    * re-synchronize wallet with the block chain, if
+    * anything changed that might affect coins retroactively.
     */
-   void sendMoney(String to, long amount)
-      throws NotEnoughMoneyException, VerificationException;
-
-   /**
-    * Create a new address in this wallet others can transfer to. It is
-    * recommended not to cache this address, but to create new addresses
-    * for each transaction.
-    * @return A new valid address for this wallet. Money transfer to this
-    * address will (eventually) show up in this wallet.
-    */
-   String createAddress()
-      throws VerificationException;
+   void reset();
 }
 

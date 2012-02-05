@@ -19,12 +19,18 @@
 package hu.netmind.bitcoin;
 
 /**
- * Thrown when an operation would require more money than currently owned.
+ * Thrown when a coin was tried to be spent but it was no longer available or
+ * was already spent.
  * @author Robert Brautigam
  */
-public class NotEnoughMoneyException extends BitCoinException
+public class InvalidCoinException extends BitCoinException
 {
-   public NotEnoughMoneyException(String message)
+   public InvalidCoinException(String message, Throwable e)
+   {
+      super(message,e);
+   }
+
+   public InvalidCoinException(String message)
    {
       super(message);
    }
