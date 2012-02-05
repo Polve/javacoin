@@ -49,16 +49,6 @@ public interface Coin
    Block getBlock();
 
    /**
-    * Gets an optional comment that was added to this coin when it was generated.
-    */
-   String getComment();
-
-   /**
-    * Gets an optional external identification that was added when it was generated.
-    */
-   String getExternalId();
-
-   /**
     * Get the transaction output this coin represents. Note that this
     * might be an expensive operation.
     */
