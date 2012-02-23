@@ -58,6 +58,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
    private static final String DIFFICULTY_DB_NAME = "difficulty-index";
    private static final String TXHASH_DB_NAME = "txhash-index";
    private static final String CLAIM_DB_NAME = "claim-index";
+   private static final String HEIGHT_DB_NAME = "height-index";
    private static Logger logger = LoggerFactory.getLogger(BDBChainLinkStorage.class);
 
    private boolean autoCreate = DEFAULT_AUTOCREATE;
@@ -71,6 +72,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
    private SecondaryDatabase difficultyDatabase = null;
    private SecondaryDatabase txhashDatabase = null;
    private SecondaryDatabase claimDatabase = null;
+   private SecondaryDatabase heightDatabase = null;
    private TransactionRunner runner = null;
 
    private StoredMap<byte[],StoredLink> links = null;
@@ -78,6 +80,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
    private StoredSortedMap<Difficulty,StoredLink> difficultyLinks = null;
    private StoredMap<byte[],StoredLink> txhashLinks = null;
    private StoredMap<Claim,StoredLink> claimLinks = null;
+   private StoredMap<Long,StoredLink> heightLinks = null;
 
    public BDBChainLinkStorage(ScriptFactory scriptFactory)
    {
@@ -156,6 +159,13 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       secondaryConfig.setSortedDuplicates(true);
       secondaryConfig.setMultiKeyCreator(new ClaimIndexCreator(scriptFactory));
       claimDatabase = environment.openSecondaryDatabase(null, CLAIM_DB_NAME, linkDatabase, secondaryConfig);
+      // Hight index
+      secondaryConfig = new SecondaryConfig();
+      secondaryConfig.setAllowCreate(autoCreate);
+      secondaryConfig.setTransactional(transactional);
+      secondaryConfig.setSortedDuplicates(true);
+      secondaryConfig.setKeyCreator(new HeightIndexCreator(scriptFactory));
+      heightDatabase = environment.openSecondaryDatabase(null, HEIGHT_DB_NAME, linkDatabase, secondaryConfig);
    }
 
    private void initializeViews()
@@ -167,6 +177,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       difficultyLinks = new StoredSortedMap(difficultyDatabase,new DifficultyBinding(),linkBinding,false);
       txhashLinks = new StoredMap(txhashDatabase,bytesBinding,linkBinding,false);
       claimLinks = new StoredMap(claimDatabase,new ClaimBinding(),linkBinding,false);
+      heightLinks = new StoredMap(heightDatabase,new LongBinding(),linkBinding,false);
    }
 
    /**
@@ -184,6 +195,8 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
          nexthashDatabase.close();
       if ( linkDatabase != null )
          linkDatabase.close();
+      if ( heightDatabase != null )
+         heightDatabase.close();
       if ( environment != null )
          environment.close();
    }
@@ -260,6 +273,45 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
                for ( StoredLink link : nextLinks.duplicates(hash) )
                   chainLinks.add(link.getLink());
                return chainLinks;
+            }
+         });
+   }
+
+   public boolean isReachable(final byte[] target, final byte[] source)
+   {
+      return executeWork(new ReturnTransactionWorker<Boolean>() {
+            public Boolean doReturnWork()
+            {
+               StoredLink targetLink = getStoredLink(target);
+               StoredLink sourceLink = getStoredLink(source);
+               if ( (targetLink==null) || (sourceLink==null) || 
+                  (targetLink.getLink().isOrphan()) || (sourceLink.getLink().isOrphan()) )
+                  return false;
+               return targetLink.getPath().isPrefix(sourceLink.getPath());
+            }
+         });
+   }
+
+   public BlockChainLink getCommonLink(final byte[] first, final byte[] second)
+   {
+      return executeWork(new ReturnTransactionWorker<BlockChainLink>() {
+            public BlockChainLink doReturnWork()
+            {
+               StoredLink firstLink = getStoredLink(first);
+               StoredLink secondLink = getStoredLink(second);
+               if ( (firstLink==null) || (secondLink==null) || 
+                  (firstLink.getLink().isOrphan()) || (secondLink.getLink().isOrphan()) )
+                  return null;
+               // Determine when the paths cross
+               Path commonPath = Path.getCommonPath(firstLink.getPath(),secondLink.getPath());
+               if ( commonPath == null )
+                  return null;
+               // Get the links at the specified height
+               Collection<StoredLink> potentialLinks = heightLinks.duplicates(commonPath.getHeight());
+               for ( StoredLink potentialLink : potentialLinks )
+                  if ( firstLink.getPath().isPrefix(potentialLink.getPath()) )
+                     return potentialLink.getLink();
+               return null;
             }
          });
    }

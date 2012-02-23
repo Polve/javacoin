@@ -71,6 +71,26 @@ public interface BlockChain extends Observable
    Block getPreviousBlock(Block current);
 
    /**
+    * Compute the latest common block for the two blocks given.
+    * @return The latest common block if there is one, or null if
+    * there is no common block, in which case one or both blocks
+    * must be not of this chain.
+    */
+   Block getCommonBlock(Block first, Block second);
+
+   /**
+    * Determine whether a block given is reachable from an intermediate
+    * block by only going forward. In other words, they are both on this
+    * chain, and both are on the same branch also.
+    * @param target The block to reach.
+    * @param source The source from which the target is attempted to be reached.
+    * @return True if the target can be reached from the source, false otherwise.
+    * A block can always reach itself. All blocks in the chain are reachable from
+    * the genesis block.
+    */
+   boolean isReachable(Block target, Block source);
+
+   /**
     * Add a block to the chain. Block is first validated against
     * BitCoin rules, then added if it passed all tests.
     */

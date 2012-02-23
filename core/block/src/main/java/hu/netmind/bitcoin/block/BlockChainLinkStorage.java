@@ -47,6 +47,22 @@ public interface BlockChainLinkStorage
    BlockChainLink getLink(byte[] hash);
 
    /**
+    * Get the common parent of the two given hashess if there is one.
+    * @return The highest common parent of the two blocks specified. Null if there
+    * is no common parent for any reason.
+    */
+   BlockChainLink getCommonLink(byte[] first, byte[] second);
+
+   /**
+    * Determine whether a block given is reachable from an intermediate
+    * block by only going forward. 
+    * @param target The block to reach.
+    * @param source The source from which the target is attempted to be reached.
+    * @return True if the target can be reached from the source, false otherwise.
+    */
+   boolean isReachable(byte[] target, byte[] source);
+
+   /**
     * Get the links for which the previous link contains the block with hash
     * given. Orphan blocks are returned.
     */

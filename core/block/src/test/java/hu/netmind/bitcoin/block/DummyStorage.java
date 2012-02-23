@@ -122,6 +122,28 @@ public class DummyStorage implements BlockChainLinkStorage
       return nextLinks;
    }
 
+   public BlockChainLink getCommonLink(byte[] first, byte[] second)
+   {
+      BlockChainLink firstLink = getLink(first);
+      BlockChainLink secondLink = getLink(second);
+      while ( (firstLink!=null) && (secondLink!=null) )
+      {
+         if ( Arrays.equals(firstLink.getBlock().getHash(),secondLink.getBlock().getHash()) )
+            return firstLink;
+         if ( firstLink.getHeight() > secondLink.getHeight() )
+            firstLink = getLink(firstLink.getBlock().getPreviousBlockHash());
+         else
+            secondLink = getLink(secondLink.getBlock().getPreviousBlockHash());
+      }
+      return null;
+   }
+
+   public boolean isReachable(byte[] target, byte[] source)
+   {
+      BlockChainLink commonLink = getCommonLink(target,source);
+      return (commonLink!=null) && (Arrays.equals(commonLink.getBlock().getHash(),source));
+   }
+
    public BlockChainLink getClaimedLink(BlockChainLink link, TransactionInput in)
    {
       while ( link != null )

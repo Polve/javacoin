@@ -81,6 +81,38 @@ public class PathTests
       Assert.assertTrue(samePath.isPrefix(path));
    }
 
+   public void testCommonPathOnDifferentBranch()
+   {
+      Tree tree = new Tree("a1 a2 a3 b3 b4 c3 c4 c5");
+      Path common = Path.getCommonPath(tree.getPath("b4"),tree.getPath("c5"));
+      Assert.assertNotNull(common);
+      Assert.assertEquals(common.getHeight(),1);
+   }
+
+   public void testCommonPathOfSameBranch()
+   {
+      Tree tree = new Tree("a1 a2 a3 b2 b3 b4 c2 c3 c4");
+      Path common = Path.getCommonPath(tree.getPath("b4"),tree.getPath("b3"));
+      Assert.assertNotNull(common);
+      Assert.assertEquals(common.getHeight(),2);
+   }
+
+   public void testCommonPathOnRoot()
+   {
+      Tree tree = new Tree("a1 a2 a3 a4 a5 a6 a7");
+      Path common = Path.getCommonPath(tree.getPath("a7"),tree.getPath("a4"));
+      Assert.assertNotNull(common);
+      Assert.assertEquals(common.getHeight(),3);
+   }
+
+   public void testCommonPathButThenDiverge()
+   {
+      Tree tree = new Tree("a1 a2 a3 a4 a5 a6 a7 a8 b3 b4");
+      Path common = Path.getCommonPath(tree.getPath("b4"),tree.getPath("a8"));
+      Assert.assertNotNull(common);
+      Assert.assertEquals(common.getHeight(),1);
+   }
+
    private void assertPrefix(String tree, String node, String prefix)
    {
       Tree t = new Tree(tree);

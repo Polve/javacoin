@@ -136,6 +136,35 @@ public class BlockChainImpl extends Observable implements BlockChain
    }
 
    /**
+    * Compute the latest common block for the two blocks given.
+    * @return The latest common block if there is one, or null if
+    * there is no common block, in which case one or both blocks
+    * must be not of this chain.
+    */
+   public Block getCommonBlock(Block first, Block second)
+   {
+      BlockChainLink link = linkStorage.getCommonLink(first.getHash(),second.getHash());
+      if ( link == null )
+         return null;
+      return link.getBlock();
+   }
+
+   /**
+    * Determine whether a block given is reachable from an intermediate
+    * block by only going forward. In other words, they are both on this
+    * chain, and both are on the same branch also.
+    * @param target The block to reach.
+    * @param source The source from which the target is attempted to be reached.
+    * @return True if the target can be reached from the source, false otherwise.
+    * A block can always reach itself. All blocks in the chain are reachable from
+    * the genesis block.
+    */
+   public boolean isReachable(Block target, Block source)
+   {
+      return linkStorage.isReachable(target.getHash(),source.getHash());
+   }
+
+   /**
     * Add a block to the chain. This call can be used to update orphan blocks.
     * @param rawBlock The block to add.
     * @param recheck Whether the block is an orphan block that needs re-checking.

@@ -992,6 +992,75 @@ public class BlockChainTests
             "      in 990105 0 999;"+
             "      out 200000000;",true);
    }
+   
+   public void testNormalCommonBlock()
+      throws BitCoinException
+   {
+      DummyStorage storage = new DummyStorage(BlockMock.createBlocks(
+            "block 1234567 1 1b0404cb 00 010203 01;"+
+            "   tx 1234567 990101 true;"+
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "block 1234567 1 1b0404cb 01 010203 02;"+
+            "   tx 1234567 990101 true;"+
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "block 1234567 1 1b0404cb 02 010203 03;"+
+            "   tx 1234567 990101 true;"+
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "block 1234567 1 1b0404cb 03 010203 04;"+
+            "   tx 1234567 990101 true;"+
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "block 1234567 1 1b0404cb 02 010203 05;"+
+            "   tx 1234567 990101 true;"+
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "block 1234567 1 1b0404cb 05 010203 06;"+
+            "   tx 1234567 990101 true;"+
+            "      in 00 -1 999;"+
+            "      out 500000000;"
+               ),0);
+      // Construct chain
+      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
+            storage,createScriptFactory(true),false);
+      // Do the check
+      Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
+            storage.getLink(new byte[] { 04 }).getBlock());
+      Assert.assertNotNull(commonBlock);
+      Assert.assertTrue(Arrays.equals(commonBlock.getHash(),new byte[] { 02 }));
+   }
+
+   public void testNoCommonBlock()
+      throws BitCoinException
+   {
+      DummyStorage storage = new DummyStorage(BlockMock.createBlocks(
+            "block 1234567 1 1b0404cb 00 010203 01;"+
+            "   tx 1234567 990101 true;"+
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "block 1234567 1 1b0404cb 01 010203 02;"+
+            "   tx 1234567 990101 true;"+
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "block 1234567 1 1b0404cb 02 010203 03;"+
+            "   tx 1234567 990101 true;"+
+            "      in 00 -1 999;"+
+            "      out 500000000;"+
+            "block 1234567 1 1b0404cb 05 010203 06;"+
+            "   tx 1234567 990101 true;"+
+            "      in 00 -1 999;"+
+            "      out 500000000;"
+               ),0);
+      // Construct chain
+      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
+            storage,createScriptFactory(true),false);
+      // Do the check
+      Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
+            storage.getLink(new byte[] { 03 }).getBlock());
+      Assert.assertNull(commonBlock);
+   }
 }
 
 

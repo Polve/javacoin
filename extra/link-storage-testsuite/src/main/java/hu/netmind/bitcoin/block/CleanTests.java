@@ -514,6 +514,69 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       Assert.assertFalse(link.isOrphan());
    }
 
+   public void testCommonAncestorConcept()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,24,2,3,false);
+      BlockChainLink link = storage.getCommonLink(getLink(27).getBlock().getHash(),
+               getLink(26).getBlock().getHash());
+      Assert.assertNotNull(link);
+      assertHash(link,24);     
+   }
+
+   public void testNoCommonAncestor()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,0,0,3,true);
+      BlockChainLink link = storage.getCommonLink(getLink(27).getBlock().getHash(),
+               getLink(26).getBlock().getHash());
+      Assert.assertNull(link);
+   }
+
+   public void testReachableConcept()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,24,2,3,false);
+      Assert.assertTrue(storage.isReachable(getLink(26).getBlock().getHash(),
+               getLink(24).getBlock().getHash()));
+   }
+
+   public void testNonReachable()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,24,2,3,false);
+      Assert.assertFalse(storage.isReachable(getLink(26).getBlock().getHash(),
+               getLink(27).getBlock().getHash()));
+   }
+
+   public void testOrphanNotReachable()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,0,0,3,true);
+      Assert.assertFalse(storage.isReachable(getLink(26).getBlock().getHash(),
+               getLink(27).getBlock().getHash()));
+   }
+
    private TransactionInputImpl createInput(int claimedTxHash, int claimedOutputIndex)
    {
       return new TransactionInputImpl(

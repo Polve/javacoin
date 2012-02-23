@@ -21,6 +21,8 @@ package hu.netmind.bitcoin.block.bdb;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A path encoding scheme for deep thin trees. Paths can be compared to see
@@ -42,8 +44,9 @@ import java.util.Collections;
  */
 public class Path
 {
+   private static Logger logger = LoggerFactory.getLogger(Path.class);
    private List<Junction> junctions = new ArrayList<Junction>();
-   private long height = 1;
+   private long height = 0;
 
    /**
     * Create a path to the root node.
@@ -105,7 +108,41 @@ public class Path
 
    public String toString()
    {
-      return junctions.toString();
+      return junctions.toString()+":"+height;
+   }
+
+   public static Path getCommonPath(Path first, Path second)
+   {
+      if ( logger.isDebugEnabled() )
+         logger.debug("finding common path for: "+first+" and "+second);
+      List<Junction> junctions = new ArrayList<Junction>();
+      long height = Math.min(first.getHeight(),second.getHeight());
+      // Parse common junctions
+      int index =0;
+      for ( ; (index<first.getJunctions().size()) && (index<second.getJunctions().size()); index++ )
+      {
+         Junction firstJunction = first.getJunctions().get(index);
+         Junction secondJunction = second.getJunctions().get(index);
+         if ( ! firstJunction.equals(secondJunction) )
+         {
+            // They diverged, so end search
+            height = Math.min(firstJunction.getHeight(),secondJunction.getHeight())-1;
+            break;
+         } else {
+            // Still on same path, they took the same branch, so follow
+            junctions.add(firstJunction);
+         }
+      }
+      // Analyze divergence
+      if ( index < first.getJunctions().size() )
+         height = Math.min(first.getJunctions().get(index).getHeight()-1,second.getHeight());
+      if ( index < second.getJunctions().size() )
+         height = Math.min(second.getJunctions().get(index).getHeight()-1,first.getHeight());
+      // Construct path
+      Path result = new Path(junctions,height);
+      if ( logger.isDebugEnabled() )
+         logger.debug("common path found: "+result);
+      return result;
    }
 
    public static class Junction
