@@ -37,15 +37,36 @@ public interface Wallet extends Observable
    };
 
    /**
-    * Get all the coins in this wallet.
+    * Get all the coins in this wallet. It is guaranteed
+    * that the returned list is always a consistent view.
     */
    List<Coin> getCoins();
 
    /**
-    * Recreate all the coins in this wallet. Use this method to
-    * re-synchronize wallet with the block chain, if
-    * anything changed that might affect coins retroactively.
+    * Mark the listed coins as spent. This is one atomic
+    * operation, so if it succeeds then all coins are marked
+    * as spent.
+    * If the coins are not spent according to the block chain
+    * in a given amount of time, the coins will be automatically
+    * reclaimed.
+    * @throws InvalidCoinException If one or more coins were not
+    * acually part of this wallet anymore, or one or more coins
+    * were already spent.
     */
-   void reset();
+   void spend(Coin... coins)
+      throws InvalidCoinException;
+
+   /**
+    * Reclaim coins. This is the inverse operation to <code>spend()</code>.
+    * The coins given will be reclaimed in one atomic operation. 
+    * Note that if you reclaim Coins that were actually spent successfully,
+    * you get coins that can't be actually spent anymore. Use this method
+    * explicitly only if it is fairly certain that the spending operation
+    * did not succeed.
+    * @throws InvalidCoinException If one or more coins were not
+    * acually part of this wallet anymore.
+    */
+   void reclaim(Coin... coins)
+      throws InvalidCoinException;
 }
 

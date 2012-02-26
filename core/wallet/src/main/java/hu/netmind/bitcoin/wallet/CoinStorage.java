@@ -16,45 +16,48 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin;
+package hu.netmind.bitcoin.wallet;
+
+import java.util.List;
+import hu.netmind.bitcoin.Coin;
 
 /**
- * A Coin is a variable value item that represents an undivisible 
- * unit that can be spent. It corresponds roughly to a TransactionOutput,
- * but it is related to a single owner and has higher level constructs
- * for spending.
+ * A persistent store of coins. Wallets call all methods in a synchronized way,
+ * so this storage doesn't have to be multithreaded.
  * @author Robert Brautigam
  */
-public interface Coin
+public interface CoinStorage
 {
    /**
-    * Get the value of this coin in 100.000.000th of BitCoin.
+    * Get the latest block hash that was used to generate the coins in this
+    * storage.
     */
-   long getValue();
+   byte[] getLastCheckedBlockHash();
 
    /**
-    * Returns whether this coin was generated in a coinbase transaction.
+    * Get all the unspent coins in this storage.
     */
-   boolean isCoinbase();
+   List<CoinImpl> getUnspentCoins();
 
    /**
-    * Gets the height of the block it was generated in.
+    * Get all the coins in the storage.
     */
-   long getBlockHeight();
+   List<CoinImpl> getCoins();
 
    /**
-    * Get the block hash this coin was created in.
+    * Get the coin from the specified output if there is one.
     */
-   byte[] getBlockHash();
+   CoinImpl getCoin(byte[] transactionHash, int outputIndex);
 
    /**
-    * Get the transaction hash this coin was created in.
+    * Update all coins listed in an atomic operation.
     */
-   byte[] getTransactionHash();
+   void update(CoinImpl... coins);
 
    /**
-    * Get the transaction output index this coin was created in.
+    * Remove some coins, and at the same time set the last checked block
+    * hash to the given value.
     */
-   int getTransactionOutputIndex();
+   void remove(byte[] lastCheckedBlockHash, CoinImpl... coins);
 }
 

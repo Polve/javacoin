@@ -26,6 +26,7 @@ import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.InvalidCoinException;
 import java.util.Arrays;
+import java.math.BigInteger;
 
 /**
  * All wallets contain Coins, which are the Coins the owner of the Wallet
@@ -41,9 +42,6 @@ import java.util.Arrays;
  */
 public class CoinImpl implements Coin
 {
-   private WalletImpl wallet;
-   private BlockChain chain;
-
    // Attributes that identify origin (these are immutable)
    private byte[] blockHash;
    private long blockHeight;
@@ -70,12 +68,9 @@ public class CoinImpl implements Coin
     * transaction.
     * @param value The value of this coin (in 100.000.000th of a BTC).
     */
-   protected CoinImpl(WalletImpl wallet, BlockChain chain,
-         byte[] blockHash, long blockHeight, byte[] transactionHash,
+   public CoinImpl(byte[] blockHash, long blockHeight, byte[] transactionHash,
          int transactionOutputIndex, boolean coinbase, long value)
    {
-      this.wallet=wallet;
-      this.chain=chain;
       this.blockHash=blockHash;
       this.blockHeight=blockHeight;
       this.transactionHash=transactionHash;
@@ -85,27 +80,6 @@ public class CoinImpl implements Coin
       this.spent=false;
       this.spentTime=0;
       this.spentHeight=0;
-   }
-
-   public void spend()
-      throws InvalidCoinException
-   {
-      wallet.spendCoin(this);
-   }
-
-   public Block getBlock()
-   {
-      return chain.getBlock(blockHash);
-   }
-
-   public TransactionOutput getOutput()
-   {
-      for ( Transaction transaction : getBlock().getTransactions() )
-      {
-         if ( Arrays.equals(transaction.getHash(),transactionHash) )
-            return transaction.getOutputs().get(transactionOutputIndex);
-      }
-      return null;
    }
 
    public byte[] getBlockHash()
@@ -143,7 +117,27 @@ public class CoinImpl implements Coin
    public long getSpentHeight()
    {
       return spentHeight;
-   }   
+   }
+
+   protected void setSpent(boolean spent)
+   {
+      this.spent=spent;
+   }
+
+   protected void setSpentTime(long spentTime)
+   {
+      this.spentTime=spentTime;
+   }
+
+   protected void setSpentHeight(long spentHeight)
+   {
+      this.spentHeight=spentHeight;
+   }
+
+   public String toString()
+   {
+      return ""+new BigInteger(1,transactionHash).toString(16)+"/"+transactionOutputIndex+" "+value+" units";
+   }
 }
 
 
