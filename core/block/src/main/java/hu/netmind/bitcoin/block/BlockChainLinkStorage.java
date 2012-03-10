@@ -47,6 +47,12 @@ public interface BlockChainLinkStorage
    BlockChainLink getLink(byte[] hash);
 
    /**
+    * Get the link following the current one given on the same
+    * branch the target is.
+    */
+   BlockChainLink getNextLink(byte[] current, byte[] target);
+
+   /**
     * Get the common parent of the two given hashess if there is one.
     * @return The highest common parent of the two blocks specified. Null if there
     * is no common parent for any reason.

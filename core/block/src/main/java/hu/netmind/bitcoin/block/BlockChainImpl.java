@@ -123,6 +123,17 @@ public class BlockChainImpl extends Observable implements BlockChain
    }
 
    /**
+    * Get the next block.
+    */
+   public Block getNextBlock(Block current, Block target)
+   {
+      BlockChainLink link = linkStorage.getNextLink(current.getHash(),target.getHash());
+      if ( link == null )
+         return null;
+      return link.getBlock();
+   }
+
+   /**
     * Add a block to the chain. The block is only added if it is verified, and
     * passes all known checks. If the block already exists in the chain, nothing
     * is done (there are no changes). Note: orphan blocks are not fully checked

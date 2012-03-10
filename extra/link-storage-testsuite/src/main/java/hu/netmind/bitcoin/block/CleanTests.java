@@ -577,6 +577,79 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                getLink(27).getBlock().getHash()));
    }
 
+   public void testSingleBranchNextBlock()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,26,4,5,false);
+      assertHash(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(27).getBlock().getHash()),25);
+   }
+
+   public void testMultiBranchNextBlock()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,26,4,5,false);
+      addLink(28,24,2,3,false);
+      addLink(29,28,3,4,false);
+      addLink(30,29,4,5,false);
+      assertHash(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(27).getBlock().getHash()),25);
+      assertHash(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(30).getBlock().getHash()),28);
+   }
+
+   public void testNextBlockWithInvalidTarget()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,26,4,5,false);
+      Assert.assertNull(storage.getNextLink(getLink(24).getBlock().getHash(),new byte[] { 1,1,1,1 }));
+   }
+
+   public void testNextBlockWithOrphanTarget()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,0,0,0,true);
+      Assert.assertNull(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(27).getBlock().getHash()));
+   }
+
+   public void testNextBlockOfOrphan()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,0,0,0,true);
+      Assert.assertNull(storage.getNextLink(getLink(26).getBlock().getHash(),getLink(26).getBlock().getHash()));
+   }
+
+   public void testNextBlockToUnreachableTarget()
+      throws BitCoinException
+   {
+      addLink(23,0,0,1,false);
+      addLink(24,23,1,2,false);
+      addLink(25,24,2,3,false);
+      addLink(26,25,3,4,false);
+      addLink(27,26,4,5,false);
+      addLink(28,24,2,3,false);
+      addLink(29,28,3,4,false);
+      addLink(30,29,4,5,false);
+      Assert.assertNull(storage.getNextLink(getLink(25).getBlock().getHash(),getLink(30).getBlock().getHash()));
+   }
+
    private TransactionInputImpl createInput(int claimedTxHash, int claimedOutputIndex)
    {
       return new TransactionInputImpl(

@@ -112,6 +112,15 @@ public class DummyStorage implements BlockChainLinkStorage
       return linksMap.get(new BigInteger(1,hash));
    }
 
+   public BlockChainLink getNextLink(byte[] current, byte[] target)
+   {
+      logger.debug("getting next link for current: {}, target: {}",Arrays.toString(current),Arrays.toString(target));
+      BlockChainLink result = getLink(target);
+      while ( (result!=null) && (!Arrays.equals(result.getBlock().getPreviousBlockHash(),current)) )
+         result = getLink(result.getBlock().getPreviousBlockHash());
+      return result;
+   }
+
    public List<BlockChainLink> getNextLinks(byte[] hash)
    {
       logger.debug("getting next links for hash: {}",Arrays.toString(hash));

@@ -101,6 +101,14 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
       return links.get(toByteList(hash));
    }
 
+   public BlockChainLink getNextLink(byte[] current, byte[] target)
+   {
+      BlockChainLink result = getLink(target);
+      while ( (result!=null) && (!Arrays.equals(result.getBlock().getPreviousBlockHash(),current)) )
+         result = getLink(result.getBlock().getPreviousBlockHash());
+      return result;
+   }
+
    public List<BlockChainLink> getNextLinks(byte[] hash)
    {
       List<BlockChainLink> nexts = new LinkedList<BlockChainLink>();

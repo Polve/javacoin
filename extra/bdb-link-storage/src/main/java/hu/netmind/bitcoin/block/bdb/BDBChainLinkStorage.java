@@ -264,17 +264,33 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       return link.getLink();
    }
 
-   public List<BlockChainLink> getNextLinks(final byte[] hash)
+   private List<StoredLink> getNextStoredLinks(final byte[] hash)
    {
-      return executeWork(new ReturnTransactionWorker<List<BlockChainLink>>() {
-            public List<BlockChainLink> doReturnWork()
+      return executeWork(new ReturnTransactionWorker<List<StoredLink>>() {
+            public List<StoredLink> doReturnWork()
             {
-               List<BlockChainLink> chainLinks = new LinkedList<BlockChainLink>();
-               for ( StoredLink link : nextLinks.duplicates(hash) )
-                  chainLinks.add(link.getLink());
-               return chainLinks;
+               return new LinkedList(nextLinks.duplicates(hash));
             }
          });
+   }
+
+   public List<BlockChainLink> getNextLinks(final byte[] hash)
+   {
+      List<BlockChainLink> chainLinks = new LinkedList<BlockChainLink>();
+      for ( StoredLink link : getNextStoredLinks(hash) )
+         chainLinks.add(link.getLink());
+      return chainLinks;
+   }
+
+   public BlockChainLink getNextLink(final byte[] current, final byte[] target)
+   {
+      StoredLink targetLink = getStoredLink(target);
+      if ( (targetLink == null) || (targetLink.getLink().isOrphan()) )
+         return null;
+      for ( StoredLink candidate : getNextStoredLinks(current) )
+         if (candidate.getPath().isPrefix(targetLink.getPath()))
+            return candidate.getLink();
+      return null;
    }
 
    public boolean isReachable(final byte[] target, final byte[] source)
