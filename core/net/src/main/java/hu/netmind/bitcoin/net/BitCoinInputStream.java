@@ -234,6 +234,16 @@ public class BitCoinInputStream extends InputStream
    }
 
    /**
+    * Read a variable length byte array from stream.
+    */
+   public byte[] readBytes()
+      throws IOException
+   {
+      long length = readUIntVar();
+      return readBytes((int)length);
+   }
+
+   /**
     * Read a byte array from stream.
     */
    public byte[] readBytes(int length)

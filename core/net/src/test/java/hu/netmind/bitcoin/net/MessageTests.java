@@ -886,28 +886,56 @@ public class MessageTests
    public void testAlertDeserialize()
       throws IOException
    {
-      // Sample taken from bitcoin wiki
+      // First alert message sent on production network:
+      // "See bitcoin.org/feb20 if you have trouble connecting after 20 February"
       BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "61 6C 65 72 74 00 00 00 00 00 00 00 "+  // "alert" command
-            "0A 00 00 00 "+                          // Payload is 10 bytes long
-            "0C 01 65 42 "+                          // checksum
-            "06 "+                                   // length of message
-            "41 6C 65 72 74 21 "+                    // message "Alert!"
-            "02 "+                                   // length of signature
-            "4D 65")));                              // signature "Me"
+            "B2 00 00 00 "+                          // Payload is 178 bytes long
+            "4F E6 8F E9 "+                          // checksum
+            "73 01 00 00 00 37 66 40 4F 00 00 00 00 B3 05 43 4F 00 00 "+
+            "00 00 F2 03 00 00 F1 03 00 00 00 10 27 00 00 48 EE 00 00 "+
+            "00 64 00 00 00 00 46 53 65 65 20 62 69 74 63 6F 69 6E 2E "+
+            "6F 72 67 2F 66 65 62 32 30 20 69 66 20 79 6F 75 20 68 61 "+
+            "76 65 20 74 72 6F 75 62 6C 65 20 63 6F 6E 6E 65 63 74 69 "+
+            "6E 67 20 61 66 74 65 72 20 32 30 20 46 65 62 72 75 61 72 "+
+            "79 00 47 30 45 02 21 00 83 89 DF 45 F0 70 3F 39 EC 8C 1C "+
+            "C4 2C 13 81 0F FC AE 14 99 5B B6 48 34 02 19 E3 53 B6 3B "+
+            "53 EB 02 20 09 EC 65 E1 C1 AA EE C1 FD 33 4C 6B 68 4B DE "+
+            "2B 3F 57 30 60 D5 B7 0C 3A 46 72 33 26 E4 E8 A4 F1"
+            )));
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       AlertMessage message = (AlertMessage) marshal.read(input);
-      // Check
+      // Check header
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"alert");
-      Assert.assertEquals(message.getLength(),10);
+      Assert.assertEquals(message.getLength(),178);
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
-      Assert.assertEquals(message.getMessage(),"Alert!");
-      Assert.assertEquals(message.getSignature(),"Me");
+      // Check message fields
+      Assert.assertEquals(message.getVersion(),1);
+      Assert.assertEquals(message.getRelayUntil(),1329620535);
+      Assert.assertEquals(message.getExpiration(),1329792435);
+      Assert.assertEquals(message.getId(),1010);
+      Assert.assertEquals(message.getCancel(),1009);
+      Assert.assertEquals(message.getMinVer(),10000);
+      Assert.assertEquals(message.getMaxVer(),61000);
+      Assert.assertEquals(message.getPriority(),100);
+      Assert.assertEquals(message.getMessage(),"See bitcoin.org/feb20 if you have trouble connecting after 20 February");
+      Assert.assertTrue(message.isSignatureVerified());
    }
+   
+  /* For reference, this is the second alert message sent on production network:
+              "01 00 00 00 F6 FA 63 4F 00 00 00 00 F2 2A 45 51 00 00 00 00 "+
+              "F3 03 00 00 F2 03 00 00 00 50 C3 00 00 7C C4 00 00 00 88 13 "+
+              "00 00 00 4A 55 52 47 45 4E 54 3A 20 73 65 63 75 72 69 74 79 "+
+              "20 66 69 78 20 66 6F 72 20 42 69 74 63 6F 69 6E 2D 51 74 20 "+
+              "6F 6E 20 57 69 6E 64 6F 77 73 3A 20 68 74 74 70 3A 2F 2F 62 "+
+              "69 74 63 6F 69 6E 2E 6F 72 67 2F 63 72 69 74 66 69 78 00"
+  */
 
+
+   // TODO: Delete this test or change it: we are unable to sign an alert message with satoshi key
    public void testAlertSerialize()
       throws IOException
    {
@@ -948,6 +976,8 @@ public class MessageTests
       message = (VerackMessage) marshal.read(input);
    }
 
+   // Obsolete, should be removed?
+   /*
    public void testFutureProofChecksum()
       throws IOException
    {
@@ -967,6 +997,7 @@ public class MessageTests
       AlertMessage message = (AlertMessage) marshal.read(input);
       Assert.assertTrue(message.verify(),"could not verify message");
    }
+   */
 
    @Test(expectedExceptions=IOException.class)
    public void testWrongMagicDeserialize()
