@@ -63,7 +63,32 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       this.pubScriptPointer=pubScriptPointer;
    }
 
-   private byte[] popData(Stack stack, String reason)
+  /*
+   * Read up to 4 little endian bytes, with sign in the most significant bit
+   * Used to read values in scripts if there are more than 4 bytes it returns
+   * zero
+   */
+  public static int readLittleEndianInt(byte[] bytes) {
+    int n = 0;
+    boolean changeSign = false;
+    if (bytes.length > 4) {
+      return 0;
+    }
+    if ((bytes[0] & 0x80) != 0) {
+      changeSign = true;
+    }
+    bytes[0] &= 0x7F;
+    for (int i = 0; i < bytes.length; i++) {
+      n += (bytes[i] << (bytes.length - 1 - i) * 8);
+    }
+    if (changeSign) {
+      return -n;
+    } else {
+      return n;
+    }
+  }
+  
+  private byte[] popData(Stack stack, String reason)
       throws ScriptException
    {
       if ( stack.empty() )
@@ -73,15 +98,20 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       return (byte[]) stack.pop();
    }
 
-   private int popInt(Stack stack, String reason)
-      throws ScriptException
-   {
-      if ( stack.empty() )
-         throw new ScriptException(reason+", but stack was empty");
-      if ( ! (stack.peek() instanceof Number) )
-         throw new ScriptException(reason+", but top item in stack is not a number but: "+stack.peek());
+  private int popInt(Stack stack, String reason)
+          throws ScriptException {
+    if (stack.empty()) {
+      throw new ScriptException(reason + ", but stack was empty");
+    }
+    Object obj = stack.peek();
+    if (obj instanceof Number) {
       return ((Number) stack.pop()).intValue();
-   }
+    }
+    if (obj instanceof byte[] && ((byte[]) obj).length <= 4) {
+      return readLittleEndianInt((byte[]) stack.pop());
+    }
+    throw new ScriptException(reason + ", but top item in stack is not a number but: " + stack.peek().getClass());
+  }
 
    private boolean popBoolean(Stack stack, String reason)
       throws ScriptException

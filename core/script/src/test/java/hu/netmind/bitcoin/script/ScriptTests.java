@@ -790,5 +790,45 @@ public class ScriptTests
       verify(publicKey3);
       verify(keyFactory);
    }
-}
 
+   /*
+    * http://blockexplorer.com/tx/369970d60ba54bae122be472366938626d2533e2f79cdda407e48eaa3765c68a
+    * Input Tx in block 168710: 369970d60ba54bae122be472366938626d2533e2f79cdda407e48eaa3765c68a output 0
+    * with script bytes 205a66f70c5d0be21192707d3b511a21e3043840acafd7f160637787d7401fe550
+    * Redeemed in block 168910: 3a5e0977cc64e601490a761d83a4ea5be3cd03b0ffb73f5fe8be6507539be76c with script '1'
+    */
+   public void testStrangeTx1()
+      throws Exception
+   {
+      Assert.assertTrue(execute(
+               "CONSTANT <5A 66 F7 0C 5D 0B E2 11 92 70 7D 3B 51 1A 21 E3 04 38 40 AC AF D7 F1 60 63 77 87 D7 40 1F E5 50> "+
+               "CONSTANT <01>"));
+   }
+
+   /*
+    * http://blockexplorer.com/tx/0f24294a1d23efbb49c1765cf443fba7930702752aba6d765870082fe4f13cae
+    * appeared in block 171043
+    */
+   public void testStrangeTx2()
+      throws Exception
+   {
+      Assert.assertTrue(execute(
+               "CONSTANT <03> CONSTANT <03> OP_MIN OP_3 OP_EQUAL"));
+   }
+
+   /*
+    * Test the readLittleEndianInt function
+    */
+   public void testReadLittleEndianInt()
+      throws Exception
+   {
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("01")), 1);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("81")), -1);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("12 34")), 4660);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("92 34")), -4660);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("12 34 56")), 1193046);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("92 34 56")), -1193046);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("12 34 56 78")), 305419896);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("92 34 56 78")), -305419896);
+   }
+}
