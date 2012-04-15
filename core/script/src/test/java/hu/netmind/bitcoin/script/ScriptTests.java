@@ -797,7 +797,7 @@ public class ScriptTests
     * with script bytes 205a66f70c5d0be21192707d3b511a21e3043840acafd7f160637787d7401fe550
     * Redeemed in block 168910: 3a5e0977cc64e601490a761d83a4ea5be3cd03b0ffb73f5fe8be6507539be76c with script '1'
     */
-   public void testStrangeTx1()
+   public void testRedeemConstantWithConstant1()
       throws Exception
    {
       Assert.assertTrue(execute(
@@ -809,7 +809,7 @@ public class ScriptTests
     * http://blockexplorer.com/tx/0f24294a1d23efbb49c1765cf443fba7930702752aba6d765870082fe4f13cae
     * appeared in block 171043
     */
-   public void testStrangeTx2()
+   public void testConstantEqualNumber()
       throws Exception
    {
       Assert.assertTrue(execute(

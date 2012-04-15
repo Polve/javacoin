@@ -72,7 +72,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
     int n = 0;
     boolean changeSign = false;
     if (bytes.length > 4) {
-      return 0;
+      throw new IllegalArgumentException();
     }
     if ((bytes[0] & 0x80) != 0) {
       changeSign = true;
