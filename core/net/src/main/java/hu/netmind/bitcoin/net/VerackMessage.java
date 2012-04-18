@@ -23,14 +23,14 @@ import java.io.IOException;
 /**
  * @author Robert Brautigam
  */
-public class VerackMessage extends Message
+public class VerackMessage extends ChecksummedMessage
 {
-   public VerackMessage(long magic)
+   public VerackMessage(long magic) throws IOException
    {
       super(magic,"verack");
    }
 
-   VerackMessage()
+   VerackMessage() throws IOException
    {
       super();
    }
