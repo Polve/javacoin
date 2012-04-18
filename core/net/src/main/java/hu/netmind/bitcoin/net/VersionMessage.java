@@ -23,7 +23,7 @@ import java.io.IOException;
 /**
  * @author Robert Brautigam
  */
-public class VersionMessage extends Message
+public class VersionMessage extends ChecksummedMessage
 {
    private long version;
    private long services;
@@ -35,7 +35,7 @@ public class VersionMessage extends Message
    private long startHeight;
 
    public VersionMessage(long magic, long version, long services, long timestamp,
-         NodeAddress receiverAddress, NodeAddress senderAddress, long nonce, String secondaryVersion, long startHeight)
+         NodeAddress receiverAddress, NodeAddress senderAddress, long nonce, String secondaryVersion, long startHeight) throws IOException
    {
       super(magic,"version");
       this.version=version;
@@ -48,7 +48,7 @@ public class VersionMessage extends Message
       this.startHeight=startHeight;
    }
 
-   VersionMessage()
+   VersionMessage() throws IOException
    {
       super();
    }
