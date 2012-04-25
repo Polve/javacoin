@@ -801,6 +801,14 @@ public class ScriptTests
       throws Exception
    {
       Assert.assertTrue(execute(
+               "OP_1 " +
+               "CONSTANT <5A 66 F7 0C 5D 0B E2 11 92 70 7D 3B 51 1A 21 E3 04 38 40 AC AF D7 F1 60 63 77 87 D7 40 1F E5 50> "));
+   }
+
+   public void testRedeemConstantWithConstantBytes()
+      throws Exception
+   {
+      Assert.assertTrue(execute(
                "CONSTANT <5A 66 F7 0C 5D 0B E2 11 92 70 7D 3B 51 1A 21 E3 04 38 40 AC AF D7 F1 60 63 77 87 D7 40 1F E5 50> "+
                "CONSTANT <01>"));
    }

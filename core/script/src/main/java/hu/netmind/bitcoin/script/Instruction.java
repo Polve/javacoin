@@ -41,5 +41,12 @@ public class Instruction
    {
       return data;
    }
+
+   @Override
+   public String toString()
+   {
+      return "Instruction[Operation: " + operation + (data != null ? " data size: " + data.length : " no data") + "]";
+   }
+   
 }
 

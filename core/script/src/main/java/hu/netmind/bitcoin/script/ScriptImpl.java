@@ -23,7 +23,6 @@ import hu.netmind.bitcoin.Script;
 import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.PublicKey;
 import hu.netmind.bitcoin.KeyFactory;
-import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.BitCoinException;
@@ -110,16 +109,35 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
     if (obj instanceof byte[] && ((byte[]) obj).length <= 4) {
       return readLittleEndianInt((byte[]) stack.pop());
     }
-    throw new ScriptException(reason + ", but top item in stack is not a number but: " + stack.peek().getClass());
+    throw new ScriptException(reason + ", but top item in stack is not a number but: " + obj.getClass());
   }
 
+   private boolean byteArrayNotZero(byte[] obj)
+   {
+      for (int i = 0; i < obj.length; i++)
+      {
+         if (obj[i] != 0)
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+   
    private boolean popBoolean(Stack stack, String reason)
       throws ScriptException
    {
-      int top = popInt(stack,reason);
-      if ( (top!=0) && (top!=1) )
-         throw new ScriptException(reason+", but top item was no 0 or 1 but: "+top);
-      return top == 1;
+    if (stack.empty()) {
+      throw new ScriptException(reason + ", but stack was empty");
+    }
+    Object obj = stack.peek();
+    if (obj instanceof Number) {
+      return ((Number) stack.pop()).intValue() != 0;
+    }
+    if (obj instanceof byte[]) {
+      return byteArrayNotZero((byte[])obj);
+    }
+    throw new ScriptException(reason+", but top item was not number nor byte[] but : "+stack.peek().getClass());
    }
 
    /**
