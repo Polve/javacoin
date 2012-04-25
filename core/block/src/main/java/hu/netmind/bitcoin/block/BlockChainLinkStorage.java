@@ -53,7 +53,7 @@ public interface BlockChainLinkStorage
    BlockChainLink getNextLink(byte[] current, byte[] target);
 
    /**
-    * Get the common parent of the two given hashess if there is one.
+    * Get the common parent of the two given hashes if there is one.
     * @return The highest common parent of the two blocks specified. Null if there
     * is no common parent for any reason.
     */
@@ -82,7 +82,7 @@ public interface BlockChainLinkStorage
     * relevant for this search.
     * @param link The link that represents the top of the branch to search. If
     * this is an orphan link, the result is undefined.
-    * @param in The tansaction input claiming the output to find the link for.
+    * @param in The transaction input claiming the output to find the link for.
     * @return The link that contains the claimed output, or null if no such
     * link exist.
     */
@@ -93,7 +93,7 @@ public interface BlockChainLinkStorage
     * that is claimed by the given input.
     * @param link The link with the block that represents the branch to search.
     * Supplying an orphan link yields an undefined result.
-    * @param in The tansaction input claiming the output to find the link for.
+    * @param in The transaction input claiming the output to find the link for.
     * @return The link that contains the said input, or null if the same output
     * is not claimed in the given branch.
     */
