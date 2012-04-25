@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.net;
 
+import hu.netmind.bitcoin.keyfactory.ecc.BitcoinUtil;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import java.io.IOException;
@@ -46,7 +47,8 @@ public class MessageTests
       BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(HexUtil.toByteArray(
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
-            "00 00 00 00")));                        // Payload is 0 bytes long
+            "00 00 00 00 "+                          // Payload is 0 bytes long
+            "5D F6 E0 E2")));                        // Checksum (mandatory from Feb 20, 2012)
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       VerackMessage message = (VerackMessage) marshal.read(input);
@@ -70,7 +72,8 @@ public class MessageTests
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
-            "00 00 00 00");                          // Payload is 0 bytes long
+            "00 00 00 00 "+                          // Payload is 0 bytes long
+            "5D F6 E0 E2");                          // Checksum (mandatory from Feb 20, 2012)
    }
 
    public void testVersionDeserialize()
@@ -81,7 +84,7 @@ public class MessageTests
           "F9 BE B4 D9 "+                                                                   // Main network magic bytes
           "76 65 72 73 69 6F 6E 00 00 00 00 00 "+                                           // "version" command
           "55 00 00 00 "+                                                                   // Payload is 85 bytes long
-                                                                                            // No checksum in version message
+          "D2 95 6D 8A "+                                                                   // checksum of payload
           "9C 7C 00 00 "+                                                                   // 31900 (version 0.3.19)
           "01 00 00 00 00 00 00 00 "+                                                       // 1 (NODE_NETWORK services)
           "E6 15 10 4D 00 00 00 00 "+                                                       // Mon Dec 20 21:50:14 EST 2010
@@ -132,7 +135,7 @@ public class MessageTests
           "F9 BE B4 D9 "+                                                                   // Main network magic bytes
           "76 65 72 73 69 6F 6E 00 00 00 00 00 "+                                           // "version" command
           "55 00 00 00 "+                                                                   // Payload is 85 bytes long
-                                                                                            // No checksum in version message
+          "D2 95 6D 8A "+                                                                   // checksum of payload
           "9C 7C 00 00 "+                                                                   // 31900 (version 0.3.19)
           "01 00 00 00 00 00 00 00 "+                                                       // 1 (NODE_NETWORK services)
           "E6 15 10 4D 00 00 00 00 "+                                                       // Mon Dec 20 21:50:14 EST 2010
@@ -445,7 +448,8 @@ public class MessageTests
             "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F "+ // junk payload
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
-            "00 00 00 00")));                        // Payload is 0 bytes long
+            "00 00 00 00 "+                          // Payload is 0 bytes long
+            "5D F6 E0 E2")));                        // Checksum
       // Unmarshall
       MessageMarshaller marshal = new MessageMarshaller();
       VerackMessage message = (VerackMessage) marshal.read(input);
@@ -922,7 +926,7 @@ public class MessageTests
       Assert.assertEquals(message.getMaxVer(),61000);
       Assert.assertEquals(message.getPriority(),100);
       Assert.assertEquals(message.getMessage(),"See bitcoin.org/feb20 if you have trouble connecting after 20 February");
-      Assert.assertTrue(message.isSignatureVerified());
+      Assert.assertTrue(BitcoinUtil.verifyDoubleDigestSatoshiSignature(message.getAlertPayload(), message.getSignature()));
    }
    
   /* For reference, this is the second alert message sent on production network:
@@ -934,8 +938,8 @@ public class MessageTests
               "69 74 63 6F 69 6E 2E 6F 72 67 2F 63 72 69 74 66 69 78 00"
   */
 
-
-   // TODO: Delete this test or change it: we are unable to sign an alert message with satoshi key
+   // TODO: Create a test key and use it to sign an AlertMessage and do unit testing
+   /*
    public void testAlertSerialize()
       throws IOException
    {
@@ -957,7 +961,10 @@ public class MessageTests
             "02 "+                                   // length of signature
             "4D 65");                                // signature "Me"
    }
-
+   */
+   
+   // Obsolete, should be removed?
+   /*
    public void testFutureProofMessageParsing()
       throws IOException
    {
@@ -976,8 +983,6 @@ public class MessageTests
       message = (VerackMessage) marshal.read(input);
    }
 
-   // Obsolete, should be removed?
-   /*
    public void testFutureProofChecksum()
       throws IOException
    {

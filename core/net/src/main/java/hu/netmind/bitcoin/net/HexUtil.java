@@ -42,20 +42,32 @@ public class HexUtil
    }
 
    /**
+    * Make the byte array appear as hex number, without spaces.
+    */
+   public static String toSingleHexString(byte[] byteArray) {
+     return toHexString(byteArray, true);
+   }
+   
+   /**
     * Make the byte array appear as space separated 2 digit hex numbers.
     */
-   public static String toHexString(byte[] byteArray)
+   public static String toHexString(byte[] byteArray) {
+     return toHexString(byteArray, false);
+   }
+   
+   public static String toHexString(byte[] byteArray, boolean withoutSpaces)
    {
       StringBuilder builder = new StringBuilder();
       for ( int i=0; i < byteArray.length; i++ )
       {
-         if ( i > 0 )
+         if ( !withoutSpaces && i > 0 )
             builder.append(" ");
          builder.append(HEXCHARS[(byteArray[i]>>4)&0xF]);
          builder.append(HEXCHARS[byteArray[i]&0xF]);
       }
       return builder.toString();
    }
+
 }
 
 

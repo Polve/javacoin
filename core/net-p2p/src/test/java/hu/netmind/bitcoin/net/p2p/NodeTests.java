@@ -45,6 +45,7 @@ import hu.netmind.bitcoin.net.AlertMessage;
 import hu.netmind.bitcoin.net.VerackMessage;
 import hu.netmind.bitcoin.net.Message;
 import hu.netmind.bitcoin.net.PingMessage;
+import java.util.logging.Level;
 
 /**
  * Tests the p2p network node implementation.
@@ -188,13 +189,13 @@ public class NodeTests
       node.start();
       // Accept the connection from node
       dummyNode.accept();
+      
       // Send a message to node
-      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message","Signature"));
+      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message"));
       // Get the repeated message right back
       AlertMessage answer = (AlertMessage) dummyNode.read();
       // Check
       Assert.assertEquals(answer.getMessage(),"Message");
-      Assert.assertEquals(answer.getSignature(),"Signature");
    }
 
    public void testBroadcast()
@@ -219,14 +220,13 @@ public class NodeTests
       for ( int i=0; i<dummyNodes.length; i++ )
          dummyNodes[i].accept();
       // Broadcast a message to all connected nodes
-      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message","Signature"));
+      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message"));
       // Get the messages from all nodes
       for ( int i=0; i<dummyNodes.length; i++ )
       {
          AlertMessage answer = (AlertMessage) dummyNodes[i].read();
          // Check
          Assert.assertEquals(answer.getMessage(),"Message");
-         Assert.assertEquals(answer.getSignature(),"Signature");
       }
    }
 
@@ -249,8 +249,8 @@ public class NodeTests
       // Accept the connection from node
       dummyNode.accept();
       // Broadcast 2 messages
-      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message1","Signature"));
-      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message2","Signature"));
+      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message1"));
+      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message2"));
       // Now check that the 1st message arrives only once
       AlertMessage message = (AlertMessage) dummyNode.read();
       Assert.assertEquals(message.getMessage(),"Message1");
@@ -271,7 +271,7 @@ public class NodeTests
       // Wait unilt the node really connected to the node
       waiter.waitForJoin();
       // Check connection
-      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message","Signature"));
+      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message"));
       AlertMessage message = (AlertMessage) dummyNode.read();
       Assert.assertEquals(message.getMessage(),"Message");
    }
@@ -375,8 +375,8 @@ public class NodeTests
       // Accept the connection from node
       dummyNode.accept();
       // Send two messages to node
-      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message1","Signature"));
-      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message2","Signature"));
+      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message1"));
+      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message2"));
       // Check that easy is only replied once by the node, meaning that only one repeater handler
       // is allowed to answer.
       AlertMessage incoming = (AlertMessage) dummyNode.read();
@@ -406,12 +406,19 @@ public class NodeTests
       Node node = createNode();
       node.setAddressSource(source);
       // Create a repeater handler
-      node.addHandler(new MessageRepeaterHandler() {
-               public void onJoin(Connection conn)
-               {
-                  conn.send(new VerackMessage(Message.MAGIC_TEST));
-               }
-            });
+      node.addHandler(new MessageRepeaterHandler()
+      {
+
+         public void onJoin(Connection conn)
+         {
+            try
+            {
+               conn.send(new VerackMessage(Message.MAGIC_TEST));
+            } catch (IOException ex)
+            {
+            }
+         }
+      });
       // Start node
       node.start();
       // Accept the connection from node
