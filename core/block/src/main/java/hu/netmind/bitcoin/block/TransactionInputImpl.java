@@ -161,7 +161,7 @@ public class TransactionInputImpl implements TransactionInput
 
    public String toString()
    {
-      return "In (seq "+sequence+") from "+HexUtil.toHexString(claimedTransactionHash)+"/"+claimedOutputIndex;
+      return "In (seq "+sequence+") from "+HexUtil.toSingleHexString(claimedTransactionHash)+"/"+claimedOutputIndex;
    }
 }
 
