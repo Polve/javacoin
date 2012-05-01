@@ -16,6 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+// TODO: Import test scripts from https://bitcointalk.org/index.php?topic=77422.0
+
 package hu.netmind.bitcoin.script;
 
 import org.testng.annotations.Test;
@@ -276,6 +278,12 @@ public class ScriptTests
       Assert.assertTrue(execute("OP_1 OP_0 OP_0 OP_0 OP_3 OP_ROLL OP_VERIFY OP_DEPTH OP_1SUB OP_1SUB"));
    }
 
+   public void testRoll2()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_0 OP_1 OP_2 OP_3 OP_2 OP_ROLL OP_1 OP_EQUALVERIFY OP_3 OP_EQUALVERIFY OP_2 OP_EQUALVERIFY OP_NOT"));
+   }
+
    public void testRot()
       throws Exception
    {
@@ -330,6 +338,12 @@ public class ScriptTests
       throws Exception
    {
       Assert.assertTrue(execute("OP_PUSHDATA1 <01 02 03 04> OP_SIZE OP_1SUB OP_1SUB OP_1SUB"));
+   }
+
+   public void testOpSize()
+      throws Exception
+   {
+      Assert.assertTrue(execute("CONSTANT <33> OP_SIZE OP_1 OP_EQUAL OP_DROP CONSTANT <33> OP_EQUAL"));
    }
 
    // Bitwise logic tests
@@ -797,7 +811,7 @@ public class ScriptTests
     * with script bytes 205a66f70c5d0be21192707d3b511a21e3043840acafd7f160637787d7401fe550
     * Redeemed in block 168910: 3a5e0977cc64e601490a761d83a4ea5be3cd03b0ffb73f5fe8be6507539be76c with script '1'
     */
-   public void testRedeemConstantWithConstant1()
+   public void testRedeemConstantWithConstantBytes()
       throws Exception
    {
       Assert.assertTrue(execute(
@@ -805,7 +819,7 @@ public class ScriptTests
                "CONSTANT <5A 66 F7 0C 5D 0B E2 11 92 70 7D 3B 51 1A 21 E3 04 38 40 AC AF D7 F1 60 63 77 87 D7 40 1F E5 50> "));
    }
 
-   public void testRedeemConstantWithConstantBytes()
+   public void testRedeemConstantWithConstant1()
       throws Exception
    {
       Assert.assertTrue(execute(
@@ -839,4 +853,34 @@ public class ScriptTests
       Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("12 34 56 78")), 305419896);
       Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("92 34 56 78")), -305419896);
    }
+
+   /*
+    * Testnet transaction appearing in block 30301
+    * http://blockexplorer.com/testnet/tx/a17b21f52859ed326d1395d8a56d5c7389f5fc83c17b9140a71d7cb86fdf0f5f
+    * Last opcode, OP_CHECKMULTISIG has been removed
+    */
+   public void testTxA17b21f52859ed326d1395d8a56d5c7389f5fc83c17b9140a71d7cb86fdf0f5f()
+      throws Exception
+   {
+      Assert.assertTrue(execute(
+              "OP_0 "+
+              "CONSTANT <30 46 02 21 00 D7 3F 63 3F 11 4E 0E 0B 32 4D 87 D3 8D 34 F2 29 66 A0 3B 07 28 03 AF A9 9C 94 08 20 1F 6D 6D C6 02 21 00 90 0E 85 BE 52 AD 22 78 D2 4E 7E DB B7 26 93 67 F5 F2 D6 F1 BD 33 8D 01 7C A4 60 00 87 76 61 44 01> "+
+              "CONSTANT <30 44 02 20 71 FE F8 AC 0A A6 31 88 17 DB D2 42 BF 51 FB 5B 75 BE 31 2A A3 1E CB 44 A0 AF E7 B4 9F CF 84 03 02 20 4C 22 31 79 A3 83 BB 6F CB 80 31 2A C6 6E 47 33 45 06 5F 7D 91 36 F9 66 2D 86 7A CF 96 C1 2A 42 01> "+
+              "OP_2 "+
+              "CONSTANT <04 8C 00 6F F0 D2 CF DE 86 45 50 86 AF 5A 25 B8 8C 2B 81 85 8A AB 67 F6 A3 13 2C 88 5A 2C B9 EC 38 E7 00 57 6F D4 6C 7D 72 D7 D2 25 55 EE E3 A1 4E 28 76 C6 43 CD 70 B1 B0 A7 7F BF 46 E6 23 31 AC> "+
+              "CONSTANT <04 B6 8E F7 D8 F2 4D 45 E1 77 11 01 E2 69 C0 AA CF 8D 3E D7 EB E1 2B 65 52 17 12 BB A7 68 EF 53 E1 E8 4F FF 3A FB EE 36 0A CE A0 D1 F4 61 C0 13 55 7F 71 D4 26 AC 17 A2 93 C5 EE BF 06 E4 68 25 3E> "+
+              "OP_0 "+
+              "OP_3 OP_ROLL OP_DUP OP_2 OP_GREATERTHANOREQUAL "+
+              "OP_VERIFY OP_3 OP_ROLL OP_SIZE OP_NOT OP_OVER OP_HASH160 "+
+              "CONSTANT <80 67 7C 53 92 22 0D B7 36 45 55 33 47 7D 0B C2 FB A6 55 02> "+
+              "OP_EQUAL OP_BOOLOR "+
+              "OP_VERIFY OP_3 OP_ROLL OP_SIZE OP_NOT OP_OVER OP_HASH160 "+
+              "CONSTANT <02 D7 AA 2E 76 D9 06 6F B2 B3 C4 1F F8 83 9A 5C 81 BD CA 19> "+
+              "OP_EQUAL OP_BOOLOR "+
+              "OP_VERIFY OP_3 OP_ROLL OP_SIZE OP_NOT OP_OVER OP_HASH160 "+
+              "CONSTANT <10 03 9C E4 FD B5 D4 EE 56 14 8F E3 93 5B 9B FB BE 4E CC 89> "+
+              "OP_EQUAL OP_BOOLOR "+
+              "OP_VERIFY OP_3"));
+   }
+
 }

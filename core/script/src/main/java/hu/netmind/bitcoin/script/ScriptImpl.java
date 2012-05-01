@@ -18,14 +18,7 @@
 
 package hu.netmind.bitcoin.script;
 
-import hu.netmind.bitcoin.ScriptException;
-import hu.netmind.bitcoin.Script;
-import hu.netmind.bitcoin.ScriptFragment;
-import hu.netmind.bitcoin.PublicKey;
-import hu.netmind.bitcoin.KeyFactory;
-import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.VerificationException;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
@@ -38,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Implements running a script.
- * @author Robert Brautigam
+ * @author Robert Brautigam, Alessandro Polverini
  */
 public class ScriptImpl extends ScriptFragmentImpl implements Script
 {
@@ -92,25 +85,32 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
    {
       if ( stack.empty() )
          throw new ScriptException(reason+", but stack was empty");
+      if (stack.peek() instanceof Number)
+      {
+         Number num = (Number) stack.pop();
+         if (num.intValue() == 0)
+            return new byte[] { };
+         if (num.intValue() > 255)
+            throw new ScriptException(reason + ", but top item in stack is a number not fitting in one-sized byte array: " + stack.peek());
+         return new byte[] { num.byteValue() };
+      }
       if ( ! (stack.peek() instanceof byte[]) )
          throw new ScriptException(reason+", but top item in stack is not a byte array but: "+stack.peek());
       return (byte[]) stack.pop();
    }
 
-  private int popInt(Stack stack, String reason)
-          throws ScriptException {
-    if (stack.empty()) {
-      throw new ScriptException(reason + ", but stack was empty");
-    }
-    Object obj = stack.peek();
-    if (obj instanceof Number) {
-      return ((Number) stack.pop()).intValue();
-    }
-    if (obj instanceof byte[] && ((byte[]) obj).length <= 4) {
-      return readLittleEndianInt((byte[]) stack.pop());
-    }
-    throw new ScriptException(reason + ", but top item in stack is not a number but: " + obj.getClass());
-  }
+   private int popInt(Stack stack, String reason)
+      throws ScriptException
+   {
+      if (stack.empty())
+         throw new ScriptException(reason + ", but stack was empty");
+      Object obj = stack.peek();
+      if (obj instanceof Number)
+         return ((Number) stack.pop()).intValue();
+      if (obj instanceof byte[] && ((byte[]) obj).length <= 4)
+         return readLittleEndianInt((byte[]) stack.pop());
+      throw new ScriptException(reason + ", but top item in stack is not a number but: " + obj.getClass());
+   }
 
    private boolean byteArrayNotZero(byte[] obj)
    {
@@ -162,6 +162,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
          Instruction instruction = null;
          while ( (instruction=input.readInstruction()) != null )
          {
+            // logger.debug("Istruzione da eseguire: "+instruction+" "+dumpStack(stack));
             switch ( instruction.getOperation() )
             {
                case CONSTANT:
@@ -262,7 +263,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   condition = popBoolean(stack,"executing OP_VERIFY");
                   if ( ! condition )
                   {
-                     logger.debug("exiting script with false on failed OP_VERIF condition from stack");
+                     logger.debug("exiting script with false on failed OP_VERIFY condition from stack");
                      return false; // Script fails
                   }
                   break;
@@ -325,7 +326,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                      throw new ScriptException("tried to OP_ROLL negative index: "+depth);
                   if ( depth >= stack.size() )
                      throw new ScriptException("tried to OP_ROLL deeper than stack: "+depth+" vs. "+stack.size());
-                  stack.push(stack.remove(stack.size()-1-depth));
+                  stack.push(stack.remove((stack.size()-1)-depth));
                   break;
                case OP_ROT:
                   Object x3 = stack.pop();
@@ -416,8 +417,17 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                case OP_RIGHT:
                   throw new ScriptException("OP_RIGHT is disabled");
                case OP_SIZE:
-                  byte[] data = popData(stack,"executing OP_SIZE");
-                  stack.push(data.length);
+                  Object o = stack.peek();
+                  if (o instanceof byte[])
+                     stack.push(((byte[])o).length);
+                  else if (o instanceof Number)
+                     // Workaround 
+                     if (((Number) o).intValue() == 0)
+                        stack.push(0);
+                     else
+                        stack.push(1);
+                  else
+                     throw new ScriptException("OP_SIZE for unknown object on stack: "+o);
                   break;
                case OP_INVERT:
                   throw new ScriptException("OP_INVERT is disabled");
@@ -619,6 +629,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                      stack.push(0);
                   break;
                case OP_RIPEMD160:
+                  byte[] data;
                   data = popData(stack,"executing OP_RIPEMD160");
                   stack.push(digestRIPEMD160(data));
                   break;
@@ -684,7 +695,9 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   int currentSig = 0; // Current sig to verify
                   for ( int i=0; (i<pubKeyCount) && (currentSig<sigCount); i++ )
                   {
-                     logger.debug("verifying signature {} with public key {}",currentSig,i);
+                     if (logger.isDebugEnabled())
+                        logger.debug("verifying signature "+currentSig+":"+BtcUtil.hexOut(sigs[currentSig])+
+                           " with public key "+i+":"+BtcUtil.hexOut(pubKeys[i]));
                      if ( verify(sigs[currentSig],pubKeys[i],txIn,subscript) )
                         currentSig++; // Go to next signature
                   }
@@ -770,6 +783,8 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
    private boolean verify(byte[] sig, byte[] pubKey, TransactionInput txIn, ScriptFragment subscript)
       throws ScriptException
    {
+      if (sig == null || pubKey == null || sig.length==0 || pubKey.length == 0)
+         return false;
       // Determine hash type first (last byte of pubKey)
       SignatureHashTypeImpl signatureType = new SignatureHashTypeImpl(sig[sig.length-1] & 0xff);
       // Remove last byte from sig
@@ -819,5 +834,29 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       System.arraycopy(toByteArray(),startIndex,fragment,0,fragment.length);
       return new ScriptFragmentImpl(fragment);
    }
-}
 
+   // A couple debugging functions used to dump the stack on the logfile
+   private String stackObjToString(Object o)
+   {
+      if (o instanceof byte[])
+         return BtcUtil.hexOut((byte[]) o);
+      else
+         return o.toString();
+   }
+
+   private String dumpStack(Stack stack)
+   {
+      StringBuilder sb = new StringBuilder("STACK: ");
+      for (Object o : stack)
+      {
+         sb.append("\n");
+         if (o instanceof Number)
+            sb.append(stackObjToString(o)).append(" ");
+         else if (o instanceof byte[])
+            sb.append("<").append(stackObjToString(o)).append("> ");
+         else
+            sb.append("<UNK ").append(o).append("> ");
+      }
+      return sb.toString();
+   }
+}
