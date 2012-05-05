@@ -418,5 +418,9 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       this.dbPath=dbPath;
    }
 
+  public byte[] getHashOfMainChainAtHeight(long height) {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
 }
 

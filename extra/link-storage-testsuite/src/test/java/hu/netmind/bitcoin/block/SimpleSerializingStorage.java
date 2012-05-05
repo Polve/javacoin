@@ -183,5 +183,8 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
          byteList.add(v);
       return byteList;
    }
-}
 
+  public byte[] getHashOfMainChainAtHeight(long height) {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+}
