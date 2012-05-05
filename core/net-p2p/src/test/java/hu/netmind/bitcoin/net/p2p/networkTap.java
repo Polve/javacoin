@@ -23,6 +23,7 @@ import hu.netmind.bitcoin.net.VerackMessage;
 import hu.netmind.bitcoin.net.VersionMessage;
 import hu.netmind.bitcoin.net.NodeAddress;
 import hu.netmind.bitcoin.net.Message;
+import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.InetSocketAddress;
 
@@ -42,7 +43,7 @@ public class networkTap
       node.setMaxConnections(1);
       node.setAddressSource(new DNSFallbackNodesSource());
       node.addHandler(new MessageHandler() {
-               public void onJoin(Connection conn)
+               public void onJoin(Connection conn) throws IOException
                {
                   System.out.println("Connected to "+conn.getRemoteAddress()+" (from: "+conn.getLocalAddress()+")");
                   // Send our version information
@@ -59,7 +60,7 @@ public class networkTap
                   System.out.println("Disconnected from "+conn.getRemoteAddress()+" (on local: "+conn.getLocalAddress()+")");
                }
 
-               public void onMessage(Connection conn, Message message)
+               public void onMessage(Connection conn, Message message) throws IOException
                {
                   System.out.println("Incoming ("+conn.getRemoteAddress()+"): "+message);
                   if ( message instanceof VersionMessage )

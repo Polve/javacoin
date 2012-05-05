@@ -18,18 +18,24 @@
 
 package hu.netmind.bitcoin.block;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 /**
  * Represents an actual target value for a hash. See <code>Difficulty</code>
  * documentation for details.
- * @author Robert Brautigam
+ * @author Robert Brautigam, Alessandro Polverini
  */
 public class DifficultyTarget implements Comparable<DifficultyTarget>
 {
-   public static final DifficultyTarget MAX_TARGET = 
+   public static final DifficultyTarget MAX_PRODNET_TARGET = 
       new DifficultyTarget(
          new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16));
+
+   public static final DifficultyTarget MAX_TESTNET_TARGET = 
+      new DifficultyTarget(
+         new BigInteger("1FFFE00000000000000000000000000000000000000000000000000000",16));
+         //new BigInteger("FFFF00000000000000000000000000000000000000000000000000000",16));
 
    private BigInteger target;
    private long compressedTarget;
@@ -93,9 +99,10 @@ public class DifficultyTarget implements Comparable<DifficultyTarget>
       return target.compareTo(other.target);
    }
 
+   @Override
    public String toString()
    {
-      return target+" ("+compressedTarget+")";
+      return "0x"+target.toString(16) +" (0x"+new BigInteger(""+compressedTarget).toString(16) +")";
    }
 }
 

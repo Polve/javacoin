@@ -108,5 +108,10 @@ public interface BlockChain extends Observable
     */
    void addBlock(Block block)
       throws VerificationException;
-}
 
+   /**
+    * Build a block locator to be used by a getBlocks message
+    * @return 
+    */
+   List<byte[]> createBlockLocator();
+}

@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.block;
 
+import hu.netmind.bitcoin.*;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.ArrayList;
@@ -30,19 +31,10 @@ import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.TransactionOutput;
-import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.BitCoinException;
-import hu.netmind.bitcoin.VerificationException;
-import hu.netmind.bitcoin.ScriptException;
-import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.net.TxIn;
 import hu.netmind.bitcoin.net.TxOut;
 import hu.netmind.bitcoin.net.Tx;
 import hu.netmind.bitcoin.net.BitCoinOutputStream;
-import hu.netmind.bitcoin.net.HexUtil;
 import hu.netmind.bitcoin.net.ArraysUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -187,14 +179,14 @@ public class TransactionImpl implements Transaction, Hashable
          output.close();
          byte[] txBytes = byteOutput.toByteArray();
          if ( logger.isDebugEnabled() )
-            logger.debug("hashing transaction: {}",HexUtil.toHexString(txBytes));
+            logger.debug("hashing transaction: {}",BtcUtil.hexOut(txBytes));
          // Hash this twice
          MessageDigest digest = MessageDigest.getInstance("SHA-256");
          byte[] firstHash = digest.digest(txBytes);
          digest.reset();
          byte[] result = ArraysUtil.reverse(digest.digest(firstHash));
          if ( logger.isDebugEnabled() )
-            logger.debug("hashed to: {}",HexUtil.toHexString(result));
+            logger.debug("hashed to: {}",BtcUtil.hexOut(result));
          return result;
       } catch ( NoSuchAlgorithmException e ) {
          throw new BitCoinException("can not find sha-256 algorithm for hash calculation",e);
@@ -324,7 +316,7 @@ public class TransactionImpl implements Transaction, Hashable
 
    public String toString()
    {
-      return "Transaction (hash: "+HexUtil.toHexString(hash)+", locked: "+lockTime+") has ins: "+
+      return "Transaction (hash: "+BtcUtil.hexOut(hash)+", locked: "+lockTime+") has ins: "+
          inputs+", outs: "+outputs;
    }
 }

@@ -114,6 +114,7 @@ public class chaintester
       logger.info("initialized chain, last link height: "+storage.getLastLink().getHeight());
       // Initialize p2p node
       node = new Node();
+      node.setPort(7321);
       node.setMinConnections(1);
       node.setMaxConnections(1);
       node.setAddressSource(new DNSFallbackNodesSource());

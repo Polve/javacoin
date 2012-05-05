@@ -18,11 +18,11 @@
 
 package hu.netmind.bitcoin.block;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.Serializable;
 
 /**
  * This object holds the difficulty value for a block, or the
@@ -40,18 +40,24 @@ import java.io.Serializable;
  *    <li>"Compressed target" is a 32 bit value representing a compressed
  *    form of a target.</li>
  * </ul>
- * @author Robert Brautigam
+ * @author Robert Brautigam, Alessandro Polverini
  */
 public class Difficulty implements Comparable<Difficulty>, Serializable
 {
    private static Logger logger = LoggerFactory.getLogger(Difficulty.class);
-   public static final Difficulty MIN_VALUE = new Difficulty(DifficultyTarget.MAX_TARGET);
-
+   private Difficulty MIN_VALUE;
    private BigDecimal difficulty;
+   
+   public final boolean isTestnet;
 
-   public Difficulty(BigDecimal difficulty)
+   public Difficulty(BigDecimal difficulty) {
+      this(difficulty, false);
+   }
+
+   public Difficulty(BigDecimal difficulty, boolean isTestnet)
    {
       this.difficulty=difficulty;
+      this.isTestnet = isTestnet;
    }
 
    /**
@@ -59,7 +65,15 @@ public class Difficulty implements Comparable<Difficulty>, Serializable
     */
    public Difficulty()
    {
-      difficulty = BigDecimal.ZERO;
+      this(BigDecimal.ZERO);
+   }
+
+   /**
+    * Construct with no difficulty.
+    */
+   public Difficulty(boolean isTestnet)
+   {
+      this(BigDecimal.ZERO, isTestnet);
    }
 
    /**
@@ -67,10 +81,16 @@ public class Difficulty implements Comparable<Difficulty>, Serializable
     */
    public Difficulty(DifficultyTarget target)
    {
+      this(target, false);
+   }
+   
+   public Difficulty(DifficultyTarget target, boolean isTestnet)
+   {
+      this.isTestnet = isTestnet;
       if ( target.getTarget().equals(BigInteger.ZERO) )
          difficulty = BigDecimal.ZERO;
       else
-         difficulty = new BigDecimal(DifficultyTarget.MAX_TARGET.getTarget()).divide(
+         difficulty = new BigDecimal((isTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET).getTarget()).divide(
                new BigDecimal(target.getTarget()),BigDecimal.ROUND_DOWN);
       logger.debug("difficulty created with value: {}",difficulty);
    }
@@ -95,13 +115,20 @@ public class Difficulty implements Comparable<Difficulty>, Serializable
    }
 
    /**
-    * Get the difficulty vaule.
+    * Get the difficulty value.
     */
    public BigDecimal getDifficulty()
    {
       return difficulty;
    }
 
+   public Difficulty getMinValue() {
+      if (MIN_VALUE == null)
+         MIN_VALUE = new Difficulty(isTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET);
+      return MIN_VALUE;
+   }
+
+   @Override
    public String toString()
    {
       return difficulty.toString();

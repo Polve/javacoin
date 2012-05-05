@@ -18,20 +18,13 @@
 
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.TransactionOutput;
-import hu.netmind.bitcoin.BitCoinException;
-import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.*;
 import hu.netmind.bitcoin.net.BlockHeader;
 import hu.netmind.bitcoin.net.Tx;
 import hu.netmind.bitcoin.net.BlockMessage;
 import hu.netmind.bitcoin.net.BitCoinOutputStream;
 import hu.netmind.bitcoin.net.HexUtil;
 import hu.netmind.bitcoin.net.ArraysUtil;
-import hu.netmind.bitcoin.VerificationException;
-import hu.netmind.bitcoin.ScriptFragment;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -39,9 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.AbstractList;
 import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
@@ -65,6 +56,7 @@ import org.slf4j.LoggerFactory;
 public class BlockImpl implements Block, Hashable
 {
    public static BlockImpl MAIN_GENESIS;
+   public static BlockImpl TESTNET_GENESIS;
 
    private static final int BLOCK_VERSION = 1;
    private static final long BLOCK_FUTURE_VALIDITY = 2*60*60*1000 ; // 2 hrs millis
@@ -186,13 +178,13 @@ public class BlockImpl implements Block, Hashable
       //    Ommitted: checked in transaction validate
       // 9. Reject if sum of transaction sig opcounts > MAX_BLOCK_SIGOPS 
       //    Ommitted: transactions already check for script complexity
-      // 10 . Verify Merkle hash 
+      // 10. Verify Merkle hash 
       try
       {
          MerkleTree tree = new MerkleTree(getTransactions());
          if ( ! Arrays.equals(tree.getRoot(),merkleRoot) )
-            throw new VerificationException("block's ("+this+") merkle root ("+HexUtil.toHexString(merkleRoot)+") does not match transaction hashes root: "+
-                  HexUtil.toHexString(tree.getRoot()));
+            throw new VerificationException("block's ("+this+") merkle root ("+BtcUtil.hexOut(merkleRoot)+") does not match transaction hashes root: "+
+                  BtcUtil.hexOut(tree.getRoot()));
       } catch ( VerificationException e ) {
          throw e;
       } catch ( BitCoinException e ) {
@@ -283,7 +275,7 @@ public class BlockImpl implements Block, Hashable
    {
       try
       {
-         // Create genesis transaction
+         // Create genesis transaction for production network
          List<TransactionInputImpl> ins = new LinkedList<TransactionInputImpl>();
          TransactionInputImpl input = new TransactionInputImpl(
                HexUtil.toByteArray("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"),
@@ -336,11 +328,66 @@ public class BlockImpl implements Block, Hashable
       } catch ( BitCoinException e ) {
          logger.error("can not construct main genesis block, main network will not be usable",e);
       }
+         
+      try
+      {
+         // Create genesis transaction for testnet
+         List<TransactionInputImpl> ins = new LinkedList<TransactionInputImpl>();
+         TransactionInputImpl input = new TransactionInputImpl(
+               HexUtil.toByteArray("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"),
+               -1,
+               new ScriptFragment() {
+                  private byte[] scriptBytes = 
+                     HexUtil.toByteArray("04 FF FF 00 1D 01 04 45 54 68 65 20 54 69 6D 65 73 20 30 33 2F 4A 61 6E 2F 32 30 30 39 20 43 68 61 6E 63 65 6C 6C 6F 72 20 6F 6E 20 62 72 69 6E 6B 20 6F 66 20 73 65 63 6F 6E 64 20 62 61 69 6C 6F 75 74 20 66 6F 72 20 62 61 6E 6B 73");
+                  public byte[] toByteArray()
+                  {
+                     return scriptBytes;                  
+                  }
+                  public boolean isComputationallyExpensive()
+                  {
+                     return false;
+                  }
+                  public ScriptFragment getSubscript(byte[]... sigs)
+                  {
+                     return this;
+                  }
+               },
+               0xFFFFFFFFl);
+         ins.add(input);
+         List<TransactionOutputImpl> outs = new LinkedList<TransactionOutputImpl>();
+         TransactionOutputImpl output = new TransactionOutputImpl(5000000000l,
+               new ScriptFragment() {
+                  private byte[] scriptBytes = 
+                     HexUtil.toByteArray("41 04 67 8A FD B0 FE 55 48 27 19 67 F1 A6 71 30 B7 10 5C D6 A8 28 E0 39 09 A6 79 62 E0 EA 1F 61 DE B6 49 F6 BC 3F 4C EF 38 C4 F3 55 04 E5 1E C1 12 DE 5C 38 4D F7 BA 0B 8D 57 8A 4C 70 2B 6B F1 1D 5F AC");
+                  public byte[] toByteArray()
+                  {
+                     return scriptBytes;                  
+                  }
+                  public boolean isComputationallyExpensive()
+                  {
+                     return false;
+                  }
+                  public ScriptFragment getSubscript(byte[]... sigs)
+                  {
+                     return this;
+                  }
+               });
+         outs.add(output);
+         List<TransactionImpl> transactions = new LinkedList<TransactionImpl>();
+         TransactionImpl tx = new TransactionImpl(ins,outs,0l);
+         transactions.add(tx);
+         // Create the test network genesis block as a constant
+         TESTNET_GENESIS = new BlockImpl(transactions,1296688602000l,384568319l,0x1d07fff8l,
+               HexUtil.toByteArray("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"),
+               HexUtil.toByteArray("4A 5E 1E 4B AA B8 9F 3A 32 51 8A 88 C3 1B C8 7F 61 8F 76 67 3E 2C C7 7A B2 12 7B 7A FD ED A3 3B "),
+               HexUtil.toByteArray("00 00 00 07 19 95 08 E3 4A 9F F8 1E 6E C0 C4 77 A4 CC CF F2 A4 76 7A 8E EE 39 C1 1D B3 67 B0 08 "));
+      } catch ( BitCoinException e ) {
+         logger.error("can not construct test genesis block, test network will not be usable",e);
+      }
    }
 
    public String toString()
    {
-      return "Block (hash "+HexUtil.toHexString(hash)+") created at "+new Date(creationTime)+", transactions: "+transactions;
+      return "Block (hash "+BtcUtil.hexOut(hash)+") created at "+new Date(creationTime)+", transactions: "+transactions;
    }
 }
-

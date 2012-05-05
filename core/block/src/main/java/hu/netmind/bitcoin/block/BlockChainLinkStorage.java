@@ -108,5 +108,11 @@ public interface BlockChainLinkStorage
     * Update an orphan block to make it non-orphan. All other use-cases are undefined.
     */
    void updateLink(BlockChainLink link);
+
+   /**
+    * @param height
+    * @return The block at specified height of the best chain
+    */
+   public byte[] getHashOfMainChainAtHeight(long height);
 }
 

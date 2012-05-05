@@ -18,27 +18,28 @@
 
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.Block;
+import hu.netmind.bitcoin.BlockChain;
+import hu.netmind.bitcoin.BtcUtil;
+import hu.netmind.bitcoin.Script;
+import hu.netmind.bitcoin.ScriptException;
+import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
-import hu.netmind.bitcoin.ScriptFactory;
-import hu.netmind.bitcoin.Script;
-import hu.netmind.bitcoin.ScriptException;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.List;
-import java.util.LinkedList;
 import java.util.Collections;
-import java.util.Observable;
-import java.util.Map;
 import java.util.HashMap;
-import java.util.ResourceBundle;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.MissingResourceException;
-import java.util.Enumeration;
+import java.util.Observable;
+import java.util.ResourceBundle;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +50,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockChainImpl extends Observable implements BlockChain
 {
-   private static Logger logger = LoggerFactory.getLogger(BlockChainImpl.class);
+   private static final Logger logger = LoggerFactory.getLogger(BlockChainImpl.class);
    private static final long TARGET_TIMESPAN = 14l*24l*60l*60l*1000l; // A target lasts 14 days
    private static final long TARGET_SPACING = 10l*60l*1000l; // Spacing between two blocks 10 minutes
    private static final long TARGET_RECALC = TARGET_TIMESPAN / TARGET_SPACING;
@@ -58,14 +59,15 @@ public class BlockChainImpl extends Observable implements BlockChain
    private static final long INITIAL_COINBASE_VALUE = 5000000000l;
    private static final long COINBASE_VALUE_HALFTIME = 210000l;
 
-   private static Map<BigInteger,Map<Long,BigInteger>> knownHashes =
-      new HashMap<BigInteger,Map<Long,BigInteger>>();
+   private static final Map<BigInteger,Map<Long,BigInteger>> knownHashes =
+      new HashMap<>();
 
    private Block genesisBlock = null;
    private BlockChainLinkStorage linkStorage = null;
    private BlockChainListener listener = null;
    private ScriptFactory scriptFactory = null;
    private boolean simplifedVerification = false;
+   private boolean isTestnet = false;
 
    /**
     * Construct a new block chain.
@@ -79,17 +81,34 @@ public class BlockChainImpl extends Observable implements BlockChain
          ScriptFactory scriptFactory, boolean simplifedVerification)
       throws VerificationException
    {
+      this(genesisBlock, linkStorage, scriptFactory, simplifedVerification, false);
+   }
+   
+   /**
+    * Construct a new block chain.
+    * @param genesisBlock The valid genesis block for this chain.
+    * @param linkStorage The store to get/store the chain links.
+    * @param simplifedVerification Set to "true" to disable transaction checking. If this
+    * is disabled the bitcoin network (whoever supplies blocks) is trusted instead. You have to
+    * disable this check if you don't want to run a full node.
+    * @param isTestnet set to true to handle different difficulty and validation rules of the test network
+    */
+   public BlockChainImpl(Block genesisBlock, BlockChainLinkStorage linkStorage,
+         ScriptFactory scriptFactory, boolean simplifedVerification, boolean isTestnet)
+      throws VerificationException
+   {
       this.linkStorage=linkStorage;
       this.scriptFactory=scriptFactory;
       this.simplifedVerification=simplifedVerification;
       this.genesisBlock=genesisBlock;
+      this.isTestnet = isTestnet;
       // Check if the genesis blocks equal, or add genesis block if storage is empty.
       // Here we assume that the storage is not tampered!
       BlockChainLink storedGenesisLink = linkStorage.getGenesisLink();
       if ( storedGenesisLink == null )
       {
          BlockChainLink genesisLink = new BlockChainLink(genesisBlock,
-               new Difficulty(new DifficultyTarget(genesisBlock.getCompressedTarget())),BlockChainLink.ROOT_HEIGHT,false);
+               new Difficulty(new DifficultyTarget(genesisBlock.getCompressedTarget()), isTestnet),BlockChainLink.ROOT_HEIGHT,false);
          linkStorage.addLink(genesisLink);
       } else {
          if ( ! storedGenesisLink.getBlock().equals(genesisBlock) )
@@ -217,7 +236,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       BlockChainLink previousLink = linkStorage.getLink(block.getPreviousBlockHash());
       if ( (previousLink == null) || (previousLink.isOrphan()) )
       {
-         BlockChainLink link = new BlockChainLink(block,new Difficulty(),0,true);
+         BlockChainLink link = new BlockChainLink(block,new Difficulty(isTestnet),0,true);
          if ( ! recheck )
             linkStorage.addLink(link);
          // Notify listeners that we have a missing block
@@ -230,7 +249,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       // Check 12: Check that nBits value matches the difficulty rules 
       logger.debug("checking whether block has the appropriate target...");
       DifficultyTarget blockTarget = new DifficultyTarget(block.getCompressedTarget());
-      Difficulty blockDifficulty = new Difficulty(blockTarget);
+      Difficulty blockDifficulty = new Difficulty(blockTarget, isTestnet);
       BlockChainLink link = new BlockChainLink(block, // Create link for block
             previousLink.getTotalDifficulty().add(blockDifficulty),
             previousLink.getHeight()+1,false);
@@ -398,7 +417,7 @@ public class BlockChainImpl extends Observable implements BlockChain
             if ( ! script.execute(in) )
                throw new VerificationException("verification script for input "+in+" returned 'false' for verification, script was: "+script);
          } catch ( ScriptException e ) {
-            throw new VerificationException("verification script for input "+in+" failed to execute",e);
+            throw new VerificationException("verification script for input "+in+" in tx "+BtcUtil.hexOut(tx.getHash())+" failed to execute",e);
          }
          // Check 16.1.5: For each input, if the referenced output has already been
          // spent by a transaction in the [same] branch, reject 
@@ -435,7 +454,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       // If we're calculating for the genesis block return
       // fixed difficulty
       if ( link == null )
-         return DifficultyTarget.MAX_TARGET;
+         return isTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET;
       // Look whether it's time to change the difficulty setting
       // (only change every TARGET_RECALC blocks). If not, return the
       // setting of this block, because the next one has to have the same
@@ -450,8 +469,9 @@ public class BlockChainImpl extends Observable implements BlockChain
       Block startBlock = link.getBlock();
       for ( int i=0; (i<TARGET_RECALC-1) && (startBlock!=null); i++ )
          startBlock = getPreviousBlock(startBlock);
+      // This shouldn't happen, we reached genesis
       if ( startBlock == null )
-         return DifficultyTarget.MAX_TARGET; // This shouldn't happen, we reached genesis
+         return isTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET;
       // Calculate the time the TARGET_RECALC blocks took
       long calculatedTimespan = link.getBlock().getCreationTime() - startBlock.getCreationTime();
       if (calculatedTimespan < TARGET_TIMESPAN/4)
@@ -465,19 +485,44 @@ public class BlockChainImpl extends Observable implements BlockChain
       target = target.divide(BigInteger.valueOf(TARGET_TIMESPAN));
       // Return the new difficulty setting
       DifficultyTarget resultTarget = new DifficultyTarget(target);
-      if ( resultTarget.compareTo(DifficultyTarget.MAX_TARGET) > 0 )
-         return DifficultyTarget.MAX_TARGET;
+      DifficultyTarget maxTarget = isTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET;
+      if ( resultTarget.compareTo(maxTarget) > 0 )
+         return maxTarget;
       else
          resultTarget = new DifficultyTarget(resultTarget.getCompressedTarget()); // Normalize
       logger.debug("previous height {}, recalculated target is: {}",link.getHeight(),resultTarget);
       return resultTarget;
    }
 
+   /**
+    * Return a block locator to be used by getBlocks using the specs defined by the wiki:
+    * https://en.bitcoin.it/wiki/Protocol_specification#getblocks
+    * @return a list of block hashes
+    */
+   @Override
+   public List<byte[]> createBlockLocator()
+   {
+      List<byte[]> blocks = new LinkedList<>();
+      long topHeight = linkStorage.getLastLink().getHeight();
+      int start = 0;
+      int step = 1;
+      for (long i = topHeight; i > 0; i -= step, ++start)
+      {
+         if (start >= 10)
+            step *= 2;
+         blocks.add(linkStorage.getHashOfMainChainAtHeight(i));
+      }
+      blocks.add(getGenesisBlock().getHash());
+      return blocks;
+   }
+
+   @Override
    public Block getGenesisBlock()
    {
       return genesisBlock;
    }
 
+   @Override
    public Block getLastBlock()
    {
       return linkStorage.getLastLink().getBlock();
@@ -490,10 +535,9 @@ public class BlockChainImpl extends Observable implements BlockChain
       {
          Map<Integer,BigInteger> idGenesis = new HashMap<Integer,BigInteger>();
          ResourceBundle bundle = ResourceBundle.getBundle("chain-knownhashes");
-         Enumeration<String> keys = bundle.getKeys();
-         while ( keys.hasMoreElements() )
+         // We need to sort the keys of the bundle
+         for (String key : new TreeSet<String>(bundle.keySet()))
          {
-            String key = keys.nextElement();
             StringTokenizer tokens = new StringTokenizer(key,".");
             tokens.nextToken();
             int id = Integer.valueOf(tokens.nextToken());

@@ -433,9 +433,9 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false,11,1);
+      addLink(25,24,2,3,false,5,1);
       addLink(26,25,3,4,false);
-      assertHash(storage.getClaimerLink(getLink(26),createInput(11,1)),25);
+      assertHash(storage.getClaimerLink(getLink(26),createInput(5,1)),25);
    }
 
    public void testGetClaimerLinkIsLastInBranch()
@@ -444,8 +444,8 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
       addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false,11,1);
-      assertHash(storage.getClaimerLink(getLink(26),createInput(11,1)),26);
+      addLink(26,25,3,4,false,9,1);
+      assertHash(storage.getClaimerLink(getLink(26),createInput(9,1)),26);
    }
 
    public void testGetClaimerLinkDoesNotExist()
@@ -455,7 +455,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(24,23,1,2,false);
       addLink(25,24,2,3,false);
       addLink(26,25,3,4,false);
-      Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(11,1)));
+      Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(33,1)));
    }
 
    public void testGetClaimerLinkOnMultipleBranches()
@@ -463,10 +463,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false,11,1);
-      addLink(26,24,2,3,false,11,1);
+      addLink(25,24,2,3,false,12,1);
+      addLink(26,24,2,3,false,12,1);
       addLink(27,25,3,4,false);
-      assertHash(storage.getClaimerLink(getLink(27),createInput(11,1)),25);
+      assertHash(storage.getClaimerLink(getLink(27),createInput(12,1)),25);
    }
 
    public void testGetClaimerLinkOnlyOnOtherBranch()
@@ -486,9 +486,9 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false,11,1);
+      addLink(25,24,2,3,false,6,1);
       addLink(26,25,3,4,false);
-      Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(11,99)));
+      Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(6,99)));
    }
 
    public void testGetOrphanClaimerLink()
@@ -498,8 +498,8 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(24,23,1,2,false);
       addLink(25,24,2,3,false);
       addLink(26,25,3,4,false);
-      addLink(27,99,0,3,true,11,1);
-      Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(11,1)));
+      addLink(27,99,0,3,true,7,1);
+      Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(7,1)));
    }
 
    public void testUpdateOrphanLink()
@@ -522,10 +522,23 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(25,24,2,3,false);
       addLink(26,25,3,4,false);
       addLink(27,24,2,3,false);
+      addLink(28,23,1,2,false);
+      addLink(29,28,2,3,false);
+      addLink(30,29,3,4,false);
       BlockChainLink link = storage.getCommonLink(getLink(27).getBlock().getHash(),
                getLink(26).getBlock().getHash());
       Assert.assertNotNull(link);
       assertHash(link,24);     
+
+      link = storage.getCommonLink(getLink(30).getBlock().getHash(),
+               getLink(23).getBlock().getHash());
+      Assert.assertNotNull(link);
+      assertHash(link,23);     
+
+      link = storage.getCommonLink(getLink(30).getBlock().getHash(),
+               getLink(27).getBlock().getHash());
+      Assert.assertNotNull(link);
+      assertHash(link,23);     
    }
 
    public void testNoCommonAncestor()
@@ -550,6 +563,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(26,25,3,4,false);
       addLink(27,24,2,3,false);
       Assert.assertTrue(storage.isReachable(getLink(26).getBlock().getHash(),
+               getLink(24).getBlock().getHash()));
+      Assert.assertTrue(storage.isReachable(getLink(27).getBlock().getHash(),
+               getLink(23).getBlock().getHash()));
+      Assert.assertTrue(storage.isReachable(getLink(27).getBlock().getHash(),
                getLink(24).getBlock().getHash()));
    }
 
@@ -754,4 +771,3 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
 }
-

@@ -29,13 +29,25 @@ import java.math.BigInteger;
 @Test
 public class DifficultyTests
 {
-   public void testMaxTarget()
+   public void testMaxTargetProdnet()
    {
-      Assert.assertEquals(DifficultyTarget.MAX_TARGET.getTarget(),
+      Assert.assertEquals(DifficultyTarget.MAX_PRODNET_TARGET.getTarget(),
             new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16));
       Assert.assertEquals(
-            Long.toHexString(DifficultyTarget.MAX_TARGET.getCompressedTarget()),
+            Long.toHexString(DifficultyTarget.MAX_PRODNET_TARGET.getCompressedTarget()),
             Long.toHexString(0x1d00ffffl));
+
+   }
+
+   public void testMaxTargetTestnet()
+   {
+      Assert.assertEquals(DifficultyTarget.MAX_TESTNET_TARGET.getTarget(),
+            new BigInteger("1FFFE00000000000000000000000000000000000000000000000000000",16));
+            //new BigInteger("FFFF00000000000000000000000000000000000000000000000000000",16));
+      Assert.assertEquals(
+            Long.toHexString(DifficultyTarget.MAX_TESTNET_TARGET.getCompressedTarget()),
+            Long.toHexString(0x1d1fffe0L));
+            //Long.toHexString(0x1d000fffl));
 
    }
 

@@ -64,7 +64,7 @@ public class getdata
       node.setMaxConnections(1);
       node.setAddressSource(new FallbackNodesSource());
       node.addHandler(new MessageHandler() {
-               public void onJoin(Connection conn)
+               public void onJoin(Connection conn) throws IOException
                {
                   System.out.println("Connected to "+conn.getRemoteAddress()+" (from: "+conn.getLocalAddress()+")");
                   // Send our version information
