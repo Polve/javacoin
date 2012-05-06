@@ -57,6 +57,7 @@ public abstract class ChecksummedMessage extends Message
       }
    }
 
+   @Override
    void readFrom(BitCoinInputStream input, long version, Object param)
       throws IOException
    {
@@ -71,6 +72,7 @@ public abstract class ChecksummedMessage extends Message
             });
    }
 
+   @Override
    void postReadFrom(BitCoinInputStream input, long version, Object param)
    {
       super.postReadFrom(input,version,param);
@@ -85,6 +87,7 @@ public abstract class ChecksummedMessage extends Message
       logger.debug("digest checksum: {}",calculatedChecksum);
    }
 
+   @Override
    void writeTo(BitCoinOutputStream output, long version)
       throws IOException
    {
@@ -93,6 +96,7 @@ public abstract class ChecksummedMessage extends Message
       output.writeUInt32(0);
    }
 
+   @Override
    void postWriteTo(byte[] serializedBytes, long version)
       throws IOException
    {

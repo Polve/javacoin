@@ -53,6 +53,7 @@ public class VersionMessage extends ChecksummedMessage
       super();
    }
 
+   @Override
    void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
       throws IOException
    {
@@ -77,6 +78,7 @@ public class VersionMessage extends ChecksummedMessage
       }
    }
 
+   @Override
    void writeTo(BitCoinOutputStream output, long protocolVersion)
       throws IOException
    {
@@ -97,6 +99,7 @@ public class VersionMessage extends ChecksummedMessage
       }
    }
 
+   @Override
    public String toString()
    {
       return super.toString()+" version: "+version+", services: "+services+

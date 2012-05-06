@@ -19,8 +19,8 @@
 package hu.netmind.bitcoin.net;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Robert Brautigam
@@ -42,6 +42,7 @@ public class HeadersMessage extends ChecksummedMessage
       super();
    }
 
+   @Override
    void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
       throws IOException
    {
@@ -58,6 +59,7 @@ public class HeadersMessage extends ChecksummedMessage
       }
    }
 
+   @Override
    void writeTo(BitCoinOutputStream output, long protocolVersion)
       throws IOException
    {
@@ -67,6 +69,7 @@ public class HeadersMessage extends ChecksummedMessage
          header.writeTo(output);
    }
 
+   @Override
    public String toString()
    {
       return super.toString()+" headers: "+headers;

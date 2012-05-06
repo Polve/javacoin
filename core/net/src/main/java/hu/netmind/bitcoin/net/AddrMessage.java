@@ -18,9 +18,9 @@
 
 package hu.netmind.bitcoin.net;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Robert Brautigam
@@ -42,6 +42,7 @@ public class AddrMessage extends ChecksummedMessage
       super();
    }
 
+   @Override
    void readFrom(BitCoinInputStream input, long version, Object param)
       throws IOException
    {
@@ -59,6 +60,7 @@ public class AddrMessage extends ChecksummedMessage
       }
    }
 
+   @Override
    void writeTo(BitCoinOutputStream output, long version)
       throws IOException
    {
@@ -79,6 +81,7 @@ public class AddrMessage extends ChecksummedMessage
       return (List<AddressEntry>) addressEntries;
    }
 
+   @Override
    public String toString()
    {
       return super.toString()+", addresses: "+addressEntries;
@@ -89,6 +92,7 @@ public class AddrMessage extends ChecksummedMessage
       private long timestamp;
       private NodeAddress address;
 
+      @Override
       public String toString()
       {
          return address.toString();
@@ -111,4 +115,3 @@ public class AddrMessage extends ChecksummedMessage
       }
    }
 }
-

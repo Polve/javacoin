@@ -35,6 +35,7 @@ public class VerackMessage extends ChecksummedMessage
       super();
    }
 
+   @Override
    void readFrom(BitCoinInputStream input, long version, Object param)
       throws IOException
    {
