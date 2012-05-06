@@ -18,19 +18,14 @@
 
 package hu.netmind.bitcoin.net.p2p.source;
 
-import hu.netmind.bitcoin.net.p2p.AddressSource;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Enumeration;
-import java.util.ResourceBundle;
-import java.util.Collections;
-import java.util.StringTokenizer;
-import java.net.InetSocketAddress;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.math.BigInteger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.StringTokenizer;
 
 /**
  * This address source delivers the static fallback nodes (by IP) listed in the official
@@ -40,7 +35,6 @@ import org.slf4j.LoggerFactory;
 public class FallbackNodesSource extends RandomizedNodesSource
 {
    private static final int DEFAULT_PORT = 8333;
-   private static Logger logger = LoggerFactory.getLogger(FallbackNodesSource.class);
 
    public List<InetSocketAddress> getInitialAddresses()
    {

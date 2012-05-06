@@ -18,10 +18,7 @@
 
 package hu.netmind.bitcoin.net.p2p;
 
-import hu.netmind.bitcoin.net.Message;
-import hu.netmind.bitcoin.net.BitCoinInputStream;
-import hu.netmind.bitcoin.net.BitCoinOutputStream;
-import hu.netmind.bitcoin.net.MessageMarshaller;
+import hu.netmind.bitcoin.net.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -466,6 +463,9 @@ public class Node
                lastIncomingTime = System.currentTimeMillis();
                // Pass to handlers
                replied = false;
+               if (message instanceof VersionMessage) {
+                  marshaller.setVersion(((VersionMessage)message).getVersion());
+               }
                for ( MessageHandler handler : handlers )
                {
                   try
