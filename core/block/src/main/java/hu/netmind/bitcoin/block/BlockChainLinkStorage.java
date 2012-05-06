@@ -89,6 +89,18 @@ public interface BlockChainLinkStorage
    BlockChainLink getClaimedLink(BlockChainLink link, TransactionInput in);
 
    /**
+    * Find the link which contains the claimed transaction by the input given.
+    * This method behaves exactly like @getClaimedLink but returns a block
+    * with just the interesting transaction, for performance purposes
+    * @param link The link that represents the top of the branch to search. If
+    * this is an orphan link, the result is undefined.
+    * @param in The transaction input claiming the output to find the link for.
+    * @return The link that contains the claimed output, or null if no such
+    * link exist.
+    */
+   BlockChainLink getPartialClaimedLink(BlockChainLink link, TransactionInput in);
+   
+   /**
     * Find the link which contains a claim for the same transaction output
     * that is claimed by the given input.
     * @param link The link with the block that represents the branch to search.
@@ -98,6 +110,17 @@ public interface BlockChainLinkStorage
     * is not claimed in the given branch.
     */
    BlockChainLink getClaimerLink(BlockChainLink link, TransactionInput in);
+
+   /**
+    * Return true if a block contains a claim for the same transaction output
+    * that is claimed by the given input.
+    * @param link The link with the block that represents the branch to search.
+    * Supplying an orphan link yields an undefined result.
+    * @param in The transaction input claiming the output to find the link for.
+    * @return True if a block in exists which contains the said input,
+    * or null if the same output is not claimed in the given branch.
+    */
+   boolean outputClaimedInSameBranch(BlockChainLink link, TransactionInput in);
 
    /**
     * Save a link into the storage. If the link exists, it will be overwritten.

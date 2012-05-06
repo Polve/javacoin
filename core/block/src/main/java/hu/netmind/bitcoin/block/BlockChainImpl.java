@@ -125,6 +125,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       return listener;
    }
 
+   @Override
    public Block getBlock(byte[] hash)
    {
       BlockChainLink link = linkStorage.getLink(hash);
@@ -136,6 +137,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    /**
     * Get the previous block.
     */
+   @Override
    public Block getPreviousBlock(Block current)
    {
       return getBlock(current.getPreviousBlockHash());
@@ -144,6 +146,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    /**
     * Get the next block.
     */
+   @Override
    public Block getNextBlock(Block current, Block target)
    {
       BlockChainLink link = linkStorage.getNextLink(current.getHash(),target.getHash());
@@ -159,6 +162,7 @@ public class BlockChainImpl extends Observable implements BlockChain
     * when letting into the store, but they will not be cleaned when it turns out
     * they are not valid (so they can't be repeated). Potential DOS attack vector.
     */
+   @Override
    public void addBlock(Block block)
       throws VerificationException
    {
@@ -171,6 +175,7 @@ public class BlockChainImpl extends Observable implements BlockChain
     * there is no common block, in which case one or both blocks
     * must be not of this chain.
     */
+   @Override
    public Block getCommonBlock(Block first, Block second)
    {
       BlockChainLink link = linkStorage.getCommonLink(first.getHash(),second.getHash());
@@ -189,6 +194,7 @@ public class BlockChainImpl extends Observable implements BlockChain
     * A block can always reach itself. All blocks in the chain are reachable from
     * the genesis block.
     */
+   @Override
    public boolean isReachable(Block target, Block source)
    {
       return linkStorage.isReachable(target.getHash(),source.getHash());
@@ -391,7 +397,7 @@ public class BlockChainImpl extends Observable implements BlockChain
          // Check 16.1.1: For each input, look in the [same] branch to find the 
          // referenced output transaction. Reject if the output transaction is missing for any input. 
          Transaction outTx = null;
-         BlockChainLink outLink = linkStorage.getClaimedLink(link,in);
+         BlockChainLink outLink = linkStorage.getPartialClaimedLink(link, in);
          if ( outLink != null ) // Check in chain before
             outTx = getTransaction(outLink.getBlock(),in.getClaimedTransactionHash());
          if ( outTx == null ) // Check in this block if not yet found
@@ -421,9 +427,9 @@ public class BlockChainImpl extends Observable implements BlockChain
          }
          // Check 16.1.5: For each input, if the referenced output has already been
          // spent by a transaction in the [same] branch, reject 
-         BlockChainLink claimerLink = linkStorage.getClaimerLink(link,in);
-         if ( claimerLink != null )
-            throw new VerificationException("output claimed by "+in+" is already claimed in another block: "+claimerLink);
+         if ( linkStorage.outputClaimedInSameBranch(link, in))
+            throw new VerificationException("output claimed by "+in+" is already claimed in another block of the same branch: "+
+               BtcUtil.hexOut(linkStorage.getClaimerLink(link, in).getBlock().getHash()));
       }
       return value;
    }
@@ -436,7 +442,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       if ( link == null )
          return 0;
       Block block = link.getBlock();
-      List<Long> times = new LinkedList<Long>();
+      List<Long> times = new LinkedList<>();
       for ( int i=0; (block!=null) && (i<MEDIAN_BLOCKS); i++ )
       {
          times.add(block.getCreationTime());
@@ -533,10 +539,10 @@ public class BlockChainImpl extends Observable implements BlockChain
       logger.debug("reading known hashes...");
       try
       {
-         Map<Integer,BigInteger> idGenesis = new HashMap<Integer,BigInteger>();
+         Map<Integer,BigInteger> idGenesis = new HashMap<>();
          ResourceBundle bundle = ResourceBundle.getBundle("chain-knownhashes");
          // We need to sort the keys of the bundle
-         for (String key : new TreeSet<String>(bundle.keySet()))
+         for (String key : new TreeSet<>(bundle.keySet()))
          {
             StringTokenizer tokens = new StringTokenizer(key,".");
             tokens.nextToken();

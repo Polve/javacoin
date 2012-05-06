@@ -19,10 +19,8 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.TransactionOutput;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,13 +39,13 @@ public class DummyStorage implements BlockChainLinkStorage
 {
    private static Logger logger = LoggerFactory.getLogger(DummyStorage.class);
 
-   private List<BlockChainLink> links = new ArrayList<BlockChainLink>();
-   private List<BlockChainLink> newLinks = new ArrayList<BlockChainLink>();
-   private Map<BigInteger,BlockChainLink> linksMap = new HashMap<BigInteger,BlockChainLink>();
+   private List<BlockChainLink> links = new ArrayList<>();
+   private List<BlockChainLink> newLinks = new ArrayList<>();
+   private Map<BigInteger,BlockChainLink> linksMap = new HashMap<>();
 
    public DummyStorage(Block genesisBlock)
    {
-      List<Block> blocks = new ArrayList<Block>();
+      List<Block> blocks = new ArrayList<>();
       blocks.add(genesisBlock);
       init(blocks,0);
    }
@@ -88,6 +86,7 @@ public class DummyStorage implements BlockChainLinkStorage
       }
    }
 
+   @Override
    public BlockChainLink getGenesisLink()
    {
       logger.debug("getting genesis link...");
@@ -96,6 +95,7 @@ public class DummyStorage implements BlockChainLinkStorage
       return links.get(0);
    }
 
+   @Override
    public BlockChainLink getLastLink()
    {
       logger.debug("getting last link...");
@@ -107,11 +107,13 @@ public class DummyStorage implements BlockChainLinkStorage
       return lastLink;
    }
 
+   @Override
    public BlockChainLink getLink(byte[] hash)
    {
       return linksMap.get(new BigInteger(1,hash));
    }
 
+   @Override
    public BlockChainLink getNextLink(byte[] current, byte[] target)
    {
       logger.debug("getting next link for current: {}, target: {}",Arrays.toString(current),Arrays.toString(target));
@@ -121,16 +123,18 @@ public class DummyStorage implements BlockChainLinkStorage
       return result;
    }
 
+   @Override
    public List<BlockChainLink> getNextLinks(byte[] hash)
    {
       logger.debug("getting next links for hash: {}",Arrays.toString(hash));
-      List<BlockChainLink> nextLinks = new ArrayList<BlockChainLink>();
+      List<BlockChainLink> nextLinks = new ArrayList<>();
       for ( BlockChainLink link : links )
          if ( Arrays.equals(link.getBlock().getPreviousBlockHash(),hash) )
             nextLinks.add(link);
       return nextLinks;
    }
 
+   @Override
    public BlockChainLink getCommonLink(byte[] first, byte[] second)
    {
       BlockChainLink firstLink = getLink(first);
@@ -147,12 +151,14 @@ public class DummyStorage implements BlockChainLinkStorage
       return null;
    }
 
+   @Override
    public boolean isReachable(byte[] target, byte[] source)
    {
       BlockChainLink commonLink = getCommonLink(target,source);
       return (commonLink!=null) && (Arrays.equals(commonLink.getBlock().getHash(),source));
    }
 
+   @Override
    public BlockChainLink getClaimedLink(BlockChainLink link, TransactionInput in)
    {
       while ( link != null )
@@ -165,6 +171,7 @@ public class DummyStorage implements BlockChainLinkStorage
       return null;
    }
 
+   @Override
    public BlockChainLink getClaimerLink(BlockChainLink link, TransactionInput in)
    {
       while ( link != null )
@@ -185,12 +192,14 @@ public class DummyStorage implements BlockChainLinkStorage
       linksMap.put(new BigInteger(1,link.getBlock().getHash()),link);
    }
 
+   @Override
    public void addLink(BlockChainLink link)
    {
       addLinkInternal(link);
       newLinks.add(link);
    }
 
+   @Override
    public void updateLink(BlockChainLink link)
    {
       addLink(link);
@@ -200,5 +209,25 @@ public class DummyStorage implements BlockChainLinkStorage
    {
       return newLinks;
    }
-}
 
+   @Override
+   public BlockChainLink getPartialClaimedLink(BlockChainLink link, TransactionInput in)
+   {
+      return getClaimedLink(link, in);
+   }
+
+   @Override
+   public boolean outputClaimedInSameBranch(BlockChainLink link, TransactionInput in)
+   {
+      return getClaimerLink(link, in) != null;
+   }
+
+   @Override
+   public byte[] getHashOfMainChainAtHeight(long height)
+   {
+      BlockChainLink lastLink = getLastLink();
+      if (lastLink == null)
+         return null;
+      return lastLink.getBlock().getHash();
+   }
+}
