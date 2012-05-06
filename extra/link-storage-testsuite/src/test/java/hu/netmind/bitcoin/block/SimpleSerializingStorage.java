@@ -185,6 +185,14 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
    }
 
   public byte[] getHashOfMainChainAtHeight(long height) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    return getLastLink().getBlock().getHash();
+  }
+
+  public BlockChainLink getPartialClaimedLink(BlockChainLink link, TransactionInput in) {
+    return getClaimedLink(link, in);
+  }
+
+  public boolean outputClaimedInSameBranch(BlockChainLink link, TransactionInput in) {
+    return getClaimerLink(link, in) != null;
   }
 }

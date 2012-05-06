@@ -373,6 +373,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(25,24,2,3,false,11,-1);
       addLink(26,25,3,4,false);
       assertHash(storage.getClaimedLink(getLink(26),createInput(11,0)),25);
+      assertHash(storage.getPartialClaimedLink(getLink(26),createInput(11,0)),25);
    }
 
    public void testGetClaimedLinkIsLastInBranch()
@@ -383,6 +384,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(25,24,2,3,false);
       addLink(26,25,3,4,false,11,-1);
       assertHash(storage.getClaimedLink(getLink(26),createInput(11,0)),26);
+      assertHash(storage.getPartialClaimedLink(getLink(26),createInput(11,0)),26);
    }
 
    public void testGetClaimedLinkDoesNotExist()
@@ -393,6 +395,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(25,24,2,3,false);
       addLink(26,25,3,4,false);
       Assert.assertNull(storage.getClaimedLink(getLink(26),createInput(11,0)));
+      Assert.assertNull(storage.getPartialClaimedLink(getLink(26),createInput(11,0)));
    }
 
    public void testGetClaimedLinkOnMultipleBranches()
@@ -404,6 +407,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(26,24,2,3,false,11,-1);
       addLink(27,25,3,4,false);
       assertHash(storage.getClaimedLink(getLink(27),createInput(11,0)),25);
+      assertHash(storage.getPartialClaimedLink(getLink(27),createInput(11,0)),25);
    }
 
    public void testGetClaimedLinkOnlyOnOtherBranch()
@@ -416,6 +420,8 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(27,25,3,4,false);
       Assert.assertNull(storage.getClaimedLink(getLink(27),createInput(11,0)));
       Assert.assertNotNull(storage.getClaimedLink(getLink(26),createInput(11,0)));
+      Assert.assertNull(storage.getPartialClaimedLink(getLink(27),createInput(11,0)));
+      Assert.assertNotNull(storage.getPartialClaimedLink(getLink(26),createInput(11,0)));
    }
 
    public void testGetClaimedLinkNotEnoughOutputs()
@@ -426,6 +432,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(25,24,2,3,false,11,-1);
       addLink(26,25,3,4,false);
       assertHash(storage.getClaimedLink(getLink(26),createInput(11,99)),25);
+      assertHash(storage.getPartialClaimedLink(getLink(26),createInput(11,99)),25);
    }
 
    public void testGetClaimerLinkConcept()
@@ -436,6 +443,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(25,24,2,3,false,5,1);
       addLink(26,25,3,4,false);
       assertHash(storage.getClaimerLink(getLink(26),createInput(5,1)),25);
+      Assert.assertTrue(storage.outputClaimedInSameBranch(getLink(26),createInput(5,1)));
    }
 
    public void testGetClaimerLinkIsLastInBranch()
@@ -446,6 +454,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(25,24,2,3,false);
       addLink(26,25,3,4,false,9,1);
       assertHash(storage.getClaimerLink(getLink(26),createInput(9,1)),26);
+      Assert.assertTrue(storage.outputClaimedInSameBranch(getLink(26),createInput(9,1)));
    }
 
    public void testGetClaimerLinkDoesNotExist()
@@ -456,6 +465,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(25,24,2,3,false);
       addLink(26,25,3,4,false);
       Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(33,1)));
+      Assert.assertFalse(storage.outputClaimedInSameBranch(getLink(26),createInput(33,1)));
    }
 
    public void testGetClaimerLinkOnMultipleBranches()
@@ -467,6 +477,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(26,24,2,3,false,12,1);
       addLink(27,25,3,4,false);
       assertHash(storage.getClaimerLink(getLink(27),createInput(12,1)),25);
+      Assert.assertTrue(storage.outputClaimedInSameBranch(getLink(27),createInput(12,1)));
    }
 
    public void testGetClaimerLinkOnlyOnOtherBranch()
@@ -479,6 +490,8 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(27,25,3,4,false);
       Assert.assertNull(storage.getClaimerLink(getLink(27),createInput(11,1)));
       Assert.assertNotNull(storage.getClaimerLink(getLink(26),createInput(11,1)));
+      Assert.assertFalse(storage.outputClaimedInSameBranch(getLink(27),createInput(11,1)));
+      Assert.assertTrue(storage.outputClaimedInSameBranch(getLink(26),createInput(11,1)));
    }
 
    public void testGetClaimerLinkDifferingOutputs()
@@ -489,6 +502,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(25,24,2,3,false,6,1);
       addLink(26,25,3,4,false);
       Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(6,99)));
+      Assert.assertFalse(storage.outputClaimedInSameBranch(getLink(26),createInput(6,99)));
    }
 
    public void testGetOrphanClaimerLink()
@@ -500,6 +514,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       addLink(26,25,3,4,false);
       addLink(27,99,0,3,true,7,1);
       Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(7,1)));
+      Assert.assertFalse(storage.outputClaimedInSameBranch(getLink(26),createInput(7,1)));
    }
 
    public void testUpdateOrphanLink()

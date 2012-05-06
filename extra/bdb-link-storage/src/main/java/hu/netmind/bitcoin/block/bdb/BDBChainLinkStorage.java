@@ -418,9 +418,25 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       this.dbPath=dbPath;
    }
 
-  public byte[] getHashOfMainChainAtHeight(long height) {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
+   @Override
+   public BlockChainLink getPartialClaimedLink(BlockChainLink link, TransactionInput in)
+   {
+      return getClaimedLink(link, in);
+   }
+
+   @Override
+   public boolean outputClaimedInSameBranch(BlockChainLink link, TransactionInput in)
+   {
+      return getClaimerLink(link, in) != null;
+   }
+
+   @Override
+   public byte[] getHashOfMainChainAtHeight(long height)
+   {
+      BlockChainLink lastLink = getLastLink();
+      if (lastLink == null)
+         return null;
+      return lastLink.getBlock().getHash();
+   }
 
 }
-

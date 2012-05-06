@@ -15,12 +15,40 @@
  */
 package hu.netmind.bitcoin.block.jdbc;
 
-import hu.netmind.bitcoin.*;
-import hu.netmind.bitcoin.block.*;
+import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.Block;
+import hu.netmind.bitcoin.BtcUtil;
+import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.TransactionInput;
+import hu.netmind.bitcoin.TransactionOutput;
+import hu.netmind.bitcoin.block.BlockChainLink;
+import hu.netmind.bitcoin.block.BlockChainLinkStorage;
+import hu.netmind.bitcoin.block.BlockImpl;
+import hu.netmind.bitcoin.block.Difficulty;
+import hu.netmind.bitcoin.block.TransactionImpl;
+import hu.netmind.bitcoin.block.TransactionInputImpl;
+import hu.netmind.bitcoin.block.TransactionOutputImpl;
 import hu.netmind.bitcoin.net.HexUtil;
+import hu.netmind.bitcoin.net.NodeAddress;
 import java.math.BigDecimal;
-import java.sql.*;
-import java.util.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +99,10 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
    //
    // SQL statements used to read from the DB
    final private String sqlGetBlockHeadersAtHeight = "SELECT * FROM Block WHERE height=?";
-   final private String sqlGetTransaction = "SELECT id,lockTime FROM Transaction WHERE hash=?";
+   final private String sqlGetHigherWorkBlock = "SELECT hash FROM Block ORDER BY chainWork DESC LIMIT 1";
+   final private String sqlGetBlocksWithPrevHash = "SELECT * FROM Block WHERE prevBlockHash=?";
+   final private String sqlGetNumBlocksWithPrevHash = "SELECT COUNT(*) FROM Block WHERE prevBlockHash=?";
+   final private String sqlGetTransaction = "SELECT id,lockTime,hash FROM Transaction WHERE hash=?";
    final private String sqlGetBlockHashesWithTx = "SELECT Block.hash, Block.prevBlockHash, Block.height FROM Block LEFT JOIN BlockTx ON (Block.id = BlockTx.blockId) LEFT JOIN Transaction ON (BlockTx.txId = Transaction.id) WHERE Transaction.hash=?";
    final private String sqlGetBlockHashesWithReferredTx = "SELECT Block.hash, Block.prevBlockHash, Block.height FROM Block LEFT JOIN BlockTx ON (Block.id = BlockTx.blockId) LEFT JOIN Transaction ON (BlockTx.txId = Transaction.id) LEFT JOIN TxInput ON (Transaction.id=TxInput.txId) WHERE TxInput.referredTxHash=? AND TxInput.referredTxIndex=?";
    final private String sqlGetBlockTransactionsFromId = "SELECT BlockTx.txId,Transaction.hash,Transaction.lockTime FROM BlockTx LEFT JOIN Transaction ON (BlockTx.txId = Transaction.id) WHERE blkId=? ORDER BY BlockTx.pos";
@@ -80,9 +111,10 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
    final private String sqlGetTxOutputs = "SELECT id,value,scriptBytes FROM TxOutput WHERE txId=? ORDER BY id";
    final private String sqlPutBlkTxLink = "INSERT INTO BlockTx(blockId, txId, pos) VALUES(?,?,?)";
    final private String sqlGetNumBlockHeadersAtHeight = "SELECT count(*) AS num FROM Block WHERE height=?";
-   final private String sqlGetHigherWorkBlock = "SELECT hash FROM Block ORDER BY chainWork DESC LIMIT 1";
-   final private String sqlGetBlocksWithPrevHash = "SELECT * FROM Block WHERE prevBlockHash=?";
-   final private String sqlGetNumBlocksWithPrevHash = "SELECT COUNT(*) FROM Block WHERE prevBlockHash=?";
+   //
+   // Address handling
+   final private String sqlPutNodeAddress = "INSERT INTO Address(address, port, services, discovered) VALUES (?,?,?,?)";
+   final private String sqlGetNodeAddress = "SELECT * FROM Address ORDER BY discovered DESC";
 
    public JdbcChainLinkStorage(ScriptFactory scriptFactory, boolean isTestnet)
    {
@@ -113,7 +145,8 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
    {
       commonInit();
       initializeDatabases();
-      logger.debug(this.getClass() + " Initialized with top hash: " + BtcUtil.hexOut(topLink.getBlock().getHash()));
+      logger.debug(this.getClass() + " Initialized with "
+              + (topLink == null ? "empty DB" : "top hash: " + BtcUtil.hexOut(topLink.getBlock().getHash())));
    }
 
    private void initializeDatabases()
@@ -263,7 +296,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
             storeBlkTxLink(blockId, txId, pos++);
          }
 
-         if (link == null || link.getTotalDifficulty().compareTo(topLink.getTotalDifficulty()) > 0)
+         if (topLink == null || link.getTotalDifficulty().compareTo(topLink.getTotalDifficulty()) > 0)
             topLink = link;
 
          if (transactional)
@@ -458,27 +491,49 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
    }
 
    @Override
-   public BlockChainLink getClaimerLink(final BlockChainLink link, final TransactionInput in)
+   public BlockChainLink getPartialClaimedLink(final BlockChainLink link, final TransactionInput in)
    {
-//      long startTime = System.currentTimeMillis();
+      long startTime = System.currentTimeMillis();
       checkConnection();
       try
       {
-         List<SimplifiedStoredBlock> potentialBlocks = getBlocksReferringTx(in);
+         List<SimplifiedStoredBlock> potentialBlocks = getBlocksWithTx(in.getClaimedTransactionHash());
          SimplifiedStoredBlock linkBlock = new SimplifiedStoredBlock(link);
          for (SimplifiedStoredBlock b : potentialBlocks)
             if (b.height <= link.getHeight() && isReachable(linkBlock, b))
-               return getLink(b.hash);
+            {
+               List<TransactionImpl> txs = new LinkedList<>();
+               txs.add(getTransaction(in.getClaimedTransactionHash()));
+               return getCompleteBlock(b.hash, txs);
+            }
          return null;
-      } catch (SQLException e)
+      } catch (SQLException | BitCoinException e)
       {
-         logger.info("getClaimerLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getClaimerLinks: " + e.getMessage(), e);
-//      } finally
-//      {
-//         long stopTime = System.currentTimeMillis();
-//         logger.debug(HexUtil.toSingleHexString(in.getClaimedTransactionHash()) + "/" + in.getClaimedOutputIndex() + " exec time: " + (stopTime - startTime) + " ms");
+         logger.info("getClaimedLink: " + e.getMessage(), e);
+         throw new JdbcStorageException("getClaimedLinks: " + e.getMessage(), e);
+      } finally
+      {
+         long stopTime = System.currentTimeMillis();
+         logger.debug(HexUtil.toSingleHexString(in.getClaimedTransactionHash()) + " exec time: " + (stopTime - startTime) + " ms");
       }
+   }
+
+   @Override
+   public BlockChainLink getClaimerLink(final BlockChainLink link, final TransactionInput in)
+   {
+      checkConnection();
+      byte[] hash = getClaimerHash(link, in);
+      if (hash == null)
+         return null;
+      else
+         return getLink(hash);
+   }
+
+   @Override
+   public boolean outputClaimedInSameBranch(final BlockChainLink link, final TransactionInput in)
+   {
+      checkConnection();
+      return getClaimerHash(link, in) != null;
    }
 
    @Override
@@ -560,6 +615,23 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
       {
          logger.info("getNextLink: " + e.getMessage(), e);
          throw new JdbcStorageException("getNextLink: " + e.getMessage(), e);
+      }
+   }
+
+   protected byte[] getClaimerHash(final BlockChainLink link, final TransactionInput in)
+   {
+      try
+      {
+         List<SimplifiedStoredBlock> potentialBlocks = getBlocksReferringTx(in);
+         SimplifiedStoredBlock linkBlock = new SimplifiedStoredBlock(link);
+         for (SimplifiedStoredBlock b : potentialBlocks)
+            if (b.height <= link.getHeight() && isReachable(linkBlock, b))
+               return b.hash;
+         return null;
+      } catch (SQLException e)
+      {
+         logger.info("getClaimerHash: " + e.getMessage(), e);
+         throw new JdbcStorageException("getClaimerHash: " + e.getMessage(), e);
       }
    }
 
@@ -721,19 +793,6 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
       }
    }
 
-   protected long getTransactionId(byte[] hash) throws SQLException
-   {
-      long txId = -1;
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetTransaction))
-      {
-         ps.setBytes(1, hash);
-         ResultSet rs = ps.executeQuery();
-         if (rs.next())
-            txId = rs.getLong("id");
-         return txId;
-      }
-   }
-
    protected List<TransactionInputImpl> loadTxInputs(long txId) throws SQLException
    {
       List<TransactionInputImpl> inputs = new LinkedList<>();
@@ -761,6 +820,34 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
             outputs.add(new TransactionOutputImpl(rs.getLong("value"), scriptFactory.createFragment(rs.getBytes("scriptBytes"))));
       }
       return outputs;
+   }
+
+   protected long getTransactionId(byte[] hash) throws SQLException
+   {
+      long txId = -1;
+      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetTransaction))
+      {
+         ps.setBytes(1, hash);
+         ResultSet rs = ps.executeQuery();
+         if (rs.next())
+            txId = rs.getLong("id");
+         return txId;
+      }
+   }
+
+   protected TransactionImpl getTransaction(byte[] hash) throws SQLException, BitCoinException
+   {
+      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetTransaction))
+      {
+         ps.setBytes(1, hash);
+         ResultSet rs = ps.executeQuery();
+         if (rs.next())
+         {
+            long txId = rs.getLong("id");
+            return new TransactionImpl(loadTxInputs(txId), loadTxOutputs(txId), rs.getLong("lockTime"), rs.getBytes("hash"));
+         }
+         return null;
+      }
    }
 
    protected List<TransactionImpl> getBlockTransactions(ResultSet rs) throws SQLException, BitCoinException
@@ -823,8 +910,8 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
             return null;
       } catch (SQLException | BitCoinException e)
       {
-         logger.info("geCompleteBlockEx: " + e.getMessage(), e);
-         throw new JdbcStorageException("getLinkEx: " + e.getMessage(), e);
+         logger.info("getCompleteBlockEx: " + e.getMessage(), e);
+         throw new JdbcStorageException("getCompleteBlockEx: " + e.getMessage(), e);
       }
    }
 
@@ -986,53 +1073,43 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
       this.jdbcUrl = jdbcUrl;
    }
 
-   protected class SimplifiedStoredBlock
-   { //implements Comparable<SimplifiedStoredBlock> {
-
-      public byte[] hash;
-      public byte[] prevBlockHash;
-      public long height;
-      //public BigDecimal chainWork;
-
-      public SimplifiedStoredBlock(BlockChainLink b)
+   public void putNodeAddress(NodeAddress node)
+   {
+      checkConnection();
+      try (PreparedStatement ps = dbConnection.prepareStatement(sqlPutNodeAddress))
       {
-         hash = b.getBlock().getHash();
-         prevBlockHash = b.getBlock().getPreviousBlockHash();
-         height = b.getHeight();
-         //chainWork = b.getTotalDifficulty().getDifficulty();
+         ps.setString(1, node.getAddress().getAddress().toString());
+         ps.setLong(2, node.getAddress().getPort());
+         ps.setLong(3, node.getServices());
+         ps.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
+         ps.executeUpdate();
+      } catch (SQLException e)
+      {
+         logger.info("putNodeAddress: " + e.getMessage(), e);
+         throw new JdbcStorageException("putNodeAddress: " + e.getMessage(), e);
       }
+   }
 
-      public SimplifiedStoredBlock(ResultSet rs) throws SQLException
+   protected List<NodeAddress> getNodeAddesses(int maxNum)
+   {
+      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetNodeAddress);
+              ResultSet rs = ps.executeQuery())
       {
-         hash = rs.getBytes("hash");
-         prevBlockHash = rs.getBytes("prevBlockHash");
-         height = rs.getLong("height");
-         //chainWork = new BigInteger(rs.getString("chainWork"));
-      }
-
-      public int compareTo(SimplifiedStoredBlock o)
+         List<NodeAddress> list = new LinkedList<>();
+         while (rs.next())
+            try
+            {
+               list.add(new NodeAddress(rs.getLong("services"),
+                       new InetSocketAddress(InetAddress.getByName(rs.getString("address")), rs.getInt("port"))));
+            } catch (UnknownHostException ex)
+            {
+               logger.info("Could not create node address from stored address: " + rs.getString("address") + " port: ", rs.getInt("port"));
+            }
+         return list;
+      } catch (SQLException e)
       {
-         return o.hash.toString().compareTo(hash.toString());
-      }
-
-      @Override
-      public boolean equals(Object obj)
-      {
-         if (!(obj instanceof SimplifiedStoredBlock))
-            return false;
-         return Arrays.equals(hash, ((SimplifiedStoredBlock) obj).hash);
-      }
-
-      @Override
-      public int hashCode()
-      {
-         return Arrays.hashCode(this.hash);
-      }
-
-      @Override
-      public String toString()
-      {
-         return "B[hash: " + HexUtil.toSingleHexString(hash) + " prev: " + HexUtil.toSingleHexString(prevBlockHash) + " h: " + height + "]";
+         logger.info("getNodeAddesses: " + e.getMessage(), e);
+         throw new JdbcStorageException("getNodeAddesses: " + e.getMessage(), e);
       }
    }
 }
