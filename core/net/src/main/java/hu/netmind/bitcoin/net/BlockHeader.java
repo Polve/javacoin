@@ -18,9 +18,8 @@
 
 package hu.netmind.bitcoin.net;
 
+import hu.netmind.bitcoin.BtcUtil;
 import java.io.IOException;
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author Robert Brautigam
@@ -71,10 +70,11 @@ public class BlockHeader
       output.writeUInt32(nonce);
    }
 
+   @Override
    public String toString()
    {
-      return "version: "+version+", prevBlock: "+HexUtil.toHexString(prevBlock)+
-         ", root hash: "+HexUtil.toHexString(rootHash)+", timestamp: "+timestamp+", difficulty: "+difficulty+
+      return "version: "+version+", prevBlock: "+BtcUtil.hexOut(prevBlock)+
+         ", root hash: "+BtcUtil.hexOut(rootHash)+", timestamp: "+timestamp+", difficulty: "+difficulty+
          ", nonce: "+nonce;
    }
 

@@ -58,6 +58,11 @@ public interface Block extends Serializable
    long getCompressedTarget();
 
    /**
+    * Get the version of the block
+    */
+   long getVersion();
+
+   /**
     * Get the hash of the previous block.
     */
    byte[] getPreviousBlockHash();

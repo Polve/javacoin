@@ -18,6 +18,7 @@
 package hu.netmind.bitcoin;
 
 import java.util.StringTokenizer;
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * @author Robert Brautigam, Alessandro Polverini
@@ -32,13 +33,21 @@ public class BtcUtil {
    * Helper method to convert strings like: "F0 A4 32 05", to actual byte array
    * for easier testing.
    */
-  public static byte[] toByteArray(String hexString) {
-    StringTokenizer tokenizer = new StringTokenizer(hexString, " ");
-    byte[] result = new byte[tokenizer.countTokens()];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = (byte) Integer.valueOf(tokenizer.nextToken(), 16).intValue();
-    }
-    return result;
+//  public static byte[] toByteArray(String hexString) {
+//    StringTokenizer tokenizer = new StringTokenizer(hexString, " ");
+//    byte[] result = new byte[tokenizer.countTokens()];
+//    for (int i = 0; i < result.length; i++) {
+//      result[i] = (byte) Integer.valueOf(tokenizer.nextToken(), 16).intValue();
+//    }
+//    return result;
+//  }
+
+  /**
+   * Helper method to convert strings like: "F0A43205", to actual byte array
+   * for easier testing.
+   */
+  public static byte[] hexIn(String s) {
+    return DatatypeConverter.parseHexBinary(s);
   }
 
   /**
@@ -48,15 +57,22 @@ public class BtcUtil {
     return toHexString(byteArray, true);
   }
 
+  public static String hexOutSpaces(String hexString) {
+    return toHexString(hexIn(hexString), true);
+  }
+
   /**
    * Make the byte array appear as hex number, without spaces.
    */
   public static String hexOut(byte[] byteArray) {
+    return DatatypeConverter.printHexBinary(byteArray);
+    /*
     if (byteArray == null) {
       return "null";
     } else {
       return toHexString(byteArray, false);
     }
+    */
   }
 
   public static String toHexString(byte[] byteArray, boolean withSpaces) {

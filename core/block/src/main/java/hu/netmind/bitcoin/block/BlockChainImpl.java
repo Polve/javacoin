@@ -412,7 +412,8 @@ public class BlockChainImpl extends Observable implements BlockChain
          // Check 16.1.3: For each input, if the referenced output transaction is coinbase,
          // it must have at least COINBASE_MATURITY confirmations; else reject. 
          if ( (outTx.isCoinbase()) && (outLink.getHeight()+COINBASE_MATURITY > link.getHeight()) )
-            throw new VerificationException("input ("+in+") referenced coinbase transaction "+outTx+" which was not mature enough (only "+(link.getHeight()-outLink.getHeight()+1)+" blocks before)");
+            throw new VerificationException("input ("+in+") referenced coinbase transaction "+
+               outTx+" which was not mature enough (only "+(link.getHeight()-outLink.getHeight()+1)+" blocks before)");
          // Check 16.1.4: Verify crypto signatures for each input; reject if any are bad 
          TransactionOutput out = outTx.getOutputs().get(in.getClaimedOutputIndex());
          value += out.getValue(); // Remember value that goes in from this out
@@ -421,14 +422,16 @@ public class BlockChainImpl extends Observable implements BlockChain
             Script script = scriptFactory.createScript(in.getSignatureScript(),
                      out.getScript());
             if ( ! script.execute(in) )
-               throw new VerificationException("verification script for input "+in+" returned 'false' for verification, script was: "+script);
+               throw new VerificationException("verification script for input "+in+" returned 'false' for verification, script was: "+
+                  script+" in tx "+BtcUtil.hexOut(tx.getHash()));
          } catch ( ScriptException e ) {
             throw new VerificationException("verification script for input "+in+" in tx "+BtcUtil.hexOut(tx.getHash())+" failed to execute",e);
          }
          // Check 16.1.5: For each input, if the referenced output has already been
          // spent by a transaction in the [same] branch, reject 
          if ( linkStorage.outputClaimedInSameBranch(link, in))
-            throw new VerificationException("output claimed by "+in+" is already claimed in another block of the same branch: "+
+            throw new VerificationException("Block: "+BtcUtil.hexOut(block.getHash())+" Tx: "+BtcUtil.hexOut(tx.getHash())+
+               " output claimed by "+in+" is already claimed in another block of the same branch: "+
                BtcUtil.hexOut(linkStorage.getClaimerLink(link, in).getBlock().getHash()));
       }
       return value;

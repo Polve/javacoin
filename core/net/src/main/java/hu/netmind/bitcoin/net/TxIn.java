@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.net;
 
+import hu.netmind.bitcoin.BtcUtil;
 import java.io.IOException;
 
 /**
@@ -65,9 +66,10 @@ public class TxIn
       output.writeUInt32(sequence);
    }
 
+   @Override
    public String toString()
    {
-      return "version: "+sequence+", tx hash/out: "+HexUtil.toHexString(referencedTxHash)+"/"+referencedTxOutIndex+", signature: "+HexUtil.toHexString(signatureScript);
+      return "version: "+sequence+", tx hash/out: "+BtcUtil.hexOut(referencedTxHash)+"/"+referencedTxOutIndex+", signature: "+BtcUtil.hexOut(signatureScript);
    }
 
    public byte[] getReferencedTxHash()

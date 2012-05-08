@@ -58,7 +58,7 @@ public class BlockImpl implements Block, Hashable
    public static BlockImpl MAIN_GENESIS;
    public static BlockImpl TESTNET_GENESIS;
 
-   private static final int BLOCK_VERSION = 1;
+   private static final int BLOCK_DEFAULT_VERSION = 1;
    private static final long BLOCK_FUTURE_VALIDITY = 2*60*60*1000 ; // 2 hrs millis
    private static Logger logger = LoggerFactory.getLogger(BlockImpl.class);
    private static KnownExceptions exceptions = new KnownExceptions();
@@ -67,6 +67,7 @@ public class BlockImpl implements Block, Hashable
    private long creationTime;
    private long nonce;
    private long compressedTarget;
+   private long version;
    private byte[] previousBlockHash;
    private byte[] merkleRoot;
    private byte[] hash;
@@ -90,6 +91,15 @@ public class BlockImpl implements Block, Hashable
          byte[] merkleRoot, byte[] hash)
       throws BitCoinException
    {
+      this(transactions, creationTime, nonce, compressedTarget, previousBlockHash, merkleRoot, hash, BLOCK_DEFAULT_VERSION);
+   }
+   
+   public BlockImpl(List<TransactionImpl> transactions,
+         long creationTime, long nonce, long compressedTarget, byte[] previousBlockHash, 
+         byte[] merkleRoot, byte[] hash, long version)
+      throws BitCoinException
+   {
+      this.version=version;
       this.creationTime=creationTime;
       this.nonce=nonce;
       this.compressedTarget=compressedTarget;
@@ -106,7 +116,7 @@ public class BlockImpl implements Block, Hashable
     */
    public BlockHeader createBlockHeader()
    {
-      return new BlockHeader(BLOCK_VERSION,previousBlockHash,merkleRoot,creationTime,
+      return new BlockHeader(version,previousBlockHash,merkleRoot,creationTime,
             compressedTarget,nonce);
    }
 
@@ -240,6 +250,11 @@ public class BlockImpl implements Block, Hashable
       return Arrays.hashCode(hash);
    }
 
+   public long getVersion()
+   {
+      return version;
+   }
+
    public boolean equals(Object o)
    {
       if ( o == null )
@@ -257,7 +272,7 @@ public class BlockImpl implements Block, Hashable
          txs.add(TransactionImpl.createTransaction(scriptFactory,tx));
       BlockImpl block = new BlockImpl(txs,blockMessage.getHeader().getTimestamp(),
             blockMessage.getHeader().getNonce(), blockMessage.getHeader().getDifficulty(),
-            blockMessage.getHeader().getPrevBlock(),blockMessage.getHeader().getRootHash());
+            blockMessage.getHeader().getPrevBlock(),blockMessage.getHeader().getRootHash(),null,blockMessage.getHeader().getVersion());
       return block;
    }
 

@@ -66,6 +66,12 @@ public interface Transaction extends Serializable
    long getLockTime();
 
    /**
+    * Get the version of the transaction
+    * @return The transaction version
+    */
+   long getVersion();
+
+   /**
     * Return the hash of this transaction.
     */
    byte[] getHash();

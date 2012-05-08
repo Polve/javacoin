@@ -22,13 +22,13 @@ import java.util.List;
 import java.util.ArrayList;
 import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BtcUtil;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.SignatureHashType;
 import hu.netmind.bitcoin.net.ArraysUtil;
-import hu.netmind.bitcoin.net.HexUtil;
 
 /**
  * @author Robert Brautigam
@@ -50,24 +50,29 @@ public class TransactionInputImpl implements TransactionInput
       this.sequence=sequence;
    }
 
+   @Override
    public byte[] getClaimedTransactionHash()
    {
       return claimedTransactionHash;
    }
 
+   @Override
    public int getClaimedOutputIndex()
    {
       return claimedOutputIndex;
    }
 
+   @Override
    public ScriptFragment getSignatureScript()
    {
       return signatureScript;
    }
+   @Override
    public long getSequence()
    {
       return sequence;
    }
+   @Override
    public Transaction getTransaction()
    {
       return transaction;
@@ -85,11 +90,12 @@ public class TransactionInputImpl implements TransactionInput
     * @param subscript The subscript to use for hashing. We assume it fits the subscript requirements
     * (no signatures in it, no code separators, etc.)
     */
+   @Override
    public byte[] getSignatureHash(SignatureHashType type, ScriptFragment subscript)
       throws BitCoinException
    {
-      List<TransactionInputImpl> inputs = new ArrayList<TransactionInputImpl>();
-      List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
+      List<TransactionInputImpl> inputs = new ArrayList<>();
+      List<TransactionOutputImpl> outputs = new ArrayList<>();
       // Create the inputs
       switch ( type.getInputType() )
       {
@@ -152,16 +158,17 @@ public class TransactionInputImpl implements TransactionInput
       // Now create the transaction copy with the modified inputs and outputs and calculate hash with
       // the type added
       TransactionImpl txCopy = new TransactionImpl(
-            inputs,outputs,transaction.getLockTime(),new byte[] {});
+            inputs,outputs,transaction.getLockTime(),new byte[] {},transaction.getVersion());
       byte[] hash = txCopy.calculateHash(new byte[] { (byte)type.getValue(), 0, 0, 0});
       // Return the hash of this specially created transaction with the type added
       // We have to reverse this signature hash back to original "BitCoin" order.
       return ArraysUtil.reverse(hash);
    }
 
+   @Override
    public String toString()
    {
-      return "In (seq "+sequence+") from "+HexUtil.toSingleHexString(claimedTransactionHash)+"/"+claimedOutputIndex;
+      return "In (seq "+sequence+") from "+BtcUtil.hexOut(claimedTransactionHash)+"/"+claimedOutputIndex;
    }
 }
 

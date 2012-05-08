@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TransactionImpl implements Transaction, Hashable
 {
-   private static final int TX_VERSION = 1;
+   public static final int TX_DEFAULT_VERSION = 1;
    private static final long MAX_BLOCK_SIZE = 1000000;
    private static final long COIN = 100000000;
    private static final long MAX_MONEY = 21000000l * COIN;
@@ -52,6 +52,7 @@ public class TransactionImpl implements Transaction, Hashable
    private static Logger logger = LoggerFactory.getLogger(TransactionImpl.class);
    private static KnownExceptions exceptions = new KnownExceptions();
 
+   private long version;
    private List<TransactionInputImpl> inputs;
    private List<TransactionOutputImpl> outputs;
    private long lockTime;
@@ -68,6 +69,13 @@ public class TransactionImpl implements Transaction, Hashable
       this(inputs,outputs,lockTime,null);
    }
    
+   public TransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
+         long lockTime, long version)
+      throws BitCoinException
+   {
+      this(inputs,outputs,lockTime,null,version);
+   }
+   
    /**
     * Create the transaction with all the necessary parameters, but also the computed hash.
     * This constructor should be used when deserializing transactions.
@@ -76,10 +84,18 @@ public class TransactionImpl implements Transaction, Hashable
          long lockTime, byte[] hash)
       throws BitCoinException
    {
+      this(inputs, outputs, lockTime, hash, TX_DEFAULT_VERSION);
+   }
+
+   public TransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
+         long lockTime, byte[] hash, long version)
+      throws BitCoinException
+   {
       this.inputs=inputs;
       this.outputs=outputs;
       this.lockTime=lockTime;
       this.hash=hash;
+      this.version=version;
       // If no hash given, then calculate it
       if ( hash == null )
          this.hash = calculateHash(null);
@@ -93,7 +109,7 @@ public class TransactionImpl implements Transaction, Hashable
          output.setIndex(index);
       }
    }
-
+   
    public List<TransactionInput> getInputs()
    {
       return Collections.unmodifiableList((List<? extends TransactionInput>) inputs);
@@ -114,6 +130,11 @@ public class TransactionImpl implements Transaction, Hashable
       return hash;
    }
 
+   public long getVersion()
+   {
+      return version;
+   }
+   
    /**
     * Convert this transaction object into a protocol transaction object.
     */
@@ -131,7 +152,7 @@ public class TransactionImpl implements Transaction, Hashable
                   (input.getSignatureScript()==null?new byte[] {}:input.getSignatureScript().toByteArray()), 
                   input.getSequence()));
       // Create transaction itself
-      Tx tx = new Tx(TX_VERSION,ins,outs,lockTime);
+      Tx tx = new Tx(version,ins,outs,lockTime);
       return tx;
    }
 
@@ -156,7 +177,7 @@ public class TransactionImpl implements Transaction, Hashable
          ins.add(in);
       }
       // Create tx
-      TransactionImpl transaction = new TransactionImpl(ins,outs,tx.getLockTime());
+      TransactionImpl transaction = new TransactionImpl(ins,outs,tx.getLockTime(),tx.getVersion());
       return transaction;
    }
 

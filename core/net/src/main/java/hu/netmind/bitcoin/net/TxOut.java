@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.net;
 
+import hu.netmind.bitcoin.BtcUtil;
 import java.io.IOException;
 
 /**
@@ -58,9 +59,10 @@ public class TxOut
       output.write(script);
    }
 
+   @Override
    public String toString()
    {
-      return "value: "+value+", script: "+HexUtil.toHexString(script);
+      return "value: "+value+", script: "+BtcUtil.hexOut(script);
    }
 
    public long getValue()

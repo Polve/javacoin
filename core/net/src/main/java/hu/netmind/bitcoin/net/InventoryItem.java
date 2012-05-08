@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.net;
 
+import hu.netmind.bitcoin.BtcUtil;
 import java.io.IOException;
 
 /**
@@ -58,7 +59,7 @@ public class InventoryItem
 
    public String toString()
    {
-      return type+":"+HexUtil.toHexString(hash);
+      return type+": "+BtcUtil.hexOut(hash);
    }
 
    public int getType()

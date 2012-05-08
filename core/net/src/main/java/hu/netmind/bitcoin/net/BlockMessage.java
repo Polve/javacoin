@@ -77,7 +77,7 @@ public class BlockMessage extends ChecksummedMessage
    @Override
    public String toString()
    {
-      return super.toString()+" "+header.toString()+", transactions: "+transactions;
+      return super.toString()+" "+header.toString()+", # transactions: "+transactions.size();
    }
 
    public BlockHeader getHeader()

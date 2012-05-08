@@ -20,6 +20,7 @@
 
 package hu.netmind.bitcoin.script;
 
+import hu.netmind.bitcoin.*;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import static org.easymock.EasyMock.*;
@@ -27,13 +28,6 @@ import org.easymock.Capture;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
-import hu.netmind.bitcoin.ScriptException;
-import hu.netmind.bitcoin.ScriptFragment;
-import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.KeyFactory;
-import hu.netmind.bitcoin.PublicKey;
-import hu.netmind.bitcoin.SignatureHashType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
