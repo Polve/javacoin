@@ -18,10 +18,10 @@
 
 package hu.netmind.bitcoin.net.p2p;
 
+import hu.netmind.bitcoin.BtcUtil;
 import hu.netmind.bitcoin.net.p2p.source.FallbackNodesSource;
 import hu.netmind.bitcoin.net.BitCoinOutputStream;
 import hu.netmind.bitcoin.net.GetDataMessage;
-import hu.netmind.bitcoin.net.HexUtil;
 import hu.netmind.bitcoin.net.Message;
 import hu.netmind.bitcoin.net.VersionMessage;
 import hu.netmind.bitcoin.net.VerackMessage;
@@ -30,12 +30,15 @@ import hu.netmind.bitcoin.net.BlockMessage;
 import hu.netmind.bitcoin.net.TxMessage;
 import hu.netmind.bitcoin.net.InventoryItem;
 import hu.netmind.bitcoin.net.MessageMarshaller;
+import hu.netmind.bitcoin.net.p2p.source.DNSFallbackNodesSource;
+import hu.netmind.bitcoin.net.p2p.source.RandomizedNodesSource;
 import java.net.SocketAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.ArrayList;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 
 /**
  * Execute a getdata with the given parameters.
@@ -49,26 +52,33 @@ public class getdata
       // Get parameters
       if ( argv.length < 2 ) 
       {
-         System.out.println("USAGE: getdata <type> <hash numbers>*");
+         System.out.println("USAGE: getdata testnet|prodnet <type> <hash numbers>*");
          return;
       }
-      final int type = Integer.parseInt(argv[0]);
-      StringBuilder builder = new StringBuilder(argv[1]);
-      for ( int i=2; i<argv.length; i++ )
-         builder.append(" "+argv[i]);
-      final byte[] hash = HexUtil.toByteArray(builder.toString());
-      System.out.println("BitCoin getdata request...");
+      final boolean isTestnet = "testnet".equalsIgnoreCase(argv[0]);
+      final int type = Integer.parseInt(argv[1]);
+//      StringBuilder builder = new StringBuilder(argv[1]);
+//      for ( int i=2; i<argv.length; i++ )
+//         builder.append(" "+argv[i]);
+//      final byte[] hash = HexUtil.toByteArray(builder.toString());
+      final byte[] hash = BtcUtil.hexIn(argv[2]);
+      final long messageMagic = isTestnet ? Message.MAGIC_TEST : Message.MAGIC_MAIN;
+
+      System.out.println("BitCoin getdata request "+type+" "+BtcUtil.hexOut(hash)+" on "+(isTestnet ? "testnet": "prodnet"));
       // Initialize node
       final Node node = new Node();
       node.setMinConnections(1);
       node.setMaxConnections(1);
-      node.setAddressSource(new FallbackNodesSource());
+      if (isTestnet)
+         node.setAddressSource(new LocalhostTestnetNodeSource());
+      else
+         node.setAddressSource(new DNSFallbackNodesSource());
       node.addHandler(new MessageHandler() {
                public void onJoin(Connection conn) throws IOException
                {
                   System.out.println("Connected to "+conn.getRemoteAddress()+" (from: "+conn.getLocalAddress()+")");
                   // Send our version information
-                  VersionMessage version = new VersionMessage(Message.MAGIC_MAIN,32100,1,System.currentTimeMillis()/1000,
+                  VersionMessage version = new VersionMessage(messageMagic,32100,1,System.currentTimeMillis()/1000,
                      new NodeAddress(1,(InetSocketAddress) conn.getRemoteAddress()),
                      new NodeAddress(1,new InetSocketAddress(((InetSocketAddress)conn.getLocalAddress()).getAddress(),node.getPort())),
                      123,"",0);
@@ -88,7 +98,7 @@ public class getdata
                   if ( message instanceof VersionMessage )
                   {
                      // Let's answer version, so we get more messages
-                     VerackMessage verack = new VerackMessage(Message.MAGIC_MAIN);
+                     VerackMessage verack = new VerackMessage(messageMagic);
                      System.out.println("Answering: "+verack);
                      conn.send(verack);
                   }
@@ -98,20 +108,24 @@ public class getdata
                      InventoryItem item = new InventoryItem(type,hash);
                      List<InventoryItem> items = new ArrayList<InventoryItem>();
                      items.add(item);
-                     GetDataMessage getdataMessage =  new GetDataMessage(Message.MAGIC_MAIN,items);
+                     GetDataMessage getdataMessage =  new GetDataMessage(messageMagic,items);
                      System.out.println("Sending a request to get data: "+getdataMessage);
                      conn.send(getdataMessage);
                   }
                   if ( (message instanceof TxMessage) || (message instanceof BlockMessage) )
                   {
-                     System.out.println("Answer received, exiting.");
+                     if (message instanceof BlockMessage) {
+                        BlockMessage blockMessage = (BlockMessage)message;
+                        System.out.println("Block with "+blockMessage.getTransactions().size()+" transactions");
+                     }
                      // Serialize it and display
                      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
                      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
                      MessageMarshaller marshaller = new MessageMarshaller();
                      marshaller.write(message,output);
-                     System.out.println("Got data:\n"+HexUtil.toHexString(byteOutput.toByteArray()));
+                     System.out.println("Got data:\n"+BtcUtil.hexOut(byteOutput.toByteArray()));
                      // We got our answer, stop node
+                     System.out.println("Answer received, exiting.");
                      conn.close();
                   }
                }
@@ -125,5 +139,16 @@ public class getdata
          waitObject.wait();
       }
    }
-}
+   
+   public static class LocalhostTestnetNodeSource extends RandomizedNodesSource
+   {
 
+      @Override
+      protected List<InetSocketAddress> getInitialAddresses()
+      {
+         List<InetSocketAddress> list = new ArrayList<>();
+         list.add(new InetSocketAddress("127.0.0.1", 18333));
+         return list;
+      }
+   }
+}
