@@ -42,12 +42,12 @@ public class DifficultyTests
    public void testMaxTargetTestnet()
    {
       Assert.assertEquals(DifficultyTarget.MAX_TESTNET_TARGET.getTarget(),
-            new BigInteger("1FFFE00000000000000000000000000000000000000000000000000000",16));
-            //new BigInteger("FFFF00000000000000000000000000000000000000000000000000000",16));
+            //new BigInteger("1FFFE00000000000000000000000000000000000000000000000000000",16));
+            new BigInteger("FFFFF0000000000000000000000000000000000000000000000000000",16));
       Assert.assertEquals(
             Long.toHexString(DifficultyTarget.MAX_TESTNET_TARGET.getCompressedTarget()),
-            Long.toHexString(0x1d1fffe0L));
-            //Long.toHexString(0x1d000fffl));
+            //Long.toHexString(0x1d1fffe0L));
+            Long.toHexString(0x1d0fffffl));
 
    }
 

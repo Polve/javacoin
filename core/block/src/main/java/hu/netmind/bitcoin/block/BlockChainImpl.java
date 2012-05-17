@@ -31,6 +31,7 @@ import hu.netmind.bitcoin.VerificationException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -259,7 +260,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       BlockChainLink link = new BlockChainLink(block, // Create link for block
             previousLink.getTotalDifficulty().add(blockDifficulty),
             previousLink.getHeight()+1,false);
-      DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousLink);
+      DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousLink, link);
       if ( blockTarget.compareTo(calculatedTarget) != 0 )
       {
          // Target has to exactly match the one calculated, otherwise it is
@@ -458,7 +459,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    /**
     * Calculate the difficulty for the next block after the one supplied.
     */
-   public DifficultyTarget getNextDifficultyTarget(BlockChainLink link)
+   public DifficultyTarget getNextDifficultyTarget(BlockChainLink link, BlockChainLink newLink)
    {
       // If we're calculating for the genesis block return
       // fixed difficulty
@@ -470,6 +471,33 @@ public class BlockChainImpl extends Observable implements BlockChain
       // target.
       if ( (link.getHeight()+1) % TARGET_RECALC != 0 )
       {
+         // Special rules for testnet after 15 Feb 2012
+         Block currBlock = link.getBlock();
+         if (isTestnet && currBlock.getCreationTime() > 1329264000000L) {
+            //BlockChainLink prevLink = linkStorage.getLink(currBlock.getPreviousBlockHash());
+            //Block prevBlock = prevLink.getBlock();
+            long timeDiff = newLink.getBlock().getCreationTime()-currBlock.getCreationTime();
+            // If the new block's timestamp is more than 2* 10 minutes
+            // then allow mining of a min-difficulty block.
+            // official client as 0.6.2 has a bug that if date of new block is previous to last one it resets difficulty
+            // so we have to "implement" the bug, too, checking if timeDiff is negative
+            // TODO: fix this bug when official client fixes it and testnet is reset
+            if (timeDiff < 0 || timeDiff > 2*TARGET_SPACING)
+               return DifficultyTarget.MAX_TESTNET_TARGET;
+            else
+            {
+               // Return the last non-special-min-difficulty-rules-block
+               // We could use a custom method here to load only block headers instead of full blocks
+               // but this lack of performance is only for the testnet so we don't care
+               while (link != null && (link.getHeight() % TARGET_RECALC) != 0 && 
+                  link.getBlock().getCompressedTarget() == DifficultyTarget.MAX_TESTNET_TARGET.getCompressedTarget())
+                  link = linkStorage.getLink(link.getBlock().getPreviousBlockHash());
+               if (link != null)
+                  return new DifficultyTarget(link.getBlock().getCompressedTarget());
+               else
+                return DifficultyTarget.MAX_TESTNET_TARGET;
+            }
+         }
          logger.debug("previous height {}, not change in target",link.getHeight());
          return new DifficultyTarget(link.getBlock().getCompressedTarget());
       }
@@ -509,7 +537,7 @@ public class BlockChainImpl extends Observable implements BlockChain
     * @return a list of block hashes
     */
    @Override
-   public List<byte[]> createBlockLocator()
+   public List<byte[]> buildBlockLocator()
    {
       List<byte[]> blocks = new LinkedList<>();
       long topHeight = linkStorage.getLastLink().getHeight();
