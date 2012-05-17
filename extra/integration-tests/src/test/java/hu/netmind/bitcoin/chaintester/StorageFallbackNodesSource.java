@@ -15,8 +15,12 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package hu.netmind.bitcoin.net.p2p.source;
+package hu.netmind.bitcoin.chaintester;
 
+import hu.netmind.bitcoin.block.jdbc.JdbcChainLinkStorage;
+import hu.netmind.bitcoin.net.NodeAddress;
+import hu.netmind.bitcoin.net.p2p.AddressSource;
+import hu.netmind.bitcoin.net.p2p.source.RandomizedNodesSource;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -31,41 +35,45 @@ import java.util.StringTokenizer;
  *
  * @author Robert Brautigam
  */
-public class DNSFallbackNodesSource extends RandomizedNodesSource
+public class StorageFallbackNodesSource extends RandomizedNodesSource
 {
 
-   public DNSFallbackNodesSource()
+   private JdbcChainLinkStorage storage;
+   private int maxSources = 100;
+   private AddressSource fallbackSource;
+
+   public StorageFallbackNodesSource(JdbcChainLinkStorage storage)
    {
       super();
+      this.storage = storage;
    }
 
-   public DNSFallbackNodesSource(int defaultPort)
+   public StorageFallbackNodesSource(JdbcChainLinkStorage storage, int defaultPort)
    {
       super(defaultPort);
+      this.storage = storage;
    }
 
+   public void setMaxSources(int maxSources)
+   {
+      this.maxSources = maxSources;
+   }
+
+   public void setFallbackSource(AddressSource fallbackSource)
+   {
+      this.fallbackSource = fallbackSource;
+   }
+
+   @Override
    public List<InetSocketAddress> getInitialAddresses()
    {
-      List<InetSocketAddress> addresses = new LinkedList<InetSocketAddress>();
-      // Read addresses from properties file
-      String addressesString = ResourceBundle.getBundle("fallback-nodes").getString("seed.names");
-      StringTokenizer tokens = new StringTokenizer(addressesString, ",");
-      while (tokens.hasMoreTokens())
-      {
-         String token = tokens.nextToken().trim();
-         try
-         {
-            // InetAddress[] allByName = InetAddress.getAllByName(token);
-            // for (InetAddress address : allByName)
-            //   addresses.add(new InetSocketAddress(address, defaultPort));
-            addresses.add(new InetSocketAddress(InetAddress.getByName(token), defaultPort));
-         } catch (UnknownHostException e)
-         {
-            logger.warn("could not parse to address: " + token, e);
-         }
-      }
-      // Randomize
-      logger.debug("dns fallback hosts read");
+      List<InetSocketAddress> addresses = new LinkedList<>();
+      List<NodeAddress> nodes = storage.getNodeAddesses(maxSources);
+      for (NodeAddress node : nodes)
+         addresses.add(node.getAddress());
+      logger.debug("Added {} nodes previously stored on db", addresses.size());
+      if (fallbackSource != null)
+         addresses.addAll(fallbackSource.getAddresses());
       return addresses;
    }
 }

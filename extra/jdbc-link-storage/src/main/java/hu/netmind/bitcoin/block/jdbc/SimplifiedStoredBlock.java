@@ -25,7 +25,7 @@ import java.util.Arrays;
  *
  * @author Alessandro Polverini
  */
-class SimplifiedStoredBlock  //implements Comparable<SimplifiedStoredBlock>
+public class SimplifiedStoredBlock implements Comparable<SimplifiedStoredBlock>
 {
 
    public byte[] hash;
@@ -49,8 +49,14 @@ class SimplifiedStoredBlock  //implements Comparable<SimplifiedStoredBlock>
       //chainWork = new BigInteger(rs.getString("chainWork"));
    }
 
+   // We sort blocks based on their height
+   @Override
    public int compareTo(SimplifiedStoredBlock o)
    {
+      if (height > o.height)
+         return -1;
+      if (height < o.height)
+         return 1;
       return o.hash.toString().compareTo(hash.toString());
    }
 
