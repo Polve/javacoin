@@ -78,6 +78,21 @@ public class ScriptTests
       return byteOutput.toByteArray();
    }
 
+   public String hexConstant(String hex)
+   {
+      int numBytes = hex.length() / 2;
+      String op;
+      if (numBytes <= 75)
+         op = "CONSTANT";
+      else if (numBytes <= 255)
+         op = "OP_PUSHDATA1";
+      else if (numBytes <= 65535)
+         op = "OP_PUSHDATA2";
+      else
+         op = "OP_PUSHDATA4";
+      return op + " <" + BtcUtil.hexOutSpaces(hex) + ">";
+   }
+   
    /**
     * Create a script an execute.
     */
@@ -877,4 +892,14 @@ public class ScriptTests
               "OP_VERIFY OP_3"));
    }
 
+   public void testBip16Multisig1of1() throws Exception
+   {
+      Assert.assertTrue(execute(
+         "OP_0"+
+         " "+hexConstant("304502206d2fced5c30e904fee5e9d4b82619c7af05d00e02a3cfda5d9e8af49e526316b022100c630706ad85622dc1d9a994246861aff13b38abfde29d650b9ef6ba97408f1a601")+
+         " "+hexConstant("3045022100ddd1d5aa757da18bc6aa7b378ae9bbaa521d5de71718c06605c0809ee596e253022005f3c729fbb1d9a2ecc4df765696711d24ee9b1a35a2adb748cf2689e53a6cc301")+
+         " "+hexConstant("524104b62fc786fdfccc3afb5d920ed34c56b7506a6670fdc18d64debd84a46f3e040399a6cb8eaca5e5b5443958536c73fedf19606925953f266ab983a988f307c3ac41047ad29326dfd04f8b0b9d956165bc090f62e93957fc733370bb4234ba4c9506be2939f25b4893f6127e3010ac75f381ee00d5e8788d3c492e37ebb8cd39740a5f21023f863e30d8ad2adfa1dad3dd06b17f6dc247cee6adc64f2687c2285debd91d8553ae")+
+         " OP_HASH160 "+hexConstant("f5b1f6ca8ba744a395f38ef0fbf6016bcaaf0a54")+" OP_EQUAL"
+         ));
+   }
 }
