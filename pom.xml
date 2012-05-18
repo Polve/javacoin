@@ -33,6 +33,17 @@
   </licenses>
   <developers>
      <developer>
+        <id>Alex</id>
+        <name>Alessandro Polverini</name>
+        <email>alex@nibbles.it</email>
+        <organization>nibbles.it</organization>
+        <organizationUrl>http://nibbles.it</organizationUrl>
+        <roles>
+          <role>developer</role>
+        </roles>
+        <timezone>+1</timezone>
+     </developer>
+     <developer>
         <id>robert</id>
         <name>Robert Braeutigam</name>
         <email>robert.brautigam@netmind.hu</email>
