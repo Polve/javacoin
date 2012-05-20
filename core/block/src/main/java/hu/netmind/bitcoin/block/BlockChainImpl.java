@@ -420,8 +420,7 @@ public class BlockChainImpl extends Observable implements BlockChain
          value += out.getValue(); // Remember value that goes in from this out
          try
          {
-            Script script = scriptFactory.createScript(in.getSignatureScript(),
-                     out.getScript());
+            Script script = scriptFactory.createScript(in.getSignatureScript(), out.getScript());
             if ( ! script.execute(in) )
                throw new VerificationException("verification script for input "+in+" returned 'false' for verification, script was: "+
                   script+" in tx "+BtcUtil.hexOut(tx.getHash()));
@@ -473,9 +472,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       {
          // Special rules for testnet after 15 Feb 2012
          Block currBlock = link.getBlock();
-         if (isTestnet && currBlock.getCreationTime() > 1329264000000L) {
-            //BlockChainLink prevLink = linkStorage.getLink(currBlock.getPreviousBlockHash());
-            //Block prevBlock = prevLink.getBlock();
+         if (isTestnet && currBlock.getCreationTime() > 1329180000000L) {
             long timeDiff = newLink.getBlock().getCreationTime()-currBlock.getCreationTime();
             // If the new block's timestamp is more than 2* 10 minutes
             // then allow mining of a min-difficulty block.
