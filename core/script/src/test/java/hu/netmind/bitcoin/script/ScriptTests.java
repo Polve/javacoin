@@ -78,21 +78,6 @@ public class ScriptTests
       return byteOutput.toByteArray();
    }
 
-   public String hexConstant(String hex)
-   {
-      int numBytes = hex.length() / 2;
-      String op;
-      if (numBytes <= 75)
-         op = "CONSTANT";
-      else if (numBytes <= 255)
-         op = "OP_PUSHDATA1";
-      else if (numBytes <= 65535)
-         op = "OP_PUSHDATA2";
-      else
-         op = "OP_PUSHDATA4";
-      return op + " <" + BtcUtil.hexOutSpaces(hex) + ">";
-   }
-   
    /**
     * Create a script an execute.
     */
@@ -892,14 +877,122 @@ public class ScriptTests
               "OP_VERIFY OP_3"));
    }
 
-   public void testBip16Multisig1of1() throws Exception
+   public String hexConstant(String hex)
    {
-      Assert.assertTrue(execute(
-         "OP_0"+
-         " "+hexConstant("304502206d2fced5c30e904fee5e9d4b82619c7af05d00e02a3cfda5d9e8af49e526316b022100c630706ad85622dc1d9a994246861aff13b38abfde29d650b9ef6ba97408f1a601")+
-         " "+hexConstant("3045022100ddd1d5aa757da18bc6aa7b378ae9bbaa521d5de71718c06605c0809ee596e253022005f3c729fbb1d9a2ecc4df765696711d24ee9b1a35a2adb748cf2689e53a6cc301")+
-         " "+hexConstant("524104b62fc786fdfccc3afb5d920ed34c56b7506a6670fdc18d64debd84a46f3e040399a6cb8eaca5e5b5443958536c73fedf19606925953f266ab983a988f307c3ac41047ad29326dfd04f8b0b9d956165bc090f62e93957fc733370bb4234ba4c9506be2939f25b4893f6127e3010ac75f381ee00d5e8788d3c492e37ebb8cd39740a5f21023f863e30d8ad2adfa1dad3dd06b17f6dc247cee6adc64f2687c2285debd91d8553ae")+
-         " OP_HASH160 "+hexConstant("f5b1f6ca8ba744a395f38ef0fbf6016bcaaf0a54")+" OP_EQUAL"
-         ));
+      int numBytes = hex.length() / 2;
+      String op;
+      if (numBytes <= 75)
+         op = "CONSTANT";
+      else if (numBytes <= 255)
+         op = "OP_PUSHDATA1";
+      else if (numBytes <= 65535)
+         op = "OP_PUSHDATA2";
+      else
+         op = "OP_PUSHDATA4";
+      return op + " <" + BtcUtil.hexOutSpaces(hex) + ">";
    }
+   
+   @Test(groups="checksig")
+   public void testMultisigConcept2()
+      throws Exception
+   {
+      // Create data
+      byte[] signature1 = BtcUtil.hexIn(("304502206d2fced5c30e904fee5e9d4b82619c7af05d00e02a3cfda5d9e8af49e526316b022100c630706ad85622dc1d9a994246861aff13b38abfde29d650b9ef6ba97408f1a6"));
+      byte[] signature2 = BtcUtil.hexIn(("3045022100ddd1d5aa757da18bc6aa7b378ae9bbaa521d5de71718c06605c0809ee596e253022005f3c729fbb1d9a2ecc4df765696711d24ee9b1a35a2adb748cf2689e53a6cc3"));
+      byte[] pubkey1 = BtcUtil.hexIn("04b62fc786fdfccc3afb5d920ed34c56b7506a6670fdc18d64debd84a46f3e040399a6cb8eaca5e5b5443958536c73fedf19606925953f266ab983a988f307c3ac");
+      byte[] pubkey2 = BtcUtil.hexIn("047ad29326dfd04f8b0b9d956165bc090f62e93957fc733370bb4234ba4c9506be2939f25b4893f6127e3010ac75f381ee00d5e8788d3c492e37ebb8cd39740a5f");
+      byte[] pubkey3 = BtcUtil.hexIn("023f863e30d8ad2adfa1dad3dd06b17f6dc247cee6adc64f2687c2285debd91d85");
+      byte[] hash = new byte[] { 1, 2, 3, 4, 5 };
+      // Create transaction mock and return hash
+      TransactionInput txIn = createMock(TransactionInput.class);
+      expect(txIn.getSignatureHash(
+               eq(SignatureHashTypeImpl.SIGHASH_ALL), 
+               (ScriptFragment) anyObject()
+               )).andReturn(hash).times(3);
+      replay(txIn);
+      // Create the 3 public keys corresponding to the data
+      PublicKey publicKey1 = createMock(PublicKey.class);
+      expect(publicKey1.verify(aryEq(hash),aryEq(signature2))).andReturn(true);
+      replay(publicKey1);
+      PublicKey publicKey2 = createMock(PublicKey.class);
+      expect(publicKey2.verify(aryEq(hash),aryEq(signature1))).andReturn(false);
+      replay(publicKey2);
+      PublicKey publicKey3 = createMock(PublicKey.class);
+      expect(publicKey3.verify(aryEq(hash),aryEq(signature1))).andReturn(true);
+      replay(publicKey3);
+      KeyFactory keyFactory = createMock(KeyFactory.class);
+      expect(keyFactory.createPublicKey(aryEq(pubkey1))).andReturn(publicKey3);
+      expect(keyFactory.createPublicKey(aryEq(pubkey2))).andReturn(publicKey2);
+      expect(keyFactory.createPublicKey(aryEq(pubkey3))).andReturn(publicKey1);
+      replay(keyFactory);
+      // Create script
+      ScriptImpl scriptImpl = new ScriptImpl(toScript(
+               "OP_0 "+
+               "CONSTANT <"+HexUtil.toHexString(signature1)+" 01> "+
+               "CONSTANT <"+HexUtil.toHexString(signature2)+" 01> "+
+               "OP_2 "+
+               "CONSTANT <"+HexUtil.toHexString(pubkey1)+"> "+
+               "CONSTANT <"+HexUtil.toHexString(pubkey2)+"> "+
+               "CONSTANT <"+HexUtil.toHexString(pubkey3)+"> "+
+               "OP_3 "+
+               "OP_CHECKMULTISIG"
+               ),keyFactory,0);
+      // Run the script and check
+      logger.info("Esecuzione test funzionante");
+      Assert.assertTrue(scriptImpl.execute(txIn));
+      verify(publicKey1);
+      verify(publicKey2);
+      verify(publicKey3);
+      verify(keyFactory);
+   }
+
+   // http://blockexplorer.com/testnet/tx/838c39e4e03b856344824cb3ef42918c87004493df5d812c9d52e8fa793de409#i633425
+   @Test(groups="checksig")
+   public void testBip16Multisig2of3() throws Exception
+   {
+      byte[] signature1 = BtcUtil.hexIn(("304502206d2fced5c30e904fee5e9d4b82619c7af05d00e02a3cfda5d9e8af49e526316b022100c630706ad85622dc1d9a994246861aff13b38abfde29d650b9ef6ba97408f1a6"));
+      byte[] signature2 = BtcUtil.hexIn(("3045022100ddd1d5aa757da18bc6aa7b378ae9bbaa521d5de71718c06605c0809ee596e253022005f3c729fbb1d9a2ecc4df765696711d24ee9b1a35a2adb748cf2689e53a6cc3"));
+      byte[] pubkey1 = BtcUtil.hexIn("04b62fc786fdfccc3afb5d920ed34c56b7506a6670fdc18d64debd84a46f3e040399a6cb8eaca5e5b5443958536c73fedf19606925953f266ab983a988f307c3ac");
+      byte[] pubkey2 = BtcUtil.hexIn("047ad29326dfd04f8b0b9d956165bc090f62e93957fc733370bb4234ba4c9506be2939f25b4893f6127e3010ac75f381ee00d5e8788d3c492e37ebb8cd39740a5f");
+      byte[] pubkey3 = BtcUtil.hexIn("023f863e30d8ad2adfa1dad3dd06b17f6dc247cee6adc64f2687c2285debd91d85");
+      byte[] hash = new byte[] { 1, 2, 3, 4, 5 };
+
+      ScriptFragment outFragment = new ScriptFragmentImpl(toScript(
+         "OP_0 "+
+         "CONSTANT <"+HexUtil.toHexString(signature1)+" 01> "+
+         "CONSTANT <"+HexUtil.toHexString(signature2)+" 01> "+
+         hexConstant("5241"+BtcUtil.hexOut(pubkey1)+"41"+BtcUtil.hexOut(pubkey2)+"21"+BtcUtil.hexOut(pubkey3)+"53ae")));
+      
+      ScriptFragment inFragment = new ScriptFragmentImpl(toScript(
+         "OP_HASH160 " + hexConstant("f5b1f6ca8ba744a395f38ef0fbf6016bcaaf0a54") + " OP_EQUAL"));
+
+      TransactionInput txIn = createMock(TransactionInput.class);
+      expect(txIn.getSignatureHash(
+               eq(SignatureHashTypeImpl.SIGHASH_ALL), 
+               (ScriptFragment) anyObject()
+               )).andReturn(hash).times(3);
+      replay(txIn);
+      PublicKey publicKey1 = createMock(PublicKey.class);
+      expect(publicKey1.verify(aryEq(hash),aryEq(signature2))).andReturn(true);
+      replay(publicKey1);
+      PublicKey publicKey2 = createMock(PublicKey.class);
+      expect(publicKey2.verify(aryEq(hash),aryEq(signature1))).andReturn(false);
+      replay(publicKey2);
+      PublicKey publicKey3 = createMock(PublicKey.class);
+      expect(publicKey3.verify(aryEq(hash),aryEq(signature1))).andReturn(true);
+      replay(publicKey3);
+      KeyFactory keyFactory = createMock(KeyFactory.class);
+      expect(keyFactory.createPublicKey(aryEq(pubkey1))).andReturn(publicKey3);
+      expect(keyFactory.createPublicKey(aryEq(pubkey2))).andReturn(publicKey2);
+      expect(keyFactory.createPublicKey(aryEq(pubkey3))).andReturn(publicKey1);
+      replay(keyFactory);
+      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(keyFactory);
+      ScriptImpl verificationScript = (ScriptImpl)scriptFactory.createScript(outFragment, inFragment);
+      logger.info("Esecuzione test NON funzionante");
+      Assert.assertTrue(verificationScript.isScriptHashType());
+      Assert.assertTrue(verificationScript.isSigScriptPushOnly());
+      Assert.assertTrue(verificationScript.isValidBip16());
+      Assert.assertTrue(verificationScript.execute(txIn));
+   }
+
 }

@@ -39,6 +39,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
 
    private KeyFactory keyFactory;
    private int pubScriptPointer = 0;
+   ScriptFragmentImpl sigScript, pubScript;
 
    /**
     * Create the script from the full bytes, and the pub script. We need
@@ -55,6 +56,111 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       this.pubScriptPointer=pubScriptPointer;
    }
 
+   /**
+    * Create the script from sigScript and pubScript. We need to have both separated
+    * if we want to be able to detect type of script.
+    * @param sigScript The script fragment of the signature.
+    * @param pubScript The script fragment of the pub key.
+    * @param keyFactory The key factory to get the public keys from for OP_CHECKSIG.
+    */
+   ScriptImpl(ScriptFragmentImpl sigScript, ScriptFragmentImpl pubScript, KeyFactory keyFactory)
+   {
+      // Copy together the two scripts creating the combined script
+      this(mergeArrays(sigScript.toByteArray(), pubScript.toByteArray()), keyFactory, sigScript.toByteArray().length);
+      
+      // Save the script fragments to be able to detect special transaction types like P2SH (BIP0016)
+      this.sigScript = sigScript;
+      this.pubScript = pubScript;
+   }
+
+   protected static byte[] mergeArrays(byte[] first, byte[] second) {
+      byte[] scriptBytes = new byte[first.length+second.length];
+      System.arraycopy(first,0,scriptBytes,0,first.length);
+      System.arraycopy(second,0,scriptBytes,first.length,second.length);
+      return scriptBytes;
+   }
+
+   /*
+    * Returns true if the pubScript matches the standard P2SH script
+    * OP_HASH160 [20-byte-hash-value] OP_EQUAL
+    * used in BIP0016
+    */
+   protected boolean isScriptHashType() {
+      if (pubScript == null)
+         return false;
+      InstructionInputStream is = pubScript.getInstructionInput();
+      try
+      {
+         Instruction instruction=is.readInstruction();
+         if (instruction.getOperation() != Operation.OP_HASH160)
+            return false;
+         instruction = is.readInstruction();
+         if (!(instruction.getOperation() == Operation.CONSTANT && instruction.getData().length == 20))
+            return false;
+         instruction = is.readInstruction();
+         if (instruction.getOperation() != Operation.OP_EQUAL)
+            return false;
+         instruction = is.readInstruction();
+         return instruction == null;
+      } catch (IOException ex)
+      {
+         return false;
+      }
+   }
+
+   protected boolean isSigScriptPushOnly()
+   {
+      if (sigScript == null)
+         return false;
+      InstructionInputStream is = sigScript.getInstructionInput();
+      try
+      {
+         Instruction instruction = is.readInstruction();
+         if (instruction == null)
+            return false;
+         while (instruction != null)
+         {
+            switch (instruction.getOperation())
+            {
+               case CONSTANT:
+               case OP_PUSHDATA1:
+               case OP_PUSHDATA2:
+               case OP_PUSHDATA4:
+               case OP_0:
+               case OP_1NEGATE:
+               case OP_1:
+               case OP_2:
+               case OP_3:
+               case OP_4:
+               case OP_5:
+               case OP_6:
+               case OP_7:
+               case OP_8:
+               case OP_9:
+               case OP_10:
+               case OP_11:
+               case OP_12:
+               case OP_13:
+               case OP_14:
+               case OP_15:
+               case OP_16:
+                  break;
+               default:
+                  return false;
+            }
+            instruction = is.readInstruction();
+         }
+         return true;
+      } catch (IOException ex)
+      {
+         return false;
+      }
+   }
+   
+   protected boolean isValidBip16() {
+      return isScriptHashType() && isSigScriptPushOnly();
+   }
+      
   /*
    * Read up to 4 little endian bytes, with sign in the most significant bit
    * Used to read values in scripts if there are more than 4 bytes it returns
@@ -150,17 +256,23 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
    public boolean execute(TransactionInput txIn)
       throws ScriptException
    {
+      // Create script runtime
+      return execute(txIn, new Stack());
+   }
+
+   boolean execute(TransactionInput txIn, Stack stack)
+      throws ScriptException
+   {
       // Create the script input
       InstructionInputStream input = getInstructionInput();
-      // Create script runtime
-      Stack stack = new Stack();
       Stack altStack = new Stack();
       int lastSeparator = 0;
+      byte[] bip16Script = null;
       // Run the script
       try
       {
-         Instruction instruction = null;
-         while ( (instruction=input.readInstruction()) != null )
+         Instruction instruction = input.readInstruction();
+         while ( instruction != null )
          {
             // logger.debug("Istruzione da eseguire: "+instruction+" "+dumpStack(stack));
             switch ( instruction.getOperation() )
@@ -644,6 +756,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                case OP_HASH160:
                   data = popData(stack,"executing OP_HASH160");
                   stack.push(digestRIPEMD160(digestMessage(data,"SHA-256")));
+                  bip16Script = data;
                   break;
                case OP_HASH256:
                   data = popData(stack,"executing OP_HASH256");
@@ -749,6 +862,20 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                default:
                   throw new ScriptException("unhandled operation encountered: "+instruction.getOperation());
             }
+            instruction = input.readInstruction();
+            if (instruction == null && isValidBip16())
+            {
+               boolean res = popBoolean(stack, "Checking first half of bip16 script");
+               if (!res)
+                  return false;
+               // By definition when a bip16 script is recognised a hash160 func has been executed
+               assert bip16Script != null;
+               ScriptImpl script = new ScriptImpl(bip16Script, keyFactory, 0);
+               res = script.execute(txIn, stack);
+               if (logger.isDebugEnabled())
+                  logger.debug("BIP0016 Script: " + script + " res: " + res);
+               stack.push(res ? 1 : 0);
+            }
          }
       } catch ( IOException e ) {
          throw new ScriptException("error reading instructions "+toString(),e);
@@ -798,7 +925,8 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       {
          transactionHash = txIn.getSignatureHash(signatureType,subscript);
          if ( logger.isDebugEnabled() )
-            logger.debug("running verification, tx signature hash is {}, for type: {}",new BigInteger(1,transactionHash).toString(16),signatureType);
+            logger.debug("running verification, tx signature hash is {}, for type: "+signatureType+" and pubKey: {}/"+publicKey,
+               new BigInteger(1,transactionHash).toString(16), BtcUtil.hexOut(pubKey));
          if ( logger.isDebugEnabled() )
             logger.debug("running verification, signature script: {}",subscript);
       } catch ( BitCoinException e ) {

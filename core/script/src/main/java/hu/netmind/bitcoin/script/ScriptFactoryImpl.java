@@ -25,7 +25,7 @@ import hu.netmind.bitcoin.Script;
 
 /**
  * Use this factory to manage scripts.
- * @author Robert Brautigam
+ * @author Robert Brautigam, Alessandro Polverini
  */
 public class ScriptFactoryImpl implements ScriptFactory
 {
@@ -47,12 +47,7 @@ public class ScriptFactoryImpl implements ScriptFactory
 
    public Script createScript(ScriptFragment sigScript, ScriptFragment pubScript)
    {
-      // Copy together the two scripts
-      byte[] scriptBytes = new byte[sigScript.toByteArray().length+pubScript.toByteArray().length];
-      System.arraycopy(sigScript.toByteArray(),0,scriptBytes,0,sigScript.toByteArray().length);
-      System.arraycopy(pubScript.toByteArray(),0,scriptBytes,sigScript.toByteArray().length,pubScript.toByteArray().length);
-      // Create script
-      return new ScriptImpl(scriptBytes,keyFactory,sigScript.toByteArray().length);
+      return new ScriptImpl((ScriptFragmentImpl)sigScript, (ScriptFragmentImpl)pubScript, keyFactory);
    }
 }
 
