@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.net;
 
+import hu.netmind.bitcoin.BtcUtil;
 import hu.netmind.bitcoin.keyfactory.ecc.BitcoinUtil;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -912,6 +913,7 @@ public class MessageTests
       MessageMarshaller marshal = new MessageMarshaller();
       AlertMessage message = (AlertMessage) marshal.read(input);
       // Check header
+      System.out.println("Signature: "+BtcUtil.hexOut(message.getSignature())+" len: "+message.getSignature().length);
       Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
       Assert.assertEquals(message.getCommand(),"alert");
       Assert.assertEquals(message.getLength(),178);
@@ -939,29 +941,52 @@ public class MessageTests
   */
 
    // TODO: Create a test key and use it to sign an AlertMessage and do unit testing
-   /*
    public void testAlertSerialize()
       throws IOException
    {
       // Setup the message
-      AlertMessage alert = new AlertMessage(Message.MAGIC_MAIN,"Alert!","Me");
+      AlertMessage alert = new AlertMessage(Message.MAGIC_MAIN,"See bitcoin.org/feb20 if you have trouble connecting after 20 February");
+      alert.setVersion(1);
+      alert.setRelayUntil(1329620535);
+      alert.setExpiration(1329792435);
+      alert.setId(1010);
+      alert.setCancel(1009);
+      alert.setMinVer(10000);
+      alert.setMaxVer(61000);
+      alert.setPriority(100);
+      alert.setSignature(new byte[] { 0x33, 0x44 });
       // Serialize it
       MessageMarshaller marshal = new MessageMarshaller();
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(alert,output);
-      // Check output
+      
+      // Deserialize it and check that all fields are correctly retained
+      AlertMessage deserAlert = (AlertMessage) marshal.read(new BitCoinInputStream(new ByteArrayInputStream(byteOutput.toByteArray())));
+      Assert.assertEquals(deserAlert.getVersion(), 1);
+      Assert.assertEquals(deserAlert.getRelayUntil(), 1329620535);
+      Assert.assertEquals(deserAlert.getExpiration(), 1329792435);
+      Assert.assertEquals(deserAlert.getId(), 1010);
+      Assert.assertEquals(deserAlert.getCancel(), 1009);
+      Assert.assertEquals(deserAlert.getMinVer(), 10000);
+      Assert.assertEquals(deserAlert.getMaxVer(), 61000);
+      Assert.assertEquals(deserAlert.getPriority(), 100);
+
+      // Check complete output
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),
             "F9 BE B4 D9 "+                          // Main network magic bytes
             "61 6C 65 72 74 00 00 00 00 00 00 00 "+  // "alert" command
-            "0A 00 00 00 "+                          // Payload is 10 bytes long
-            "0C 01 65 42 "+                          // checksum
-            "06 "+                                   // length of message
-            "41 6C 65 72 74 21 "+                    // message "Alert!"
-            "02 "+                                   // length of signature
-            "4D 65");                                // signature "Me"
+            "77 00 00 00 "+                          // Payload is 119 bytes long
+            "C1 C5 92 D9 "+                          // checksum
+            "73 01 00 00 00 37 66 40 4F 00 00 00 00 B3 05 43 4F 00 00 "+
+            "00 00 F2 03 00 00 F1 03 00 00 00 10 27 00 00 48 EE 00 00 "+
+            "00 64 00 00 00 00 46 53 65 65 20 62 69 74 63 6F 69 6E 2E "+
+            "6F 72 67 2F 66 65 62 32 30 20 69 66 20 79 6F 75 20 68 61 "+
+            "76 65 20 74 72 6F 75 62 6C 65 20 63 6F 6E 6E 65 63 74 69 "+
+            "6E 67 20 61 66 74 65 72 20 32 30 20 46 65 62 72 75 61 72 "+
+            "79 00 02 33 44"
+         );
    }
-   */
    
    // Obsolete, should be removed?
    /*

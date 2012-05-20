@@ -16,9 +16,11 @@
 package hu.netmind.bitcoin.net;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +33,7 @@ public class AlertMessage extends ChecksummedMessage
    private static final Logger logger = LoggerFactory.getLogger(AlertMessage.class);
    // Chosen arbitrarily to avoid memory blowups.
    private static final long MAX_SET_SIZE = 100;
-   private long version;
+   private long version = 1;
    private long relayUntil;
    private long expiration;
    private long id;
@@ -41,11 +43,10 @@ public class AlertMessage extends ChecksummedMessage
    private long maxVer;
    private Set<String> matchingSubVers;
    private long priority;
-   private String comment;
-   private String reserved;
-   private String message;
-   private byte[] alertPayload;
-   private byte[] signature;
+   private String comment = "";
+   private String reserved = "";
+   private String message = "";
+   private byte[] signature = new byte[] { };
 
    public AlertMessage(long magic, String message)
       throws IOException
@@ -65,7 +66,7 @@ public class AlertMessage extends ChecksummedMessage
       throws IOException
    {
       super.readFrom(input, protocolVersion, param);
-      alertPayload = input.readBytes();
+      byte[] alertPayload = input.readBytes();
       signature = input.readBytes();
       BitCoinInputStream alertStream = new BitCoinInputStream(new ByteArrayInputStream(alertPayload));
       version = alertStream.readUInt32();
@@ -119,8 +120,51 @@ public class AlertMessage extends ChecksummedMessage
       throws IOException
    {
       super.writeTo(output, protocolVersion);
-      output.write(alertPayload);
+      byte[] payload = getAlertPayload();
+      output.writeUIntVar(payload.length);
+      output.write(payload);
+      output.writeUIntVar(signature.length);
       output.write(signature);
+   }
+
+   public byte[] getAlertPayload()
+   {
+      try
+      {
+         ByteArrayOutputStream payload = new ByteArrayOutputStream();
+         BitCoinOutputStream payloadStream = new BitCoinOutputStream(payload);
+         payloadStream.writeUInt32(version);
+         payloadStream.writeUInt64(relayUntil);
+         payloadStream.writeUInt64(expiration);
+         payloadStream.writeUInt32(id);
+         payloadStream.writeUInt32(cancel);
+         if (cancelSet == null || cancelSet.isEmpty())
+            payloadStream.writeU(0);
+         else
+         {
+            payloadStream.writeU(cancelSet.size());
+            for (long i : cancelSet)
+               payloadStream.writeUInt32(i);
+         }
+         payloadStream.writeUInt32(minVer);
+         payloadStream.writeUInt32(maxVer);
+         if (matchingSubVers == null || matchingSubVers.isEmpty())
+            payloadStream.writeU(0);
+         else
+         {
+            payloadStream.writeU(matchingSubVers.size());
+            for (String s : matchingSubVers)
+               payloadStream.writeString(s);
+         }
+         payloadStream.writeUInt32(priority);
+         payloadStream.writeString(comment);
+         payloadStream.writeString(message);
+         payloadStream.writeString(reserved);
+         return payload.toByteArray();
+      } catch (IOException ex)
+      {
+         return null;
+      }
    }
 
    @Override
@@ -132,11 +176,6 @@ public class AlertMessage extends ChecksummedMessage
    public String getMessage()
    {
       return message;
-   }
-
-   public byte[] getAlertPayload()
-   {
-      return alertPayload;
    }
 
    public byte[] getSignature()
@@ -197,5 +236,75 @@ public class AlertMessage extends ChecksummedMessage
    public long getVersion()
    {
       return version;
+   }
+
+   public void setCancel(long cancel)
+   {
+      this.cancel = cancel;
+   }
+
+   public void setCancelSet(Set<Long> cancelSet)
+   {
+      this.cancelSet = cancelSet;
+   }
+
+   public void setComment(String comment)
+   {
+      this.comment = comment;
+   }
+
+   public void setExpiration(long expiration)
+   {
+      this.expiration = expiration;
+   }
+
+   public void setId(long id)
+   {
+      this.id = id;
+   }
+
+   public void setMatchingSubVers(Set<String> matchingSubVers)
+   {
+      this.matchingSubVers = matchingSubVers;
+   }
+
+   public void setMaxVer(long maxVer)
+   {
+      this.maxVer = maxVer;
+   }
+
+   public void setMessage(String message)
+   {
+      this.message = message;
+   }
+
+   public void setMinVer(long minVer)
+   {
+      this.minVer = minVer;
+   }
+
+   public void setPriority(long priority)
+   {
+      this.priority = priority;
+   }
+
+   public void setRelayUntil(long relayUntil)
+   {
+      this.relayUntil = relayUntil;
+   }
+
+   public void setReserved(String reserved)
+   {
+      this.reserved = reserved;
+   }
+
+   public void setSignature(byte[] signature)
+   {
+      this.signature = signature;
+   }
+
+   public void setVersion(long version)
+   {
+      this.version = version;
    }
 }
