@@ -141,6 +141,15 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
    final private String sqlGetNumBlockHeadersAtHeight =
            "SELECT count(*) AS num FROM Block WHERE height=?";
    //
+   // Purge blocks and transactions (mainly used for debugging/testing)
+   final private String sqlPurgeBlocksAndTxsUpToHeight =
+           "DELETE FROM Block,BlockTx,Transaction,TxInput,TxOutput "
+           + "USING Block LEFT JOIN BlockTx ON (Block.id=BlockTx.blockId) "
+           + "LEFT JOIN Transaction ON (Transaction.id=BlockTx.txId) "
+           + "LEFT JOIN TxInput ON (TxInput.txId=Transaction.id) "
+           + "LEFT JOIN TxOutput ON (TxOutput.txId=Transaction.id) "
+           + "WHERE height >= ?";
+   //
    // Address handling
    final private String sqlPutNodeAddress =
            "INSERT INTO Node(address, port, services, discovered) VALUES (?,?,?,?)";
@@ -655,10 +664,10 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
 
    /*
     * This check is complicated by BIP30, that a new tx can exist with same hash
-    * if the other one fully spent
-    * We sort blocks on height because we need to check only the last one in the given chain
-    * The problem arise from TX a1d7c19f72ce5b24a1001bf9c5452babed6734eaa478642379f8c702a46d5e27
-    * in block 0000000013aa9f67da178005f9ced61c7064dd6e8464b35f6a8ca8fabc1ca2cf
+    * if the other one fully spent We sort blocks on height because we need to
+    * check only the last one in the given chain The problem arise from TX
+    * a1d7c19f72ce5b24a1001bf9c5452babed6734eaa478642379f8c702a46d5e27 in block
+    * 0000000013aa9f67da178005f9ced61c7064dd6e8464b35f6a8ca8fabc1ca2cf
     */
    protected byte[] getClaimerHash(final BlockChainLink link, final TransactionInput in)
    {
@@ -1043,6 +1052,15 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
       // We reached the top of all our chain without finding the target
       // so we are in different branches
       return false;
+   }
+
+   protected void purgeBlocksAndTxsUpToHeight(long height) throws SQLException
+   {
+      try (PreparedStatement ps = dbConnection.prepareStatement(sqlPurgeBlocksAndTxsUpToHeight))
+      {
+         ps.setLong(1, height);
+         ps.executeUpdate();
+      }
    }
 
    public boolean getAutoCreate()
