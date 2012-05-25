@@ -15,11 +15,11 @@
  */
 package hu.netmind.bitcoin.block.jdbc;
 
-import hu.netmind.bitcoin.block.TestSuiteFactory;
 import hu.netmind.bitcoin.block.StorageProvider;
+import hu.netmind.bitcoin.block.TestSuiteFactory;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
-import org.testng.annotations.Test;
 import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 
 /**
  * @author Alessandro Polverini
@@ -36,10 +36,13 @@ public class StorageITTests
          protected JdbcChainLinkStorage getStorageInstance()
          {
             JdbcChainLinkStorage storage = new JdbcChainLinkStorage(new ScriptFactoryImpl(null), false);
-            storage.setDriverClassName("com.mysql.jdbc.Driver");
-            storage.setJdbcUrl("jdbc:mysql://localhost/javacoin_test");
-            storage.setDbUser("javacoin");
-            storage.setDbPassword("pw");
+            try
+            {
+               storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_test", "javacoin", "pw"));
+            } catch (ClassNotFoundException ex)
+            {
+               throw new RuntimeException("Mysql Driver class not found", ex);
+            }
             return storage;
          }
 
@@ -54,8 +57,6 @@ public class StorageITTests
          @Override
          public void closeStorage(JdbcChainLinkStorage storage)
          {
-            if (storage != null)
-               storage.close();
          }
 
          @Override
