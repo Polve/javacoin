@@ -17,10 +17,12 @@
     <module>core/keyfactory-ecc</module>
     <module>core/script</module>
     <module>core/block</module>
+    <module>core/utils</module>
     <module>extra/integration-tests</module>
     <module>extra/link-storage-testsuite</module>
     <module>extra/bdb-link-storage</module>
     <module>extra/jdbc-link-storage</module>
+    <module>extra/satoshi-behavior</module>
   </modules>
 
   <!-- Project meta-data -->
