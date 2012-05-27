@@ -18,7 +18,7 @@
 
 package hu.netmind.bitcoin.net;
 
-import hu.netmind.bitcoin.BtcUtil;
+import it.nibbles.bitcoin.utils.BtcUtil;
 import java.io.IOException;
 
 /**

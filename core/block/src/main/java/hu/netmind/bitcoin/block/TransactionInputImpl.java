@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.ArrayList;
 import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.BitCoinException;
-import hu.netmind.bitcoin.BtcUtil;
+import it.nibbles.bitcoin.utils.BtcUtil;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;

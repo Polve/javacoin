@@ -19,6 +19,7 @@
 package hu.netmind.bitcoin.script;
 
 import hu.netmind.bitcoin.*;
+import it.nibbles.bitcoin.utils.BtcUtil;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;

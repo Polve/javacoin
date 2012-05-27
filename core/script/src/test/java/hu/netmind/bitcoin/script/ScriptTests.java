@@ -20,6 +20,7 @@
 
 package hu.netmind.bitcoin.script;
 
+import it.nibbles.bitcoin.utils.BtcUtil;
 import hu.netmind.bitcoin.*;
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -27,7 +28,6 @@ import static org.easymock.EasyMock.*;
 import org.easymock.Capture;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

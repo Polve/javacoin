@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.block;
 
+import it.nibbles.bitcoin.utils.BtcUtil;
 import hu.netmind.bitcoin.*;
 import hu.netmind.bitcoin.net.BlockHeader;
 import hu.netmind.bitcoin.net.Tx;

@@ -18,7 +18,7 @@
 
 package hu.netmind.bitcoin.net.p2p;
 
-import hu.netmind.bitcoin.BtcUtil;
+import it.nibbles.bitcoin.utils.BtcUtil;
 import hu.netmind.bitcoin.net.p2p.source.FallbackNodesSource;
 import hu.netmind.bitcoin.net.BitCoinOutputStream;
 import hu.netmind.bitcoin.net.GetDataMessage;

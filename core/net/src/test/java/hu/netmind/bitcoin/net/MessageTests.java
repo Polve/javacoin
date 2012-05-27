@@ -18,7 +18,7 @@
 
 package hu.netmind.bitcoin.net;
 
-import hu.netmind.bitcoin.BtcUtil;
+import it.nibbles.bitcoin.utils.BtcUtil;
 import hu.netmind.bitcoin.keyfactory.ecc.BitcoinUtil;
 import org.testng.Assert;
 import org.testng.annotations.Test;
