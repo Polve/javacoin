@@ -68,7 +68,7 @@ public class StorageFallbackNodesSource extends RandomizedNodesSource
    public List<InetSocketAddress> getInitialAddresses()
    {
       List<InetSocketAddress> addresses = new LinkedList<>();
-      List<NodeAddress> nodes = storage.getNodeAddesses(maxSources);
+      List<NodeAddress> nodes = storage.loadNodeAddesses(maxSources);
       for (NodeAddress node : nodes)
          addresses.add(node.getAddress());
       logger.debug("Added {} nodes previously stored on db", addresses.size());

@@ -17,7 +17,7 @@ package hu.netmind.bitcoin.block.jdbc;
 
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.BtcUtil;
+import it.nibbles.bitcoin.utils.BtcUtil;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
@@ -31,13 +31,13 @@ import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
 import hu.netmind.bitcoin.net.HexUtil;
 import hu.netmind.bitcoin.net.NodeAddress;
+import hu.netmind.bitcoin.net.p2p.NodeStorage;
 import java.math.BigDecimal;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -60,7 +60,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Alessandro Polverini
  */
-public class JdbcChainLinkStorage implements BlockChainLinkStorage
+public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
 {
 
    private static final boolean DEFAULT_AUTOCREATE = true;
@@ -374,7 +374,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
    @Override
    public List<BlockChainLink> getNextLinks(final byte[] hash)
    {
-      long startTime = System.currentTimeMillis();
+      //long startTime = System.currentTimeMillis();
       try (Connection dbConnection = getDbConnection())
       {
          List<SimplifiedStoredBlock> blocks = getBlocksWithPrevHash(dbConnection, hash);
@@ -391,8 +391,8 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
          throw new JdbcStorageException("getNextLinks: " + e.getMessage(), e);
       } finally
       {
-         long stopTime = System.currentTimeMillis();
-         logger.debug("exec time: " + (stopTime - startTime) + " ms");
+         //long stopTime = System.currentTimeMillis();
+         //logger.debug("exec time: " + (stopTime - startTime) + " ms");
       }
    }
 
@@ -1036,7 +1036,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
    //
    // Node address storage
    //
-   public void putNodeAddress(NodeAddress node)
+   public void storeNodeAddress(NodeAddress node)
    {
       try (Connection dbConnection = getDbConnection(); PreparedStatement psReadOld = dbConnection.prepareStatement(sqlGetNodeAddress))
       {
@@ -1074,7 +1074,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage
       }
    }
 
-   public List<NodeAddress> getNodeAddesses(int maxNum)
+   public List<NodeAddress> loadNodeAddesses(int maxNum)
    {
       try (Connection dbConnection = getDbConnection(); PreparedStatement ps = dbConnection.prepareStatement(sqlGetNodeAddresses);
               ResultSet rs = ps.executeQuery())

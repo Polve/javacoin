@@ -48,6 +48,18 @@
      </dependency>
      <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
+        <artifactId>bitcoin-utils</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <type>jar</type>
+     </dependency>
+     <dependency>
+        <groupId>hu.netmind.bitcoin</groupId>
+        <artifactId>bitcoin-net-p2p</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <type>jar</type>
+     </dependency>
+     <dependency>
+        <groupId>hu.netmind.bitcoin</groupId>
         <artifactId>link-storage-testsuite</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <type>jar</type>
