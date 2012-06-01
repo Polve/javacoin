@@ -246,6 +246,11 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
          });
    }
 
+   public long getHeight()
+   {
+      return getLastLink().getHeight();
+   }
+
    public StoredLink getStoredLink(final byte[] hash)
    {
       return executeWork(new ReturnTransactionWorker<StoredLink>() {

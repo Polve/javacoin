@@ -96,6 +96,11 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
       return last;
    }
 
+   public long getHeight()
+   {
+     return getLastLink().getHeight();
+   }
+   
    public BlockChainLink getLink(byte[] hash)
    {
       return links.get(toByteList(hash));

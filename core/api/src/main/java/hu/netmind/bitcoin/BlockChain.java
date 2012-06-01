@@ -111,7 +111,14 @@ public interface BlockChain extends Observable
 
    /**
     * Build a block locator to be used by a getBlocks message
-    * @return 
+    * @return A list of hashes
     */
    List<byte[]> buildBlockLocator();
+
+   /**
+    * Returns the height of the best chain
+    * @return 
+    */
+   long getHeight();
+   
 }

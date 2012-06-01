@@ -108,6 +108,13 @@ public class DummyStorage implements BlockChainLinkStorage
    }
 
    @Override
+   public long getHeight()
+   {
+      logger.debug("getting height of best chain...");
+      return getLastLink().getHeight();
+   }
+
+   @Override
    public BlockChainLink getLink(byte[] hash)
    {
       return linksMap.get(new BigInteger(1,hash));

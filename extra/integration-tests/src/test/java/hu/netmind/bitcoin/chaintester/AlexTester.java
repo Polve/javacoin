@@ -51,9 +51,9 @@ public class AlexTester
 {
 
    private static Logger logger = LoggerFactory.getLogger(AlexTester.class);
-   private static long BC_PROTOCOL_VERSION = 32100;
    private static boolean isTestnet = false;
    private Node node = null;
+   // private static long BC_PROTOCOL_VERSION = 32100;
    // private BlockChain chain = null;
    // private JdbcChainLinkStorage storage = null;
    //private ScriptFactoryImpl scriptFactory = null;
@@ -96,6 +96,24 @@ public class AlexTester
    }
 
    /**
+    * Run the client and listen for new blocks forever.
+    */
+   public void run()
+   {
+      try
+      {
+//         // Start the node
+//         node.start();
+         nodeHandler.run();
+         // Wait for keypress to end
+         System.in.read();
+      } catch (Exception e)
+      {
+         logger.error("error while starting node or waiting for enter", e);
+      }
+   }
+
+   /**
     * Initialize and bind components together.
     */
    public void init()
@@ -103,7 +121,6 @@ public class AlexTester
    {
       // Initialize the chain
       ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
-      //storage = new JdbcChainLinkStorage(scriptFactory);
       JdbcChainLinkStorage storage = new JdbcChainLinkStorage(scriptFactory, isTestnet);
       storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_" + (isTestnet ? "testnet" : "prodnet"), "javacoin", "pw"));
       storage.init();
@@ -112,7 +129,7 @@ public class AlexTester
       Block genesisBlock = storage.getGenesisLink().getBlock();
       logger.debug("Genesis block hash: " + BtcUtil.hexOut(genesisBlock.getHash()) + " nonce: " + genesisBlock.getNonce());
       genesisBlock.validate();
-      logger.info((isTestnet ? "[TESTNET]" : "[PRODNET]") + " initialized chain, last link height: " + storage.getLastLink().getHeight());
+      logger.info((isTestnet ? "[TESTNET]" : "[PRODNET]") + " initialized chain, last link height: " + chain.getHeight());
       // Initialize p2p node
       node = new Node();
       node.setPort(isTestnet ? 18733 : 7333);
@@ -137,24 +154,6 @@ public class AlexTester
       //node.addHandler(new DownloaderHandler());
       logger.debug(addressSource.toString());
       nodeHandler = new StdNodeHandler(node, scriptFactory, messageMagic, chain, storage);
-   }
-
-   /**
-    * Run the client and listen for new blocks forever.
-    */
-   public void run()
-   {
-      try
-      {
-//         // Start the node
-//         node.start();
-         nodeHandler.run();
-         // Wait for keypress to end
-         System.in.read();
-      } catch (Exception e)
-      {
-         logger.error("error while starting node or waiting for enter", e);
-      }
    }
 
 //   public class DownloaderHandler implements MessageHandler

@@ -80,9 +80,6 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    protected JdbcIdGenerator txInputsIdGen;
    protected JdbcIdGenerator txOutputsIdGen;
    //
-   // We do not persist orphan blocks, we keep them in a cache
-   protected Map<String, BlockChainLink> orphanBlocks = new HashMap<>();
-   //
    // We keep cached the top of the chain for a faster response
    protected BlockChainLink topLink;
    //
@@ -106,7 +103,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    final private String sqlGetSimplifiedBlockHeadersAtHeight =
            "SELECT hash,prevBlockHash,height FROM Block WHERE height=?";
    final private String sqlGetHigherWorkBlock =
-           "SELECT hash FROM Block ORDER BY chainWork DESC LIMIT 1";
+           "SELECT hash, height FROM Block ORDER BY chainWork DESC LIMIT 1";
    final private String sqlGetSimplifiedBlocksWithPrevHash =
            "SELECT hash,prevBlockHash,height FROM Block WHERE prevBlockHash=?";
    final private String sqlGetNumBlocksWithPrevHash =
@@ -137,7 +134,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    final private String sqlGetNumBlockHeadersAtHeight =
            "SELECT count(*) AS num FROM Block WHERE height=?";
    //
-   // Purge blocks and transactions (mainly used for debugging/testing)
+   // Purge blocks and transactions (mainly used for debugging/testing, do not use, broken)
    final private String sqlPurgeBlocksAndTxsUpToHeight =
            "DELETE FROM Block,BlockTx,Transaction,TxInput,TxOutput "
            + "USING Block LEFT JOIN BlockTx ON (Block.id=BlockTx.blockId) "
@@ -224,7 +221,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
     */
    public void removeDatabase()
    {
-      orphanBlocks.clear();
+      //orphanBlocks.clear();
       try (Connection dbConnection = getDbConnection(); Statement st = dbConnection.createStatement())
       {
          String[] tables =
@@ -249,8 +246,8 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       //       + " height: " + link.getHeight() + " totalDifficulty: " + link.getTotalDifficulty() + " isOrphan: " + link.isOrphan());
       if (link.isOrphan())
       {
-         orphanBlocks.put(HexUtil.toSingleHexString(link.getBlock().getHash()), link);
-         return;
+         logger.error("Requested to persist orphan block");
+         throw new JdbcStorageException("Requested to persist orphan block");
       }
       Connection dbConnection = getDbConnection();
       try
@@ -310,8 +307,8 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    @Override
    public void updateLink(BlockChainLink link)
    {
-      orphanBlocks.remove(HexUtil.toSingleHexString(link.getBlock().getHash()));
-      addLink(link);
+      logger.error("Requested to update link");
+      throw new JdbcStorageException("Requested to update link");
    }
 
    @Override
@@ -321,11 +318,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       try (Connection dbConnection = getDbConnection())
       {
          // logger.debug("getLink: " + HexUtil.toSingleHexString(hash));
-         BlockChainLink link = getCompleteBlock(dbConnection, hash, getBlockTransactions(dbConnection, hash));
-         if (link != null)
-            return link;
-         else
-            return orphanBlocks.get(HexUtil.toSingleHexString(hash));
+         return getCompleteBlock(dbConnection, hash, getBlockTransactions(dbConnection, hash));
       } catch (Exception e)
       {
          logger.error("getLinkEx: " + e.getMessage(), e);
@@ -361,13 +354,32 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       {
          ResultSet rs = ps.executeQuery();
          if (rs.next())
-            return topLink = getLink(rs.getBytes(1));
+            return topLink = getLink(rs.getBytes("hash"));
          else
             return null;
       } catch (SQLException e)
       {
          logger.error("getLastLinkEx: " + e.getMessage(), e);
          throw new JdbcStorageException("getLastLinkEx: " + e.getMessage(), e);
+      }
+   }
+
+   @Override
+   public long getHeight()
+   {
+      if (topLink != null)
+         return topLink.getHeight();
+      try (Connection dbConnection = getDbConnection(); PreparedStatement ps = dbConnection.prepareStatement(sqlGetHigherWorkBlock))
+      {
+         ResultSet rs = ps.executeQuery();
+         if (rs.next())
+            return rs.getLong("height");
+         else
+            return 0;
+      } catch (SQLException e)
+      {
+         logger.error("getHeight: " + e.getMessage(), e);
+         throw new JdbcStorageException("getHeight: " + e.getMessage(), e);
       }
    }
 
@@ -381,9 +393,6 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
          List<BlockChainLink> storedLinks = new LinkedList<>();
          for (SimplifiedStoredBlock b : blocks)
             storedLinks.add(getLink(b.hash));
-         for (BlockChainLink b : orphanBlocks.values())
-            if (Arrays.equals(hash, b.getBlock().getPreviousBlockHash()))
-               storedLinks.add(b);
          return storedLinks;
       } catch (SQLException e)
       {

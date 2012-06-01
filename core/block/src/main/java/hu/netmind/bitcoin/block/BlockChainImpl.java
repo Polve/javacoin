@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.block;
 
+import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.Script;
@@ -61,7 +62,8 @@ public class BlockChainImpl extends Observable implements BlockChain
 
    private static final Map<BigInteger,Map<Long,BigInteger>> knownHashes =
       new HashMap<>();
-   
+
+   private OrphanBlocksSet orphanBlocks = new OrphanBlocksSet();
    private Block genesisBlock = null;
    private BlockChainLinkStorage linkStorage = null;
    private BlockChainListener listener = null;
@@ -166,7 +168,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    public void addBlock(Block block)
       throws VerificationException
    {
-      addBlock(block,false);
+      addBlock(block,true);
    }
 
    /**
@@ -201,91 +203,69 @@ public class BlockChainImpl extends Observable implements BlockChain
    }
 
    /**
-    * Add a block to the chain. This call can be used to update orphan blocks.
+    * Add a block to the chain. If the block is not connectable it will be added to the orphan pool.
+    * No orphan is ever passed to the store.
     * @param rawBlock The block to add.
-    * @param recheck Whether the block is an orphan block that needs re-checking.
+    * @param checkOrphans Whether we should check if some orphans are now connectable.
     */
-   private void addBlock(Block block, boolean recheck)
+   private int addBlock(Block block, boolean checkOrphans)
       throws VerificationException
    {
-      logger.debug("adding block: {}",block);
+      logger.debug("Trying to add block: {}", block);
 
-      // In this method we do all the necessary checks documented on the
-      // "protocol rules" section of the wiki at:
-      // https://en.bitcoin.it/wiki/Protocol_rules#Transactions
-      
-      // Checks 1-10, except 2: covered by the context independent
-      // block validation.
-      logger.debug("validating block internally...");
+      // Internal validation
       block.validate();
-      // Check 2: Reject if duplicate of block we have in any of the three categories 
-      // Note: we don't have three categories, so this differs from original client
-      if ( ! recheck )
-      {
-         logger.debug("checking whether block is already known...");
-         BlockChainLink link = linkStorage.getLink(block.getHash());
-         if ( link != null )
-         {
-            // Block already exists, if it is orphan, recheck original version
-            // of block (do not take block from outside). If not orphan that we
-            // already know this block well enough.
-            if ( link.isOrphan() )
-               addBlock(link.getBlock(),true);
-            return; // End here
-         }
-      } else {
-         logger.debug("block is an orphan block that needs rechecking...");
-      }
-      // Check 11: Check whether block will be an orphan block, in which case notify
+
+      logger.debug("Checking whether block is already in the chain...");
+      BlockChainLink link = linkStorage.getLink(block.getHash());
+      if (link != null)
+         return 0;
+
+      // Check 11: Check whether block is orphan block, in which case notify
       // listener to try to get that block and stop
-      logger.debug("checking whether block is orphan...");
+      logger.debug("Checking whether block is orphan...");
       BlockChainLink previousLink = linkStorage.getLink(block.getPreviousBlockHash());
-      if ( (previousLink == null) || (previousLink.isOrphan()) )
+      if (previousLink == null)
       {
-         BlockChainLink link = new BlockChainLink(block,new Difficulty(isTestnet),0,true);
-         if ( ! recheck )
-            linkStorage.addLink(link);
+         orphanBlocks.addBlock(block);
+
          // Notify listeners that we have a missing block
-         if ( listener != null )
+         if (listener != null)
             listener.notifyMissingBlock(block.getPreviousBlockHash());
-         // Finish here for now, this link will be re-checked as soon as
+         // Finish here for now, this block will be re-checked as soon as
          // its parent will be non-orphan
-         return;
+         return 0;
       }
-      // Check 12: Check that nBits value matches the difficulty rules 
+
+      // Check 12: Check that nBits value matches the difficulty rules
       logger.debug("checking whether block has the appropriate target...");
       DifficultyTarget blockTarget = new DifficultyTarget(block.getCompressedTarget());
       Difficulty blockDifficulty = new Difficulty(blockTarget, isTestnet);
-      BlockChainLink link = new BlockChainLink(block, // Create link for block
-            previousLink.getTotalDifficulty().add(blockDifficulty),
-            previousLink.getHeight()+1,false);
+      link = new BlockChainLink(block, // Create link for block
+         previousLink.getTotalDifficulty().add(blockDifficulty),
+         previousLink.getHeight() + 1, false);
       DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousLink, link);
-      if ( blockTarget.compareTo(calculatedTarget) != 0 )
-      {
+      if (blockTarget.compareTo(calculatedTarget) != 0)
          // Target has to exactly match the one calculated, otherwise it is
          // considered invalid!
-         throw new VerificationException("block has wrong target "+blockTarget+
-               ", when calculated is: "+calculatedTarget);
-      }
+         throw new VerificationException("block has wrong target " + blockTarget
+            + ", when calculated is: " + calculatedTarget);
       // Check 13: Reject if timestamp is before the median time of the last 11 blocks
       long medianTimestamp = getMedianTimestamp(previousLink);
-      logger.debug("checking timestamp {} against median {}",block.getCreationTime(),medianTimestamp);
-      if ( block.getCreationTime() <= medianTimestamp )
-         throw new VerificationException("block's creation time ("+block.getCreationTime()+
-               ") is not after median of previous blocks: "+medianTimestamp);
+      logger.debug("checking timestamp {} against median {}", block.getCreationTime(), medianTimestamp);
+      if (block.getCreationTime() <= medianTimestamp)
+         throw new VerificationException("block's creation time (" + block.getCreationTime()
+            + ") is not after median of previous blocks: " + medianTimestamp);
       // Check 14: Check for known hashes
-      BigInteger genesisHash = new BigInteger(1,genesisBlock.getHash());
-      BigInteger blockHash = new BigInteger(1,block.getHash());
-      if ( knownHashes.containsKey(genesisHash) )
+      BigInteger genesisHash = new BigInteger(1, genesisBlock.getHash());
+      BigInteger blockHash = new BigInteger(1, block.getHash());
+      if (knownHashes.containsKey(genesisHash))
       {
          BigInteger knownHash = knownHashes.get(genesisHash).get(link.getHeight());
-         if ( (knownHash != null) && (!knownHash.equals(blockHash)) )
-            throw new VerificationException("block should have a hash we already know, but it doesn't, might indicate a tampering or attack at depth: "+link.getHeight());
-      }
-      else
-      {
+         if ((knownHash != null) && (!knownHash.equals(blockHash)))
+            throw new VerificationException("block should have a hash we already know, but it doesn't, might indicate a tampering or attack at depth: " + link.getHeight());
+      } else
          logger.warn("known hashes don't exist for this chain, security checks for known blocks can not be made");
-      }
       // Checks 15,16,17,18: Check the transactions in the block
       // We diverge from the official list here since we don't maintain main and side branches
       // separately, and we have to make sure block is 100% compliant if we want to add it to the
@@ -295,70 +275,81 @@ public class BlockChainImpl extends Observable implements BlockChain
       logger.debug("checking transactions...");
       long inValue = 0;
       long outValue = 0;
-      for ( Transaction tx : block.getTransactions() )
+      for (Transaction tx : block.getTransactions())
       {
          // Validate without context
          tx.validate();
          // Checks 16.1.1-7: Verify only if this is supposed to be a full node
          long localInValue = 0;
          long localOutValue = 0;
-         if ( (!simplifedVerification) && (!tx.isCoinbase()) )
+         if ((!simplifedVerification) && (!tx.isCoinbase()))
          {
-            localInValue = verifyTransaction(previousLink,block,tx);
-            for ( TransactionOutput out : tx.getOutputs() )
+            localInValue = verifyTransaction(previousLink, block, tx);
+            for (TransactionOutput out : tx.getOutputs())
+            {
                localOutValue += out.getValue();
+            }
             inValue += localInValue;
             outValue += localOutValue;
-            // Check 16.1.6: Using the referenced output transactions to get 
-            // input values, check that each input value, as well as the sum, are in legal money range 
-            // Check 16.1.7: Reject if the sum of input values < sum of output values 
-            if ( localInValue < localOutValue )
-               throw new VerificationException("more money spent ("+localOutValue+") then available ("+localInValue+") in transaction: "+tx);
+            // Check 16.1.6: Using the referenced output transactions to get
+            // input values, check that each input value, as well as the sum, are in legal money range
+            // Check 16.1.7: Reject if the sum of input values < sum of output values
+            if (localInValue < localOutValue)
+               throw new VerificationException("more money spent (" + localOutValue + ") then available (" + localInValue + ") in transaction: " + tx);
          }
       }
       // Verify coinbase if we have full verification and there is a coinbase
       logger.debug("verifying coinbase...");
       Transaction coinbaseTx = null;
-      if ( ! block.getTransactions().isEmpty() )
+      if (!block.getTransactions().isEmpty())
          coinbaseTx = block.getTransactions().get(0);
-      if ( (!simplifedVerification) && (coinbaseTx.isCoinbase()) )
+      if ((!simplifedVerification) && (coinbaseTx.isCoinbase()))
       {
          long coinbaseValue = 0;
-         for ( TransactionOutput out : coinbaseTx.getOutputs() )
+         for (TransactionOutput out : coinbaseTx.getOutputs())
+         {
             coinbaseValue += out.getValue();
+         }
          // Check 16.2: Verify that the money produced is in the legal range
          // Valid if coinbase value is not greater than mined value plus fees in tx
          long coinbaseValid = getBlockCoinbaseValue(link);
-         if ( coinbaseValue > coinbaseValid+(inValue-outValue) )
-            throw new VerificationException("coinbase transaction in block "+block+" claimed more coins than appropriate: "+
-                  coinbaseValue+" vs. "+(coinbaseValid+(inValue-outValue))+
-                  " (coinbase: "+coinbaseValid+", in: "+inValue+", out: "+outValue+")");
+         if (coinbaseValue > coinbaseValid + (inValue - outValue))
+            throw new VerificationException("coinbase transaction in block " + block + " claimed more coins than appropriate: "
+               + coinbaseValue + " vs. " + (coinbaseValid + (inValue - outValue))
+               + " (coinbase: " + coinbaseValid + ", in: " + inValue + ", out: " + outValue + ")");
       }
+
       // Check 16.6: Relay block to our peers
       // (Also: add or update the link in storage, and only relay if it's really new)
       logger.debug("adding block to storage...");
-      if ( recheck )
+      linkStorage.addLink(link);
+      if (listener != null)
+         listener.notifyAddedBlock(block);
+
+      // Check 19: For each orphan block for which this block is its prev,
+      // run all these steps (including this one) recursively on that orphan
+      int blocksAdded = 1;
+      if (checkOrphans)
       {
-         linkStorage.updateLink(link);
-      } else {
-         linkStorage.addLink(link);
-         if ( listener != null )
-            listener.notifyAddedBlock(block);
-      }
-      // Check 19: For each orphan block for which this block is its prev, 
-      // run all these steps (including this one) recursively on that orphan 
-      logger.debug("re-visiting potential orphan next links...");
-      for ( BlockChainLink nextLink : linkStorage.getNextLinks(block.getHash()) )
-      {
-         try
+         logger.debug("re-checking orphans...");
+         Block orphan = block;
+         while ((orphan = orphanBlocks.removeBlockByPreviousHash(orphan.getHash())) != null)
          {
-            addBlock(nextLink.getBlock(),true);
-         } catch ( VerificationException e ) {
-            logger.warn("orhpan block was rechecked (because parent appeared), but is not valid",e);
+            try
+            {
+               int n = addBlock(orphan, false);
+               if (n != 1)
+                  logger.error("Internal error: inserting connectable orphan block returned " + n + " instead of 1");
+               blocksAdded++;
+            } catch (VerificationException e)
+            {
+               logger.warn("orphan block was rechecked (because parent appeared), but is not valid", e);
+            }
          }
       }
+      return blocksAdded;
    }
-
+   
    /**
     * Get a Block's maximum coinbase value.
     */
@@ -561,6 +552,12 @@ public class BlockChainImpl extends Observable implements BlockChain
       return linkStorage.getLastLink().getBlock();
    }
 
+   @Override
+   public long getHeight()
+   {
+      return linkStorage.getHeight();
+   }
+
    static
    {
       logger.debug("reading known hashes...");
@@ -598,5 +595,6 @@ public class BlockChainImpl extends Observable implements BlockChain
          logger.warn("can not read known hashes for the block chain, security might be impacted",e);
       }
    }
+
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2011 NetMind Consulting Bt.
+ * Copyright (C) 2012 nibbles.it
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free

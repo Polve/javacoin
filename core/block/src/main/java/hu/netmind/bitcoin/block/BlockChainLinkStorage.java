@@ -41,6 +41,12 @@ public interface BlockChainLinkStorage
    BlockChainLink getLastLink();
 
    /**
+    * Return the height of the best chain
+    * @return The height of the chain with most work
+    */
+   public long getHeight();
+
+   /**
     * Get the link to the given hash value. Orphan blocks are returned.
     * @return The link with the block with the given hash, or null if no such link exists.
     */

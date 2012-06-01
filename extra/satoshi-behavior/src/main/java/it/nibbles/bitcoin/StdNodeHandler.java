@@ -71,22 +71,22 @@ public class StdNodeHandler implements MessageHandler, Runnable
 
    @Override
    public void onJoin(Connection conn)
-      throws IOException
+           throws IOException
    {
-      long ourHeight = storage.getLastLink().getHeight();
-      logger.debug("connected to " + conn.getRemoteAddress() + " (from: " + conn.getLocalAddress() + ") sending out height: "+ourHeight);
+      long ourHeight = chain.getHeight();
+      logger.debug("connected to " + conn.getRemoteAddress() + " (from: " + conn.getLocalAddress() + ") sending out height: " + ourHeight);
       // Send our version information
       VersionMessage version = new VersionMessage(messageMagic, BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
-         new NodeAddress(1, (InetSocketAddress) conn.getRemoteAddress()),
-         // new NodeAddress(1, new InetSocketAddress(((InetSocketAddress) conn.getLocalAddress()).getAddress(), node.getPort())),
-         new NodeAddress(1, new InetSocketAddress("127.0.0.1", node.getPort())),
-         123, "JavaCoin/1.0-DEV", ourHeight);
+              new NodeAddress(1, (InetSocketAddress) conn.getRemoteAddress()),
+              // new NodeAddress(1, new InetSocketAddress(((InetSocketAddress) conn.getLocalAddress()).getAddress(), node.getPort())),
+              new NodeAddress(1, new InetSocketAddress("127.0.0.1", node.getPort())),
+              123, "JavaCoin/1.0-DEV", ourHeight);
       conn.send(version);
    }
 
    @Override
    public void onLeave(Connection conn)
-      throws IOException
+           throws IOException
    {
       PeerData removed = liveNodes.remove(conn.getRemoteAddress().toString());
       if (removed == downloadingFromPeer)
@@ -96,7 +96,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
 
    @Override
    public synchronized void onMessage(Connection conn, Message message)
-      throws IOException
+           throws IOException
    {
       numMessages++;
       PeerData currPeer = liveNodes.get(conn.getRemoteAddress().toString());
@@ -107,7 +107,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
       {
          AlertMessage alertMessage = (AlertMessage) message;
          logger.info("ALERT id=" + alertMessage.getId() + " message='" + alertMessage.getMessage() + "' comment='" + alertMessage.getComment()
-            + "' signatureVerified: " + BitcoinUtil.verifyDoubleDigestSatoshiSignature(alertMessage.getAlertPayload(), alertMessage.getSignature()));
+                 + "' signatureVerified: " + BitcoinUtil.verifyDoubleDigestSatoshiSignature(alertMessage.getAlertPayload(), alertMessage.getSignature()));
       } else if (message instanceof VersionMessage)
       {
          VersionMessage version = (VersionMessage) message;
@@ -115,7 +115,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
          VerackMessage verack = new VerackMessage(messageMagic);
          logger.debug("Answering verack to VersionMessage: " + version);
          conn.send(verack);
-         currPeer = new PeerData(version,conn);
+         currPeer = new PeerData(version, conn);
          liveNodes.put(conn.getRemoteAddress().toString(), currPeer);
       } else if (message instanceof VerackMessage)
       {
@@ -148,11 +148,10 @@ public class StdNodeHandler implements MessageHandler, Runnable
             {
                //logger.debug("Inv nuova transazione: " + BtcUtil.hexOut(item.getHash()));
             } else if (item.getType() == InventoryItem.TYPE_BLOCK)
-            {
                //logger.debug("Inv nuovo blocco: " + BtcUtil.hexOut(item.getHash()));
                // Determine the last promised block, so we know later when we're finished
                highestHashPromised = item.getHash();
-            } else
+            else
             {
                logger.debug("Item inventory sconosciuto: " + item.getType() + " " + BtcUtil.hexOut(item.getHash()));
                itemIterator.remove();
@@ -165,7 +164,6 @@ public class StdNodeHandler implements MessageHandler, Runnable
             logger.debug("Reply to INV using getdata -- highestHashPromised: " + BtcUtil.hexOut(highestHashPromised));
          }
       } else if (message instanceof TxMessage)
-      {
          try
          {
             long startTime = System.currentTimeMillis();
@@ -177,7 +175,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
          {
             logger.error("Can't create transaction from tx message: " + message);
          }
-      } else if (message instanceof BlockMessage)
+      else if (message instanceof BlockMessage)
       {
          BlockImpl block = null;
          try
@@ -209,9 +207,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
          logger.debug("Ping message: " + message);
          conn.send(new PingMessage(messageMagic));
       } else
-      {
          logger.debug("[#" + numMessages + "] unhandled message (" + conn.getRemoteAddress() + "): " + message.getClass());
-      }
 
       if (downloadingFromPeer == null && currPeer != null && currPeer.numBadBlocks() == 0)
       {
@@ -222,7 +218,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
             highestHashKnownBeforeRequest = lastStoredLink.getBlock().getHash();
             List<byte[]> startBlocks = chain.buildBlockLocator();
             logger.debug("We are at " + lastStoredLink.getHeight() + " / " + BtcUtil.hexOut(highestHashKnownBeforeRequest)
-               + ", while known max is: " + currPeer.getVersion().getStartHeight() + " Sending getblocks to " + downloadingFromPeer);
+                    + ", while known max is: " + currPeer.getVersion().getStartHeight() + " Sending getblocks to " + downloadingFromPeer);
             GetBlocksMessage getBlocks = new GetBlocksMessage(messageMagic, BC_PROTOCOL_VERSION, startBlocks, null);
             conn.send(getBlocks);
          }
@@ -245,11 +241,13 @@ public class StdNodeHandler implements MessageHandler, Runnable
 
    public void stop()
    {
+      logger.info("StdNodeHandler stopping node...");
       node.stop();
    }
 
    protected class PeerData implements Comparator
    {
+
       private VersionMessage version;
       private Connection connection;
       private long timeOfLastReceivedMessage;
@@ -304,7 +302,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
       {
          PeerData peer1 = (PeerData) arg1;
          PeerData peer2 = (PeerData) arg2;
-         logger.debug("Compare "+peer1+" with "+peer2);
+         logger.debug("Compare " + peer1 + " with " + peer2);
          if (peer1.connection.getRemoteAddress().toString().equals(peer2.connection.getRemoteAddress().toString()))
             return 0;
          return peer1.badBlocks.size() - peer2.badBlocks.size();
@@ -314,7 +312,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
       public String toString()
       {
          return "PeerData[" + connection.getRemoteAddress() + " numFailedBlocks: " + badBlocks.size() + " messages: " + numReceivedMessages
-            + " timeOfLastMessage: " + new Date(timeOfLastReceivedMessage) + "]";
+                 + " timeOfLastMessage: " + new Date(timeOfLastReceivedMessage) + "]";
       }
    }
 }
