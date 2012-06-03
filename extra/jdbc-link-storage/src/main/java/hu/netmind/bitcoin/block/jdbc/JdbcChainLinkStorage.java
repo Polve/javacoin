@@ -135,13 +135,15 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
            "SELECT count(*) AS num FROM Block WHERE height=?";
    //
    // Purge blocks and transactions (mainly used for debugging/testing, do not use, broken)
-   final private String sqlPurgeBlocksAndTxsUpToHeight =
-           "DELETE FROM Block,BlockTx,Transaction,TxInput,TxOutput "
+   final private String sqlPurgeBlocksUpToHeight =
+           "DELETE FROM Block,BlockTx "
            + "USING Block LEFT JOIN BlockTx ON (Block.id=BlockTx.blockId) "
-           + "LEFT JOIN Transaction ON (Transaction.id=BlockTx.txId) "
-           + "LEFT JOIN TxInput ON (TxInput.txId=Transaction.id) "
-           + "LEFT JOIN TxOutput ON (TxOutput.txId=Transaction.id) "
            + "WHERE height >= ?";
+   final private String sqlPurgeOrphanedTransactions =
+           "DELETE FROM Transaction,TxInput,TxOutput "
+           + "USING Transaction LEFT JOIN TxInput ON (TxInput.txId=Transaction.id) "
+           + "LEFT JOIN TxOutput ON (TxOutput.txId=Transaction.id) "
+           + "WHERE Transaction.id NOT IN (SELECT BlockTx.txId FROM BlockTx)";
    //
    // Address handling
    final private String sqlPutNodeAddress =
@@ -1002,14 +1004,57 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       return false;
    }
 
-   protected void purgeBlocksAndTxsUpToHeight(final Connection dbConnection, long height) throws SQLException
+   public void purgeBlocksUpToHeight(long height, boolean purgeTransactions) throws SQLException
    {
-      // This is broken ... disabled for now
-//      try (PreparedStatement ps = dbConnection.prepareStatement(sqlPurgeBlocksAndTxsUpToHeight))
-//      {
-//         ps.setLong(1, height);
-//         ps.executeUpdate();
-//      }
+      long startTime = System.currentTimeMillis();
+      Connection dbConnection = getDbConnection();
+      int blocksDeleted=-1, txDeleted=-1;
+      try
+      {
+         if (transactional)
+            dbConnection.setAutoCommit(false);
+         try (PreparedStatement ps = dbConnection.prepareStatement(sqlPurgeBlocksUpToHeight))
+         {
+            ps.setLong(1, height);
+            blocksDeleted = ps.executeUpdate();
+         }
+         if (purgeTransactions)
+            try (PreparedStatement ps = dbConnection.prepareStatement(sqlPurgeOrphanedTransactions))
+            {
+               txDeleted = ps.executeUpdate();
+            }
+         if (transactional)
+         {
+            dbConnection.commit();
+            dbConnection.setAutoCommit(true);
+         }
+      } catch (SQLException e)
+      {
+         try
+         {
+            if (transactional)
+            {
+               dbConnection.rollback();
+               dbConnection.setAutoCommit(true);
+            }
+         } catch (SQLException ex)
+         {
+         }
+         logger.error("purgeBlocksUpToHeight: " + e.getMessage(), e);
+         throw new JdbcStorageException("Error while purging blocks: " + e.getMessage(), e);
+      } finally
+      {
+         try
+         {
+            dbConnection.close();
+         } catch (SQLException e)
+         {
+            logger.error("purgeBlocksUpToHeight: " + e.getMessage(), e);
+            throw new JdbcStorageException("Error while closing connection: " + e.getMessage(), e);
+         }
+         long stopTime = System.currentTimeMillis();
+         logger.debug("exec time: " + (stopTime - startTime) + " ms blocksDeleted: "+blocksDeleted+" txDeleted: "+txDeleted);
+      }
    }
 
    public boolean getAutoCreate()
