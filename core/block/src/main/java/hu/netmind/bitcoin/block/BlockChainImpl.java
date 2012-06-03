@@ -331,10 +331,31 @@ public class BlockChainImpl extends Observable implements BlockChain
       int blocksAdded = 1;
       if (checkOrphans)
       {
-         logger.debug("re-checking orphans...");
-         Block orphan = block;
-         while ((orphan = orphanBlocks.removeBlockByPreviousHash(orphan.getHash())) != null)
+         blocksAdded += connectOrphanBlocks(block);
+      }
+      return blocksAdded;
+   }
+   
+   /**
+    * This is an iterative function that adds to the chain all
+    * the orphan blocks that can be added after a new block is inserted
+    * to avoid the otherwise more natural recursion.
+    * @param lastAddedBlock
+    * @return Number of blocks added to the chain
+    */
+   private int connectOrphanBlocks(Block lastAddedBlock)
+   {
+      logger.debug("Checking for connectable orphans...");
+      int blocksAdded = 0;
+      List<Block> blocks = new LinkedList<>();
+      blocks.add(lastAddedBlock);
+      Block orphan;
+      while (!blocks.isEmpty())
+      {
+         Block block = blocks.remove(0);
+         while ((orphan = orphanBlocks.removeBlockByPreviousHash(block.getHash())) != null)
          {
+            blocks.add(orphan);
             try
             {
                int n = addBlock(orphan, false);
@@ -349,7 +370,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       }
       return blocksAdded;
    }
-   
+
    /**
     * Get a Block's maximum coinbase value.
     */

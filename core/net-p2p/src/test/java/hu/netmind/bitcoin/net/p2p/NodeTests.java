@@ -18,34 +18,32 @@
 
 package hu.netmind.bitcoin.net.p2p;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
-import org.testng.annotations.AfterMethod;
-import java.io.IOException;
-import java.io.BufferedInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.easymock.EasyMock;
-import java.net.InetSocketAddress;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.net.ServerSocket;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import hu.netmind.bitcoin.net.AlertMessage;
 import hu.netmind.bitcoin.net.BitCoinInputStream;
 import hu.netmind.bitcoin.net.BitCoinOutputStream;
-import hu.netmind.bitcoin.net.MessageMarshaller;
-import hu.netmind.bitcoin.net.AlertMessage;
-import hu.netmind.bitcoin.net.VerackMessage;
 import hu.netmind.bitcoin.net.Message;
+import hu.netmind.bitcoin.net.MessageMarshaller;
+import hu.netmind.bitcoin.net.NodeAddress;
 import hu.netmind.bitcoin.net.PingMessage;
-import java.util.logging.Level;
+import hu.netmind.bitcoin.net.VerackMessage;
+import hu.netmind.bitcoin.net.VersionMessage;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import org.easymock.EasyMock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Test;
 
 /**
  * Tests the p2p network node implementation.
@@ -55,23 +53,24 @@ import java.util.logging.Level;
 public class NodeTests
 {
    private static final Logger logger = LoggerFactory.getLogger(NodeTests.class);
+   private static long BC_PROTOCOL_VERSION = 32100;
 
-   private List<DummyNode> dummyNodes = new ArrayList<DummyNode>();
-   private Node node = null;
+   private List<DummyNode> dummyNodes = new ArrayList<>();
+   private Node savedNode = null;
 
    /**
     * Create a node which will be destroyed at the end of test.
     */
    public Node createNode()
    {
-      node = new Node();
-      return node;
+      savedNode = new Node();
+      return savedNode;
    }
 
    /**
     * Create a new dummy node which connects to a node and has no server.
     */
-   public DummyNode createDummyNode(InetSocketAddress address)
+   DummyNode createDummyNode(InetSocketAddress address)
       throws IOException
    {
       DummyNode node = new DummyNode(address);
@@ -82,7 +81,7 @@ public class NodeTests
    /**
     * Create a new dummy node.
     */
-   public DummyNode createDummyNode()
+   DummyNode createDummyNode()
       throws IOException
    {
       DummyNode node = new DummyNode();
@@ -95,9 +94,9 @@ public class NodeTests
    {
       logger.debug("running cleanup...");
       // Stop node if it was created with createNode()
-      if ( node != null )
-         node.stop();
-      node = null;
+      if ( savedNode != null )
+         savedNode.stop();
+      savedNode = null;
       // Stop all dummy nodes
       for ( DummyNode dummyNode : dummyNodes )
       {
@@ -156,7 +155,7 @@ public class NodeTests
    {
       DummyNode dummyNode = createDummyNode();
       // Create bootstrapper
-      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new ArrayList<>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
       EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
@@ -170,12 +169,60 @@ public class NodeTests
       Assert.assertTrue(dummyNode.isAccepted());
    }
 
+   public void testDetectConnectioToSelf()
+      throws IOException
+   {
+      DummyNode dummyNode = createDummyNode();
+      // Create bootstrapper
+      List<InetSocketAddress> addresses = new ArrayList<>();
+      addresses.add(dummyNode.getAddress());
+      AddressSource source = EasyMock.createMock(AddressSource.class);
+      EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
+      EasyMock.replay(source);
+
+      final NodeAddress dummyNodeAddress = new NodeAddress(1, new InetSocketAddress(51234));
+      final VersionMessage verMsg1 = new VersionMessage(Message.MAGIC_TEST, BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
+         dummyNodeAddress, dummyNodeAddress, 123, "test", 1);
+      final VersionMessage verMsg2 = new VersionMessage(Message.MAGIC_TEST, BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
+         dummyNodeAddress, dummyNodeAddress, 124, "test", 1);
+
+      // Create node
+      Node node = createNode();
+      node.setAddressSource(source);
+      // Create a repeater handler
+      node.addHandler(new VersionMessageSenderHandler(verMsg1));
+      // Start node
+      node.start();
+      // Accept the connection from node
+      dummyNode.accept();
+      Assert.assertTrue(dummyNode.isAccepted());
+
+      // Send different versionMessage to node
+      dummyNode.send(verMsg2);
+
+      // Verify we are able to read the version message back
+      dummyNode.read();
+
+      // This time send the same versionMessage
+      dummyNode.send(verMsg1);
+
+      // Verify we are unable to get the repeated message back because the
+      // node detected connection to self and shut down the connection
+      try
+      {
+         dummyNode.read();
+         Assert.fail("Connection not closed from node");
+      } catch (IOException ex)
+      {
+      }
+   }
+
    public void testCommunicationConcept()
       throws IOException
    {
       DummyNode dummyNode = createDummyNode();
       // Create bootstrapper
-      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new ArrayList<>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
       EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
@@ -205,7 +252,7 @@ public class NodeTests
       for ( int i=0; i<dummyNodes.length; i++ )
          dummyNodes[i] = createDummyNode();
       // Create bootstrapper
-      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new ArrayList<>();
       for ( int i=0; i<dummyNodes.length; i++ )
          addresses.add(dummyNodes[i].getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
@@ -235,7 +282,7 @@ public class NodeTests
    {
       DummyNode dummyNode = createDummyNode();
       // Create bootstrapper
-      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new ArrayList<>();
       addresses.add(dummyNode.getAddress());
       addresses.add(dummyNode.getAddress()); // 2nd time
       AddressSource source = EasyMock.createMock(AddressSource.class);
@@ -281,7 +328,7 @@ public class NodeTests
    {
       DummyNode dummyNode = createDummyNode();
       // Create bootstrapper
-      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new ArrayList<>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
       EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
@@ -311,7 +358,7 @@ public class NodeTests
    {
       DummyNode dummyNode = createDummyNode();
       // Create bootstrapper
-      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new ArrayList<>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
       EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
@@ -324,6 +371,7 @@ public class NodeTests
       // Create a handler which repeats and also notifies
       final Semaphore semaphore = new Semaphore(0);
       node.addHandler(new MessageRepeaterHandler(){
+         @Override
                public void onLeave(Connection conn)
                {
                   semaphore.release();
@@ -349,7 +397,7 @@ public class NodeTests
    {
       DummyNode dummyNode = createDummyNode();
       // Create bootstrapper
-      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new ArrayList<>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
       EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
@@ -397,7 +445,7 @@ public class NodeTests
    {
       DummyNode dummyNode = createDummyNode();
       // Create bootstrapper
-      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new ArrayList<>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
       EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
@@ -409,6 +457,7 @@ public class NodeTests
       node.addHandler(new MessageRepeaterHandler()
       {
 
+         @Override
          public void onJoin(Connection conn)
          {
             try
@@ -432,7 +481,7 @@ public class NodeTests
    {
       DummyNode dummyNode = createDummyNode();
       // Create bootstrapper
-      List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new ArrayList<>();
       addresses.add(dummyNode.getAddress());
       AddressSource source = EasyMock.createMock(AddressSource.class);
       EasyMock.expect(source.getAddresses()).andReturn(addresses).anyTimes();
@@ -445,6 +494,7 @@ public class NodeTests
       // Create a handler which repeats and also notifies
       final Semaphore semaphore = new Semaphore(0);
       node.addHandler(new MessageRepeaterHandler(){
+         @Override
                public void onLeave(Connection conn)
                {
                   semaphore.release();
@@ -543,8 +593,9 @@ public class NodeTests
    public class JoinWaiterHandler implements MessageHandler
    {
       private boolean joined = false;
-      private Object joinWaiter = new Object();
+      private final Object joinWaiter = new Object();
 
+      @Override
       public void onJoin(Connection conn)
       {
          synchronized ( joinWaiter )
@@ -554,6 +605,7 @@ public class NodeTests
          }
       }
 
+      @Override
       public void onLeave(Connection conn)
       {
       }
@@ -568,23 +620,54 @@ public class NodeTests
          }
       }
 
+      @Override
       public void onMessage(Connection conn, Message message)
       {
       }
    }
+
    public class MessageRepeaterHandler implements MessageHandler
    {
+      @Override
       public void onJoin(Connection conn)
       {
       }
 
+      @Override
       public void onLeave(Connection conn)
       {
       }
 
+      @Override
       public void onMessage(Connection conn, Message message)
       {
          conn.send(message);
+      }
+   }
+   
+   public class VersionMessageSenderHandler implements MessageHandler
+   {
+      private VersionMessage versionMessage;
+
+      public VersionMessageSenderHandler(VersionMessage versionMessage)
+      {
+         this.versionMessage = versionMessage;
+      }
+
+      @Override
+      public void onJoin(Connection conn)
+      {
+      }
+
+      @Override
+      public void onLeave(Connection conn)
+      {
+      }
+
+      @Override
+      public void onMessage(Connection conn, Message message)
+      {
+         conn.send(versionMessage);
       }
    }
 }

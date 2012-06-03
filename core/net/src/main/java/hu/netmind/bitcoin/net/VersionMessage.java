@@ -102,9 +102,9 @@ public class VersionMessage extends ChecksummedMessage
    @Override
    public String toString()
    {
-      return super.toString()+" version: "+version+", services: "+services+
-         ", sender: "+senderAddress+", receiver: "+receiverAddress+
-         ", secondary version: "+secondaryVersion+", start height: "+startHeight;
+      return super.toString()+"[VersionMessage] ver: "+version+" services: "+services+" nonce: "+nonce+
+         " sender: "+senderAddress+" receiver: "+receiverAddress+
+         " userAgent: "+secondaryVersion+" startHeight: "+startHeight;
    }
 
    public long getVersion()

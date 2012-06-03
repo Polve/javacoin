@@ -41,49 +41,36 @@
         <artifactId>bitcoin-net-p2p</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <type>jar</type>
-        <scope>test</scope>
      </dependency>
      <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
         <artifactId>bitcoin-api</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <type>jar</type>
-        <scope>test</scope>
      </dependency>
      <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
         <artifactId>bitcoin-block</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <type>jar</type>
-        <scope>test</scope>
      </dependency>
      <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
         <artifactId>bitcoin-script</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <type>jar</type>
-        <scope>test</scope>
      </dependency>
      <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
         <artifactId>bitcoin-keyfactory-ecc</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <type>jar</type>
-        <scope>test</scope>
-     </dependency>
-     <dependency>
-        <groupId>hu.netmind.bitcoin</groupId>
-        <artifactId>bdb-link-storage</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-        <type>jar</type>
-        <scope>test</scope>
      </dependency>
      <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
         <artifactId>jdbc-link-storage</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <type>jar</type>
-        <scope>test</scope>
      </dependency>
      <dependency>
         <groupId>hu.netmind.bitcoin</groupId>
@@ -98,16 +85,20 @@
         <type>jar</type>
      </dependency>
      <dependency>
+        <groupId>hu.netmind.bitcoin</groupId>
+        <artifactId>bdb-link-storage</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <type>jar</type>
+     </dependency>
+     <dependency>
 	<groupId>net.sf.jopt-simple</groupId>
 	<artifactId>jopt-simple</artifactId>
 	<version>4.3</version>
-        <scope>test</scope>
      </dependency>
      <dependency>
 	<groupId>org.codehaus.jackson</groupId>
 	<artifactId>jackson-mapper-asl</artifactId>
 	<version>1.9.5</version>
-        <scope>test</scope>
      </dependency>
                              
   </dependencies>

@@ -55,9 +55,8 @@ public class StdNodeHandler implements MessageHandler, Runnable
    private BlockChainLinkStorage storage;
    private byte[] highestHashKnownBeforeRequest = null;
    private byte[] highestHashPromised = null;
-   private transient PeerData downloadingFromPeer = null;
+   private transient Connection downloadingFromPeer = null;
    private int numMessages = 0;
-   private SortedMap<String, PeerData> liveNodes = Collections.synchronizedSortedMap(new TreeMap<String, PeerData>());
 
    public StdNodeHandler(Node node, ScriptFactory scriptFactory, long messageMagic, BlockChain chain, BlockChainLinkStorage storage)
    {
@@ -78,9 +77,9 @@ public class StdNodeHandler implements MessageHandler, Runnable
       // Send our version information
       VersionMessage version = new VersionMessage(messageMagic, BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
               new NodeAddress(1, (InetSocketAddress) conn.getRemoteAddress()),
-              // new NodeAddress(1, new InetSocketAddress(((InetSocketAddress) conn.getLocalAddress()).getAddress(), node.getPort())),
-              new NodeAddress(1, new InetSocketAddress("127.0.0.1", node.getPort())),
-              123, "JavaCoin/1.0-DEV", ourHeight);
+              new NodeAddress(1, new InetSocketAddress(((InetSocketAddress) conn.getLocalAddress()).getAddress(), node.getPort())),
+              //new NodeAddress(1, new InetSocketAddress("127.0.0.1", node.getPort())),
+              new Random().nextLong(), "JavaCoin/1.0-DEV", ourHeight);
       conn.send(version);
    }
 
@@ -88,10 +87,9 @@ public class StdNodeHandler implements MessageHandler, Runnable
    public void onLeave(Connection conn)
            throws IOException
    {
-      PeerData removed = liveNodes.remove(conn.getRemoteAddress().toString());
-      if (removed == downloadingFromPeer)
+      if (conn == downloadingFromPeer)
          downloadingFromPeer = null;
-      logger.debug("disconnected from " + conn.getRemoteAddress() + " (on local: " + conn.getLocalAddress() + ") removed: " + removed);
+      logger.debug("disconnected from " + conn.getRemoteAddress() + " (on local: " + conn.getLocalAddress() + ") removed: " + conn);
    }
 
    @Override
@@ -99,10 +97,14 @@ public class StdNodeHandler implements MessageHandler, Runnable
            throws IOException
    {
       numMessages++;
-      PeerData currPeer = liveNodes.get(conn.getRemoteAddress().toString());
-      logger.debug("[#" + numMessages + "] incoming (" + conn.getRemoteAddress() + "): " + message.getClass() + " currPeer: " + currPeer);
-      if (currPeer != null)
-         currPeer.newMessage(message);
+      PeerData peerData = (PeerData) conn.getSessionAttribute("peerData");
+      if (peerData == null)
+      {
+         peerData = new PeerData();
+         conn.setSessionAttribute("peerData", peerData);
+      }
+      peerData.newMessage(message);
+      logger.debug("[#" + numMessages + "] incoming (" + conn.getRemoteAddress() + "): " + message.getClass() + " currPeer: " + peerData);
       if (message instanceof AlertMessage)
       {
          AlertMessage alertMessage = (AlertMessage) message;
@@ -115,8 +117,6 @@ public class StdNodeHandler implements MessageHandler, Runnable
          VerackMessage verack = new VerackMessage(messageMagic);
          logger.debug("Answering verack to VersionMessage: " + version);
          conn.send(verack);
-         currPeer = new PeerData(version, conn);
-         liveNodes.put(conn.getRemoteAddress().toString(), currPeer);
       } else if (message instanceof VerackMessage)
       {
          VerackMessage verack = (VerackMessage) message;
@@ -198,9 +198,9 @@ public class StdNodeHandler implements MessageHandler, Runnable
             logger.debug("Block " + BtcUtil.hexOut(block.getHash()) + " with " + block.getTransactions().size() + " transactions added in " + (stopTime - startTime) + " ms ");
          } catch (BitCoinException e)
          {
-            logger.warn("block could not be added, marking peer " + currPeer + " as unreliable", e);
-            if (currPeer != null && block != null)
-               currPeer.newBadBlock(block);
+            logger.warn("block could not be added, marking peer " + conn + " as unreliable", e);
+            if (peerData != null && block != null)
+               peerData.newBadBlock(block);
          }
       } else if (message instanceof PingMessage)
       {
@@ -209,16 +209,16 @@ public class StdNodeHandler implements MessageHandler, Runnable
       } else
          logger.debug("[#" + numMessages + "] unhandled message (" + conn.getRemoteAddress() + "): " + message.getClass());
 
-      if (downloadingFromPeer == null && currPeer != null && currPeer.numBadBlocks() == 0)
+      if (downloadingFromPeer == null && peerData.numBadBlocks() == 0)
       {
          BlockChainLink lastStoredLink = storage.getLastLink();
-         if (currPeer.getVersion().getStartHeight() > lastStoredLink.getHeight())
+         if (peerData.getVersion().getStartHeight() > lastStoredLink.getHeight())
          {
-            downloadingFromPeer = currPeer;
+            downloadingFromPeer = conn;
             highestHashKnownBeforeRequest = lastStoredLink.getBlock().getHash();
             List<byte[]> startBlocks = chain.buildBlockLocator();
             logger.debug("We are at " + lastStoredLink.getHeight() + " / " + BtcUtil.hexOut(highestHashKnownBeforeRequest)
-                    + ", while known max is: " + currPeer.getVersion().getStartHeight() + " Sending getblocks to " + downloadingFromPeer);
+                    + ", while known max is: " + peerData.getVersion().getStartHeight() + " Sending getblocks to " + downloadingFromPeer);
             GetBlocksMessage getBlocks = new GetBlocksMessage(messageMagic, BC_PROTOCOL_VERSION, startBlocks, null);
             conn.send(getBlocks);
          }
@@ -245,26 +245,15 @@ public class StdNodeHandler implements MessageHandler, Runnable
       node.stop();
    }
 
-   protected class PeerData implements Comparator
+   protected class PeerData
    {
 
       private VersionMessage version;
-      private Connection connection;
+      //private Connection connection;
       private long timeOfLastReceivedMessage;
       // Number of messages received after initial Version
       private int numReceivedMessages;
       private Map<byte[], Block> badBlocks = new HashMap<>();
-
-      public PeerData(VersionMessage version, Connection connection)
-      {
-         this.version = version;
-         this.connection = connection;
-      }
-
-      public Connection getConnection()
-      {
-         return connection;
-      }
 
       public VersionMessage getVersion()
       {
@@ -273,6 +262,8 @@ public class StdNodeHandler implements MessageHandler, Runnable
 
       public void newMessage(Message m)
       {
+         if (m instanceof VersionMessage)
+            this.version = (VersionMessage) m;
          timeOfLastReceivedMessage = System.currentTimeMillis();
          numReceivedMessages++;
       }
@@ -298,20 +289,9 @@ public class StdNodeHandler implements MessageHandler, Runnable
       }
 
       @Override
-      public int compare(Object arg1, Object arg2)
-      {
-         PeerData peer1 = (PeerData) arg1;
-         PeerData peer2 = (PeerData) arg2;
-         logger.debug("Compare " + peer1 + " with " + peer2);
-         if (peer1.connection.getRemoteAddress().toString().equals(peer2.connection.getRemoteAddress().toString()))
-            return 0;
-         return peer1.badBlocks.size() - peer2.badBlocks.size();
-      }
-
-      @Override
       public String toString()
       {
-         return "PeerData[" + connection.getRemoteAddress() + " numFailedBlocks: " + badBlocks.size() + " messages: " + numReceivedMessages
+         return "PeerData[numFailedBlocks: " + badBlocks.size() + " messages: " + numReceivedMessages
                  + " timeOfLastMessage: " + new Date(timeOfLastReceivedMessage) + "]";
       }
    }
