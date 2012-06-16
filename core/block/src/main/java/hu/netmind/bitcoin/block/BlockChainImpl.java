@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2011 NetMind Consulting Bt.
+ * Copyright (C) 2012 nibbles.it.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,7 +19,6 @@
 
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.Script;
@@ -47,18 +47,18 @@ import org.slf4j.LoggerFactory;
 /**
  * The BlockChain is responsible for maintaining the list of valid Blocks
  * and also calculating the longest chain starting from the Genesis Block.
- * @author Robert Brautigam
+ * @author Robert Brautigam, Alessandro Polverini
  */
 public class BlockChainImpl extends Observable implements BlockChain
 {
    private static final Logger logger = LoggerFactory.getLogger(BlockChainImpl.class);
-   private static final long TARGET_TIMESPAN = 14l*24l*60l*60l*1000l; // A target lasts 14 days
-   private static final long TARGET_SPACING = 10l*60l*1000l; // Spacing between two blocks 10 minutes
-   private static final long TARGET_RECALC = TARGET_TIMESPAN / TARGET_SPACING;
-   private static final int MEDIAN_BLOCKS = 11;
-   private static final long COINBASE_MATURITY = 100;
-   private static final long INITIAL_COINBASE_VALUE = 5000000000l;
-   private static final long COINBASE_VALUE_HALFTIME = 210000l;
+   public static final long TARGET_TIMESPAN = 14l*24l*60l*60l*1000l; // A target lasts 14 days
+   public static final long TARGET_SPACING = 10l*60l*1000l; // Spacing between two blocks 10 minutes
+   public static final long TARGET_RECALC = TARGET_TIMESPAN / TARGET_SPACING;
+   public static final int MEDIAN_BLOCKS = 11;
+   public static final long COINBASE_MATURITY = 100;
+   public static final long INITIAL_COINBASE_VALUE = 5000000000l;
+   public static final long COINBASE_VALUE_HALFTIME = 210000l;
 
    private static final Map<BigInteger,Map<Long,BigInteger>> knownHashes =
       new HashMap<>();
@@ -272,6 +272,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       // tree (as non-orphan). Because of Block checks we know the first is a coinbase tx and
       // the rest are not. So execute checks from point 16. (Checks 16.3-5 are not
       // handles since they don't apply to this model)
+      long time = System.currentTimeMillis();
       logger.debug("checking transactions...");
       long inValue = 0;
       long outValue = 0;
@@ -298,6 +299,26 @@ public class BlockChainImpl extends Observable implements BlockChain
                throw new VerificationException("more money spent (" + localOutValue + ") then available (" + localInValue + ") in transaction: " + tx);
          }
       }
+      
+      try
+      {
+         long time1 = System.currentTimeMillis() - time;
+         time = System.currentTimeMillis();
+         long originalDiff = inValue - outValue;
+         ParallelTransactionVerifier newVerifier =
+            new ParallelTransactionVerifier(linkStorage, scriptFactory, previousLink, block, simplifedVerification, 0);
+         long newDiff = newVerifier.verifyTransactions();
+         long time2 = System.currentTimeMillis() - time;
+         if (originalDiff != newDiff)
+            throw new VerificationException("Calcolo fee non corrispondente: " + originalDiff + " vs " + newDiff);
+         else
+            logger.info("time1: " + time1 + " time2: " + time2);
+      } catch (Exception e)
+      {
+         logger.error("Ex in nuovo codice verifica transazioni: " + e.getMessage(), e);
+         throw new VerificationException(e.getMessage(), e);
+      }
+      
       // Verify coinbase if we have full verification and there is a coinbase
       logger.debug("verifying coinbase...");
       Transaction coinbaseTx = null;
