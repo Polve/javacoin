@@ -18,26 +18,20 @@
 
 package hu.netmind.bitcoin.block;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.AfterMethod;
-import org.testng.Assert;
-import hu.netmind.bitcoin.block.BlockImpl;
-import hu.netmind.bitcoin.block.Difficulty;
-import hu.netmind.bitcoin.block.BlockChainLink;
-import hu.netmind.bitcoin.block.TransactionImpl;
-import hu.netmind.bitcoin.block.TransactionInputImpl;
-import hu.netmind.bitcoin.block.TransactionOutputImpl;
+import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
-import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Random;
 import java.math.BigDecimal;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * Tests requiring clean storage to run.

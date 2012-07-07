@@ -70,6 +70,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    private ScriptFactory scriptFactory = null;
    private boolean simplifedVerification = false;
    private boolean isTestnet = false;
+   private ParallelTransactionVerifier parallelVerifier;
 
    /**
     * Construct a new block chain.
@@ -116,6 +117,7 @@ public class BlockChainImpl extends Observable implements BlockChain
          if ( ! storedGenesisLink.getBlock().equals(genesisBlock) )
             throw new VerificationException("genesis block in storage is not the same as the block chain's");
       }
+      parallelVerifier = new ParallelTransactionVerifier(0);
    }
 
    public void setListener(BlockChainListener listener)
@@ -272,47 +274,21 @@ public class BlockChainImpl extends Observable implements BlockChain
       // tree (as non-orphan). Because of Block checks we know the first is a coinbase tx and
       // the rest are not. So execute checks from point 16. (Checks 16.3-5 are not
       // handles since they don't apply to this model)
-      long time = System.currentTimeMillis();
       logger.debug("checking transactions...");
-      long inValue = 0;
-      long outValue = 0;
-      for (Transaction tx : block.getTransactions())
-      {
-         // Validate without context
-         tx.validate();
-         // Checks 16.1.1-7: Verify only if this is supposed to be a full node
-         long localInValue = 0;
-         long localOutValue = 0;
-         if ((!simplifedVerification) && (!tx.isCoinbase()))
-         {
-            localInValue = verifyTransaction(previousLink, block, tx);
-            for (TransactionOutput out : tx.getOutputs())
-            {
-               localOutValue += out.getValue();
-            }
-            inValue += localInValue;
-            outValue += localOutValue;
-            // Check 16.1.6: Using the referenced output transactions to get
-            // input values, check that each input value, as well as the sum, are in legal money range
-            // Check 16.1.7: Reject if the sum of input values < sum of output values
-            if (localInValue < localOutValue)
-               throw new VerificationException("more money spent (" + localOutValue + ") then available (" + localInValue + ") in transaction: " + tx);
-         }
-      }
+      // long time = System.currentTimeMillis();
+      // long blockFees = serialTransactionVerifier(previousLink, block);
+      // long time1 = System.currentTimeMillis() - time;
       
+      long blockFees;
       try
       {
-         long time1 = System.currentTimeMillis() - time;
-         time = System.currentTimeMillis();
-         long originalDiff = inValue - outValue;
-         ParallelTransactionVerifier newVerifier =
-            new ParallelTransactionVerifier(linkStorage, scriptFactory, previousLink, block, simplifedVerification, 0);
-         long newDiff = newVerifier.verifyTransactions();
-         long time2 = System.currentTimeMillis() - time;
-         if (originalDiff != newDiff)
-            throw new VerificationException("Calcolo fee non corrispondente: " + originalDiff + " vs " + newDiff);
-         else
-            logger.info("time1: " + time1 + " time2: " + time2);
+         //time = System.currentTimeMillis();
+         blockFees = parallelVerifier.verifyTransactions(linkStorage, scriptFactory, previousLink, block, simplifedVerification);
+         //long time3 = System.currentTimeMillis() - time;
+         //if (blockFees != parallelFees)
+         //   throw new VerificationException("Calcolo fee non corrispondente: " + blockFees + " vs " + parallelFees);
+         //else
+         //   logger.info("time1: " + time1 + " time3: " + time3 + " fees: " + blockFees + " speedup: " + ((1.0 * time2) / time3));
       } catch (Exception e)
       {
          logger.error("Ex in nuovo codice verifica transazioni: " + e.getMessage(), e);
@@ -334,10 +310,10 @@ public class BlockChainImpl extends Observable implements BlockChain
          // Check 16.2: Verify that the money produced is in the legal range
          // Valid if coinbase value is not greater than mined value plus fees in tx
          long coinbaseValid = getBlockCoinbaseValue(link);
-         if (coinbaseValue > coinbaseValid + (inValue - outValue))
+         if (coinbaseValue > coinbaseValid + blockFees)
             throw new VerificationException("coinbase transaction in block " + block + " claimed more coins than appropriate: "
-               + coinbaseValue + " vs. " + (coinbaseValid + (inValue - outValue))
-               + " (coinbase: " + coinbaseValid + ", in: " + inValue + ", out: " + outValue + ")");
+               + coinbaseValue + " vs. " + (coinbaseValid + blockFees)
+               + " (coinbase: " + coinbaseValid + ", block fees: " + blockFees + ")");
       }
 
       // Check 16.6: Relay block to our peers
@@ -355,6 +331,35 @@ public class BlockChainImpl extends Observable implements BlockChain
          blocksAdded += connectOrphanBlocks(block);
       }
       return blocksAdded;
+   }
+   
+   private long serialTransactionVerifier(BlockChainLink previousLink, Block block) throws VerificationException {
+      long inValue = 0;
+      long outValue = 0;
+      for (Transaction tx : block.getTransactions())
+      {
+         // Validate without context
+         tx.validate();
+         // Checks 16.1.1-7: Verify only if this is supposed to be a full node
+         long localInValue;
+         long localOutValue = 0;
+         if ((!simplifedVerification) && (!tx.isCoinbase()))
+         {
+            localInValue = verifyTransaction(previousLink, block, tx);
+            for (TransactionOutput out : tx.getOutputs())
+            {
+               localOutValue += out.getValue();
+            }
+            inValue += localInValue;
+            outValue += localOutValue;
+            // Check 16.1.6: Using the referenced output transactions to get
+            // input values, check that each input value, as well as the sum, are in legal money range
+            // Check 16.1.7: Reject if the sum of input values < sum of output values
+            if (localInValue < localOutValue)
+               throw new VerificationException("more money spent (" + localOutValue + ") then available (" + localInValue + ") in transaction: " + tx);
+         }
+      }
+      return inValue - outValue;
    }
    
    /**

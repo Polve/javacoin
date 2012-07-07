@@ -48,31 +48,33 @@ public class ParallelTransactionVerifier
 
    private static final Logger logger = LoggerFactory.getLogger(ParallelTransactionVerifier.class);
    ExecutorService executorService;
-   private final BlockChainLinkStorage linkStorage;
-   private final ScriptFactory scriptFactory;
-   private final BlockChainLink link;
-   private final Block block;
-   private final boolean simplifiedVerification;
-   long inValue = 0;
-   long outValue = 0;
+   private BlockChainLinkStorage linkStorage;
+   private ScriptFactory scriptFactory;
+   private BlockChainLink link;
+   private Block block;
+   private boolean simplifiedVerification;
+   private int numThreads;
+   long inValue;
+   long outValue;
 
-   public ParallelTransactionVerifier(BlockChainLinkStorage linkStorage, ScriptFactory scriptFactory,
-      BlockChainLink previousLink, Block block, boolean simplifiedVerification, int maxThreads)
+   public ParallelTransactionVerifier(int maxThreads)
+   {
+      numThreads = maxThreads <= 0 ? Runtime.getRuntime().availableProcessors() : maxThreads;
+      executorService = Executors.newFixedThreadPool(numThreads);
+      logger.debug("Parallel Transaction Verifier instantiated with {} threads", numThreads);
+   }
+
+   public long verifyTransactions(BlockChainLinkStorage linkStorage, ScriptFactory scriptFactory,
+      BlockChainLink previousLink, Block block, boolean simplifiedVerification)
+      throws VerificationException, BitCoinException
    {
       this.linkStorage = linkStorage;
       this.scriptFactory = scriptFactory;
       this.link = previousLink;
       this.block = block;
       this.simplifiedVerification = simplifiedVerification;
-      int numThreads = maxThreads <= 0 ? Runtime.getRuntime().availableProcessors() : maxThreads;
-      executorService = Executors.newFixedThreadPool(numThreads);
-      logger.debug("Parallel Transaction Verifier instantiated with {} threads", numThreads);
-   }
-
-   public long verifyTransactions()
-      throws VerificationException, BitCoinException
-   {
-      logger.debug("Parallel checking transactions...");
+      inValue = outValue = 0;
+      logger.debug("Parallel checking of {} transactions...", block.getTransactions().size());
       List<Callable<Void>> todo = new ArrayList<>(block.getTransactions().size());
       for (Transaction tx : block.getTransactions())
       {
@@ -101,6 +103,8 @@ public class ParallelTransactionVerifier
          }
       } catch (InterruptedException ex)
       {
+         executorService.shutdownNow();
+         executorService = Executors.newFixedThreadPool(numThreads);
          throw new VerificationException("Verification threads interrupted");
       }
       return inValue - outValue;
