@@ -44,9 +44,10 @@ public class DNSFallbackNodesSource extends RandomizedNodesSource
       super(defaultPort);
    }
 
+   @Override
    public List<InetSocketAddress> getInitialAddresses()
    {
-      List<InetSocketAddress> addresses = new LinkedList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new LinkedList<>();
       // Read addresses from properties file
       String addressesString = ResourceBundle.getBundle("fallback-nodes").getString("seed.names");
       StringTokenizer tokens = new StringTokenizer(addressesString, ",");

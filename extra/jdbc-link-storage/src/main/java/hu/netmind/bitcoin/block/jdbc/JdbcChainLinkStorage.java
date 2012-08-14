@@ -1089,6 +1089,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    //
    // Node address storage
    //
+   @Override
    public void storeNodeAddress(NodeAddress node)
    {
       try (Connection dbConnection = getDbConnection(); PreparedStatement psReadOld = dbConnection.prepareStatement(sqlGetNodeAddress))
@@ -1127,6 +1128,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       }
    }
 
+   @Override
    public List<NodeAddress> loadNodeAddesses(int maxNum)
    {
       try (Connection dbConnection = getDbConnection(); PreparedStatement ps = dbConnection.prepareStatement(sqlGetNodeAddresses);

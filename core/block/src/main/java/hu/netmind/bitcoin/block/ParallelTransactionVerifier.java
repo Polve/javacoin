@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +61,7 @@ public class ParallelTransactionVerifier
    public ParallelTransactionVerifier(int maxThreads)
    {
       numThreads = maxThreads <= 0 ? Runtime.getRuntime().availableProcessors() : maxThreads;
-      executorService = Executors.newFixedThreadPool(numThreads);
+      executorService = Executors.newFixedThreadPool(numThreads, new DaemonThreadFactory());
       logger.debug("Parallel Transaction Verifier instantiated with {} threads", numThreads);
    }
 
@@ -221,6 +222,19 @@ public class ParallelTransactionVerifier
                return txCandidate;
          }
          return null;
+      }
+   }
+
+   class DaemonThreadFactory implements ThreadFactory
+   {
+
+      @Override
+      public Thread newThread(Runnable r)
+      {
+         Thread t = new Thread(r);
+         t.setDaemon(true);
+         t.setName("Transaction Verifier");
+         return t;
       }
    }
 }

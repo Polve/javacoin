@@ -26,7 +26,10 @@ Any value defined here will override the pom.xml file value but is only applicab
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.methodDeclBracePlacement>NEW_LINE</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.methodDeclBracePlacement>
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.allowConvertToStarImport>false</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.allowConvertToStarImport>
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.allowConvertToStaticStarImport>false</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.allowConvertToStaticStarImport>
-        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantIfBraces>ELIMINATE</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantIfBraces>
+        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantIfBraces>LEAVE_ALONE</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantIfBraces>
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.importGroupsOrder>*</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.importGroupsOrder>
+        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantWhileBraces>LEAVE_ALONE</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantWhileBraces>
+        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantForBraces>LEAVE_ALONE</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantForBraces>
+        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantDoWhileBraces>LEAVE_ALONE</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantDoWhileBraces>
     </properties>
 </project-shared-configuration>

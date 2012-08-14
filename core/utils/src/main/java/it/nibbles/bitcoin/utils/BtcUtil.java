@@ -86,4 +86,8 @@ public class BtcUtil {
     }
     return builder.toString();
   }
+
+    public static int readUint16BE(byte[] bytes, int offset) {
+        return ((bytes[offset] & 0xff) << 8) | bytes[offset + 1] & 0xff;
+    }
 }
