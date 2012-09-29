@@ -33,7 +33,6 @@ import org.testng.Assert;
 import hu.netmind.bitcoin.net.HexUtil;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Iterator;
 import java.util.ArrayList;
 
 /**

@@ -23,6 +23,8 @@ import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
 import hu.netmind.bitcoin.block.BlockImpl;
+import hu.netmind.bitcoin.block.StandardBitcoinFactory;
+import hu.netmind.bitcoin.block.TestnetBitcoinFactory;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
@@ -147,7 +149,9 @@ public class BlockTool
          storage = engine;
       } else if (STORAGE_JDBC.equalsIgnoreCase(storageType))
       {
-         JdbcChainLinkStorage engine = new JdbcChainLinkStorage(scriptFactory, isTestNet);
+         //JdbcChainLinkStorage engine = new JdbcChainLinkStorage(scriptFactory, isTestNet);
+         JdbcChainLinkStorage engine = new JdbcChainLinkStorage(
+            isTestNet ? new TestnetBitcoinFactory(scriptFactory) : new StandardBitcoinFactory(scriptFactory));
          //engine.setDriverClassName(optJdbcDriver.value(options));
          //engine.init();
       }

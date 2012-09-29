@@ -15,6 +15,7 @@
  */
 package hu.netmind.bitcoin.block.jdbc;
 
+import hu.netmind.bitcoin.block.StandardBitcoinFactory;
 import hu.netmind.bitcoin.block.StorageProvider;
 import hu.netmind.bitcoin.block.TestSuiteFactory;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
@@ -35,7 +36,7 @@ public class StorageITTests
 
          protected JdbcChainLinkStorage getStorageInstance()
          {
-            JdbcChainLinkStorage storage = new JdbcChainLinkStorage(new ScriptFactoryImpl(null), false);
+            JdbcChainLinkStorage storage = new JdbcChainLinkStorage(new StandardBitcoinFactory(new ScriptFactoryImpl(null)));
             try
             {
                storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_test", "javacoin", "pw"));

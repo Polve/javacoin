@@ -18,8 +18,13 @@
 package it.nibbles.bitcoin.utils;
 
 import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.keyfactory.ecc.BitcoinUtil;
 import java.math.BigInteger;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.logging.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Base58
 {
@@ -102,16 +107,26 @@ public class Base58
    {
       byte[] tmp = decode(input);
       if (tmp.length < 4)
+      {
          throw new BitCoinException("Input too short");
+      }
       byte[] checksum = new byte[4];
       System.arraycopy(tmp, tmp.length - 4, checksum, 0, 4);
       byte[] bytes = new byte[tmp.length - 4];
       System.arraycopy(tmp, 0, bytes, 0, tmp.length - 4);
-      //tmp = Utils.doubleDigest(bytes);
+      try
+      {
+         tmp = BitcoinUtil.doubleDigest(bytes);
+      } catch (NoSuchAlgorithmException ex)
+      {
+         throw new BitCoinException("SHA256 not available, can't compute base58 checksum");
+      }
       byte[] hash = new byte[4];
       System.arraycopy(tmp, 0, hash, 0, 4);
       if (!Arrays.equals(hash, checksum))
+      {
          throw new BitCoinException("Checksum does not validate");
+      }
       return bytes;
    }
 }

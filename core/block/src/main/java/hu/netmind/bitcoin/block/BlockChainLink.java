@@ -77,6 +77,7 @@ public class BlockChainLink implements Serializable
       return height;
    }
 
+   @Override
    public String toString()
    {
       return "Link at height "+height+" (orphan: "+orphan+"), block: "+block;

@@ -30,6 +30,7 @@ public class Message
 {
    public static final long MAGIC_MAIN = 0xF9BEB4D9l;
    public static final long MAGIC_TEST = 0xFABFB5DAl;
+   public static final long MAGIC_TESTNET3 = 0x0b110907L;
 
    private long magic;
    private String command;

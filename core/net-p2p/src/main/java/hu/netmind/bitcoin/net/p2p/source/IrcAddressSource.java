@@ -14,6 +14,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ * 
+ * Adapted for JavaCoin by Alessandro Polverini
  */
 package hu.netmind.bitcoin.net.p2p.source;
 
@@ -39,7 +41,7 @@ import org.slf4j.LoggerFactory;
 public class IrcAddressSource implements AddressSource
 {
 
-   private static final Logger log = LoggerFactory.getLogger(IrcAddressSource.class);
+   private static final Logger logger = LoggerFactory.getLogger(IrcAddressSource.class);
    private String channel;
    private int port = 6667;
    private String server;
@@ -107,8 +109,7 @@ public class IrcAddressSource implements AddressSource
       connection = null;
       try
       {
-         InetAddress ip = InetAddress.getByName("irc.lfnet.org");
-         log.info("Connecting to IRC with " + ip);
+         logger.info("Connecting to IRC with " + InetAddress.getByName(server));
          connection = new Socket(server, port);
          writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"));
          BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
@@ -171,7 +172,7 @@ public class IrcAddressSource implements AddressSource
          writer.flush();
       } catch (Exception e)
       {
-         log.info(e.getMessage(), e);
+         logger.info(e.getMessage(), e);
       } finally
       {
          try
@@ -216,7 +217,7 @@ public class IrcAddressSource implements AddressSource
             addressBytes = Base58.decodeChecked(user.substring(1));
          } catch (BitCoinException e)
          {
-            log.warn("IRC nick does not parse as base58: " + user);
+            logger.warn("IRC nick does not parse as base58: " + user+" error: "+e.getMessage());
             continue;
          }
 

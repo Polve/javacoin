@@ -20,6 +20,8 @@ package hu.netmind.bitcoin.chaintester;
 import hu.netmind.bitcoin.*;
 import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockImpl;
+import hu.netmind.bitcoin.block.StandardBitcoinFactory;
+import hu.netmind.bitcoin.block.TestnetBitcoinFactory;
 import hu.netmind.bitcoin.block.jdbc.DatasourceUtils;
 import hu.netmind.bitcoin.block.jdbc.JdbcChainLinkStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
@@ -121,7 +123,8 @@ public class AlexTester
    {
       // Initialize the chain
       ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
-      JdbcChainLinkStorage storage = new JdbcChainLinkStorage(scriptFactory, isTestnet);
+      JdbcChainLinkStorage storage = new JdbcChainLinkStorage(
+         isTestnet ? new TestnetBitcoinFactory(scriptFactory) : new StandardBitcoinFactory(scriptFactory));
       storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_" + (isTestnet ? "testnet" : "prodnet"), "javacoin", "pw"));
       storage.init();
       BlockChain chain = new BlockChainImpl(isTestnet ? BlockImpl.TESTNET_GENESIS : BlockImpl.MAIN_GENESIS, storage, scriptFactory, false, isTestnet);

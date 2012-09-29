@@ -17,11 +17,11 @@ package hu.netmind.bitcoin.block.jdbc;
 
 import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Block;
-import it.nibbles.bitcoin.utils.BtcUtil;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
 import hu.netmind.bitcoin.block.BlockImpl;
@@ -32,6 +32,7 @@ import hu.netmind.bitcoin.block.TransactionOutputImpl;
 import hu.netmind.bitcoin.net.HexUtil;
 import hu.netmind.bitcoin.net.NodeAddress;
 import hu.netmind.bitcoin.net.p2p.NodeStorage;
+import it.nibbles.bitcoin.utils.BtcUtil;
 import java.math.BigDecimal;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -69,8 +70,9 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    private boolean autoCreate = DEFAULT_AUTOCREATE;
    private boolean transactional = DEFAULT_TRANSACTIONAL;
    private int idReserveSize = DEFAULT_RESERVE_SIZE;
-   private ScriptFactory scriptFactory = null;
-   private boolean isTestnet = false;
+   private BitcoinFactory bitcoinFactory = null;
+   //private ScriptFactory scriptFactory = null;
+   //private boolean isTestnet = false;
    private DataSource dataSource;
    //
    // Id generators for rows inserted in the DB tables
@@ -154,10 +156,16 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    final private String sqlGetNodeAddresses =
            "SELECT * FROM Node ORDER BY discovered DESC";
 
-   public JdbcChainLinkStorage(ScriptFactory scriptFactory, boolean isTestnet)
+//   public JdbcChainLinkStorage(ScriptFactory scriptFactory, boolean isTestnet)
+//   {
+//      this.scriptFactory = scriptFactory;
+//      this.isTestnet = isTestnet;
+//      readConfiguration();
+//   }
+
+   public JdbcChainLinkStorage(BitcoinFactory bitcoinFactory)
    {
-      this.scriptFactory = scriptFactory;
-      this.isTestnet = isTestnet;
+      this.bitcoinFactory = bitcoinFactory;
       readConfiguration();
    }
 
@@ -820,7 +828,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
          while (rs.next())
             inputs.add(new TransactionInputImpl(
                     rs.getBytes("referredTxHash"), rs.getInt("referredTxIndex"),
-                    scriptFactory.createFragment(rs.getBytes("scriptBytes")),
+                    bitcoinFactory.getScriptFactory().createFragment(rs.getBytes("scriptBytes")),
                     rs.getLong("sequence")));
       }
       return inputs;
@@ -834,7 +842,8 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
          ps.setLong(1, txId);
          ResultSet rs = ps.executeQuery();
          while (rs.next())
-            outputs.add(new TransactionOutputImpl(rs.getLong("value"), scriptFactory.createFragment(rs.getBytes("scriptBytes"))));
+            outputs.add(new TransactionOutputImpl(rs.getLong("value"),
+                    bitcoinFactory.getScriptFactory().createFragment(rs.getBytes("scriptBytes"))));
       }
       return outputs;
    }
@@ -920,9 +929,10 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
          {
             Block block = new BlockImpl(transactions, rs.getLong("nTime"), rs.getLong("nonce"), rs.getLong("nBits"),
                     rs.getBytes("prevBlockHash"), rs.getBytes("hashMerkleRoot"), rs.getBytes("hash"));
-            return new BlockChainLink(block,
-                    new Difficulty(new BigDecimal(rs.getLong("chainWork")), isTestnet),
-                    rs.getLong("height"), false);
+            return bitcoinFactory.newBlockChainLink(block, new BigDecimal(rs.getLong("chainWork")), rs.getLong("height"));
+//            return new BlockChainLink(block,
+//                    new Difficulty(new BigDecimal(rs.getLong("chainWork")), isTestnet),
+//                    rs.getLong("height"), false);
          } else
             return null;
       } catch (SQLException | BitCoinException e)
