@@ -17,25 +17,21 @@
  */
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.Block;
+import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.ScriptFactory;
-import java.math.BigDecimal;
+import it.nibbles.bitcoin.utils.BtcUtil;
 
 /**
  *
  * @author Alessandro Polverini
  */
-public class TestnetBitcoinFactory extends StandardBitcoinFactory
+public class Testnet3BitcoinFactory extends StandardBitcoinFactory
 {
 
-   public TestnetBitcoinFactory(ScriptFactory scriptFactory)
+   public Testnet3BitcoinFactory(ScriptFactory scriptFactory) throws BitCoinException
    {
-      super(scriptFactory);
-   }
-
-   @Override
-   public BlockChainLink newBlockChainLink(Block block, BigDecimal chainWork, long height)
-   {
-      return new BlockChainLink(block, new Difficulty(chainWork, true), height, false);
+      this.scriptFactory = scriptFactory;
+      this.isTestnet3 = true;
+      setNetworkParams(0x0b110907, 1296688602000L, 414098458L, 0x1d00ffffL, BtcUtil.hexIn("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
    }
 }

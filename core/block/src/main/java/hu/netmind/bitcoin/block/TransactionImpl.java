@@ -277,7 +277,7 @@ public class TransactionImpl implements Transaction, Hashable
       //    Note: only implemented dos attack on sig check (count the number of sigchecks)
       try
       {
-         if ( (!isCoinbase()) && (!exceptions.isExempt(this,ValidationCategory.Complexity)) )
+         if ( (!isCoinbase()) && (!exceptions.isExempt(this.getHash(),ValidationCategory.Complexity)) )
          {
             for ( TransactionOutput out : outputs )
                if ( out.getScript().isComputationallyExpensive() )

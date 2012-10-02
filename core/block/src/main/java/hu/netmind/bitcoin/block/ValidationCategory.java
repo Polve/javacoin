@@ -24,6 +24,6 @@ package hu.netmind.bitcoin.block;
  */
 public enum ValidationCategory
 {
-    Complexity,
+    Complexity, ScriptValidation,
 }
 

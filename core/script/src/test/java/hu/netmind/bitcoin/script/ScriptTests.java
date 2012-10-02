@@ -464,6 +464,18 @@ public class ScriptTests
       Assert.assertTrue(execute("OP_5 OP_0 OP_10 OP_WITHIN OP_VERIFY OP_4 OP_5 OP_10 OP_WITHIN OP_NOT"));
    }
 
+   public void testWithinRightExclusive()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_1 OP_0 OP_1 OP_WITHIN OP_NOT"));
+   }
+
+   public void testWithinLeftExclusive()
+      throws Exception
+   {
+      Assert.assertTrue(execute("OP_0 OP_0 OP_1 OP_WITHIN"));
+   }
+
    // Crypto
 
    public void testRipemd160()
@@ -838,16 +850,72 @@ public class ScriptTests
    public void testReadLittleEndianInt()
       throws Exception
    {
-      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("01")), 1);
-      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("81")), -1);
-      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("12 34")), 4660);
-      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("92 34")), -4660);
-      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("12 34 56")), 1193046);
-      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("92 34 56")), -1193046);
-      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("12 34 56 78")), 305419896);
-      Assert.assertEquals(ScriptImpl.readLittleEndianInt(HexUtil.toByteArray("92 34 56 78")), -305419896);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("01")), 1);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("81")), -1);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("7F")), 127);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("FF")), -127);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("1234")), 4660);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("9234")), -4660);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("7FFF")), 32767);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("FFFF")), -32767);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("123456")), 1193046);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("923456")), -1193046);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("7FFFFF")), 8388607);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("FFFFFF")), -8388607);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("12345678")), 305419896);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("92345678")), -305419896);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("7FFFFFFF")), 2147483647);
+      Assert.assertEquals(ScriptImpl.readLittleEndianInt(BtcUtil.hexIn("FFFFFFFF")), -2147483647);
    }
 
+   /*
+    * Test the readBigEndianInt function
+    */
+   public void testReadBigEndianInt()
+      throws Exception
+   {
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("01")), 1);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("81")), -1);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("7F")), 127);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("FF")), -127);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("3412")), 4660);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("3492")), -4660);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("FF7F")), 32767);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("FFFF")), -32767);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("563412")), 1193046);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("563492")), -1193046);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("FFFF7F")), 8388607);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("FFFFFF")), -8388607);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("78563412")), 305419896);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("78563492")), -305419896);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("FFFFFF7F")), 2147483647);
+      Assert.assertEquals(ScriptImpl.readBigEndianInt(BtcUtil.hexIn("FFFFFFFF")), -2147483647);
+   }
+
+   /*
+    * Test the toBigEndianByteArray function
+    */
+   public void testToBigEndianByteArray() throws ScriptException {
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(0), BtcUtil.hexIn("00"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(1), BtcUtil.hexIn("01"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(-1), BtcUtil.hexIn("81"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(127), BtcUtil.hexIn("7F"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(-127), BtcUtil.hexIn("FF"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(4660), BtcUtil.hexIn("3412"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(-4660), BtcUtil.hexIn("3492"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(32767), BtcUtil.hexIn("FF7F"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(-32767), BtcUtil.hexIn("FFFF"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(1193046), BtcUtil.hexIn("563412"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(-1193046), BtcUtil.hexIn("563492"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(8388607), BtcUtil.hexIn("FFFF7F"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(305419896), BtcUtil.hexIn("78563412"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(-305419896), BtcUtil.hexIn("78563492"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(2147483647), BtcUtil.hexIn("FFFFFF7F"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(-2147483647), BtcUtil.hexIn("FFFFFFFF"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(4294967294L), BtcUtil.hexIn("FEFFFFFF00"));
+      Assert.assertEquals( ScriptImpl.toBigEndianByteArray(-4294967294L), BtcUtil.hexIn("FEFFFFFF80"));
+   }
+   
    /*
     * Testnet transaction appearing in block 30301
     * http://blockexplorer.com/testnet/tx/a17b21f52859ed326d1395d8a56d5c7389f5fc83c17b9140a71d7cb86fdf0f5f

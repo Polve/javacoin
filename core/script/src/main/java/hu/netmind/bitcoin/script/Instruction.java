@@ -18,6 +18,8 @@
 
 package hu.netmind.bitcoin.script;
 
+import it.nibbles.bitcoin.utils.BtcUtil;
+
 /**
  * A single instruction in a script.
  * @author Robert Brautigam
@@ -45,7 +47,7 @@ public class Instruction
    @Override
    public String toString()
    {
-      return "Instruction[Operation: " + operation + (data != null ? " data size: " + data.length : " no data") + "]";
+      return "Instruction[Operation: " + operation + (data != null ? " "+data.length+"["+BtcUtil.hexOut(data)+"]" : " [no data]") + "]";
    }
    
 }

@@ -18,6 +18,9 @@
 
 package hu.netmind.bitcoin.net.p2p;
 
+import hu.netmind.bitcoin.block.BitcoinFactory;
+import hu.netmind.bitcoin.block.StandardBitcoinFactory;
+import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import hu.netmind.bitcoin.net.p2p.source.FallbackNodesSource;
 import hu.netmind.bitcoin.net.BitCoinOutputStream;
@@ -56,13 +59,14 @@ public class getdata
          return;
       }
       final boolean isTestnet = "testnet".equalsIgnoreCase(argv[0]);
+      BitcoinFactory bitcoinFactory = isTestnet ? new Testnet2BitcoinFactory(null) : new StandardBitcoinFactory(null);
       final int type = Integer.parseInt(argv[1]);
 //      StringBuilder builder = new StringBuilder(argv[1]);
 //      for ( int i=2; i<argv.length; i++ )
 //         builder.append(" "+argv[i]);
 //      final byte[] hash = HexUtil.toByteArray(builder.toString());
       final byte[] hash = BtcUtil.hexIn(argv[2]);
-      final long messageMagic = isTestnet ? Message.MAGIC_TEST : Message.MAGIC_MAIN;
+      final long messageMagic = bitcoinFactory.getMessageMagic();
 
       System.out.println("BitCoin getdata request "+type+" "+BtcUtil.hexOut(hash)+" on "+(isTestnet ? "testnet": "prodnet"));
       // Initialize node

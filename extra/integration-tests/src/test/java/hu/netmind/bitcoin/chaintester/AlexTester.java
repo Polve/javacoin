@@ -18,10 +18,12 @@
 package hu.netmind.bitcoin.chaintester;
 
 import hu.netmind.bitcoin.*;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.StandardBitcoinFactory;
-import hu.netmind.bitcoin.block.TestnetBitcoinFactory;
+import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
+import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.jdbc.DatasourceUtils;
 import hu.netmind.bitcoin.block.jdbc.JdbcChainLinkStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
@@ -32,6 +34,7 @@ import hu.netmind.bitcoin.net.MessageMarshaller;
 import hu.netmind.bitcoin.net.p2p.AddressSource;
 import hu.netmind.bitcoin.net.p2p.Node;
 import hu.netmind.bitcoin.net.p2p.source.DNSFallbackNodesSource;
+import hu.netmind.bitcoin.net.p2p.source.IrcAddressSource;
 import hu.netmind.bitcoin.net.p2p.source.RandomizedNodesSource;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import it.nibbles.bitcoin.StdNodeHandler;
@@ -53,24 +56,31 @@ public class AlexTester
 {
 
    private static Logger logger = LoggerFactory.getLogger(AlexTester.class);
-   private static boolean isTestnet = false;
+   private static boolean isTestnet2 = false;
+   private static boolean isTestnet3 = false;
    private Node node = null;
    // private static long BC_PROTOCOL_VERSION = 32100;
    // private BlockChain chain = null;
    // private JdbcChainLinkStorage storage = null;
    //private ScriptFactoryImpl scriptFactory = null;
-   private static long messageMagic;
+   //private static long messageMagic;
    private StdNodeHandler nodeHandler;
 
    public static void main(String[] argv)
       throws Exception
    {
       AlexTester app = new AlexTester();
-      if (argv.length == 1 && "-testnet".equals(argv[0]))
+      if (argv.length == 1)
       {
-         isTestnet = true;
+         if ("-testnet2".equals(argv[0]))
+         {
+            isTestnet2 = true;
+         } else if ("-testnet3".equals(argv[0]))
+         {
+            isTestnet3 = true;
+         }
       }
-      messageMagic = isTestnet ? Message.MAGIC_TEST : Message.MAGIC_MAIN;
+      //messageMagic = isTestnet2 ? Message.MAGIC_TEST : Message.MAGIC_MAIN;
 
       try
       {
@@ -78,6 +88,10 @@ public class AlexTester
          app.init();
          logger.debug("run...");
          app.run();
+      } catch (RuntimeException e)
+      {
+         logger.error("Exception: " + e.getMessage(), e);
+         throw e;
       } finally
       {
          logger.debug("close...");
@@ -123,27 +137,42 @@ public class AlexTester
    {
       // Initialize the chain
       ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
-      JdbcChainLinkStorage storage = new JdbcChainLinkStorage(
-         isTestnet ? new TestnetBitcoinFactory(scriptFactory) : new StandardBitcoinFactory(scriptFactory));
-      storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_" + (isTestnet ? "testnet" : "prodnet"), "javacoin", "pw"));
+      BitcoinFactory bitcoinFactory = isTestnet2
+         ? new Testnet2BitcoinFactory(scriptFactory)
+         : isTestnet3
+         ? new Testnet3BitcoinFactory(scriptFactory)
+         : new StandardBitcoinFactory(scriptFactory);
+      logger.debug("bitcoin factory initialized");
+      JdbcChainLinkStorage storage = new JdbcChainLinkStorage(bitcoinFactory);
+      storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
+         + (isTestnet2 ? "testnet2" : isTestnet3 ? "testnet3" : "prodnet"), "javacoin", "pw"));
       storage.init();
-      BlockChain chain = new BlockChainImpl(isTestnet ? BlockImpl.TESTNET_GENESIS : BlockImpl.MAIN_GENESIS, storage, scriptFactory, false, isTestnet);
+      logger.debug("storage initialized");
+      //BlockChain chain = new BlockChainImpl(isTestnet ? BlockImpl.TESTNET_GENESIS : BlockImpl.MAIN_GENESIS, storage, scriptFactory, false, isTestnet);
+      BlockChain chain = new BlockChainImpl(bitcoinFactory, storage, false);
+      logger.debug("blockchain initialized");
       // Introduce a small check here that we can read back the genesis block correctly
       Block genesisBlock = storage.getGenesisLink().getBlock();
       logger.debug("Genesis block hash: " + BtcUtil.hexOut(genesisBlock.getHash()) + " nonce: " + genesisBlock.getNonce());
       genesisBlock.validate();
-      logger.info((isTestnet ? "[TESTNET]" : "[PRODNET]") + " initialized chain, last link height: " + chain.getHeight());
+      logger.info((isTestnet2 ? "[TESTNET2]" : isTestnet3 ? "[TESTNET3]" : "[PRODNET]") + " initialized chain, last link height: " + chain.getHeight());
       // Initialize p2p node
       node = new Node();
-      node.setPort(isTestnet ? 18733 : 7333);
+      node.setPort((isTestnet2 || isTestnet3) ? 18733 : 7333);
       node.setMinConnections(10);
       node.setMaxConnections(100);
       AddressSource addressSource;
-      if (isTestnet)
+      if (isTestnet2)
       {
          // addressSource = new LocalhostTestnetNodeSource();
          StorageFallbackNodesSource source = new StorageFallbackNodesSource(storage);
-         source.setFallbackSource(new LocalhostTestnetNodeSource());
+         //source.setFallbackSource(new LocalhostTestnetNodeSource());
+         source.setFallbackSource(new IrcAddressSource("#bitcoinTEST"));
+         addressSource = source;
+      } else if (isTestnet3)
+      {
+         StorageFallbackNodesSource source = new StorageFallbackNodesSource(storage);
+         source.setFallbackSource(new IrcAddressSource("#bitcoinTEST3"));
          addressSource = source;
       } else
       {
@@ -156,11 +185,10 @@ public class AlexTester
       node.setAddressSource(addressSource);
       //node.addHandler(new DownloaderHandler());
       logger.debug(addressSource.toString());
-      nodeHandler = new StdNodeHandler(node, scriptFactory, messageMagic, chain, storage);
+      nodeHandler = new StdNodeHandler(node, bitcoinFactory, chain, storage);
    }
 
-
-   public void testBlock41980Testnet() throws BitCoinException
+   public void testBlock41980OfTestnet2() throws BitCoinException
    {
       BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(BtcUtil.hexIn(
          "FABFB5DA626C6F636B00000000000000550600008F8306AC0100000017467951795F6"

@@ -33,19 +33,14 @@ import hu.netmind.bitcoin.net.BlockMessage;
 import hu.netmind.bitcoin.net.InvMessage;
 import hu.netmind.bitcoin.net.InventoryItem;
 import hu.netmind.bitcoin.net.GetDataMessage;
-import hu.netmind.bitcoin.net.Tx;
-import hu.netmind.bitcoin.net.TxOut;
-import hu.netmind.bitcoin.net.TxIn;
-import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockImpl;
-import hu.netmind.bitcoin.block.TransactionImpl;
-import hu.netmind.bitcoin.block.TransactionOutputImpl;
-import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.BlockChainLink;
+import hu.netmind.bitcoin.block.StandardBitcoinFactory;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.block.bdb.BDBChainLinkStorage;
@@ -69,7 +64,8 @@ public class chaintester
    private Node node = null;
    private BlockChain chain = null;
    private BDBChainLinkStorage storage = null;
-   private ScriptFactoryImpl scriptFactory = null;
+   //private ScriptFactoryImpl scriptFactory = null;
+   private BitcoinFactory bitcoinFactory;
 
    public static void main(String[] argv)
       throws Exception
@@ -103,12 +99,15 @@ public class chaintester
       throws BitCoinException
    {
       // Initialize the chain
-      scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
+
+      ScriptFactory scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
+      bitcoinFactory = new StandardBitcoinFactory(scriptFactory);
       storage = new BDBChainLinkStorage(scriptFactory);
       storage.setDbPath("data");
       storage.init();
-      chain = new BlockChainImpl(BlockImpl.MAIN_GENESIS,
-            storage,scriptFactory,false);
+      //chain = new BlockChainImpl(BlockImpl.MAIN_GENESIS, storage,scriptFactory,false);
+      
+      chain = new BlockChainImpl(bitcoinFactory, storage, false);
       // Introduce a small check here that we can read back the genesis block correctly
       storage.getGenesisLink().getBlock().validate();
       logger.info("initialized chain, last link height: "+storage.getLastLink().getHeight());
@@ -152,7 +151,7 @@ public class chaintester
       {
          logger.debug("connected to "+conn.getRemoteAddress()+" (from: "+conn.getLocalAddress()+")");
          // Send our version information
-         VersionMessage version = new VersionMessage(Message.MAGIC_MAIN,BC_PROTOCOL_VERSION,0,System.currentTimeMillis()/1000,
+         VersionMessage version = new VersionMessage(bitcoinFactory.getMessageMagic(),BC_PROTOCOL_VERSION,0,System.currentTimeMillis()/1000,
                new NodeAddress(1,(InetSocketAddress) conn.getRemoteAddress()),
                new NodeAddress(1,new InetSocketAddress(((InetSocketAddress)conn.getLocalAddress()).getAddress(),node.getPort())),
                123,"NetMind BitCoin/1.0.0-SNAPSHOT",storage.getLastLink().getHeight());
@@ -177,7 +176,7 @@ public class chaintester
             if ( version.getStartHeight() > knownHighestBlock )
                knownHighestBlock = version.getStartHeight();
             // Let's answer version, so we get more messages
-            VerackMessage verack = new VerackMessage(Message.MAGIC_MAIN);
+            VerackMessage verack = new VerackMessage(bitcoinFactory.getMessageMagic());
             logger.debug("answering: "+verack);
             conn.send(verack);
          }
@@ -201,7 +200,7 @@ public class chaintester
                // Determine the last promised block, so we know later when we're finished
                if ( highestHashPromised == null )
                   highestHashPromised = invMessage.getInventoryItems().get(invMessage.getInventoryItems().size()-1).getHash();
-               conn.send(new GetDataMessage(Message.MAGIC_MAIN,items));
+               conn.send(new GetDataMessage(bitcoinFactory.getMessageMagic(),items));
                logger.debug("sent getdata, waiting for blocks...");
             }
          }
@@ -209,7 +208,7 @@ public class chaintester
          {
             try
             {
-               BlockImpl block = BlockImpl.createBlock(scriptFactory, (BlockMessage) message);
+               BlockImpl block = BlockImpl.createBlock(bitcoinFactory.getScriptFactory(), (BlockMessage) message);
                // Check whether we are finished with the download, even before trying to add
                if ( Arrays.equals(highestHashPromised,block.getHash()) )
                {
@@ -241,7 +240,7 @@ public class chaintester
             logger.debug("sending getblocks, we are at "+link.getHeight()+", while known max is: "+knownHighestBlock);
             List<byte[]> startBlocks = new LinkedList<byte[]>();
             startBlocks.add(highestHashKnownBeforeRequest);
-            GetBlocksMessage getBlocks = new GetBlocksMessage(Message.MAGIC_MAIN,BC_PROTOCOL_VERSION,startBlocks,null);
+            GetBlocksMessage getBlocks = new GetBlocksMessage(bitcoinFactory.getMessageMagic(),BC_PROTOCOL_VERSION,startBlocks,null);
             node.broadcast(getBlocks);
          }
       }

@@ -86,7 +86,11 @@ public class KnownExceptions
     */
    public boolean isExempt(Hashable obj, ValidationCategory category)
    {
-      Set<ValidationCategory> categories = exceptions.get(new BigInteger(1,obj.getHash()));
+      return isExempt(obj.getHash(), category);
+   }
+   public boolean isExempt(byte[] hash, ValidationCategory category)
+   {
+      Set<ValidationCategory> categories = exceptions.get(new BigInteger(1,hash));
       return (categories!=null) && (categories.contains(category));
    }
 }

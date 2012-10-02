@@ -23,6 +23,7 @@ import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
+import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import java.math.BigDecimal;
 import java.util.LinkedList;
@@ -60,17 +61,19 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGenesisStoreRecall()
       throws BitCoinException
    {
+     BitcoinFactory factory = new StandardBitcoinFactory(new ScriptFactoryImpl(new KeyFactoryImpl(null)));
+     Block genesis = factory.getGenesisBlock();
       // Store
-      BlockChainLink genesisLink = new BlockChainLink(BlockImpl.MAIN_GENESIS,
+      BlockChainLink genesisLink = new BlockChainLink(genesis,
             new Difficulty(),BlockChainLink.ROOT_HEIGHT,false);
       storage.addLink(genesisLink);
       // Recall
-      BlockChainLink readLink = storage.getLink(BlockImpl.MAIN_GENESIS.getHash());
+      BlockChainLink readLink = storage.getLink(genesis.getHash());
       // Check link data
       Assert.assertEquals(readLink.getHeight(),BlockChainLink.ROOT_HEIGHT);
       Assert.assertFalse(readLink.isOrphan());
       // Check block integrity
-      Assert.assertEquals(readLink.getBlock().getHash(),BlockImpl.MAIN_GENESIS.getHash());
+      Assert.assertEquals(readLink.getBlock().getHash(),genesis.getHash());
       validateBlock(readLink.getBlock());
    }
 

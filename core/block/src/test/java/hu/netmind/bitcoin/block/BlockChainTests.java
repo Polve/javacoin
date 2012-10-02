@@ -67,7 +67,9 @@ public class BlockChainTests
             "block 1234567 1 1b0404cb 00 010203 01;");
       DummyStorage storage = new DummyStorage(genesisBlock);
       // Check that construction works
-      BlockChainImpl chain = new BlockChainImpl(genesisBlock,storage,null,false);
+      //BlockChainImpl chain = new BlockChainImpl(genesisBlock,storage,null,false);
+      //BlockChainImpl chain = new BlockChainImpl(new StandardBitcoinFactory(),storage,false);
+      Assert.fail();
    }
 
    @Test(expectedExceptions = VerificationException.class)
@@ -80,7 +82,8 @@ public class BlockChainTests
       // Check that construction fails with other genesis
       Block differentBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 02;");
-      BlockChainImpl chain = new BlockChainImpl(differentBlock,storage,null,false);
+      //BlockChainImpl chain = new BlockChainImpl(differentBlock,storage,null,false);
+      Assert.fail();
    }
 
    public void testGenesisInitialization()
@@ -91,7 +94,8 @@ public class BlockChainTests
       // Construct block chain with genesis block
       Block genesisBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 01;");
-      BlockChainImpl chain = new BlockChainImpl(genesisBlock,storage,null,false);
+      //BlockChainImpl chain = new BlockChainImpl(genesisBlock,storage,null,false);
+            Assert.fail();
       // Verify genesis block
       Assert.assertEquals(storage.getNewLinks().size(),1);
       BlockChainLink link = storage.getNewLinks().get(0);
@@ -121,16 +125,17 @@ public class BlockChainTests
       DummyStorage storage = new DummyStorage(BlockMock.createBlocks(chainBlocks),blockOffset);
       long stopTime = System.currentTimeMillis();
       logger.debug("created storage, lasted: "+(stopTime-startTime)+" ms");
+      throw new BitCoinException("TODO: FIXME!");
       // Construct chain
-      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
-            storage,createScriptFactory(scriptSuccess),false);
-      // Add the block
-      Block block = BlockMock.createBlock(newBlock);
-      startTime = System.currentTimeMillis();
-      chain.addBlock(block);
-      stopTime = System.currentTimeMillis();
-      logger.debug("added block, lasted: "+(stopTime-startTime)+" ms");
-      return storage;
+//      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
+//            storage,createScriptFactory(scriptSuccess),false);
+//      // Add the block
+//      Block block = BlockMock.createBlock(newBlock);
+//      startTime = System.currentTimeMillis();
+//      chain.addBlock(block);
+//      stopTime = System.currentTimeMillis();
+//      logger.debug("added block, lasted: "+(stopTime-startTime)+" ms");
+//      return storage;
    }
 
    public void testAddValidBlock()
@@ -1024,13 +1029,15 @@ public class BlockChainTests
             "      out 500000000;"
                ),0);
       // Construct chain
-      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
-            storage,createScriptFactory(true),false);
+      //BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
+      //      storage,createScriptFactory(true),false);
+      Assert.fail();
+
       // Do the check
-      Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
-            storage.getLink(new byte[] { 04 }).getBlock());
-      Assert.assertNotNull(commonBlock);
-      Assert.assertTrue(Arrays.equals(commonBlock.getHash(),new byte[] { 02 }));
+//      Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
+//            storage.getLink(new byte[] { 04 }).getBlock());
+//      Assert.assertNotNull(commonBlock);
+//      Assert.assertTrue(Arrays.equals(commonBlock.getHash(),new byte[] { 02 }));
    }
 
    public void testNoCommonBlock()
@@ -1055,12 +1062,13 @@ public class BlockChainTests
             "      out 500000000;"
                ),0);
       // Construct chain
-      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
-            storage,createScriptFactory(true),false);
-      // Do the check
-      Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
-            storage.getLink(new byte[] { 03 }).getBlock());
-      Assert.assertNull(commonBlock);
+      Assert.fail();
+//      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
+//            storage,createScriptFactory(true),false);
+//      // Do the check
+//      Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
+//            storage.getLink(new byte[] { 03 }).getBlock());
+//      Assert.assertNull(commonBlock);
    }
 }
 

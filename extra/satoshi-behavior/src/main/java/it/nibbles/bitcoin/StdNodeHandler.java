@@ -21,6 +21,7 @@ import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
 import hu.netmind.bitcoin.block.BlockImpl;
@@ -49,8 +50,9 @@ public class StdNodeHandler implements MessageHandler, Runnable
    private static Logger logger = LoggerFactory.getLogger(StdNodeHandler.class);
    private static long BC_PROTOCOL_VERSION = 32100;
    private Node node;
-   private ScriptFactory scriptFactory;
-   private long messageMagic;
+   private BitcoinFactory bitcoinFactory;
+   //private ScriptFactory scriptFactory;
+   //private long messageMagic;
    private BlockChain chain;
    private BlockChainLinkStorage storage;
    private byte[] highestHashKnownBeforeRequest = null;
@@ -58,11 +60,10 @@ public class StdNodeHandler implements MessageHandler, Runnable
    private transient Connection downloadingFromPeer = null;
    private int numMessages = 0;
 
-   public StdNodeHandler(Node node, ScriptFactory scriptFactory, long messageMagic, BlockChain chain, BlockChainLinkStorage storage)
+   public StdNodeHandler(Node node, BitcoinFactory bitcoinFactory, BlockChain chain, BlockChainLinkStorage storage)
    {
       this.node = node;
-      this.scriptFactory = scriptFactory;
-      this.messageMagic = messageMagic;
+      this.bitcoinFactory = bitcoinFactory;
       this.chain = chain;
       this.storage = storage;
       node.addHandler(this);
@@ -75,7 +76,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
       long ourHeight = chain.getHeight();
       logger.debug("connected to " + conn.getRemoteAddress() + " (from: " + conn.getLocalAddress() + ") sending out height: " + ourHeight);
       // Send our version information
-      VersionMessage version = new VersionMessage(messageMagic, BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
+      VersionMessage version = new VersionMessage(bitcoinFactory.getMessageMagic(), BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
               new NodeAddress(1, (InetSocketAddress) conn.getRemoteAddress()),
               new NodeAddress(1, new InetSocketAddress(((InetSocketAddress) conn.getLocalAddress()).getAddress(), node.getPort())),
               //new NodeAddress(1, new InetSocketAddress("127.0.0.1", node.getPort())),
@@ -114,7 +115,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
       {
          VersionMessage version = (VersionMessage) message;
          // Let's answer version, so we get more messages
-         VerackMessage verack = new VerackMessage(messageMagic);
+         VerackMessage verack = new VerackMessage(bitcoinFactory.getMessageMagic());
          logger.debug("Answering verack to VersionMessage: " + version);
          conn.send(verack);
       } else if (message instanceof VerackMessage)
@@ -160,14 +161,14 @@ public class StdNodeHandler implements MessageHandler, Runnable
          // Do the request for all blocks remaining
          if (!items.isEmpty())
          {
-            conn.send(new GetDataMessage(messageMagic, items));
+            conn.send(new GetDataMessage(bitcoinFactory.getMessageMagic(), items));
             logger.debug("Reply to INV using getdata -- highestHashPromised: " + BtcUtil.hexOut(highestHashPromised));
          }
       } else if (message instanceof TxMessage)
          try
          {
             long startTime = System.currentTimeMillis();
-            TransactionImpl tx = TransactionImpl.createTransaction(scriptFactory, ((TxMessage) message).getTx());
+            TransactionImpl tx = TransactionImpl.createTransaction(bitcoinFactory.getScriptFactory(), ((TxMessage) message).getTx());
             tx.validate();
             long diffTime = System.currentTimeMillis() - startTime;
             logger.debug("New transaction {} validated in {} ms", BtcUtil.hexOut(tx.getHash()), diffTime);
@@ -180,7 +181,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
          BlockImpl block = null;
          try
          {
-            block = BlockImpl.createBlock(scriptFactory, (BlockMessage) message);
+            block = BlockImpl.createBlock(bitcoinFactory.getScriptFactory(), (BlockMessage) message);
             logger.debug("Inserting block {} created {}", BtcUtil.hexOut(block.getHash()), new Date(block.getCreationTime()));
             // Check whether we are finished with the download, even before trying to add
             if (Arrays.equals(highestHashPromised, block.getHash()))
@@ -205,7 +206,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
       } else if (message instanceof PingMessage)
       {
          logger.debug("Ping message: " + message);
-         conn.send(new PingMessage(messageMagic));
+         conn.send(new PingMessage(bitcoinFactory.getMessageMagic()));
       } else
          logger.debug("[#" + numMessages + "] unhandled message (" + conn.getRemoteAddress() + "): " + message.getClass());
 
@@ -219,7 +220,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
             List<byte[]> startBlocks = chain.buildBlockLocator();
             logger.debug("We are at " + lastStoredLink.getHeight() + " / " + BtcUtil.hexOut(highestHashKnownBeforeRequest)
                     + ", while known max is: " + peerData.getVersion().getStartHeight() + " Sending getblocks to " + downloadingFromPeer);
-            GetBlocksMessage getBlocks = new GetBlocksMessage(messageMagic, BC_PROTOCOL_VERSION, startBlocks, null);
+            GetBlocksMessage getBlocks = new GetBlocksMessage(bitcoinFactory.getMessageMagic(), BC_PROTOCOL_VERSION, startBlocks, null);
             conn.send(getBlocks);
          }
       }

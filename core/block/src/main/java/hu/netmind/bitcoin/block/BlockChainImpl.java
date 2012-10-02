@@ -64,12 +64,13 @@ public class BlockChainImpl extends Observable implements BlockChain
       new HashMap<>();
 
    private OrphanBlocksSet orphanBlocks = new OrphanBlocksSet();
-   private Block genesisBlock = null;
+   //private Block genesisBlock = null;
    private BlockChainLinkStorage linkStorage = null;
    private BlockChainListener listener = null;
-   private ScriptFactory scriptFactory = null;
+   //private ScriptFactory scriptFactory = null;
+   private BitcoinFactory bitcoinFactory = null;
    private boolean simplifedVerification = false;
-   private boolean isTestnet = false;
+   //private boolean isTestnet = false;
    private ParallelTransactionVerifier parallelVerifier;
 
    /**
@@ -80,12 +81,12 @@ public class BlockChainImpl extends Observable implements BlockChain
     * is disabled the bitcoin network (whoever supplies blocks) is trusted instead. You have to
     * disable this check if you don't want to run a full node.
     */
-   public BlockChainImpl(Block genesisBlock, BlockChainLinkStorage linkStorage,
-         ScriptFactory scriptFactory, boolean simplifedVerification)
-      throws VerificationException
-   {
-      this(genesisBlock, linkStorage, scriptFactory, simplifedVerification, false);
-   }
+//   public BlockChainImpl(Block genesisBlock, BlockChainLinkStorage linkStorage,
+//         ScriptFactory scriptFactory, boolean simplifedVerification)
+//      throws VerificationException
+//   {
+//      this(genesisBlock, linkStorage, scriptFactory, simplifedVerification, false);
+//   }
    
    /**
     * Construct a new block chain.
@@ -96,29 +97,51 @@ public class BlockChainImpl extends Observable implements BlockChain
     * disable this check if you don't want to run a full node.
     * @param isTestnet set to true to handle different difficulty and validation rules of the test network
     */
-   public BlockChainImpl(Block genesisBlock, BlockChainLinkStorage linkStorage,
-         ScriptFactory scriptFactory, boolean simplifedVerification, boolean isTestnet)
+   public BlockChainImpl(BitcoinFactory bitcoinFactory, BlockChainLinkStorage linkStorage, boolean simplifedVerification)
       throws VerificationException
    {
       this.linkStorage=linkStorage;
-      this.scriptFactory=scriptFactory;
+      this.bitcoinFactory=bitcoinFactory;
       this.simplifedVerification=simplifedVerification;
-      this.genesisBlock=genesisBlock;
-      this.isTestnet = isTestnet;
       // Check if the genesis blocks equal, or add genesis block if storage is empty.
       // Here we assume that the storage is not tampered!
       BlockChainLink storedGenesisLink = linkStorage.getGenesisLink();
       if ( storedGenesisLink == null )
       {
-         BlockChainLink genesisLink = new BlockChainLink(genesisBlock,
-               new Difficulty(new DifficultyTarget(genesisBlock.getCompressedTarget()), isTestnet),BlockChainLink.ROOT_HEIGHT,false);
+         BlockChainLink genesisLink = new BlockChainLink(
+            bitcoinFactory.getGenesisBlock(), bitcoinFactory.getGenesisDifficulty(),
+//            new Difficulty(new DifficultyTarget(bitcoinFactory.getGenesisBlock().getCompressedTarget()),isTestnet),
+            BlockChainLink.ROOT_HEIGHT,false);
          linkStorage.addLink(genesisLink);
       } else {
-         if ( ! storedGenesisLink.getBlock().equals(genesisBlock) )
+         if ( ! storedGenesisLink.getBlock().equals(bitcoinFactory.getGenesisBlock()) )
             throw new VerificationException("genesis block in storage is not the same as the block chain's");
       }
       parallelVerifier = new ParallelTransactionVerifier(0);
    }
+//   public BlockChainImpl(Block genesisBlock, BlockChainLinkStorage linkStorage,
+//         ScriptFactory scriptFactory, boolean simplifedVerification, boolean isTestnet)
+//      throws VerificationException
+//   {
+//      this.linkStorage=linkStorage;
+//      this.scriptFactory=scriptFactory;
+//      this.simplifedVerification=simplifedVerification;
+//      this.genesisBlock=genesisBlock;
+//      this.isTestnet = isTestnet;
+//      // Check if the genesis blocks equal, or add genesis block if storage is empty.
+//      // Here we assume that the storage is not tampered!
+//      BlockChainLink storedGenesisLink = linkStorage.getGenesisLink();
+//      if ( storedGenesisLink == null )
+//      {
+//         BlockChainLink genesisLink = new BlockChainLink(genesisBlock,
+//               new Difficulty(new DifficultyTarget(genesisBlock.getCompressedTarget()), isTestnet),BlockChainLink.ROOT_HEIGHT,false);
+//         linkStorage.addLink(genesisLink);
+//      } else {
+//         if ( ! storedGenesisLink.getBlock().equals(genesisBlock) )
+//            throw new VerificationException("genesis block in storage is not the same as the block chain's");
+//      }
+//      parallelVerifier = new ParallelTransactionVerifier(0);
+//   }
 
    public void setListener(BlockChainListener listener)
    {
@@ -242,9 +265,8 @@ public class BlockChainImpl extends Observable implements BlockChain
       // Check 12: Check that nBits value matches the difficulty rules
       logger.debug("checking whether block has the appropriate target...");
       DifficultyTarget blockTarget = new DifficultyTarget(block.getCompressedTarget());
-      Difficulty blockDifficulty = new Difficulty(blockTarget, isTestnet);
       link = new BlockChainLink(block, // Create link for block
-         previousLink.getTotalDifficulty().add(blockDifficulty),
+         previousLink.getTotalDifficulty().add(bitcoinFactory.newDifficulty(blockTarget)),
          previousLink.getHeight() + 1, false);
       DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousLink, link);
       if (blockTarget.compareTo(calculatedTarget) != 0)
@@ -252,14 +274,16 @@ public class BlockChainImpl extends Observable implements BlockChain
          // considered invalid!
          throw new VerificationException("block has wrong target " + blockTarget
             + ", when calculated is: " + calculatedTarget);
+      
       // Check 13: Reject if timestamp is before the median time of the last 11 blocks
       long medianTimestamp = getMedianTimestamp(previousLink);
       logger.debug("checking timestamp {} against median {}", block.getCreationTime(), medianTimestamp);
       if (block.getCreationTime() <= medianTimestamp)
          throw new VerificationException("block's creation time (" + block.getCreationTime()
             + ") is not after median of previous blocks: " + medianTimestamp);
+      
       // Check 14: Check for known hashes
-      BigInteger genesisHash = new BigInteger(1, genesisBlock.getHash());
+      BigInteger genesisHash = new BigInteger(1, bitcoinFactory.getGenesisBlock().getHash());
       BigInteger blockHash = new BigInteger(1, block.getHash());
       if (knownHashes.containsKey(genesisHash))
       {
@@ -278,12 +302,11 @@ public class BlockChainImpl extends Observable implements BlockChain
       // long time = System.currentTimeMillis();
       // long blockFees = serialTransactionVerifier(previousLink, block);
       // long time1 = System.currentTimeMillis() - time;
-      
       long blockFees;
       try
       {
          //time = System.currentTimeMillis();
-         blockFees = parallelVerifier.verifyTransactions(linkStorage, scriptFactory, previousLink, block, simplifedVerification);
+         blockFees = parallelVerifier.verifyTransactions(linkStorage, bitcoinFactory.getScriptFactory(), previousLink, block, simplifedVerification);
          //long time3 = System.currentTimeMillis() - time;
          //if (blockFees != parallelFees)
          //   throw new VerificationException("Calcolo fee non corrispondente: " + blockFees + " vs " + parallelFees);
@@ -457,7 +480,7 @@ public class BlockChainImpl extends Observable implements BlockChain
          value += out.getValue(); // Remember value that goes in from this out
          try
          {
-            Script script = scriptFactory.createScript(in.getSignatureScript(), out.getScript());
+            Script script = bitcoinFactory.getScriptFactory().createScript(in.getSignatureScript(), out.getScript());
             if ( ! script.execute(in) )
                throw new VerificationException("verification script for input "+in+" returned 'false' for verification, script was: "+
                   script+" in tx "+BtcUtil.hexOut(tx.getHash()));
@@ -500,7 +523,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       // If we're calculating for the genesis block return
       // fixed difficulty
       if ( link == null )
-         return isTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET;
+         return bitcoinFactory.maxDifficultyTarget();
       // Look whether it's time to change the difficulty setting
       // (only change every TARGET_RECALC blocks). If not, return the
       // setting of this block, because the next one has to have the same
@@ -509,7 +532,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       {
          // Special rules for testnet after 15 Feb 2012
          Block currBlock = link.getBlock();
-         if (isTestnet && currBlock.getCreationTime() > 1329180000000L) {
+         if (bitcoinFactory.isTestnet3() || (bitcoinFactory.isTestnet2() && currBlock.getCreationTime() > 1329180000000L)) {
             long timeDiff = newLink.getBlock().getCreationTime()-currBlock.getCreationTime();
             // If the new block's timestamp is more than 2* 10 minutes
             // then allow mining of a min-difficulty block.
@@ -517,7 +540,7 @@ public class BlockChainImpl extends Observable implements BlockChain
             // so we have to "implement" the bug, too, checking if timeDiff is negative
             // TODO: fix this bug when official client fixes it and testnet is reset
             if (timeDiff < 0 || timeDiff > 2*TARGET_SPACING)
-               return DifficultyTarget.MAX_TESTNET_TARGET;
+               return bitcoinFactory.maxDifficultyTarget();
             else
             {
                // Return the last non-special-min-difficulty-rules-block
@@ -542,7 +565,7 @@ public class BlockChainImpl extends Observable implements BlockChain
          startBlock = getPreviousBlock(startBlock);
       // This shouldn't happen, we reached genesis
       if ( startBlock == null )
-         return isTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET;
+         return bitcoinFactory.maxDifficultyTarget();
       // Calculate the time the TARGET_RECALC blocks took
       long calculatedTimespan = link.getBlock().getCreationTime() - startBlock.getCreationTime();
       if (calculatedTimespan < TARGET_TIMESPAN/4)
@@ -556,7 +579,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       target = target.divide(BigInteger.valueOf(TARGET_TIMESPAN));
       // Return the new difficulty setting
       DifficultyTarget resultTarget = new DifficultyTarget(target);
-      DifficultyTarget maxTarget = isTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET;
+      DifficultyTarget maxTarget = bitcoinFactory.maxDifficultyTarget();
       if ( resultTarget.compareTo(maxTarget) > 0 )
          return maxTarget;
       else
@@ -590,7 +613,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    @Override
    public Block getGenesisBlock()
    {
-      return genesisBlock;
+      return bitcoinFactory.getGenesisBlock();
    }
 
    @Override

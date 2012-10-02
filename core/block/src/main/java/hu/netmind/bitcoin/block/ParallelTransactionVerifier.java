@@ -48,7 +48,8 @@ public class ParallelTransactionVerifier
 {
 
    private static final Logger logger = LoggerFactory.getLogger(ParallelTransactionVerifier.class);
-   ExecutorService executorService;
+   private static KnownExceptions exceptions = new KnownExceptions();
+   private ExecutorService executorService;
    private BlockChainLinkStorage linkStorage;
    private ScriptFactory scriptFactory;
    private BlockChainLink link;
@@ -186,15 +187,25 @@ public class ParallelTransactionVerifier
             // Check 16.1.4: Verify crypto signatures for each input; reject if any are bad
             TransactionOutput out = outTx.getOutputs().get(in.getClaimedOutputIndex());
             value += out.getValue(); // Remember value that goes in from this out
-            try
+
+            if (!exceptions.isExempt(tx.getHash(), ValidationCategory.ScriptValidation))
             {
                Script script = scriptFactory.createScript(in.getSignatureScript(), out.getScript());
-               if (!script.execute(in))
-                  throw new VerificationException("verification script for input " + in + " returned 'false' for verification, script was: "
-                     + script + " in tx " + BtcUtil.hexOut(tx.getHash()));
-            } catch (ScriptException e)
-            {
-               throw new VerificationException("verification script for input " + in + " in tx " + BtcUtil.hexOut(tx.getHash()) + " failed to execute", e);
+               try
+               {
+                  if (!script.execute(in))
+                  {
+                     logger.warn("FALSE executing script on " + tx + "\n"
+                        + "inScript:  " + in.getSignatureScript() + " outScript:  " + out.getScript() + " bip16: " + script.isValidBip16());
+                     throw new VerificationException("verification script for input " + in + " returned 'false' for verification, script was: "
+                        + script + " in tx " + BtcUtil.hexOut(tx.getHash()));
+                  }
+               } catch (ScriptException e)
+               {
+                  logger.warn("ScriptException executing script on " + tx + "\n"
+                     + "inScript:  " + in.getSignatureScript() + " outScript:  " + out.getScript() + " bip16: " + script.isValidBip16());
+                  throw new VerificationException("verification script for input " + in + " in tx " + BtcUtil.hexOut(tx.getHash()) + " failed to execute", e);
+               }
             }
             // Check 16.1.5: For each input, if the referenced output has already been
             // spent by a transaction in the [same] branch, reject
@@ -228,12 +239,15 @@ public class ParallelTransactionVerifier
    class DaemonThreadFactory implements ThreadFactory
    {
 
+      int counter = 0;
+
       @Override
       public Thread newThread(Runnable r)
       {
+         counter++;
          Thread t = new Thread(r);
          t.setDaemon(true);
-         t.setName("Transaction Verifier");
+         t.setName("Transaction Verifier " + counter);
          return t;
       }
    }

@@ -68,7 +68,7 @@ public class Message
       throws IOException
    {
       magic = input.readUInt32BE();
-      if ( (magic!=MAGIC_TEST) && (magic!=MAGIC_MAIN) )
+      if ( (magic!=MAGIC_TEST) && (magic!=MAGIC_MAIN) && (magic != MAGIC_TESTNET3))
          throw new IOException("wrong magic number for message: "+new Long(magic).toString(16));
       command = input.readString(12);
       length = input.readUInt32();

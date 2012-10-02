@@ -86,9 +86,9 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    //
    // Block Headers SQL statements and PS
    final private String blockSqlFields =
-           "id, hash, hashMerkleRoot, nTime, nBits, nonce, height, prevBlockHash, chainWork";
+           "id, height, nTime, nBits, nonce, version, hash, prevBlockHash, hashMerkleRoot, chainWork";
    final private String sqlPutBlock =
-           "INSERT INTO Block(" + blockSqlFields + ") VALUES(?,?,?,?,?,?,?,?,?)"; // ON DUPLICATE KEY UPDATE nTime=nTime";
+           "INSERT INTO Block(" + blockSqlFields + ") VALUES(?,?,?,?,?,?,?,?,?,?)"; // ON DUPLICATE KEY UPDATE nTime=nTime";
    final private String sqlGetBlock =
            "SELECT " + blockSqlFields + " FROM Block WHERE hash=?";
    //
@@ -162,7 +162,6 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
 //      this.isTestnet = isTestnet;
 //      readConfiguration();
 //   }
-
    public JdbcChainLinkStorage(BitcoinFactory bitcoinFactory)
    {
       this.bitcoinFactory = bitcoinFactory;
@@ -749,14 +748,15 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlPutBlock))
       {
          ps.setLong(1, blockId);
-         ps.setBytes(2, block.getHash());
-         ps.setBytes(3, block.getMerkleRoot());
-         ps.setLong(4, block.getCreationTime());
-         ps.setLong(5, block.getCompressedTarget());
-         ps.setLong(6, block.getNonce());
-         ps.setLong(7, link.getHeight());
+         ps.setLong(2, link.getHeight());
+         ps.setLong(3, block.getCreationTime());
+         ps.setLong(4, block.getCompressedTarget());
+         ps.setLong(5, block.getNonce());
+         ps.setLong(6, block.getVersion());
+         ps.setBytes(7, block.getHash());
          ps.setBytes(8, block.getPreviousBlockHash());
-         ps.setLong(9, link.getTotalDifficulty().getDifficulty().longValue());
+         ps.setBytes(9, block.getMerkleRoot());
+         ps.setLong(10, link.getTotalDifficulty().getDifficulty().longValue());
          ps.executeUpdate();
          return blockId;
       } catch (SQLException e)
@@ -926,14 +926,13 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
          ps.setBytes(1, hash);
          ResultSet rs = ps.executeQuery();
          if (rs.next())
-         {
-            Block block = new BlockImpl(transactions, rs.getLong("nTime"), rs.getLong("nonce"), rs.getLong("nBits"),
-                    rs.getBytes("prevBlockHash"), rs.getBytes("hashMerkleRoot"), rs.getBytes("hash"));
-            return bitcoinFactory.newBlockChainLink(block, new BigDecimal(rs.getLong("chainWork")), rs.getLong("height"));
-//            return new BlockChainLink(block,
-//                    new Difficulty(new BigDecimal(rs.getLong("chainWork")), isTestnet),
-//                    rs.getLong("height"), false);
-         } else
+            return bitcoinFactory.newBlockChainLink(
+                    new BlockImpl(
+                    transactions, rs.getLong("nTime"), rs.getLong("nonce"), rs.getLong("nBits"),
+                    rs.getBytes("prevBlockHash"), rs.getBytes("hashMerkleRoot"), rs.getBytes("hash"), rs.getLong("version")),
+                    new BigDecimal(rs.getLong("chainWork")),
+                    rs.getLong("height"));
+         else
             return null;
       } catch (SQLException | BitCoinException e)
       {
@@ -1017,7 +1016,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    {
       long startTime = System.currentTimeMillis();
       Connection dbConnection = getDbConnection();
-      int blocksDeleted=-1, txDeleted=-1;
+      int blocksDeleted = -1, txDeleted = -1;
       try
       {
          if (transactional)
@@ -1062,7 +1061,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
             throw new JdbcStorageException("Error while closing connection: " + e.getMessage(), e);
          }
          long stopTime = System.currentTimeMillis();
-         logger.debug("exec time: " + (stopTime - startTime) + " ms blocksDeleted: "+blocksDeleted+" txDeleted: "+txDeleted);
+         logger.debug("exec time: " + (stopTime - startTime) + " ms blocksDeleted: " + blocksDeleted + " txDeleted: " + txDeleted);
       }
    }
 

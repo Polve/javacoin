@@ -15,21 +15,21 @@
  */
 package it.nibbles.bitcoin;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import hu.netmind.bitcoin.net.p2p.Node;
-import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BlockChain;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
 import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.StandardBitcoinFactory;
-import hu.netmind.bitcoin.block.TestnetBitcoinFactory;
+import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
+import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
-import hu.netmind.bitcoin.script.ScriptFactoryImpl;
-import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.block.bdb.BDBChainLinkStorage;
 import hu.netmind.bitcoin.block.jdbc.JdbcChainLinkStorage;
+import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
+import hu.netmind.bitcoin.net.p2p.Node;
+import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -39,6 +39,8 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple class to work on blockchain blocks, for testing purposes
@@ -53,10 +55,11 @@ public class BlockTool
    private static final String STORAGE_BDB = "bdb";
    private static final String STORAGE_JDBC = "jdbc";
    private static final String STORAGE_MEMORY = "memory";
-   private Node node = null;
-   private BlockChain chain = null;
-   private BlockChainLinkStorage storage = null;
-   private ScriptFactoryImpl scriptFactory = null;
+   private Node node;
+   private BlockChain chain;
+   private BlockChainLinkStorage storage;
+   private ScriptFactoryImpl scriptFactory;
+   private BitcoinFactory bitcoinFactory;
    private static final String HELP_TEXT =
       "BlockTool: Dump local BlockChain blocks for testint purposes\n\n"
       + "Usage:\n"
@@ -140,6 +143,7 @@ public class BlockTool
    public void init(OptionSet options) throws BitCoinException
    {
       scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
+      bitcoinFactory = isTestNet ? new Testnet3BitcoinFactory(scriptFactory) : new StandardBitcoinFactory(scriptFactory);
       // Initialize the correct storage engine
       if (STORAGE_BDB.equalsIgnoreCase(storageType))
       {
@@ -150,12 +154,11 @@ public class BlockTool
       } else if (STORAGE_JDBC.equalsIgnoreCase(storageType))
       {
          //JdbcChainLinkStorage engine = new JdbcChainLinkStorage(scriptFactory, isTestNet);
-         JdbcChainLinkStorage engine = new JdbcChainLinkStorage(
-            isTestNet ? new TestnetBitcoinFactory(scriptFactory) : new StandardBitcoinFactory(scriptFactory));
+         JdbcChainLinkStorage engine = new JdbcChainLinkStorage(bitcoinFactory);
          //engine.setDriverClassName(optJdbcDriver.value(options));
          //engine.init();
       }
-      chain = new BlockChainImpl(BlockImpl.MAIN_GENESIS, storage, scriptFactory, false);
+      chain = new BlockChainImpl(bitcoinFactory, storage, false);
       // Introduce a small check here that we can read back the genesis block correctly
       storage.getGenesisLink().getBlock().validate();
       logger.info("Storage initialized, last link height: " + storage.getLastLink().getHeight());

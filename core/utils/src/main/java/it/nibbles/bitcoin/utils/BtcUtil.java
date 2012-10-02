@@ -23,16 +23,18 @@ import javax.xml.bind.DatatypeConverter;
 /**
  * @author Robert Brautigam, Alessandro Polverini
  */
-public class BtcUtil {
+public class BtcUtil
+{
 
-  private static final String[] HEXCHARS = new String[]{
-    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"
-  };
+   private static final String[] HEXCHARS = new String[]
+   {
+      "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"
+   };
 
-  /**
-   * Helper method to convert strings like: "F0 A4 32 05", to actual byte array
-   * for easier testing.
-   */
+   /**
+    * Helper method to convert strings like: "F0 A4 32 05", to actual byte array
+    * for easier testing.
+    */
 //  public static byte[] toByteArray(String hexString) {
 //    StringTokenizer tokenizer = new StringTokenizer(hexString, " ");
 //    byte[] result = new byte[tokenizer.countTokens()];
@@ -41,53 +43,60 @@ public class BtcUtil {
 //    }
 //    return result;
 //  }
-
-  /**
-   * Helper method to convert strings like: "F0A43205", to actual byte array
-   * for easier testing.
-   */
-  public static byte[] hexIn(String s) {
-    return DatatypeConverter.parseHexBinary(s);
-  }
-
-  /**
-   * Make the byte array appear as space separated 2 digit hex numbers.
-   */
-  public static String hexOutSpaces(byte[] byteArray) {
-    return toHexString(byteArray, true);
-  }
-
-  public static String hexOutSpaces(String hexString) {
-    return toHexString(hexIn(hexString), true);
-  }
-
-  /**
-   * Make the byte array appear as hex number, without spaces.
-   */
-  public static String hexOut(byte[] byteArray) {
-    return DatatypeConverter.printHexBinary(byteArray);
-    /*
-    if (byteArray == null) {
-      return "null";
-    } else {
-      return toHexString(byteArray, false);
-    }
+   /**
+    * Helper method to convert strings like: "F0A43205", to actual byte array
+    * for easier testing.
     */
-  }
+   public static byte[] hexIn(String s)
+   {
+      return DatatypeConverter.parseHexBinary(s);
+   }
 
-  public static String toHexString(byte[] byteArray, boolean withSpaces) {
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < byteArray.length; i++) {
-      if (withSpaces && i > 0) {
-        builder.append(" ");
+   /**
+    * Make the byte array appear as space separated 2 digit hex numbers.
+    */
+   public static String hexOutSpaces(byte[] byteArray)
+   {
+      return toHexString(byteArray, true);
+   }
+
+   public static String hexOutSpaces(String hexString)
+   {
+      return toHexString(hexIn(hexString), true);
+   }
+
+   /**
+    * Make the byte array appear as hex number, without spaces.
+    */
+   public static String hexOut(byte[] byteArray)
+   {
+      if (byteArray == null)
+      {
+         return "null";
+      } else
+      {
+         return DatatypeConverter.printHexBinary(byteArray);
+         //return toHexString(byteArray, false);
       }
-      builder.append(HEXCHARS[(byteArray[i] >> 4) & 0xF]);
-      builder.append(HEXCHARS[byteArray[i] & 0xF]);
-    }
-    return builder.toString();
-  }
+   }
 
-    public static int readUint16BE(byte[] bytes, int offset) {
-        return ((bytes[offset] & 0xff) << 8) | bytes[offset + 1] & 0xff;
-    }
+   public static String toHexString(byte[] byteArray, boolean withSpaces)
+   {
+      StringBuilder builder = new StringBuilder();
+      for (int i = 0; i < byteArray.length; i++)
+      {
+         if (withSpaces && i > 0)
+         {
+            builder.append(" ");
+         }
+         builder.append(HEXCHARS[(byteArray[i] >> 4) & 0xF]);
+         builder.append(HEXCHARS[byteArray[i] & 0xF]);
+      }
+      return builder.toString();
+   }
+
+   public static int readUint16BE(byte[] bytes, int offset)
+   {
+      return ((bytes[offset] & 0xff) << 8) | bytes[offset + 1] & 0xff;
+   }
 }

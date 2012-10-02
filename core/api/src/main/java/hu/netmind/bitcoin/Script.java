@@ -27,6 +27,8 @@ package hu.netmind.bitcoin;
  */
 public interface Script extends ScriptFragment
 {
+  public static final long BIP16SwitchTime = 1333238400000L;
+  
    /**
     * Execute the script and provide the output decision whether
     * spending of the given txIn is authorized.
@@ -36,5 +38,7 @@ public interface Script extends ScriptFragment
     */
    boolean execute(TransactionInput txIn)
       throws ScriptException;
-}
+   
+   boolean isValidBip16();
 
+}

@@ -18,32 +18,21 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BitCoinException;
-import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.ScriptFactory;
-import java.math.BigDecimal;
+import it.nibbles.bitcoin.utils.BtcUtil;
 
 /**
  *
  * @author Alessandro Polverini
  */
-public interface BitcoinFactory
+public class Testnet2BitcoinFactory extends StandardBitcoinFactory
 {
 
-   public ScriptFactory getScriptFactory();
+   public Testnet2BitcoinFactory(ScriptFactory scriptFactory) throws BitCoinException
+   {
+      this.scriptFactory = scriptFactory;
+      this.isOldTestnet = true;
+      setNetworkParams(0xfabfb5daL, 1296688602000l, 384568319l, 0x1d07fff8L, BtcUtil.hexIn("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
+   }
 
-   public long getMessageMagic();
-
-   public BlockChainLink newBlockChainLink(Block block, BigDecimal chainWork, long height);
-
-   public Difficulty newDifficulty(DifficultyTarget target);
-
-   public DifficultyTarget maxDifficultyTarget();
-
-   public boolean isTestnet2();
-
-   public boolean isTestnet3();
-
-   public Block getGenesisBlock();
-
-   public Difficulty getGenesisDifficulty();
 }

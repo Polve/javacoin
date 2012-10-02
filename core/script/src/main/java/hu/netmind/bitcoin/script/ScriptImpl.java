@@ -158,34 +158,92 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       }
    }
    
-   protected boolean isValidBip16() {
-      return isScriptHashType() && isSigScriptPushOnly();
+   boolean bip16CheckDone, bip16CheckResult;
+
+   public boolean isValidBip16()
+   {
+      if (!bip16CheckDone)
+      {
+         bip16CheckDone = true;
+         bip16CheckResult = isScriptHashType() && isSigScriptPushOnly();
+      }
+      return bip16CheckResult;
    }
-      
+
+   /*
+    * Convert a number in the minimum bytes necessary to represent it
+    * For example numbers between -127 and 127 need just one byte
+    * while 40000 needs 3 bytes.
+    */
+   public static byte[] toBigEndianByteArray(Number number) throws ScriptException
+   {
+      long n = number.longValue();
+      for (int i = 1; i <= 8; i++)
+      {
+         long maxNum = 1L << (i * 8 - 1);
+         if (n <= maxNum && n >= -maxNum)
+         {
+            byte[] res = new byte[i];
+            boolean changeSign = false;
+            if (n < 0)
+            {
+               changeSign = true;
+               n = -n;
+            }
+            for (int j = 0; j < i; j++)
+            {
+               res[j] = (byte) ((n >> j * 8) & 0xFF);
+            }
+            // Bitcoin scripts use 1-complement for negative numbers
+            if (changeSign)
+            {
+               res[i - 1] |= 0x80;
+            }
+            return res;
+         }
+      }
+      throw new ScriptException("Number to large to convert to binary: " + number);
+   }
+   
   /*
    * Read up to 4 little endian bytes, with sign in the most significant bit
    * Used to read values in scripts if there are more than 4 bytes it returns
-   * zero
+   * the low order 32 bits
    */
   public static int readLittleEndianInt(byte[] bytes) {
-    int n = 0;
-    boolean changeSign = false;
-    if (bytes.length > 4) {
-      throw new IllegalArgumentException();
-    }
+    int signum = 1;
     if ((bytes[0] & 0x80) != 0) {
-      changeSign = true;
+      signum = -1;
+      bytes[0] &= 0x7F;
     }
-    bytes[0] &= 0x7F;
-    for (int i = 0; i < bytes.length; i++) {
-      n += (bytes[i] << (bytes.length - 1 - i) * 8);
-    }
-    if (changeSign) {
-      return -n;
-    } else {
-      return n;
-    }
+    return new BigInteger(signum, bytes).intValue();
   }
+  
+   public static int readBigEndianInt(byte[] bytes)
+   {
+      byte[] reversedBytes = new byte[bytes.length];
+      switch (bytes.length)
+      {
+         case 1:
+            return readLittleEndianInt(bytes);
+         case 2:
+            reversedBytes[0] = bytes[1];
+            reversedBytes[1] = bytes[0];
+            break;
+         case 3:
+            reversedBytes[0] = bytes[2];
+            reversedBytes[1] = bytes[1];
+            reversedBytes[2] = bytes[0];
+            break;
+         case 4:
+            reversedBytes[0] = bytes[3];
+            reversedBytes[1] = bytes[2];
+            reversedBytes[2] = bytes[1];
+            reversedBytes[3] = bytes[0];
+            break;
+      }
+      return readLittleEndianInt(reversedBytes);
+   }
   
   private byte[] popData(Stack stack, String reason)
       throws ScriptException
@@ -215,7 +273,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
       if (obj instanceof Number)
          return ((Number) stack.pop()).intValue();
       if (obj instanceof byte[] && ((byte[]) obj).length <= 4)
-         return readLittleEndianInt((byte[]) stack.pop());
+         return readBigEndianInt((byte[]) stack.pop());
       throw new ScriptException(reason + ", but top item in stack is not a number but: " + obj.getClass());
    }
 
@@ -275,7 +333,8 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
          Instruction instruction = input.readInstruction();
          while ( instruction != null )
          {
-            // logger.debug("Istruzione da eseguire: "+instruction+" "+dumpStack(stack));
+            if (logger.isDebugEnabled())
+               logger.debug("Istruzione da eseguire: "+instruction+" "+dumpStack(stack));
             switch ( instruction.getOperation() )
             {
                case CONSTANT:
@@ -559,14 +618,23 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   if ( (x1 instanceof Number) && (x2 instanceof Number) )
                   {
                      // Compare two numbers
-                     equalResult = x1.equals(x2);
+                     equalResult = ((Number)x1).longValue() == ((Number)x2).longValue();
                   }
                   else if ( (x1 instanceof byte[]) && (x2 instanceof byte[]) )
                   {
                      // Compare two arrays
                      equalResult = Arrays.equals((byte[]) x1, (byte[]) x2);
                   } 
-                  else
+                  else if ( (x1 instanceof byte[]) && (x2 instanceof Number) )
+                  {
+                     // Compare an array with the binary representazione of the number
+                     equalResult = Arrays.equals((byte[]) x1, toBigEndianByteArray((Number) x2));
+                  }
+                  else if ( (x1 instanceof Number) && (x2 instanceof byte[]) )
+                  {
+                     // Compare an array with the binary representazione of the number
+                     equalResult = Arrays.equals(toBigEndianByteArray((Number) x1), (byte[]) x2);
+                  } else
                   {
                      throw new ScriptException("comparing non-compatible values: "+x1+" vs. "+x2);
                   }
@@ -587,7 +655,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                   }
                   break;
                case OP_1ADD:
-                  int a = popInt(stack,"executing OP_1ADD");
+                  long a = popInt(stack,"executing OP_1ADD");
                   stack.push( (a+1) );
                   break;
                case OP_1SUB:
@@ -624,7 +692,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                      stack.push(0);
                   break;
                case OP_ADD:
-                  int b = popInt(stack,"executing OP_ADD");
+                  long b = popInt(stack,"executing OP_ADD");
                   a = popInt(stack,"executing OP_ADD");
                   stack.push( (a+b) );
                   break;
@@ -733,10 +801,10 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                      stack.push(b);
                   break;
                case OP_WITHIN:
-                  int max = popInt(stack,"executing OP_WITHIN");
-                  int min = popInt(stack,"executing OP_WITHIN");
+                  long max = popInt(stack,"executing OP_WITHIN");
+                  long min = popInt(stack,"executing OP_WITHIN");
                   a = popInt(stack,"executing OP_WITHIN");
-                  if ( (a>=min) && (a<=max) )
+                  if ( (a>=min) && (a<max) )
                      stack.push(1);
                   else
                      stack.push(0);
@@ -869,15 +937,20 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                boolean res = popBoolean(stack, "Checking first half of bip16 script");
                if (!res)
                   return false;
-               // By definition when a bip16 script is recognised a hash160 func has been executed
+               // Implementation implies that when a bip16 script is recognised exactly one hash160 func has been executed
                assert bip16Script != null;
                ScriptImpl script = new ScriptImpl(bip16Script, keyFactory, 0);
+               if (logger.isDebugEnabled())
+                  logger.debug("BIP0016 Script: " + script);
                res = script.execute(txIn, stack);
                if (logger.isDebugEnabled())
-                  logger.debug("BIP0016 Script: " + script + " res: " + res);
+                  logger.debug("BIP0016 Script res: " + res);
                stack.push(res ? 1 : 0);
             }
          }
+      } catch ( ScriptException e ) {
+         logger.info("Script Exception: "+e.getMessage());
+         throw e;
       } catch ( IOException e ) {
          throw new ScriptException("error reading instructions "+toString(),e);
       }

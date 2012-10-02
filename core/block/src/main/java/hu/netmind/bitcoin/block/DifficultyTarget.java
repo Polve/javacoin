@@ -34,7 +34,6 @@ public class DifficultyTarget implements Comparable<DifficultyTarget>
 
    public static final DifficultyTarget MAX_TESTNET_TARGET = 
       new DifficultyTarget(
-         //new BigInteger("1FFFE00000000000000000000000000000000000000000000000000000",16));
          new BigInteger("FFFFF0000000000000000000000000000000000000000000000000000",16));
 
    private BigInteger target;
