@@ -530,16 +530,12 @@ public class BlockChainImpl extends Observable implements BlockChain
       // target.
       if ( (link.getHeight()+1) % TARGET_RECALC != 0 )
       {
-         // Special rules for testnet after 15 Feb 2012
+         // Special rules for testnet (for testnet2 only after 15 Feb 2012)
          Block currBlock = link.getBlock();
          if (bitcoinFactory.isTestnet3() || (bitcoinFactory.isTestnet2() && currBlock.getCreationTime() > 1329180000000L)) {
-            long timeDiff = newLink.getBlock().getCreationTime()-currBlock.getCreationTime();
             // If the new block's timestamp is more than 2* 10 minutes
             // then allow mining of a min-difficulty block.
-            // official client as 0.6.2 has a bug that if date of new block is previous to last one it resets difficulty
-            // so we have to "implement" the bug, too, checking if timeDiff is negative
-            // TODO: fix this bug when official client fixes it and testnet is reset
-            if (timeDiff < 0 || timeDiff > 2*TARGET_SPACING)
+            if (newLink.getBlock().getCreationTime() > link.getBlock().getCreationTime() + 2*TARGET_SPACING)
                return bitcoinFactory.maxDifficultyTarget();
             else
             {
@@ -547,12 +543,12 @@ public class BlockChainImpl extends Observable implements BlockChain
                // We could use a custom method here to load only block headers instead of full blocks
                // but this lack of performance is only for the testnet so we don't care
                while (link != null && (link.getHeight() % TARGET_RECALC) != 0 && 
-                  link.getBlock().getCompressedTarget() == DifficultyTarget.MAX_TESTNET_TARGET.getCompressedTarget())
+                  link.getBlock().getCompressedTarget() == bitcoinFactory.maxDifficultyTarget().getCompressedTarget())
                   link = linkStorage.getLink(link.getBlock().getPreviousBlockHash());
                if (link != null)
                   return new DifficultyTarget(link.getBlock().getCompressedTarget());
                else
-                return DifficultyTarget.MAX_TESTNET_TARGET;
+                return bitcoinFactory.maxDifficultyTarget();
             }
          }
          logger.debug("previous height {}, not change in target",link.getHeight());
