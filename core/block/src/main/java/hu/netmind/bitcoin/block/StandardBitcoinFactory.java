@@ -21,8 +21,6 @@ import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.ScriptFragment;
-import hu.netmind.bitcoin.block.BlockChainLink;
-import hu.netmind.bitcoin.block.Difficulty;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import java.math.BigDecimal;
 import java.util.Arrays;

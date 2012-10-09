@@ -9,6 +9,7 @@
 /extra/integration-tests/target/
 /extra/link-storage-testsuite/target/
 /extra/bdb-link-storage/target/
+/extra/jdbc-link-storage/target
 /core/script/target.old/
 /core/utils/target/
 /extra/satoshi-behavior/target/

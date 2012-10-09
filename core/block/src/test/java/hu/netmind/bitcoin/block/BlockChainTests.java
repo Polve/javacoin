@@ -61,20 +61,19 @@ public class BlockChainTests
    }
 
    public void testGenesisOk()
-      throws VerificationException
+      throws VerificationException, BitCoinException
    {
       Block genesisBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 01;");
       DummyStorage storage = new DummyStorage(genesisBlock);
       // Check that construction works
       //BlockChainImpl chain = new BlockChainImpl(genesisBlock,storage,null,false);
-      //BlockChainImpl chain = new BlockChainImpl(new StandardBitcoinFactory(),storage,false);
-      Assert.fail();
+      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(genesisBlock, null),storage,false);
    }
 
    @Test(expectedExceptions = VerificationException.class)
    public void testWrongGenesis()
-      throws VerificationException
+      throws VerificationException, BitCoinException
    {
       Block genesisBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 01;");
@@ -83,11 +82,11 @@ public class BlockChainTests
       Block differentBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 02;");
       //BlockChainImpl chain = new BlockChainImpl(differentBlock,storage,null,false);
-      Assert.fail();
+      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(differentBlock, null),storage,false);
    }
 
    public void testGenesisInitialization()
-      throws VerificationException
+      throws VerificationException, BitCoinException
    {
       // Initialize storage with nothing
       DummyStorage storage = new DummyStorage();
@@ -95,7 +94,7 @@ public class BlockChainTests
       Block genesisBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 01;");
       //BlockChainImpl chain = new BlockChainImpl(genesisBlock,storage,null,false);
-            Assert.fail();
+      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(genesisBlock,null), storage,false);
       // Verify genesis block
       Assert.assertEquals(storage.getNewLinks().size(),1);
       BlockChainLink link = storage.getNewLinks().get(0);
@@ -125,17 +124,16 @@ public class BlockChainTests
       DummyStorage storage = new DummyStorage(BlockMock.createBlocks(chainBlocks),blockOffset);
       long stopTime = System.currentTimeMillis();
       logger.debug("created storage, lasted: "+(stopTime-startTime)+" ms");
-      throw new BitCoinException("TODO: FIXME!");
       // Construct chain
-//      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
-//            storage,createScriptFactory(scriptSuccess),false);
-//      // Add the block
-//      Block block = BlockMock.createBlock(newBlock);
-//      startTime = System.currentTimeMillis();
-//      chain.addBlock(block);
-//      stopTime = System.currentTimeMillis();
-//      logger.debug("added block, lasted: "+(stopTime-startTime)+" ms");
-//      return storage;
+      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(storage.getGenesisLink().getBlock(),
+         createScriptFactory(scriptSuccess)), storage, false);
+      // Add the block
+      Block block = BlockMock.createBlock(newBlock);
+      startTime = System.currentTimeMillis();
+      chain.addBlock(block);
+      stopTime = System.currentTimeMillis();
+      logger.debug("added block, lasted: "+(stopTime-startTime)+" ms");
+      return storage;
    }
 
    public void testAddValidBlock()
@@ -222,34 +220,35 @@ public class BlockChainTests
             "      out 2000000;",true);
    }
 
-   public void testAddIndirectlyOrphan()
-      throws BitCoinException
-   {
-      DummyStorage storage = testAddBlockTemplate(
-            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
-            "   tx 1234567 990101 true;"+ // Coinbase
-            "      in 00 -1 999;"+
-            "      out 5000000;"+
-            "block 1234568 1 1b0404cb 99 010203 02;"+ // Next block, 99 doesn't exist
-            "   tx 123458 990102 true;"+ // Coinbase
-            "      in 00 -1 999;"+
-            "      out 5000000;"+
-            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
-            "      in 990101 0 999;"+
-            "      out 2000000;"+
-            "      out 3000000;",
-
-            "block 1234569 1 1b0404cb 02 010203 03;"+ // prev hash 02 should be orphan
-            "   tx 1234569 990104 true;"+ // Coinbase
-            "      in 00 -1 999;"+
-            "      out 5000000;"+
-            "   tx 1234580 990105 false;"+ // Using some money
-            "      in 990103 1 999;"+
-            "      out 2000000;",true);
-      Assert.assertEquals(storage.getNewLinks().size(),1);
-      BlockChainLink newLink = storage.getNewLinks().get(0);
-      Assert.assertEquals(newLink.isOrphan(),true);
-   }
+   // This test is now not useful anymore: orphan blocks are not persisted in the storage
+//   public void testAddIndirectlyOrphan()
+//      throws BitCoinException
+//   {
+//      DummyStorage storage = testAddBlockTemplate(
+//            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+//            "   tx 1234567 990101 true;"+ // Coinbase
+//            "      in 00 -1 999;"+
+//            "      out 5000000;"+
+//            "block 1234568 1 1b0404cb 99 010203 02;"+ // Next block, 99 doesn't exist
+//            "   tx 123458 990102 true;"+ // Coinbase
+//            "      in 00 -1 999;"+
+//            "      out 5000000;"+
+//            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+//            "      in 990101 0 999;"+
+//            "      out 2000000;"+
+//            "      out 3000000;",
+//
+//            "block 1234569 1 1b0404cb 02 010203 03;"+ // prev hash 02 should be orphan
+//            "   tx 1234569 990104 true;"+ // Coinbase
+//            "      in 00 -1 999;"+
+//            "      out 5000000;"+
+//            "   tx 1234580 990105 false;"+ // Using some money
+//            "      in 990103 1 999;"+
+//            "      out 2000000;",true);
+//      Assert.assertEquals(storage.getNewLinks().size(),1);
+//      BlockChainLink newLink = storage.getNewLinks().get(0);
+//      Assert.assertEquals(newLink.isOrphan(),true);
+//   }
 
    @Test(expectedExceptions = VerificationException.class)
    public void testAddMoreDifficultyBlock()
@@ -1031,13 +1030,14 @@ public class BlockChainTests
       // Construct chain
       //BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
       //      storage,createScriptFactory(true),false);
-      Assert.fail();
+      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(storage.getGenesisLink().getBlock(),createScriptFactory(true)),
+            storage,false);
 
       // Do the check
-//      Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
-//            storage.getLink(new byte[] { 04 }).getBlock());
-//      Assert.assertNotNull(commonBlock);
-//      Assert.assertTrue(Arrays.equals(commonBlock.getHash(),new byte[] { 02 }));
+      Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
+            storage.getLink(new byte[] { 04 }).getBlock());
+      Assert.assertNotNull(commonBlock);
+      Assert.assertTrue(Arrays.equals(commonBlock.getHash(),new byte[] { 02 }));
    }
 
    public void testNoCommonBlock()
@@ -1062,13 +1062,14 @@ public class BlockChainTests
             "      out 500000000;"
                ),0);
       // Construct chain
-      Assert.fail();
 //      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
 //            storage,createScriptFactory(true),false);
-//      // Do the check
-//      Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
-//            storage.getLink(new byte[] { 03 }).getBlock());
-//      Assert.assertNull(commonBlock);
+      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(storage.getGenesisLink().getBlock(),createScriptFactory(true)),
+         storage,false);
+      // Do the check
+      Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
+            storage.getLink(new byte[] { 03 }).getBlock());
+      Assert.assertNull(commonBlock);
    }
 }
 
