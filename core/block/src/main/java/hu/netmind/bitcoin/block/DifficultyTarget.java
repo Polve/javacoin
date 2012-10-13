@@ -28,14 +28,6 @@ import java.math.BigInteger;
  */
 public class DifficultyTarget implements Comparable<DifficultyTarget>
 {
-   public static final DifficultyTarget MAX_PRODNET_TARGET = 
-      new DifficultyTarget(
-         new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16));
-
-   public static final DifficultyTarget MAX_TESTNET_TARGET = 
-      new DifficultyTarget(
-         new BigInteger("FFFFF0000000000000000000000000000000000000000000000000000",16));
-
    private BigInteger target;
    private long compressedTarget;
 

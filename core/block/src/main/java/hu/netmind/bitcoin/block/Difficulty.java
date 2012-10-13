@@ -44,51 +44,49 @@ public class Difficulty implements Comparable<Difficulty>, Serializable
    private static Logger logger = LoggerFactory.getLogger(Difficulty.class);
    private Difficulty MIN_VALUE;
    private BigDecimal difficulty;
-   public final boolean isTestnet;
+   private DifficultyTarget maxTarget;
 
-   public Difficulty(BigDecimal difficulty)
-   {
-      this(difficulty, false);
-   }
+//   public Difficulty(BigDecimal difficulty)
+//   {
+//      this(difficulty, false);
+//   }
 
-   public Difficulty(BigDecimal difficulty, boolean isTestnet)
+   public Difficulty(BigDecimal difficulty, DifficultyTarget maxTarget)
    {
       this.difficulty = difficulty;
-      this.isTestnet = isTestnet;
+      this.maxTarget = maxTarget;
    }
 
-   /**
-    * Construct with no difficulty.
-    */
-   public Difficulty()
-   {
-      this(BigDecimal.ZERO);
-   }
+//   /**
+//    * Construct with no difficulty.
+//    */
+//   public Difficulty()
+//   {
+//      this(BigDecimal.ZERO);
+//   }
 
-   /**
-    * Construct with no difficulty.
-    */
-   public Difficulty(boolean isTestnet)
-   {
-      this(BigDecimal.ZERO, isTestnet);
-   }
+//   /**
+//    * Construct with no difficulty.
+//    */
+//   public Difficulty(boolean isTestnet)
+//   {
+//      this(BigDecimal.ZERO, isTestnet);
+//   }
+//
+//   /**
+//    * Construct the difficulty using the target directly.
+//    */
+//   public Difficulty(DifficultyTarget target)
+//   {
+//      this(target, false);
+//   }
 
-   /**
-    * Construct the difficulty using the target directly.
-    */
-   public Difficulty(DifficultyTarget target)
+   public Difficulty(DifficultyTarget target, DifficultyTarget maxTarget)
    {
-      this(target, false);
-   }
-
-   public Difficulty(DifficultyTarget target, boolean isTestnet)
-   {
-      this.isTestnet = isTestnet;
       if (target.getTarget().equals(BigInteger.ZERO))
          difficulty = BigDecimal.ZERO;
       else
-         difficulty = new BigDecimal((isTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET).getTarget()).divide(
-            new BigDecimal(target.getTarget()), BigDecimal.ROUND_DOWN);
+         difficulty = new BigDecimal(maxTarget.getTarget()).divide(new BigDecimal(target.getTarget()), BigDecimal.ROUND_DOWN);
       logger.debug("difficulty created with value: {}", difficulty);
    }
 
@@ -109,7 +107,7 @@ public class Difficulty implements Comparable<Difficulty>, Serializable
     */
    public Difficulty add(Difficulty other)
    {
-      return new Difficulty(difficulty.add(other.difficulty));
+      return new Difficulty(difficulty.add(other.difficulty), maxTarget);
    }
 
    /**
@@ -123,7 +121,7 @@ public class Difficulty implements Comparable<Difficulty>, Serializable
    public Difficulty getMinValue()
    {
       if (MIN_VALUE == null)
-         MIN_VALUE = new Difficulty(isTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET);
+         MIN_VALUE = new Difficulty(maxTarget, maxTarget);
       return MIN_VALUE;
    }
 

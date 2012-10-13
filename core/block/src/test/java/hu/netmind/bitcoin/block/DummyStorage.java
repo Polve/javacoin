@@ -42,25 +42,29 @@ public class DummyStorage implements BlockChainLinkStorage
    private List<BlockChainLink> links = new ArrayList<>();
    private List<BlockChainLink> newLinks = new ArrayList<>();
    private Map<BigInteger,BlockChainLink> linksMap = new HashMap<>();
+   private BitcoinFactory bitcoinFactory;
 
-   public DummyStorage(Block genesisBlock)
+   public DummyStorage(BitcoinFactory bitcoinFactory, Block genesisBlock)
    {
+      this.bitcoinFactory = bitcoinFactory;
       List<Block> blocks = new ArrayList<>();
       blocks.add(genesisBlock);
       init(blocks,0);
    }
 
-   public DummyStorage()
+   public DummyStorage(BitcoinFactory bitcoinFactory)
    {
+      this.bitcoinFactory = bitcoinFactory;
    }
 
-   public DummyStorage(List<Block> blocks)
-   {
-      init(blocks,0);
-   }
+//   public DummyStorage(List<Block> blocks)
+//   {
+//      init(blocks,0);
+//   }
 
-   public DummyStorage(List<Block> blocks, long blockOffset)
+   public DummyStorage(BitcoinFactory bitcoinFactory,List<Block> blocks, long blockOffset)
    {
+      this.bitcoinFactory = bitcoinFactory;
       init(blocks,blockOffset);
    }
 
@@ -73,13 +77,13 @@ public class DummyStorage implements BlockChainLinkStorage
          {
             if ( links.isEmpty() )
                addLinkInternal(new BlockChainLink(block,
-                        new Difficulty(new DifficultyTarget(block.getCompressedTarget())),blockOffset,false));
+                        bitcoinFactory.newDifficulty(new DifficultyTarget(block.getCompressedTarget())),blockOffset,false));
             else
                addLinkInternal(new BlockChainLink(block,
-                        new Difficulty(new DifficultyTarget(block.getCompressedTarget())),blockOffset,true));
+                        bitcoinFactory.newDifficulty(new DifficultyTarget(block.getCompressedTarget())),blockOffset,true));
          } else {
             addLinkInternal(new BlockChainLink(block,
-                     previousLink.getTotalDifficulty().add(new Difficulty(
+                     previousLink.getTotalDifficulty().add(bitcoinFactory.newDifficulty(
                            new DifficultyTarget(block.getCompressedTarget()))),
                      previousLink.getHeight()+1,false));
          }

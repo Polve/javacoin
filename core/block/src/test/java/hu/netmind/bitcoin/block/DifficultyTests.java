@@ -18,9 +18,12 @@
 
 package hu.netmind.bitcoin.block;
 
+import hu.netmind.bitcoin.BitCoinException;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import java.math.BigInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Test the difficulty calculations.
@@ -29,26 +32,37 @@ import java.math.BigInteger;
 @Test
 public class DifficultyTests
 {
-   public void testMaxTargetProdnet()
+   static public BitcoinFactory prodnetFactory;
+   static public BitcoinFactory testnet2Factory;
+   
+   static {
+      try
+      {
+         prodnetFactory = new StandardBitcoinFactory(null);
+         testnet2Factory = new Testnet2BitcoinFactory(null);
+      } catch (BitCoinException ex)
+      {
+         Assert.fail("Cant create factories: "+ex.getMessage(),ex);
+      }
+   }
+   
+   public void testMaxTargetProdnet() throws BitCoinException
    {
-      Assert.assertEquals(DifficultyTarget.MAX_PRODNET_TARGET.getTarget(),
+      Assert.assertEquals(prodnetFactory.maxDifficultyTarget().getTarget(),
             new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16));
       Assert.assertEquals(
-            Long.toHexString(DifficultyTarget.MAX_PRODNET_TARGET.getCompressedTarget()),
+            Long.toHexString(prodnetFactory.maxDifficultyTarget().getCompressedTarget()),
             Long.toHexString(0x1d00ffffl));
-
    }
 
-   public void testMaxTargetTestnet()
+   public void testMaxTargetTestnet() throws BitCoinException
    {
-      Assert.assertEquals(DifficultyTarget.MAX_TESTNET_TARGET.getTarget(),
-            //new BigInteger("1FFFE00000000000000000000000000000000000000000000000000000",16));
+      Assert.assertEquals(testnet2Factory.maxDifficultyTarget().getTarget(),
             new BigInteger("FFFFF0000000000000000000000000000000000000000000000000000",16));
       Assert.assertEquals(
-            Long.toHexString(DifficultyTarget.MAX_TESTNET_TARGET.getCompressedTarget()),
+            Long.toHexString(testnet2Factory.maxDifficultyTarget().getCompressedTarget()),
             //Long.toHexString(0x1d1fffe0L));
             Long.toHexString(0x1d0fffffl));
-
    }
 
    public void testTargetDecompression()
@@ -68,7 +82,7 @@ public class DifficultyTests
 
    public void testMaxDifficulty()
    {
-      Difficulty difficulty = new Difficulty(
+      Difficulty difficulty = prodnetFactory.newDifficulty(
             new DifficultyTarget(
                new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16).toByteArray()));
       Assert.assertEquals(difficulty.getDifficulty().longValue(),1);
@@ -76,7 +90,7 @@ public class DifficultyTests
 
    public void testSampleDifficulty()
    {
-      Difficulty difficulty = new Difficulty(
+      Difficulty difficulty = prodnetFactory.newDifficulty(
             new DifficultyTarget(
                new BigInteger("404CB000000000000000000000000000000000000000000000000",16).toByteArray()));
       Assert.assertEquals(difficulty.getDifficulty().longValue(),16307);
@@ -84,33 +98,33 @@ public class DifficultyTests
 
    public void testUncompressingMaxDifficulty()
    {
-      Difficulty difficulty = new Difficulty(new DifficultyTarget(0x1d00ffffl));
+      Difficulty difficulty = prodnetFactory.newDifficulty(new DifficultyTarget(0x1d00ffffl));
       Assert.assertEquals(difficulty.getDifficulty().longValue(),1);
    }
 
    public void testUncompressingSampleDifficulty()
    {
-      Difficulty difficulty = new Difficulty(new DifficultyTarget(0x1b0404cbl));
+      Difficulty difficulty = prodnetFactory.newDifficulty(new DifficultyTarget(0x1b0404cbl));
       Assert.assertEquals(difficulty.getDifficulty().longValue(),16307);
    }
 
    public void testAddDifficulties()
    {
-      Difficulty difficulty = new Difficulty(new DifficultyTarget(0x1b0404cbl));
-      Difficulty result = difficulty.add(new Difficulty(new DifficultyTarget(0x1b0404cbl)));
+      Difficulty difficulty = prodnetFactory.newDifficulty(new DifficultyTarget(0x1b0404cbl));
+      Difficulty result = difficulty.add(prodnetFactory.newDifficulty(new DifficultyTarget(0x1b0404cbl)));
       Assert.assertEquals(result.getDifficulty().longValue(),16307*2);
    }
 
    public void testCompareDifficulties()
    {
-      Assert.assertTrue( new Difficulty(new DifficultyTarget(0x1b0404cbl)).
-            compareTo(new Difficulty(new DifficultyTarget(0x1d00ffffl))) > 0 );
+      Assert.assertTrue(prodnetFactory.newDifficulty(new DifficultyTarget(0x1b0404cbl)).
+            compareTo(prodnetFactory.newDifficulty(new DifficultyTarget(0x1d00ffffl))) > 0 );
    }
 
    public void testZeroDifficulty()
    {
-      Assert.assertTrue( new Difficulty(new DifficultyTarget(0)).
-            compareTo(new Difficulty(new DifficultyTarget(0x1d00ffffl))) < 0 );
+      Assert.assertTrue(prodnetFactory.newDifficulty(new DifficultyTarget(0)).
+            compareTo(prodnetFactory.newDifficulty(new DifficultyTarget(0x1d00ffffl))) < 0 );
    }
 
 }

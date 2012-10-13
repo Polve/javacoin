@@ -65,10 +65,11 @@ public class BlockChainTests
    {
       Block genesisBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 01;");
-      DummyStorage storage = new DummyStorage(genesisBlock);
       // Check that construction works
       //BlockChainImpl chain = new BlockChainImpl(genesisBlock,storage,null,false);
-      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(genesisBlock, null),storage,false);
+      BitcoinFactory factory = new TesterBitcoinFactory(genesisBlock, null);
+      DummyStorage storage = new DummyStorage(factory, genesisBlock);
+      BlockChainImpl chain = new BlockChainImpl(factory,storage,false);
    }
 
    @Test(expectedExceptions = VerificationException.class)
@@ -77,24 +78,26 @@ public class BlockChainTests
    {
       Block genesisBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 01;");
-      DummyStorage storage = new DummyStorage(genesisBlock);
       // Check that construction fails with other genesis
       Block differentBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 02;");
       //BlockChainImpl chain = new BlockChainImpl(differentBlock,storage,null,false);
-      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(differentBlock, null),storage,false);
+      BitcoinFactory factory = new TesterBitcoinFactory(differentBlock, null);
+      DummyStorage storage = new DummyStorage(factory,genesisBlock);
+      BlockChainImpl chain = new BlockChainImpl(factory,storage,false);
    }
 
    public void testGenesisInitialization()
       throws VerificationException, BitCoinException
    {
-      // Initialize storage with nothing
-      DummyStorage storage = new DummyStorage();
       // Construct block chain with genesis block
       Block genesisBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 01;");
       //BlockChainImpl chain = new BlockChainImpl(genesisBlock,storage,null,false);
-      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(genesisBlock,null), storage,false);
+      BitcoinFactory testerFactory = new TesterBitcoinFactory(genesisBlock,null);
+      // Initialize storage with nothing
+      DummyStorage storage = new DummyStorage(testerFactory);
+      BlockChainImpl chain = new BlockChainImpl(testerFactory, storage,false);
       // Verify genesis block
       Assert.assertEquals(storage.getNewLinks().size(),1);
       BlockChainLink link = storage.getNewLinks().get(0);
@@ -121,12 +124,13 @@ public class BlockChainTests
    {
       // Construct a block chain and storage
       long startTime = System.currentTimeMillis();
-      DummyStorage storage = new DummyStorage(BlockMock.createBlocks(chainBlocks),blockOffset);
       long stopTime = System.currentTimeMillis();
       logger.debug("created storage, lasted: "+(stopTime-startTime)+" ms");
       // Construct chain
-      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(storage.getGenesisLink().getBlock(),
-         createScriptFactory(scriptSuccess)), storage, false);
+      List<Block> blocks = BlockMock.createBlocks(chainBlocks);
+      BitcoinFactory factory = new TesterBitcoinFactory(blocks.get(0),createScriptFactory(scriptSuccess));
+      DummyStorage storage = new DummyStorage(factory, blocks, blockOffset);
+      BlockChainImpl chain = new BlockChainImpl(factory, storage, false);
       // Add the block
       Block block = BlockMock.createBlock(newBlock);
       startTime = System.currentTimeMillis();
@@ -1001,37 +1005,37 @@ public class BlockChainTests
    public void testNormalCommonBlock()
       throws BitCoinException
    {
-      DummyStorage storage = new DummyStorage(BlockMock.createBlocks(
-            "block 1234567 1 1b0404cb 00 010203 01;"+
-            "   tx 1234567 990101 true;"+
-            "      in 00 -1 999;"+
-            "      out 500000000;"+
-            "block 1234567 1 1b0404cb 01 010203 02;"+
-            "   tx 1234567 990101 true;"+
-            "      in 00 -1 999;"+
-            "      out 500000000;"+
-            "block 1234567 1 1b0404cb 02 010203 03;"+
-            "   tx 1234567 990101 true;"+
-            "      in 00 -1 999;"+
-            "      out 500000000;"+
-            "block 1234567 1 1b0404cb 03 010203 04;"+
-            "   tx 1234567 990101 true;"+
-            "      in 00 -1 999;"+
-            "      out 500000000;"+
-            "block 1234567 1 1b0404cb 02 010203 05;"+
-            "   tx 1234567 990101 true;"+
-            "      in 00 -1 999;"+
-            "      out 500000000;"+
-            "block 1234567 1 1b0404cb 05 010203 06;"+
-            "   tx 1234567 990101 true;"+
-            "      in 00 -1 999;"+
-            "      out 500000000;"
-               ),0);
+      List<Block> blocks = BlockMock.createBlocks(
+         "block 1234567 1 1b0404cb 00 010203 01;"
+         + "   tx 1234567 990101 true;"
+         + "      in 00 -1 999;"
+         + "      out 500000000;"
+         + "block 1234567 1 1b0404cb 01 010203 02;"
+         + "   tx 1234567 990101 true;"
+         + "      in 00 -1 999;"
+         + "      out 500000000;"
+         + "block 1234567 1 1b0404cb 02 010203 03;"
+         + "   tx 1234567 990101 true;"
+         + "      in 00 -1 999;"
+         + "      out 500000000;"
+         + "block 1234567 1 1b0404cb 03 010203 04;"
+         + "   tx 1234567 990101 true;"
+         + "      in 00 -1 999;"
+         + "      out 500000000;"
+         + "block 1234567 1 1b0404cb 02 010203 05;"
+         + "   tx 1234567 990101 true;"
+         + "      in 00 -1 999;"
+         + "      out 500000000;"
+         + "block 1234567 1 1b0404cb 05 010203 06;"
+         + "   tx 1234567 990101 true;"
+         + "      in 00 -1 999;"
+         + "      out 500000000;");
+      BitcoinFactory factory = new TesterBitcoinFactory(blocks.get(0),createScriptFactory(true));
+      DummyStorage storage = new DummyStorage(factory, blocks,0);
       // Construct chain
       //BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
       //      storage,createScriptFactory(true),false);
-      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(storage.getGenesisLink().getBlock(),createScriptFactory(true)),
-            storage,false);
+      BlockChainImpl chain = new BlockChainImpl(factory,storage,false);
 
       // Do the check
       Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
@@ -1043,7 +1047,7 @@ public class BlockChainTests
    public void testNoCommonBlock()
       throws BitCoinException
    {
-      DummyStorage storage = new DummyStorage(BlockMock.createBlocks(
+      List<Block> blocks = BlockMock.createBlocks(
             "block 1234567 1 1b0404cb 00 010203 01;"+
             "   tx 1234567 990101 true;"+
             "      in 00 -1 999;"+
@@ -1060,19 +1064,17 @@ public class BlockChainTests
             "   tx 1234567 990101 true;"+
             "      in 00 -1 999;"+
             "      out 500000000;"
-               ),0);
+               );
+//               ),0);
+      BitcoinFactory factory = new TesterBitcoinFactory(blocks.get(0),createScriptFactory(true));
+      DummyStorage storage = new DummyStorage(factory, blocks, 0);
       // Construct chain
 //      BlockChainImpl chain = new BlockChainImpl(storage.getGenesisLink().getBlock(),
 //            storage,createScriptFactory(true),false);
-      BlockChainImpl chain = new BlockChainImpl(new TesterBitcoinFactory(storage.getGenesisLink().getBlock(),createScriptFactory(true)),
-         storage,false);
+      BlockChainImpl chain = new BlockChainImpl(factory,storage,false);
       // Do the check
       Block commonBlock = chain.getCommonBlock(storage.getLink(new byte[] { 06 }).getBlock(),
             storage.getLink(new byte[] { 03 }).getBlock());
       Assert.assertNull(commonBlock);
    }
 }
-
-
-
-

@@ -23,6 +23,7 @@ import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.ScriptFragment;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -43,6 +44,10 @@ public class StandardBitcoinFactory implements BitcoinFactory
    protected long messageMagic;
    protected boolean isOldTestnet = false;
    protected boolean isTestnet3 = false;
+   public static final DifficultyTarget MAX_PRODNET_TARGET =
+      new DifficultyTarget(new BigInteger("FFFF0000000000000000000000000000000000000000000000000000", 16));
+   public static final DifficultyTarget MAX_TESTNET_TARGET =
+      new DifficultyTarget(new BigInteger("FFFFF0000000000000000000000000000000000000000000000000000", 16));
 
    protected StandardBitcoinFactory()
    {
@@ -69,19 +74,19 @@ public class StandardBitcoinFactory implements BitcoinFactory
    @Override
    public BlockChainLink newBlockChainLink(Block block, BigDecimal chainWork, long height)
    {
-      return new BlockChainLink(block, new Difficulty(chainWork, false), height, isOldTestnet);
+      return new BlockChainLink(block, new Difficulty(chainWork, maxDifficultyTarget()), height, false);
    }
 
    @Override
    public Difficulty newDifficulty(DifficultyTarget target)
    {
-      return new Difficulty(target, isOldTestnet);
+      return new Difficulty(target, maxDifficultyTarget());
    }
 
    @Override
    public DifficultyTarget maxDifficultyTarget()
    {
-      return isOldTestnet ? DifficultyTarget.MAX_TESTNET_TARGET : DifficultyTarget.MAX_PRODNET_TARGET;
+      return isOldTestnet ? MAX_TESTNET_TARGET : MAX_PRODNET_TARGET;
    }
 
    @Override
@@ -93,7 +98,7 @@ public class StandardBitcoinFactory implements BitcoinFactory
    @Override
    public Difficulty getGenesisDifficulty()
    {
-      return new Difficulty(new DifficultyTarget(compressedTarget), isOldTestnet);
+      return new Difficulty(new DifficultyTarget(compressedTarget), maxDifficultyTarget());
    }
 
    @Override
