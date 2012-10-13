@@ -19,11 +19,9 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BitCoinException;
-import org.testng.annotations.Test;
-import org.testng.Assert;
 import java.math.BigInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * Test the difficulty calculations.
