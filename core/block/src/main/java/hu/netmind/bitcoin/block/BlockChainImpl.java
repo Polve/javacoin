@@ -23,7 +23,6 @@ import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.Script;
 import hu.netmind.bitcoin.ScriptException;
-import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
