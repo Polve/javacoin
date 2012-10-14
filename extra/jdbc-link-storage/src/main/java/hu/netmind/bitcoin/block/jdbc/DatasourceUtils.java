@@ -19,7 +19,6 @@ package hu.netmind.bitcoin.block.jdbc;
 
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import javax.sql.DataSource;
-import org.apache.derby.jdbc.EmbeddedConnectionPoolDataSource40;
 
 /**
  *
@@ -38,11 +37,11 @@ public class DatasourceUtils
       return ds;
    }
 
-   public static DataSource getEmbeddedDerbyDatasource(String databaseName) throws ClassNotFoundException
-   {
-      Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
-      EmbeddedConnectionPoolDataSource40 ds = new EmbeddedConnectionPoolDataSource40();
-      ds.setDatabaseName(databaseName);
-      return ds;
-   }
+//   public static DataSource getEmbeddedDerbyDatasource(String databaseName) throws ClassNotFoundException
+//   {
+//      Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
+//      EmbeddedConnectionPoolDataSource40 ds = new EmbeddedConnectionPoolDataSource40();
+//      ds.setDatabaseName(databaseName);
+//      return ds;
+//   }
 }

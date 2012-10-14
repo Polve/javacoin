@@ -78,6 +78,18 @@ public class StandardBitcoinFactory implements BitcoinFactory
    }
 
    @Override
+   public Difficulty newDifficulty()
+   {
+      return new Difficulty(BigDecimal.ZERO, maxDifficultyTarget());
+   }
+
+   @Override
+   public Difficulty newDifficulty(BigDecimal target)
+   {
+      return new Difficulty(target, maxDifficultyTarget());
+   }
+
+   @Override
    public Difficulty newDifficulty(DifficultyTarget target)
    {
       return new Difficulty(target, maxDifficultyTarget());

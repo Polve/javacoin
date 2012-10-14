@@ -35,6 +35,13 @@ public interface BitcoinFactory
 
    public BlockChainLink newBlockChainLink(Block block, BigDecimal chainWork, long height);
 
+   /**
+    * Construct with no difficulty.
+    */
+   public Difficulty newDifficulty();
+
+   public Difficulty newDifficulty(BigDecimal difficulty);
+
    public Difficulty newDifficulty(DifficultyTarget target);
 
    public DifficultyTarget maxDifficultyTarget();

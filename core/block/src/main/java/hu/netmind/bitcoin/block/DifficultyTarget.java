@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.block;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -26,7 +27,7 @@ import java.math.BigInteger;
  * documentation for details.
  * @author Robert Brautigam, Alessandro Polverini
  */
-public class DifficultyTarget implements Comparable<DifficultyTarget>
+public class DifficultyTarget implements Comparable<DifficultyTarget>, Serializable
 {
    private BigInteger target;
    private long compressedTarget;

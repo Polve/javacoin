@@ -46,40 +46,11 @@ public class Difficulty implements Comparable<Difficulty>, Serializable
    private BigDecimal difficulty;
    private DifficultyTarget maxTarget;
 
-//   public Difficulty(BigDecimal difficulty)
-//   {
-//      this(difficulty, false);
-//   }
-
    public Difficulty(BigDecimal difficulty, DifficultyTarget maxTarget)
    {
       this.difficulty = difficulty;
       this.maxTarget = maxTarget;
    }
-
-//   /**
-//    * Construct with no difficulty.
-//    */
-//   public Difficulty()
-//   {
-//      this(BigDecimal.ZERO);
-//   }
-
-//   /**
-//    * Construct with no difficulty.
-//    */
-//   public Difficulty(boolean isTestnet)
-//   {
-//      this(BigDecimal.ZERO, isTestnet);
-//   }
-//
-//   /**
-//    * Construct the difficulty using the target directly.
-//    */
-//   public Difficulty(DifficultyTarget target)
-//   {
-//      this(target, false);
-//   }
 
    public Difficulty(DifficultyTarget target, DifficultyTarget maxTarget)
    {

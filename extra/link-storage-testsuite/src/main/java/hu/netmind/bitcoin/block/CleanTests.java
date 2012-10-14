@@ -64,8 +64,8 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
      BitcoinFactory factory = new StandardBitcoinFactory(new ScriptFactoryImpl(new KeyFactoryImpl(null)));
      Block genesis = factory.getGenesisBlock();
       // Store
-      BlockChainLink genesisLink = new BlockChainLink(genesis,
-            new Difficulty(),BlockChainLink.ROOT_HEIGHT,false);
+      BlockChainLink genesisLink = new BlockChainLink(genesis, factory.newDifficulty(),
+            BlockChainLink.ROOT_HEIGHT,false);
       storage.addLink(genesisLink);
       // Recall
       BlockChainLink readLink = storage.getLink(genesis.getHash());
@@ -118,7 +118,8 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 }, new byte[] {
                111,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 });
-      BlockChainLink link = new BlockChainLink(block,new Difficulty(),BlockChainLink.ROOT_HEIGHT,false);
+      BitcoinFactory factory = new StandardBitcoinFactory(null);
+      BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(),BlockChainLink.ROOT_HEIGHT,false);
       // Store & Recall
       storage.addLink(link);
       BlockChainLink readLink = storage.getLink(link.getBlock().getHash());
@@ -171,7 +172,8 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 }, new byte[] {
                111,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 });
-      BlockChainLink link = new BlockChainLink(block,new Difficulty(),BlockChainLink.ROOT_HEIGHT,false);
+      BitcoinFactory factory = new StandardBitcoinFactory(null);
+      BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(),BlockChainLink.ROOT_HEIGHT,false);
       // Store -> Restart -> Recall
       storage.addLink(link);
       getProvider().closeStorage(storage);
@@ -608,7 +610,8 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
             new byte[] { (byte)prevHash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
             new byte[] { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
             new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
-      BlockChainLink link = new BlockChainLink(block,new Difficulty(new BigDecimal(""+totalDifficulty)),height,orphan);
+      BitcoinFactory factory = new StandardBitcoinFactory(null);
+      BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(new BigDecimal(""+totalDifficulty)),height,orphan);
       storage.addLink(link);
    }
 
