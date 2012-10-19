@@ -18,11 +18,11 @@
 
 package hu.netmind.bitcoin.block.bdb;
 
-import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
-import java.util.List;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Creates a secondary index for a link using all the transaction inputs in the link.
@@ -30,15 +30,15 @@ import java.util.LinkedList;
  */
 public class ClaimIndexCreator extends TupleMultiSecondaryKeyCreator<Claim,StoredLink>
 {
-   public ClaimIndexCreator(ScriptFactory scriptFactory)
+   public ClaimIndexCreator(BitcoinFactory bitcoinFactory)
    {
-      super(new ClaimBinding(),new LinkBinding(scriptFactory));
+      super(new ClaimBinding(),new LinkBinding(bitcoinFactory));
    }
 
    @Override
    public List<Claim> createSecondaryKeys(StoredLink link)
    {
-      List<Claim> resultKeys = new LinkedList<Claim>();
+      List<Claim> resultKeys = new LinkedList<>();
       if ( ! link.getLink().isOrphan() )
          for ( Transaction tx : link.getLink().getBlock().getTransactions() )
             for ( TransactionInput in : tx.getInputs() )

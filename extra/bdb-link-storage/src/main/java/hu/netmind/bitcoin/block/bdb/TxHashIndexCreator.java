@@ -18,11 +18,10 @@
 
 package hu.netmind.bitcoin.block.bdb;
 
-import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Transaction;
-import java.util.List;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 import java.util.LinkedList;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Creates a secondary index from a link using the transaction hash. 
@@ -30,15 +29,15 @@ import java.util.Set;
  */
 public class TxHashIndexCreator extends TupleMultiSecondaryKeyCreator<byte[],StoredLink>
 {
-   public TxHashIndexCreator(ScriptFactory scriptFactory)
+   public TxHashIndexCreator(BitcoinFactory bitcoinFactory)
    {
-      super(new BytesBinding(),new LinkBinding(scriptFactory));
+      super(new BytesBinding(),new LinkBinding(bitcoinFactory));
    }
 
    @Override
    public List<byte[]> createSecondaryKeys(StoredLink link)
    {
-      List<byte[]> resultKeys = new LinkedList<byte[]>();
+      List<byte[]> resultKeys = new LinkedList<>();
       if ( !link.getLink().isOrphan() )
          for ( Transaction tx : link.getLink().getBlock().getTransactions() )
             resultKeys.add(tx.getHash());

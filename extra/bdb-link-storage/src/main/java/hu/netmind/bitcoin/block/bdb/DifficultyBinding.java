@@ -22,6 +22,8 @@ import hu.netmind.bitcoin.block.Difficulty;
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.bind.tuple.TupleInput;
 import com.sleepycat.bind.tuple.TupleOutput;
+import hu.netmind.bitcoin.block.BitcoinFactory;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 
@@ -30,14 +32,22 @@ import java.math.BigDecimal;
  */
 public class DifficultyBinding extends TupleBinding<Difficulty>
 {
+  private BitcoinFactory factory;
+
+  public DifficultyBinding(BitcoinFactory factory) {
+    this.factory = factory;
+  }
+  
+  @Override
    public Difficulty entryToObject(TupleInput in)
    {
       int unscaledBytesLength = in.readInt();
       byte[] unscaledBytes = BytesBinding.readBytes(in,unscaledBytesLength);
       int scale = in.readInt();
-      return new Difficulty(new BigDecimal(new BigInteger(unscaledBytes),scale));
+      return factory.newDifficulty(new BigDecimal(new BigInteger(unscaledBytes),scale));
    }
 
+  @Override
    public void objectToEntry(Difficulty difficulty, TupleOutput out)
    {
       byte[] unscaledBytes = difficulty.getDifficulty().unscaledValue().toByteArray();

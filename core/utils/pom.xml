@@ -1,30 +1,32 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>hu.netmind.bitcoin</groupId>
-  <artifactId>bitcoin-utils</artifactId>
-  <packaging>jar</packaging>
-  <version>1.0.0-SNAPSHOT</version>
-  <name>BitCoin Utilities</name>
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>hu.netmind.bitcoin</groupId>
+   <artifactId>bitcoin-utils</artifactId>
+   <packaging>jar</packaging>
+   <version>1.0.0-SNAPSHOT</version>
+   <name>BitCoin Utilities</name>
 
-  <parent>
-    <groupId>hu.netmind.bitcoin</groupId>
-    <artifactId>bitcoin-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-  </parent>
-    <dependencies>
-     <dependency>
-        <groupId>hu.netmind.bitcoin</groupId>
-        <artifactId>bitcoin-api</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-        <type>jar</type>
-     </dependency>
-     <dependency>
-        <groupId>hu.netmind.bitcoin</groupId>
-        <artifactId>bitcoin-keyfactory-ecc</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-        <type>jar</type>
-     </dependency>
-  </dependencies>
+   <parent>
+      <groupId>hu.netmind.bitcoin</groupId>
+      <artifactId>bitcoin-parent</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <relativePath>../..</relativePath>
+   </parent>
+
+   <dependencies>
+      <dependency>
+         <groupId>hu.netmind.bitcoin</groupId>
+         <artifactId>bitcoin-api</artifactId>
+         <version>1.0.0-SNAPSHOT</version>
+         <type>jar</type>
+      </dependency>
+      <dependency>
+         <groupId>hu.netmind.bitcoin</groupId>
+         <artifactId>bitcoin-keyfactory-ecc</artifactId>
+         <version>1.0.0-SNAPSHOT</version>
+         <type>jar</type>
+      </dependency>
+   </dependencies>
 </project>

@@ -17,7 +17,6 @@
  */
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.BitCoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.ScriptFactory;
 import java.math.BigDecimal;

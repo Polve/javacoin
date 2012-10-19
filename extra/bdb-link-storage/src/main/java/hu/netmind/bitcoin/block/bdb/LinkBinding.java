@@ -33,6 +33,7 @@ import hu.netmind.bitcoin.TransactionInput;
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.bind.tuple.TupleInput;
 import com.sleepycat.bind.tuple.TupleOutput;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.LinkedList;
@@ -44,13 +45,14 @@ import static hu.netmind.bitcoin.block.bdb.BytesBinding.readBytes;
  */
 public class LinkBinding extends TupleBinding<StoredLink>
 {
-   private ScriptFactory scriptFactory;
+   private BitcoinFactory bitcoinFactory;
 
-   public LinkBinding(ScriptFactory scriptFactory)
+   public LinkBinding(BitcoinFactory bitcoinFactory)
    {
-      this.scriptFactory=scriptFactory;
+      this.bitcoinFactory=bitcoinFactory;
    }
 
+  @Override
    public StoredLink entryToObject(TupleInput in)
    {
       BlockChainLink link = readLink(in);
@@ -66,7 +68,7 @@ public class LinkBinding extends TupleBinding<StoredLink>
       Block block = readBlock(in);
       boolean orphan = in.readBoolean();
       long height = in.readLong();
-      Difficulty totalDifficulty = new Difficulty(new BigDecimal(in.readString()));
+      Difficulty totalDifficulty = bitcoinFactory.newDifficulty(new BigDecimal(in.readString()));
       return new BlockChainLink(block,totalDifficulty,height,orphan);
    }
 
@@ -119,7 +121,7 @@ public class LinkBinding extends TupleBinding<StoredLink>
       int scriptLength = in.readInt();
       byte[] script = readBytes(in,scriptLength);
       return new TransactionInputImpl(claimedHash,claimedIndex,
-            scriptFactory.createFragment(script),sequence);
+            bitcoinFactory.getScriptFactory().createFragment(script),sequence);
    }
 
    private TransactionOutputImpl readOutput(TupleInput in)
@@ -128,9 +130,10 @@ public class LinkBinding extends TupleBinding<StoredLink>
       int scriptLength = in.readInt();
       byte[] script = readBytes(in,scriptLength);
       return new TransactionOutputImpl(value,
-            scriptFactory.createFragment(script));
+            bitcoinFactory.getScriptFactory().createFragment(script));
    }
 
+  @Override
    public void objectToEntry(StoredLink link, TupleOutput out)
    {
       write(link.getLink(),out);

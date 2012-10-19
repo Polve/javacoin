@@ -17,19 +17,21 @@ package it.nibbles.bitcoin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
+import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
 import hu.netmind.bitcoin.block.StandardBitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
-import hu.netmind.bitcoin.block.bdb.BDBChainLinkStorage;
+import hu.netmind.bitcoin.block.jdbc.DatasourceUtils;
 import hu.netmind.bitcoin.block.jdbc.JdbcChainLinkStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
-import hu.netmind.bitcoin.net.p2p.Node;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
+import it.nibbles.bitcoin.utils.BtcUtil;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -49,16 +51,15 @@ import org.slf4j.LoggerFactory;
 public class BlockTool
 {
 
-   private static Logger logger = LoggerFactory.getLogger(BlockTool.class);
+   //private static Logger logger = LoggerFactory.getLogger(BlockTool.class);
    private static final long BC_PROTOCOL_VERSION = 32100;
    private static final String STORAGE_BDB = "bdb";
    private static final String STORAGE_JDBC = "jdbc";
    private static final String STORAGE_MEMORY = "memory";
-   private Node node;
-   private BlockChain chain;
-   private BlockChainLinkStorage storage;
-   private ScriptFactoryImpl scriptFactory;
-   private BitcoinFactory bitcoinFactory;
+   private static BlockChain chain;
+   private static BlockChainLinkStorage storage;
+   private static ScriptFactoryImpl scriptFactory;
+   private static BitcoinFactory bitcoinFactory;
    private static final String HELP_TEXT =
       "BlockTool: Dump local BlockChain blocks for testint purposes\n\n"
       + "Usage:\n"
@@ -82,11 +83,11 @@ public class BlockTool
       + "  --dbpass=<password>  Specify database password to use for the connection.\n";
    private static int firstBlock, lastBlock;
    private static int listenPort = -1;
-   private static String storageType = STORAGE_BDB;
+   private static String storageType = STORAGE_JDBC;
+   private static boolean isProdnet = false;
    private static boolean isTestNet2 = false;
    private static boolean isTestNet3 = false;
    private static OptionSpec<String> optBdbPath;
-   private static OptionSpec<String> optJdbcDriver;
    private static OptionSpec<String> optJdbcUrl;
    private static OptionSpec<String> optJdbcUser;
    private static OptionSpec<String> optJdbcPassword;
@@ -108,10 +109,10 @@ public class BlockTool
       parser.accepts("first").withRequiredArg().ofType(Integer.class);
       parser.accepts("port").withRequiredArg().ofType(Integer.class);
       optBdbPath = parser.accepts("bdbPath").withRequiredArg().defaultsTo("data");
-      optJdbcUrl = parser.accepts("url").withRequiredArg();
-      optJdbcDriver = parser.accepts("driver").withRequiredArg().defaultsTo("com.mysql.jdbc.Driver");
-      optJdbcUser = parser.accepts("dbuser").withRequiredArg().defaultsTo("bitcoinj");
-      optJdbcPassword = parser.accepts("dbpass").withRequiredArg();
+      //optJdbcDriver = parser.accepts("driver").withRequiredArg().defaultsTo("com.mysql.jdbc.Driver");
+      optJdbcUrl = parser.accepts("url").withRequiredArg().defaultsTo("jdbc:mysql://localhost/javacoin_testnet3");
+      optJdbcUser = parser.accepts("dbuser").withRequiredArg().defaultsTo("javacoin");
+      optJdbcPassword = parser.accepts("dbpass").withRequiredArg().defaultsTo("pw");
       inputfile = parser.accepts("inputfile").withRequiredArg();
       outputfile = parser.accepts("outputfile").withRequiredArg();
       OptionSet options = parser.parse(args);
@@ -125,11 +126,12 @@ public class BlockTool
          || (options.has("testnet2") && options.has("prodnet"))
          || (options.has("testnet3") && options.has("prodnet")))
       {
-         System.out.println(HELP_TEXT);
+         println(HELP_TEXT);
          return;
       }
       cmdSaveBlockchain = options.has("save");
       cmdLoadBlockchain = options.has("load");
+      isProdnet = options.has("prodnet");
       isTestNet2 = options.has("testnet2");
       isTestNet3 = options.has("testnet3");
       if (options.hasArgument("first"))
@@ -141,20 +143,23 @@ public class BlockTool
          listenPort = ((Integer) options.valueOf("port")).intValue();
       }
 
+      println("save: " + cmdSaveBlockchain + " load: " + cmdLoadBlockchain + " prodnet: " + isProdnet + " testnet2: " + isTestNet2 + " testnet3: " + isTestNet3);
       BlockTool app = new BlockTool();
       try
       {
-         logger.debug("FirstBlock: " + firstBlock + " lastBlock: " + lastBlock + " inputfile: " + inputfile.value(options));
+         println("FirstBlock: " + firstBlock + " lastBlock: " + lastBlock + " inputfile: " + inputfile.value(options) + " outputfile: " + outputfile.value(options));
          app.init(options);
          if (cmdLoadBlockchain)
          {
             app.readBlock(inputfile.value(options));
-         } else if (cmdSaveBlockchain) {
-            // TODO
+         } else if (cmdSaveBlockchain)
+         {
+            BlockChainLink blockLink = storage.getLastLink();
+            app.writeBlock(outputfile.value(options), blockLink.getBlock());
          }
       } finally
       {
-         logger.debug("close...");
+         println("close...");
          app.close();
       }
    }
@@ -162,7 +167,7 @@ public class BlockTool
    /**
     * Initialize and bind components together.
     */
-   public void init(OptionSet options) throws BitCoinException
+   public void init(OptionSet options) throws BitCoinException, ClassNotFoundException
    {
       scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
       bitcoinFactory = isTestNet3 ? new Testnet3BitcoinFactory(scriptFactory)
@@ -171,20 +176,23 @@ public class BlockTool
       // Initialize the correct storage engine
       if (STORAGE_BDB.equalsIgnoreCase(storageType))
       {
-         BDBChainLinkStorage engine = new BDBChainLinkStorage(scriptFactory);
-         engine.setDbPath(optBdbPath.value(options));
-         engine.init();
-         storage = engine;
+         println("BDB DISABLED");
+         System.exit(33);
+//         BDBChainLinkStorage engine = new BDBChainLinkStorage(scriptFactory);
+//         engine.setDbPath(optBdbPath.value(options));
+//         storage = engine;
       } else if (STORAGE_JDBC.equalsIgnoreCase(storageType))
       {
          JdbcChainLinkStorage engine = new JdbcChainLinkStorage(bitcoinFactory);
-         //engine.setDriverClassName(optJdbcDriver.value(options));
-         //engine.init();
+         engine.setDataSource(DatasourceUtils.getMysqlDatasource(
+            optJdbcUrl.value(options), optJdbcUser.value(options), optJdbcPassword.value(options)));
+         engine.init();
+         storage = engine;
       }
       chain = new BlockChainImpl(bitcoinFactory, storage, false);
       // Introduce a small check here that we can read back the genesis block correctly
       storage.getGenesisLink().getBlock().validate();
-      logger.info("Storage initialized, last link height: " + storage.getLastLink().getHeight());
+      println("Storage initialized, last link height: " + storage.getLastLink().getHeight());
    }
 
    /**
@@ -197,23 +205,6 @@ public class BlockTool
       }
    }
 
-   /**
-    * Run the client and listen for new blocks forever.
-    */
-   public void run()
-   {
-      try
-      {
-         // Start the node
-         node.start();
-         // Wait for keypress to end
-         System.in.read();
-      } catch (Exception e)
-      {
-         logger.error("error while starting node or waiting for enter", e);
-      }
-   }
-
    public void readBlock(String fileName) throws FileNotFoundException, IOException
    {
       ObjectMapper mapper = new ObjectMapper();
@@ -222,26 +213,37 @@ public class BlockTool
       ArrayList<Map> txs = (ArrayList<Map>) jsonObj.get("tx");
       for (Map tx : txs)
       {
-         logger.debug("Processing tx: " + tx.get("hash"));
+         println("Processing tx: " + tx.get("hash"));
          ArrayList<Map> inputs = (ArrayList<Map>) tx.get("inputs");
          ArrayList<Map> outs = (ArrayList<Map>) tx.get("out");
          for (Map input : inputs)
-         {
-            logger.debug(" Input: " + input.get("prev_out"));
-         }
+            println(" Input: " + input.get("prev_out"));
          for (Map output : outs)
          {
             long value = ((Long) output.get("value")).longValue();
             int type = ((Integer) output.get("type")).intValue();
-            logger.debug(" Out -- addr: " + output.get("addr") + " value: " + value + " type: " + type);
+            println(" Out -- addr: " + output.get("addr") + " value: " + value + " type: " + type);
             TransactionOutputImpl tout = new TransactionOutputImpl(value, scriptFactory.createFragment(null));
-            logger.debug(" Tout: " + tout);
+            println(" Tout: " + tout);
          }
       }
-      logger.debug("Lettura da " + fileName + " hash: " + hash + " txs: " + txs);
+      println("Lettura da " + fileName + " hash: " + hash + " txs: " + txs);
    }
-   
-   public void writeBlock(String outString) {
-      
+
+   public void writeBlock(String filename, Block block) throws IOException
+   {
+      println("write to " + filename + " block: " + block);
+      println("block " + BtcUtil.hexOut(block.getHash()) + " "
+         + BtcUtil.hexOut(block.getMerkleRoot()) + " "
+         + BtcUtil.hexOut(block.getPreviousBlockHash()) + " "
+         + Long.toHexString(block.getCompressedTarget()) + " "
+         + block.getCreationTime() + " "
+         + block.getNonce() + " "
+         + block.getVersion());
+   }
+
+   public static void println(String s)
+   {
+      System.out.println(s);
    }
 }

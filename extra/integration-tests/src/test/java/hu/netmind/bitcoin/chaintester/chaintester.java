@@ -43,7 +43,6 @@ import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.StandardBitcoinFactory;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
-import hu.netmind.bitcoin.block.bdb.BDBChainLinkStorage;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -63,7 +62,7 @@ public class chaintester
 
    private Node node = null;
    private BlockChain chain = null;
-   private BDBChainLinkStorage storage = null;
+   //private BDBChainLinkStorage storage = null;
    //private ScriptFactoryImpl scriptFactory = null;
    private BitcoinFactory bitcoinFactory;
 
@@ -88,8 +87,8 @@ public class chaintester
     */
    public void close()
    {
-      if ( storage != null )
-         storage.close();
+//      if ( storage != null )
+//         storage.close();
    }
 
    /**
@@ -102,15 +101,15 @@ public class chaintester
 
       ScriptFactory scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
       bitcoinFactory = new StandardBitcoinFactory(scriptFactory);
-      storage = new BDBChainLinkStorage(scriptFactory);
-      storage.setDbPath("data");
-      storage.init();
+//      storage = new BDBChainLinkStorage(scriptFactory);
+//      storage.setDbPath("data");
+//      storage.init();
       //chain = new BlockChainImpl(BlockImpl.MAIN_GENESIS, storage,scriptFactory,false);
       
-      chain = new BlockChainImpl(bitcoinFactory, storage, false);
+//      chain = new BlockChainImpl(bitcoinFactory, storage, false);
       // Introduce a small check here that we can read back the genesis block correctly
-      storage.getGenesisLink().getBlock().validate();
-      logger.info("initialized chain, last link height: "+storage.getLastLink().getHeight());
+//      storage.getGenesisLink().getBlock().validate();
+//      logger.info("initialized chain, last link height: "+storage.getLastLink().getHeight());
       // Initialize p2p node
       node = new Node();
       node.setPort(7321);
@@ -151,12 +150,12 @@ public class chaintester
       {
          logger.debug("connected to "+conn.getRemoteAddress()+" (from: "+conn.getLocalAddress()+")");
          // Send our version information
-         VersionMessage version = new VersionMessage(bitcoinFactory.getMessageMagic(),BC_PROTOCOL_VERSION,0,System.currentTimeMillis()/1000,
-               new NodeAddress(1,(InetSocketAddress) conn.getRemoteAddress()),
-               new NodeAddress(1,new InetSocketAddress(((InetSocketAddress)conn.getLocalAddress()).getAddress(),node.getPort())),
-               123,"NetMind BitCoin/1.0.0-SNAPSHOT",storage.getLastLink().getHeight());
-         logger.debug("sending version information: "+version);
-         conn.send(version);
+//         VersionMessage version = new VersionMessage(bitcoinFactory.getMessageMagic(),BC_PROTOCOL_VERSION,0,System.currentTimeMillis()/1000,
+//               new NodeAddress(1,(InetSocketAddress) conn.getRemoteAddress()),
+//               new NodeAddress(1,new InetSocketAddress(((InetSocketAddress)conn.getLocalAddress()).getAddress(),node.getPort())),
+//               123,"NetMind BitCoin/1.0.0-SNAPSHOT",storage.getLastLink().getHeight());
+//         logger.debug("sending version information: "+version);
+//         conn.send(version);
       }
 
       public void onLeave(Connection conn)
@@ -231,17 +230,17 @@ public class chaintester
          // from other blocks (it could actually run in a separate thread)
          if ( ! downloading )
          {
-            BlockChainLink link = storage.getLastLink();
-            if ( knownHighestBlock <= link.getHeight() )
-               return; // As far as we know we know everything, so no need to send anything
-            highestHashKnownBeforeRequest = link.getBlock().getHash();
-            downloading = true;
-            // Send the request
-            logger.debug("sending getblocks, we are at "+link.getHeight()+", while known max is: "+knownHighestBlock);
-            List<byte[]> startBlocks = new LinkedList<byte[]>();
-            startBlocks.add(highestHashKnownBeforeRequest);
-            GetBlocksMessage getBlocks = new GetBlocksMessage(bitcoinFactory.getMessageMagic(),BC_PROTOCOL_VERSION,startBlocks,null);
-            node.broadcast(getBlocks);
+//            BlockChainLink link = storage.getLastLink();
+//            if ( knownHighestBlock <= link.getHeight() )
+//               return; // As far as we know we know everything, so no need to send anything
+//            highestHashKnownBeforeRequest = link.getBlock().getHash();
+//            downloading = true;
+//            // Send the request
+//            logger.debug("sending getblocks, we are at "+link.getHeight()+", while known max is: "+knownHighestBlock);
+//            List<byte[]> startBlocks = new LinkedList<byte[]>();
+//            startBlocks.add(highestHashKnownBeforeRequest);
+//            GetBlocksMessage getBlocks = new GetBlocksMessage(bitcoinFactory.getMessageMagic(),BC_PROTOCOL_VERSION,startBlocks,null);
+//            node.broadcast(getBlocks);
          }
       }
    }
