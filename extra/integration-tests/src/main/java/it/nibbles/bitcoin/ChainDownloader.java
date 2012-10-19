@@ -15,7 +15,7 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package hu.netmind.bitcoin.chaintester;
+package it.nibbles.bitcoin;
 
 import hu.netmind.bitcoin.*;
 import hu.netmind.bitcoin.block.BitcoinFactory;
@@ -37,7 +37,6 @@ import hu.netmind.bitcoin.net.p2p.source.DNSFallbackNodesSource;
 import hu.netmind.bitcoin.net.p2p.source.IrcAddressSource;
 import hu.netmind.bitcoin.net.p2p.source.RandomizedNodesSource;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
-import it.nibbles.bitcoin.StdNodeHandler;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -52,10 +51,10 @@ import org.slf4j.LoggerFactory;
  * adds them to the chain.
  *
  */
-public class AlexTester
+public class ChainDownloader
 {
 
-   private static Logger logger = LoggerFactory.getLogger(AlexTester.class);
+   private static Logger logger = LoggerFactory.getLogger(ChainDownloader.class);
    private static boolean isTestnet2 = false;
    private static boolean isTestnet3 = false;
    private Node node = null;
@@ -69,7 +68,7 @@ public class AlexTester
    public static void main(String[] argv)
       throws Exception
    {
-      AlexTester app = new AlexTester();
+      ChainDownloader app = new ChainDownloader();
       if (argv.length == 1)
       {
          if ("-testnet2".equals(argv[0]))

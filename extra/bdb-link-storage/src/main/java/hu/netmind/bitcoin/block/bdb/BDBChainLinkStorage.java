@@ -35,6 +35,7 @@ import com.sleepycat.je.SecondaryConfig;
 import com.sleepycat.collections.StoredMap;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.collections.TransactionRunner;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -65,7 +66,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
    private boolean transactional = DEFAULT_TRANSACTIONAL;
    private String dbPath = DEFAULT_DB_PATH;
 
-   private ScriptFactory scriptFactory = null;
+   private BitcoinFactory bitcoinFactory = null;
    private Environment environment = null;
    private Database linkDatabase = null;
    private SecondaryDatabase nexthashDatabase = null;
@@ -82,9 +83,9 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
    private StoredMap<Claim,StoredLink> claimLinks = null;
    private StoredMap<Long,StoredLink> heightLinks = null;
 
-   public BDBChainLinkStorage(ScriptFactory scriptFactory)
+   public BDBChainLinkStorage(BitcoinFactory bitcoinFactory)
    {
-      this.scriptFactory=scriptFactory;
+      this.bitcoinFactory = bitcoinFactory;
       readConfiguration();
    }
 
@@ -135,46 +136,46 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       secondaryConfig.setAllowCreate(autoCreate);
       secondaryConfig.setTransactional(transactional);
       secondaryConfig.setSortedDuplicates(true);
-      secondaryConfig.setKeyCreator(new NextHashIndexCreator(scriptFactory));
+      secondaryConfig.setKeyCreator(new NextHashIndexCreator(bitcoinFactory));
       nexthashDatabase = environment.openSecondaryDatabase(null, NEXTHASH_DB_NAME, linkDatabase, secondaryConfig);
       // Difficulty index
       secondaryConfig = new SecondaryConfig();
       secondaryConfig.setAllowCreate(autoCreate);
       secondaryConfig.setTransactional(transactional);
       secondaryConfig.setSortedDuplicates(true);
-      secondaryConfig.setKeyCreator(new DifficultyIndexCreator(scriptFactory));
-      secondaryConfig.setBtreeComparator(DifficultyComparator.class);
+      secondaryConfig.setKeyCreator(new DifficultyIndexCreator(bitcoinFactory));
+      secondaryConfig.setBtreeComparator(new DifficultyComparator(bitcoinFactory));
       difficultyDatabase = environment.openSecondaryDatabase(null, DIFFICULTY_DB_NAME, linkDatabase, secondaryConfig);
       // Txhash index
       secondaryConfig = new SecondaryConfig();
       secondaryConfig.setAllowCreate(autoCreate);
       secondaryConfig.setTransactional(transactional);
       secondaryConfig.setSortedDuplicates(true);
-      secondaryConfig.setMultiKeyCreator(new TxHashIndexCreator(scriptFactory));
+      secondaryConfig.setMultiKeyCreator(new TxHashIndexCreator(bitcoinFactory));
       txhashDatabase = environment.openSecondaryDatabase(null, TXHASH_DB_NAME, linkDatabase, secondaryConfig);
       // Claims index
       secondaryConfig = new SecondaryConfig();
       secondaryConfig.setAllowCreate(autoCreate);
       secondaryConfig.setTransactional(transactional);
       secondaryConfig.setSortedDuplicates(true);
-      secondaryConfig.setMultiKeyCreator(new ClaimIndexCreator(scriptFactory));
+      secondaryConfig.setMultiKeyCreator(new ClaimIndexCreator(bitcoinFactory));
       claimDatabase = environment.openSecondaryDatabase(null, CLAIM_DB_NAME, linkDatabase, secondaryConfig);
       // Hight index
       secondaryConfig = new SecondaryConfig();
       secondaryConfig.setAllowCreate(autoCreate);
       secondaryConfig.setTransactional(transactional);
       secondaryConfig.setSortedDuplicates(true);
-      secondaryConfig.setKeyCreator(new HeightIndexCreator(scriptFactory));
+      secondaryConfig.setKeyCreator(new HeightIndexCreator(bitcoinFactory));
       heightDatabase = environment.openSecondaryDatabase(null, HEIGHT_DB_NAME, linkDatabase, secondaryConfig);
    }
 
    private void initializeViews()
    {
-      LinkBinding linkBinding = new LinkBinding(scriptFactory);
+      LinkBinding linkBinding = new LinkBinding(bitcoinFactory);
       BytesBinding bytesBinding = new BytesBinding();
       links = new StoredMap(linkDatabase,bytesBinding,linkBinding,true);
       nextLinks = new StoredMap(nexthashDatabase,bytesBinding,linkBinding,false);
-      difficultyLinks = new StoredSortedMap(difficultyDatabase,new DifficultyBinding(),linkBinding,false);
+      difficultyLinks = new StoredSortedMap(difficultyDatabase,new DifficultyBinding(bitcoinFactory),linkBinding,false);
       txhashLinks = new StoredMap(txhashDatabase,bytesBinding,linkBinding,false);
       claimLinks = new StoredMap(claimDatabase,new ClaimBinding(),linkBinding,false);
       heightLinks = new StoredMap(heightDatabase,new LongBinding(),linkBinding,false);

@@ -18,7 +18,7 @@
 
 package hu.netmind.bitcoin.block.bdb;
 
-import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 
 /**
  * Creates the secondary index for the height of the link. This only indexes if the link
@@ -27,11 +27,12 @@ import hu.netmind.bitcoin.ScriptFactory;
  */
 public class HeightIndexCreator extends TupleSecondaryKeyCreator<Long,StoredLink>
 {
-   public HeightIndexCreator(ScriptFactory scriptFactory)
+   public HeightIndexCreator(BitcoinFactory bitcoinFactory)
    {
-      super(new LongBinding(),new LinkBinding(scriptFactory));
+      super(new LongBinding(),new LinkBinding(bitcoinFactory));
    }
 
+  @Override
    public Long createSecondaryKey(StoredLink link)
    {
       if ( link.getLink().isOrphan() )

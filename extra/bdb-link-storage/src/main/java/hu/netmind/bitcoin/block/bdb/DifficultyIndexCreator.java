@@ -18,7 +18,7 @@
 
 package hu.netmind.bitcoin.block.bdb;
 
-import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.Difficulty;
 
 /**
@@ -28,11 +28,13 @@ import hu.netmind.bitcoin.block.Difficulty;
  */
 public class DifficultyIndexCreator extends TupleSecondaryKeyCreator<Difficulty,StoredLink>
 {
-   public DifficultyIndexCreator(ScriptFactory scriptFactory)
+          
+   public DifficultyIndexCreator(BitcoinFactory bitcoinFactory)
    {
-      super(new DifficultyBinding(),new LinkBinding(scriptFactory));
+      super(new DifficultyBinding(bitcoinFactory),new LinkBinding(bitcoinFactory));
    }
 
+  @Override
    public Difficulty createSecondaryKey(StoredLink link)
    {
       if ( link.getLink().isOrphan() )

@@ -18,7 +18,7 @@
 
 package hu.netmind.bitcoin.block.bdb;
 
-import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.block.BitcoinFactory;
 
 /**
  * Creates a secondary index from a link using the previous hash. This means
@@ -27,11 +27,12 @@ import hu.netmind.bitcoin.ScriptFactory;
  */
 public class NextHashIndexCreator extends TupleSecondaryKeyCreator<byte[],StoredLink>
 {
-   public NextHashIndexCreator(ScriptFactory scriptFactory)
+   public NextHashIndexCreator(BitcoinFactory bitcoinFactory)
    {
-      super(new BytesBinding(),new LinkBinding(scriptFactory));
+      super(new BytesBinding(),new LinkBinding(bitcoinFactory));
    }
 
+  @Override
    public byte[] createSecondaryKey(StoredLink link)
    {
       return link.getLink().getBlock().getPreviousBlockHash();
