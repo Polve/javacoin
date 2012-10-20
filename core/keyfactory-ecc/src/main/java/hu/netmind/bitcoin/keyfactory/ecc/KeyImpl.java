@@ -27,12 +27,10 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.lang.reflect.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.asn1.x9.X9ECParametersHolder;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
 import org.bouncycastle.crypto.params.ECDomainParameters;
@@ -40,10 +38,11 @@ import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
-import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERSequenceGenerator;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.DLSequence;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
 /**
@@ -123,8 +122,8 @@ public class KeyImpl implements Key
       {
          ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
          DERSequenceGenerator derOutput = new DERSequenceGenerator(byteOutput);
-         derOutput.addObject(new DERInteger(signature[0]));
-         derOutput.addObject(new DERInteger(signature[1]));
+         derOutput.addObject(new ASN1Integer(signature[0]));
+         derOutput.addObject(new ASN1Integer(signature[1]));
          derOutput.close();
          return byteOutput.toByteArray();
       } catch (IOException e) {
@@ -195,9 +194,9 @@ public class KeyImpl implements Key
          {
             // First, get back the "r" and "s" values from the concatenated DER signature
             ASN1InputStream derInput = new ASN1InputStream(signature);
-            DERSequence sequence = (DERSequence) derInput.readObject();
-            BigInteger r = ((DERInteger)sequence.getObjectAt(0)).getPositiveValue();
-            BigInteger s = ((DERInteger)sequence.getObjectAt(1)).getPositiveValue();
+            DLSequence sequence = (DLSequence) derInput.readObject();
+            BigInteger r = ((ASN1Integer)sequence.getObjectAt(0)).getPositiveValue();
+            BigInteger s = ((ASN1Integer)sequence.getObjectAt(1)).getPositiveValue();
             derInput.close();
             // Now verify
             ECDSASigner signer = new ECDSASigner();
