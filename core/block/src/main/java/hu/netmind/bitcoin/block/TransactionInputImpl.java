@@ -21,7 +21,7 @@ package hu.netmind.bitcoin.block;
 import java.util.List;
 import java.util.ArrayList;
 import hu.netmind.bitcoin.ScriptFragment;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
@@ -92,7 +92,7 @@ public class TransactionInputImpl implements TransactionInput
     */
    @Override
    public byte[] getSignatureHash(SignatureHashType type, ScriptFragment subscript)
-      throws BitCoinException
+      throws BitcoinException
    {
       List<TransactionInputImpl> inputs = new ArrayList<>();
       List<TransactionOutputImpl> outputs = new ArrayList<>();

@@ -18,7 +18,7 @@
 
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import java.math.BigInteger;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -38,13 +38,13 @@ public class DifficultyTests
       {
          prodnetFactory = new StandardBitcoinFactory(null);
          testnet2Factory = new Testnet2BitcoinFactory(null);
-      } catch (BitCoinException ex)
+      } catch (BitcoinException ex)
       {
          Assert.fail("Cant create factories: "+ex.getMessage(),ex);
       }
    }
    
-   public void testMaxTargetProdnet() throws BitCoinException
+   public void testMaxTargetProdnet() throws BitcoinException
    {
       Assert.assertEquals(prodnetFactory.maxDifficultyTarget().getTarget(),
             new BigInteger("FFFF0000000000000000000000000000000000000000000000000000",16));
@@ -53,7 +53,7 @@ public class DifficultyTests
             Long.toHexString(0x1d00ffffl));
    }
 
-   public void testMaxTargetTestnet() throws BitCoinException
+   public void testMaxTargetTestnet() throws BitcoinException
    {
       Assert.assertEquals(testnet2Factory.maxDifficultyTarget().getTarget(),
             new BigInteger("FFFFF0000000000000000000000000000000000000000000000000000",16));

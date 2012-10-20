@@ -16,7 +16,7 @@
 package it.nibbles.bitcoin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.block.BitcoinFactory;
@@ -167,7 +167,7 @@ public class BlockTool
    /**
     * Initialize and bind components together.
     */
-   public void init(OptionSet options) throws BitCoinException, ClassNotFoundException
+   public void init(OptionSet options) throws BitcoinException, ClassNotFoundException
    {
       scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
       bitcoinFactory = isTestNet3 ? new Testnet3BitcoinFactory(scriptFactory)

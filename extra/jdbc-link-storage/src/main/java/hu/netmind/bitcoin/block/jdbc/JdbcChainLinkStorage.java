@@ -15,7 +15,7 @@
  */
 package hu.netmind.bitcoin.block.jdbc;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Transaction;
@@ -498,7 +498,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
                return getCompleteBlock(dbConnection, b.hash, txs);
             }
          return null;
-      } catch (SQLException | BitCoinException e)
+      } catch (SQLException | BitcoinException e)
       {
          logger.error("getClaimedLink: " + e.getMessage(), e);
          throw new JdbcStorageException("getClaimedLinks: " + e.getMessage(), e);
@@ -861,7 +861,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       }
    }
 
-   protected TransactionImpl getTransaction(final Connection dbConnection, byte[] hash) throws SQLException, BitCoinException
+   protected TransactionImpl getTransaction(final Connection dbConnection, byte[] hash) throws SQLException, BitcoinException
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetTransaction))
       {
@@ -876,7 +876,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       }
    }
 
-   protected List<TransactionImpl> getBlockTransactions(final Connection dbConnection, ResultSet rs) throws SQLException, BitCoinException
+   protected List<TransactionImpl> getBlockTransactions(final Connection dbConnection, ResultSet rs) throws SQLException, BitcoinException
    {
       List<TransactionImpl> res = new LinkedList<>();
       while (rs.next())
@@ -893,7 +893,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       {
          ps.setBytes(1, hash);
          return getBlockTransactions(dbConnection, ps.executeQuery());
-      } catch (SQLException | BitCoinException e)
+      } catch (SQLException | BitcoinException e)
       {
          logger.error("getBlockByHashTransactionsEx: " + e.getMessage(), e);
          throw new JdbcStorageException("getBlockByHashTransactionsEx: " + e.getMessage(), e);
@@ -906,7 +906,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       {
          ps.setLong(1, blockId);
          return getBlockTransactions(dbConnection, ps.executeQuery());
-      } catch (SQLException | BitCoinException e)
+      } catch (SQLException | BitcoinException e)
       {
          logger.error("getBlockByIdTransactionsEx: " + e.getMessage(), e);
          throw new JdbcStorageException("getBlockByIdTransactionsEx: " + e.getMessage(), e);
@@ -934,7 +934,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
                     rs.getLong("height"));
          else
             return null;
-      } catch (SQLException | BitCoinException e)
+      } catch (SQLException | BitcoinException e)
       {
          logger.error("getCompleteBlockEx: " + e.getMessage(), e);
          throw new JdbcStorageException("getCompleteBlockEx: " + e.getMessage(), e);

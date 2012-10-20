@@ -30,7 +30,7 @@ import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.VerificationException;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.SignatureHashType;
 
 /**
@@ -183,7 +183,7 @@ public class TransactionTests
    }
 
    public void testValidTransaction()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // The data is taken from a real transaction, hash:
       // 4719e088cc1105e7aa636615a53f5e5b5082ec2201447e5d4e51449e6670a756
@@ -224,7 +224,7 @@ public class TransactionTests
    }
 
    public void testMinimalValidTransaction()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // First build the output
       TransactionOutputImpl output = new TransactionOutputImpl(203000000,
@@ -258,7 +258,7 @@ public class TransactionTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testInputsEmpty()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // First build the output
       TransactionOutputImpl output = new TransactionOutputImpl(203000000,
@@ -275,7 +275,7 @@ public class TransactionTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testOutputsEmpty()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // First build the output
       List<TransactionOutputImpl> outputs = new ArrayList<TransactionOutputImpl>();
@@ -305,7 +305,7 @@ public class TransactionTests
    }
 
    public void testSmallTransaction()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // First build the output
       TransactionOutputImpl output = new TransactionOutputImpl(203000000,
@@ -327,7 +327,7 @@ public class TransactionTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testNegativeMoney()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // First build the output
       TransactionOutputImpl output = new TransactionOutputImpl(-100000000l,
@@ -361,7 +361,7 @@ public class TransactionTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testTooMuchMoney()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // First build the output
       TransactionOutputImpl output = new TransactionOutputImpl(2200000000000000l,
@@ -395,7 +395,7 @@ public class TransactionTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testTooMuchTotalMoney()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // First build the output
       TransactionOutputImpl output1 = new TransactionOutputImpl(1100000000000000l,
@@ -432,7 +432,7 @@ public class TransactionTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testExpensiveScript()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // First build the output
       TransactionOutputImpl output1 = new TransactionOutputImpl(1100000000l,
@@ -468,7 +468,7 @@ public class TransactionTests
    }
 
    public void testCoinbaseScriptIsNotChecked()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // First build the output
       TransactionOutputImpl output1 = new TransactionOutputImpl(1100000000l,
@@ -493,7 +493,7 @@ public class TransactionTests
    }
 
    public void testCoinbase()
-      throws ScriptException, BitCoinException
+      throws ScriptException, BitcoinException
    {
       // First build the output
       TransactionOutputImpl output1 = new TransactionOutputImpl(1100000000l,
@@ -518,7 +518,7 @@ public class TransactionTests
    }
 
    public void testNotCoinbase()
-      throws ScriptException, BitCoinException
+      throws ScriptException, BitcoinException
    {
       // First build the output
       TransactionOutputImpl output1 = new TransactionOutputImpl(1100000000l,
@@ -614,7 +614,7 @@ public class TransactionTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testSelfReference()
-      throws BitCoinException
+      throws BitcoinException
    {
       // First build the 2 outputs with script
       TransactionOutputImpl output1 = new TransactionOutputImpl(203000000,
@@ -641,7 +641,7 @@ public class TransactionTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testTooComplexOutputTransaction()
-      throws BitCoinException
+      throws BitcoinException
    {
       // First build the output
       TransactionOutputImpl output = new TransactionOutputImpl(203000000,
@@ -674,7 +674,7 @@ public class TransactionTests
    }
 
    public void testTooComplexOutputButExemptTransaction()
-      throws BitCoinException
+      throws BitcoinException
    {
       // First build the output
       TransactionOutputImpl output = new TransactionOutputImpl(201000000,

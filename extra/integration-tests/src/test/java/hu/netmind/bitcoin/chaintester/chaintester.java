@@ -34,7 +34,7 @@ import hu.netmind.bitcoin.net.InvMessage;
 import hu.netmind.bitcoin.net.InventoryItem;
 import hu.netmind.bitcoin.net.GetDataMessage;
 import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
@@ -95,7 +95,7 @@ public class chaintester
     * Initialize and bind components together.
     */
    public void init()
-      throws BitCoinException
+      throws BitcoinException
    {
       // Initialize the chain
 
@@ -222,7 +222,7 @@ public class chaintester
                chain.addBlock(block);
                long stopTime = System.currentTimeMillis();
                logger.debug("added block in "+(stopTime-startTime)+" ms");
-            } catch ( BitCoinException e ) {
+            } catch ( BitcoinException e ) {
                logger.warn("block could not be added",e);
             }
          }

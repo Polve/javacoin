@@ -22,7 +22,7 @@ package hu.netmind.bitcoin;
  * Thrown when issues are encountered in a script.
  * @author Robert Brautigam
  */
-public class ScriptException extends BitCoinException
+public class ScriptException extends BitcoinException
 {
    public ScriptException(String message, Throwable e)
    {

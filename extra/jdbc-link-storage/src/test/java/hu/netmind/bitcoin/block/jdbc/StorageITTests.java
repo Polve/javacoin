@@ -15,7 +15,7 @@
  */
 package hu.netmind.bitcoin.block.jdbc;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.block.StandardBitcoinFactory;
 import hu.netmind.bitcoin.block.StorageProvider;
 import hu.netmind.bitcoin.block.TestSuiteFactory;
@@ -42,7 +42,7 @@ public class StorageITTests
             JdbcChainLinkStorage storage = new JdbcChainLinkStorage(new StandardBitcoinFactory(new ScriptFactoryImpl(null)));
                storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_test", "javacoin", "pw"));
             return storage;
-            } catch (BitCoinException ex) {
+            } catch (BitcoinException ex) {
                throw new RuntimeException("Can't instance JDBC storage: "+ex.getMessage(), ex);
             } catch (ClassNotFoundException ex)
             {

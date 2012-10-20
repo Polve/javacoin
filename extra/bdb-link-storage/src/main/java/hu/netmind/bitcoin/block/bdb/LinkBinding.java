@@ -25,7 +25,7 @@ import hu.netmind.bitcoin.block.TransactionOutputImpl;
 import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.TransactionImpl;
 import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionOutput;
@@ -88,7 +88,7 @@ public class LinkBinding extends TupleBinding<StoredLink>
          byte[] hash = readBytes(in,32);
          return new BlockImpl(transactions,creationTime,nonce,compressedTarget,previousBlockHash,
                merkleRoot,hash);
-      } catch ( BitCoinException e ) {
+      } catch ( BitcoinException e ) {
          throw new BDBStorageException("could not create block",e);
       }
    }
@@ -108,7 +108,7 @@ public class LinkBinding extends TupleBinding<StoredLink>
          byte[] hash = readBytes(in,32);
          long lockTime = in.readLong();
          return new TransactionImpl(inputs,outputs,lockTime,hash);
-      } catch ( BitCoinException e ) {
+      } catch ( BitcoinException e ) {
          throw new BDBStorageException("could not create transaction",e);
       }
    }

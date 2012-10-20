@@ -1,6 +1,6 @@
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.ScriptFactory;
 
@@ -12,7 +12,7 @@ public class TesterBitcoinFactory extends StandardBitcoinFactory
 {
    private Block genesisBlock;
 
-   public TesterBitcoinFactory(Block genesisBlock, ScriptFactory scriptFactory) throws BitCoinException
+   public TesterBitcoinFactory(Block genesisBlock, ScriptFactory scriptFactory) throws BitcoinException
    {
       super(scriptFactory);
       this.genesisBlock = genesisBlock;

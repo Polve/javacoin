@@ -19,7 +19,7 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Script;
@@ -61,7 +61,7 @@ public class BlockChainTests
    }
 
    public void testGenesisOk()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       Block genesisBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 01;");
@@ -74,7 +74,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testWrongGenesis()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       Block genesisBlock = BlockMock.createBlock(
             "block 1234567 1 1b0404cb 00 010203 01;");
@@ -88,7 +88,7 @@ public class BlockChainTests
    }
 
    public void testGenesisInitialization()
-      throws VerificationException, BitCoinException
+      throws VerificationException, BitcoinException
    {
       // Construct block chain with genesis block
       Block genesisBlock = BlockMock.createBlock(
@@ -113,14 +113,14 @@ public class BlockChainTests
    }
 
    private DummyStorage testAddBlockTemplate(String chainBlocks, String newBlock, boolean scriptSuccess)
-      throws BitCoinException
+      throws BitcoinException
    {
       return testAddBlockTemplate(chainBlocks,newBlock,scriptSuccess,0);
    }
 
    private DummyStorage testAddBlockTemplate(String chainBlocks, String newBlock, boolean scriptSuccess,
          long blockOffset)
-      throws BitCoinException
+      throws BitcoinException
    {
       // Construct a block chain and storage
       long startTime = System.currentTimeMillis();
@@ -141,7 +141,7 @@ public class BlockChainTests
    }
 
    public void testAddValidBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       DummyStorage storage = testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -172,7 +172,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testAddInvalidBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -198,7 +198,7 @@ public class BlockChainTests
    }
 
    public void testAddExisting()
-      throws BitCoinException
+      throws BitcoinException
    {
       // Block will be ignore, shouldn't throw exception
       testAddBlockTemplate(
@@ -226,7 +226,7 @@ public class BlockChainTests
 
    // This test is now not useful anymore: orphan blocks are not persisted in the storage
 //   public void testAddIndirectlyOrphan()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      DummyStorage storage = testAddBlockTemplate(
 //            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -256,7 +256,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testAddMoreDifficultyBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -283,7 +283,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions = VerificationException.class)
    public void testAddLessDifficultyBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -309,7 +309,7 @@ public class BlockChainTests
    }
 
    public void testAddDifficultyChangedBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       // Create a block chain that has 2016 blocks, so the next one
       // will trigger a re-calculation. Make all blocks 9 minutes apart,
@@ -337,7 +337,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testAddWrongDifficultyChangedBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       // Just as testAddDifficultyChangedBlock() but wrong block to add
       StringBuilder blocks = new StringBuilder();
@@ -357,7 +357,7 @@ public class BlockChainTests
    }
 
    public void testAddDifficultyExtremeSmallBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       // Leave extremely small timeslots, and check that difficulty is not
       // cranked up all the way. The rate of change should max out at 4 times
@@ -380,7 +380,7 @@ public class BlockChainTests
    }
 
    public void testRightMedianBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       StringBuilder blocks = new StringBuilder();
       long[] times = new long[] { 100, 10, 20, 30, 40, 50, 200, 300, 400, 500, 1000 };
@@ -400,7 +400,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testWrongMedianBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       StringBuilder blocks = new StringBuilder();
       long[] times = new long[] { 100, 10, 20, 30, 40, 50, 200, 300, 400, 500, 1000 };
@@ -419,7 +419,7 @@ public class BlockChainTests
    }
 
    public void testValidKnownHashes()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 1122334455;"+ // Genesis block
@@ -446,7 +446,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testInvalidKnownHashes()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 1122334455;"+ // Genesis block
@@ -473,7 +473,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testInvalidTransactionAdd()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -500,7 +500,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testOutputIsMoreThanInput()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -527,7 +527,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testOutputsAreMoreThanInput()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -555,7 +555,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testNoTransactionReferredExists()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -582,7 +582,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testReferredTransactionExistsInSideBranch()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -617,7 +617,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testReferToNonExistingOutput()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -644,7 +644,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testReferToYoungCoinbase()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -670,7 +670,7 @@ public class BlockChainTests
    }
 
    public void testUseOldCoinbaseOutput()
-      throws BitCoinException
+      throws BitcoinException
    {
       // Construct a chain with sufficient length to use the coinbase (which is
       // 100 blocks, about 16 hours)
@@ -694,7 +694,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testAddTransactionWithWrongScript()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -721,7 +721,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testSpendAlreadySpentOutput()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -755,7 +755,7 @@ public class BlockChainTests
    }
 
    public void testSpendAlreadySpentOutputOnOtherBranch()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -790,7 +790,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testCreateMoreMoneyThanAllowed()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -817,7 +817,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testUseMoreMoneyThanAvailable()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -843,7 +843,7 @@ public class BlockChainTests
    }
 
    public void testUseFeesInCoinbase()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -870,7 +870,7 @@ public class BlockChainTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testUseMoreMoneyThanAvailableAfterMiningChange()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -885,7 +885,7 @@ public class BlockChainTests
    }
 
    public void testUseExactMiningAmountRightBeforeChange()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -901,7 +901,7 @@ public class BlockChainTests
 
    // These tests are no more valid because we do not guarantee to keep orphans
 //   public void testActivateOrphanChain()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      DummyStorage storage = testAddBlockTemplate(
 //            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -923,7 +923,7 @@ public class BlockChainTests
 //   }
 //
 //   public void testActivateInvalidOrphan()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      DummyStorage storage = testAddBlockTemplate(
 //            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -945,7 +945,7 @@ public class BlockChainTests
 //   }
 //
 //   public void testAddOrphan()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      DummyStorage storage = testAddBlockTemplate(
 //            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -974,7 +974,7 @@ public class BlockChainTests
 //   }
 
    public void testReferToSameBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       testAddBlockTemplate(
             "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
@@ -1003,7 +1003,7 @@ public class BlockChainTests
    }
    
    public void testNormalCommonBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       List<Block> blocks = BlockMock.createBlocks(
          "block 1234567 1 1b0404cb 00 010203 01;"
@@ -1045,7 +1045,7 @@ public class BlockChainTests
    }
 
    public void testNoCommonBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       List<Block> blocks = BlockMock.createBlocks(
             "block 1234567 1 1b0404cb 00 010203 01;"+

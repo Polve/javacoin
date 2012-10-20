@@ -72,6 +72,6 @@ public interface TransactionInput extends Serializable
     * @return The signature compatible with BitCoin.
     */
    byte[] getSignatureHash(SignatureHashType type, ScriptFragment subscript)
-      throws BitCoinException;
+      throws BitcoinException;
 }
 

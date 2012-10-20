@@ -18,7 +18,7 @@
 
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.net.ArraysUtil;
 import java.util.SortedSet;
@@ -60,7 +60,7 @@ public class MerkleTree
    private MessageDigest digest = null;
 
    public MerkleTree(List<? extends Transaction> transactions)
-      throws BitCoinException
+      throws BitcoinException
    {
       this(null,transactions);
    }
@@ -71,7 +71,7 @@ public class MerkleTree
     * @param transactions Transactions to build the tree with.
     */
    public MerkleTree(List<MerkleNode> outerNodes, List<? extends Transaction> transactions)
-      throws BitCoinException
+      throws BitcoinException
    {
       this.outerNodes=outerNodes;
       if ( this.outerNodes == null )
@@ -81,7 +81,7 @@ public class MerkleTree
       {
          digest = MessageDigest.getInstance("SHA-256");
       } catch ( NoSuchAlgorithmException e ) {
-         throw new BitCoinException("can not find sha-256 algorithm for merkle hash calculation",e);
+         throw new BitcoinException("can not find sha-256 algorithm for merkle hash calculation",e);
       }
    }
 

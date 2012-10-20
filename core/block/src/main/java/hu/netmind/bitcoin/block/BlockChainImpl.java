@@ -68,40 +68,35 @@ public class BlockChainImpl extends Observable implements BlockChain
    private BlockChainListener listener = null;
    //private ScriptFactory scriptFactory = null;
    private BitcoinFactory bitcoinFactory = null;
-   private boolean simplifedVerification = false;
+   private boolean simplifiedVerification = false;
    //private boolean isTestnet = false;
-   private ParallelTransactionVerifier parallelVerifier;
+   //private ParallelTransactionsVerifier parallelVerifier;
+   private BlockTransactionsVerifier transactionsVerifier;
+
+   public BlockChainImpl(BitcoinFactory bitcoinFactory, BlockChainLinkStorage linkStorage,
+      boolean simplifiedVerification)
+      throws VerificationException
+   {
+      this(bitcoinFactory, linkStorage, simplifiedVerification, 0);
+   }
 
    /**
     * Construct a new block chain.
     * @param genesisBlock The valid genesis block for this chain.
     * @param linkStorage The store to get/store the chain links.
-    * @param simplifedVerification Set to "true" to disable transaction checking. If this
+    * @param simplifiedVerification Set to "true" to disable transaction checking. If this
     * is disabled the bitcoin network (whoever supplies blocks) is trusted instead. You have to
     * disable this check if you don't want to run a full node.
+    * @param maxThreads Hints to maximum number of threads to use in the computing.
+    * If zero autodetects the best value, if greater than zero uses at most that level of parallelism
     */
-//   public BlockChainImpl(Block genesisBlock, BlockChainLinkStorage linkStorage,
-//         ScriptFactory scriptFactory, boolean simplifedVerification)
-//      throws VerificationException
-//   {
-//      this(genesisBlock, linkStorage, scriptFactory, simplifedVerification, false);
-//   }
-   
-   /**
-    * Construct a new block chain.
-    * @param genesisBlock The valid genesis block for this chain.
-    * @param linkStorage The store to get/store the chain links.
-    * @param simplifedVerification Set to "true" to disable transaction checking. If this
-    * is disabled the bitcoin network (whoever supplies blocks) is trusted instead. You have to
-    * disable this check if you don't want to run a full node.
-    * @param isTestnet set to true to handle different difficulty and validation rules of the test network
-    */
-   public BlockChainImpl(BitcoinFactory bitcoinFactory, BlockChainLinkStorage linkStorage, boolean simplifedVerification)
+   public BlockChainImpl(BitcoinFactory bitcoinFactory, BlockChainLinkStorage linkStorage,
+      boolean simplifiedVerification, int maxThreads)
       throws VerificationException
    {
       this.linkStorage=linkStorage;
       this.bitcoinFactory=bitcoinFactory;
-      this.simplifedVerification=simplifedVerification;
+      this.simplifiedVerification=simplifiedVerification;
       // Check if the genesis blocks equal, or add genesis block if storage is empty.
       // Here we assume that the storage is not tampered!
       BlockChainLink storedGenesisLink = linkStorage.getGenesisLink();
@@ -116,31 +111,11 @@ public class BlockChainImpl extends Observable implements BlockChain
          if ( ! storedGenesisLink.getBlock().equals(bitcoinFactory.getGenesisBlock()) )
             throw new VerificationException("genesis block in storage is not the same as the block chain's");
       }
-      parallelVerifier = new ParallelTransactionVerifier(0);
+      if (maxThreads == 1)
+         transactionsVerifier = new SerialTransactionsVerifier(linkStorage, bitcoinFactory.getScriptFactory(), simplifiedVerification);
+      else
+         transactionsVerifier = new ParallelTransactionsVerifier(linkStorage, bitcoinFactory.getScriptFactory(), simplifiedVerification, maxThreads);
    }
-//   public BlockChainImpl(Block genesisBlock, BlockChainLinkStorage linkStorage,
-//         ScriptFactory scriptFactory, boolean simplifedVerification, boolean isTestnet)
-//      throws VerificationException
-//   {
-//      this.linkStorage=linkStorage;
-//      this.scriptFactory=scriptFactory;
-//      this.simplifedVerification=simplifedVerification;
-//      this.genesisBlock=genesisBlock;
-//      this.isTestnet = isTestnet;
-//      // Check if the genesis blocks equal, or add genesis block if storage is empty.
-//      // Here we assume that the storage is not tampered!
-//      BlockChainLink storedGenesisLink = linkStorage.getGenesisLink();
-//      if ( storedGenesisLink == null )
-//      {
-//         BlockChainLink genesisLink = new BlockChainLink(genesisBlock,
-//               new Difficulty(new DifficultyTarget(genesisBlock.getCompressedTarget()), isTestnet),BlockChainLink.ROOT_HEIGHT,false);
-//         linkStorage.addLink(genesisLink);
-//      } else {
-//         if ( ! storedGenesisLink.getBlock().equals(genesisBlock) )
-//            throw new VerificationException("genesis block in storage is not the same as the block chain's");
-//      }
-//      parallelVerifier = new ParallelTransactionVerifier(0);
-//   }
 
    public void setListener(BlockChainListener listener)
    {
@@ -305,7 +280,8 @@ public class BlockChainImpl extends Observable implements BlockChain
       try
       {
          //time = System.currentTimeMillis();
-         blockFees = parallelVerifier.verifyTransactions(linkStorage, bitcoinFactory.getScriptFactory(), previousLink, block, simplifedVerification);
+         //blockFees = parallelVerifier.verifyBlockTransactions(linkStorage, bitcoinFactory.getScriptFactory(), previousLink, block, simplifedVerification);
+         blockFees = transactionsVerifier.verifyBlockTransactions(previousLink, block);
          //long time3 = System.currentTimeMillis() - time;
          //if (blockFees != parallelFees)
          //   throw new VerificationException("Calcolo fee non corrispondente: " + blockFees + " vs " + parallelFees);
@@ -322,7 +298,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       Transaction coinbaseTx = null;
       if (!block.getTransactions().isEmpty())
          coinbaseTx = block.getTransactions().get(0);
-      if ((!simplifedVerification) && (coinbaseTx.isCoinbase()))
+      if ((!simplifiedVerification) && (coinbaseTx.isCoinbase()))
       {
          long coinbaseValue = 0;
          for (TransactionOutput out : coinbaseTx.getOutputs())
@@ -353,35 +329,6 @@ public class BlockChainImpl extends Observable implements BlockChain
          blocksAdded += connectOrphanBlocks(block);
       }
       return blocksAdded;
-   }
-   
-   private long serialTransactionVerifier(BlockChainLink previousLink, Block block) throws VerificationException {
-      long inValue = 0;
-      long outValue = 0;
-      for (Transaction tx : block.getTransactions())
-      {
-         // Validate without context
-         tx.validate();
-         // Checks 16.1.1-7: Verify only if this is supposed to be a full node
-         long localInValue;
-         long localOutValue = 0;
-         if ((!simplifedVerification) && (!tx.isCoinbase()))
-         {
-            localInValue = verifyTransaction(previousLink, block, tx);
-            for (TransactionOutput out : tx.getOutputs())
-            {
-               localOutValue += out.getValue();
-            }
-            inValue += localInValue;
-            outValue += localOutValue;
-            // Check 16.1.6: Using the referenced output transactions to get
-            // input values, check that each input value, as well as the sum, are in legal money range
-            // Check 16.1.7: Reject if the sum of input values < sum of output values
-            if (localInValue < localOutValue)
-               throw new VerificationException("more money spent (" + localOutValue + ") then available (" + localInValue + ") in transaction: " + tx);
-         }
-      }
-      return inValue - outValue;
    }
    
    /**
@@ -425,75 +372,6 @@ public class BlockChainImpl extends Observable implements BlockChain
    private long getBlockCoinbaseValue(BlockChainLink link)
    {
       return (INITIAL_COINBASE_VALUE) >> (link.getHeight()/COINBASE_VALUE_HALFTIME);
-   }
-
-   /**
-    * Search for a specific transaction in a block.
-    * @param block The block to search transaction in.
-    * @param txHash The transaction hash to match.
-    * @return The transaction in the block which has the given hash, null otherwise.
-    */
-   private Transaction getTransaction(Block block, byte[] txHash)
-   {
-      for ( Transaction txCandidate : block.getTransactions() )
-         if ( Arrays.equals(txCandidate.getHash(),txHash) )
-            return txCandidate;
-      return null;
-   }
-
-   /**
-    * Verify that a transaction is valid according to sub-rules applying to the block
-    * tree.
-    * @param link The link that represents the branch if the new transaction.
-    * @param block The block we're trying to add.
-    * @return The total value of the inputs after verification.
-    */
-   private long verifyTransaction(BlockChainLink link, Block block, Transaction tx)
-      throws VerificationException
-   {
-      long value = 0;
-      for ( TransactionInput in : tx.getInputs() )
-      {
-         // Check 16.1.1: For each input, look in the [same] branch to find the 
-         // referenced output transaction. Reject if the output transaction is missing for any input. 
-         Transaction outTx = null;
-         BlockChainLink outLink = linkStorage.getPartialClaimedLink(link, in);
-         if ( outLink != null ) // Check in chain before
-            outTx = getTransaction(outLink.getBlock(),in.getClaimedTransactionHash());
-         if ( outTx == null ) // Check in this block if not yet found
-            outTx = getTransaction(block,in.getClaimedTransactionHash());
-         if ( outTx == null )
-            throw new VerificationException("transaction output not found for input: "+in);
-         // Check 16.1.2: For each input, if we are using the nth output of the 
-         // earlier transaction, but it has fewer than n+1 outputs, reject. 
-         if ( outTx.getOutputs().size() <= in.getClaimedOutputIndex() )
-            throw new VerificationException("transaction output index for input is out of range: "+
-                  (in.getClaimedOutputIndex()+1)+" vs. "+outTx.getOutputs().size());
-         // Check 16.1.3: For each input, if the referenced output transaction is coinbase,
-         // it must have at least COINBASE_MATURITY confirmations; else reject. 
-         if ( (outTx.isCoinbase()) && (outLink.getHeight()+COINBASE_MATURITY > link.getHeight()) )
-            throw new VerificationException("input ("+in+") referenced coinbase transaction "+
-               outTx+" which was not mature enough (only "+(link.getHeight()-outLink.getHeight()+1)+" blocks before)");
-         // Check 16.1.4: Verify crypto signatures for each input; reject if any are bad 
-         TransactionOutput out = outTx.getOutputs().get(in.getClaimedOutputIndex());
-         value += out.getValue(); // Remember value that goes in from this out
-         try
-         {
-            Script script = bitcoinFactory.getScriptFactory().createScript(in.getSignatureScript(), out.getScript());
-            if ( ! script.execute(in) )
-               throw new VerificationException("verification script for input "+in+" returned 'false' for verification, script was: "+
-                  script+" in tx "+BtcUtil.hexOut(tx.getHash()));
-         } catch ( ScriptException e ) {
-            throw new VerificationException("verification script for input "+in+" in tx "+BtcUtil.hexOut(tx.getHash())+" failed to execute",e);
-         }
-         // Check 16.1.5: For each input, if the referenced output has already been
-         // spent by a transaction in the [same] branch, reject 
-         if ( linkStorage.outputClaimedInSameBranch(link, in))
-            throw new VerificationException("Block: "+BtcUtil.hexOut(block.getHash())+" Tx: "+BtcUtil.hexOut(tx.getHash())+
-               " output claimed by "+in+" is already claimed in another block of the same branch: "+
-               BtcUtil.hexOut(linkStorage.getClaimerLink(link, in).getBlock().getHash()));
-      }
-      return value;
    }
 
    /**
@@ -662,4 +540,3 @@ public class BlockChainImpl extends Observable implements BlockChain
    }
 
 }
-

@@ -17,7 +17,7 @@
  */
 package hu.netmind.bitcoin.block.bdb;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.StandardBitcoinFactory;
 import hu.netmind.bitcoin.block.StorageProvider;
@@ -44,7 +44,7 @@ public class StorageITTests {
         BitcoinFactory bitcoinFactory;
         try {
           bitcoinFactory = new StandardBitcoinFactory(new ScriptFactoryImpl(null));
-        } catch (BitCoinException ex) {
+        } catch (BitcoinException ex) {
           logger.error("Cant instantiate StandardBitcoinFactory: " + ex.getMessage(), ex);
           return null;
         }
