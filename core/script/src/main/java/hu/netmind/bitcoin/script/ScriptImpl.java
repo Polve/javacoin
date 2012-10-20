@@ -1003,7 +1003,7 @@ public class ScriptImpl extends ScriptFragmentImpl implements Script
                new BigInteger(1,transactionHash).toString(16), BtcUtil.hexOut(pubKey));
          if ( logger.isDebugEnabled() )
             logger.debug("running verification, signature script: {}",subscript);
-      } catch ( BitCoinException e ) {
+      } catch ( BitcoinException e ) {
          throw new ScriptException("could not generate signature hash");
       }
       // Now check that the sig is the encrypted transaction hash (done with the

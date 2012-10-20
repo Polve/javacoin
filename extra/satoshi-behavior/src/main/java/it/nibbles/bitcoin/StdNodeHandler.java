@@ -17,10 +17,9 @@
  */
 package it.nibbles.bitcoin;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
@@ -35,8 +34,14 @@ import hu.netmind.bitcoin.net.p2p.NodeStorage;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,7 +177,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
             tx.validate();
             long diffTime = System.currentTimeMillis() - startTime;
             logger.debug("New transaction {} validated in {} ms", BtcUtil.hexOut(tx.getHash()), diffTime);
-         } catch (BitCoinException ex)
+         } catch (BitcoinException ex)
          {
             logger.error("Can't create transaction from tx message: " + message);
          }
@@ -197,7 +202,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
             chain.addBlock(block);
             long stopTime = System.currentTimeMillis();
             logger.debug("Block " + BtcUtil.hexOut(block.getHash()) + " with " + block.getTransactions().size() + " transactions added in " + (stopTime - startTime) + " ms ");
-         } catch (BitCoinException e)
+         } catch (BitcoinException e)
          {
             logger.warn("block could not be added, marking peer " + conn + " as unreliable", e);
             if (peerData != null && block != null)

@@ -23,7 +23,7 @@ package hu.netmind.bitcoin;
  * is found to be compromised, or can not be successfully verified.
  * @author Robert Brautigam
  */
-public class VerificationException extends BitCoinException
+public class VerificationException extends BitcoinException
 {
    public VerificationException(String message)
    {

@@ -17,7 +17,7 @@
  */
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.ScriptFactory;
 import it.nibbles.bitcoin.utils.BtcUtil;
 
@@ -28,7 +28,7 @@ import it.nibbles.bitcoin.utils.BtcUtil;
 public class Testnet3BitcoinFactory extends StandardBitcoinFactory
 {
 
-   public Testnet3BitcoinFactory(ScriptFactory scriptFactory) throws BitCoinException
+   public Testnet3BitcoinFactory(ScriptFactory scriptFactory) throws BitcoinException
    {
       this.scriptFactory = scriptFactory;
       this.isTestnet3 = true;

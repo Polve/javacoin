@@ -22,14 +22,14 @@ package hu.netmind.bitcoin;
  * The root of all exceptions coming from this API.
  * @author Robert Brautigam
  */
-public class BitCoinException extends Exception
+public class BitcoinException extends Exception
 {
-   public BitCoinException(String message)
+   public BitcoinException(String message)
    {
       super(message);
    }
 
-   public BitCoinException(String message, Throwable e)
+   public BitcoinException(String message, Throwable e)
    {
       super(message,e);
    }

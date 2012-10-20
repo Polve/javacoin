@@ -20,7 +20,7 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.ScriptFactory;
@@ -43,7 +43,7 @@ import java.util.ArrayList;
 public class BlockTests
 {
    public void testBlockHashCalculation()
-      throws BitCoinException
+      throws BitcoinException
    {
       // This example is from the real block:
       // 00000000000000ed4c7dea403573c2dbddd505daef6e3aee0e9cf855686aad00
@@ -56,7 +56,7 @@ public class BlockTests
    }
 
    public void testValidBlock()
-      throws BitCoinException, VerificationException
+      throws BitcoinException, VerificationException
    {
       // Construct block with minimal transactions, that is only a coinbase
       TransactionImpl tx = new TransactionImpl(
@@ -73,7 +73,7 @@ public class BlockTests
    }
 
    public void testEmptyTransactions()
-      throws BitCoinException, VerificationException
+      throws BitcoinException, VerificationException
    {
       // Construct block with minimal transactions, that is only a coinbase
       List<TransactionImpl> transactions = new ArrayList<TransactionImpl>();
@@ -84,7 +84,7 @@ public class BlockTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testFalseDifficulty()
-      throws BitCoinException, VerificationException
+      throws BitcoinException, VerificationException
    {
       // Construct block with minimal transactions, that is only a coinbase
       List<TransactionImpl> transactions = new ArrayList<TransactionImpl>();
@@ -99,7 +99,7 @@ public class BlockTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testBlockWithInvalidTransaction()
-      throws BitCoinException, VerificationException
+      throws BitcoinException, VerificationException
    {
       // Construct block with minimal transactions, that don't validate
       TransactionImpl tx = new TransactionImpl(
@@ -117,7 +117,7 @@ public class BlockTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testBlockWrongMerkleRoot()
-      throws BitCoinException, VerificationException
+      throws BitcoinException, VerificationException
    {
       // Construct block with minimal transactions, that is only a coinbase
       TransactionImpl tx = new TransactionImpl(
@@ -135,7 +135,7 @@ public class BlockTests
 
    @Test(expectedExceptions=VerificationException.class)
    public void testSameOutputTwice()
-      throws BitCoinException, VerificationException
+      throws BitcoinException, VerificationException
    {
       TransactionImpl tx1 = new TransactionImpl(
             Arrays.asList(new TransactionInputImpl[] { new TransactionInputImpl(new byte[] {1,2,3}, 2, createMockScript(), 1) }),
@@ -157,7 +157,7 @@ public class BlockTests
 
    // TODO: Probabilmente questo test è ormai inutile in quanto integrato nella factory
 //   public void testMainGenesisBlock()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      //BlockImpl genesis = BlockImpl.MAIN_GENESIS;
 //      byte[] hash = genesis.calculateHash();
@@ -168,7 +168,7 @@ public class BlockTests
 //   }
 
    public void testConvertToMessageAndBack()
-      throws BitCoinException, IOException
+      throws BitcoinException, IOException
    {
       // Construct a non-trivial valid block
       TransactionImpl tx1 = new TransactionImpl(

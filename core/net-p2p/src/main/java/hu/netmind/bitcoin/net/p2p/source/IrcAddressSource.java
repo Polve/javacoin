@@ -19,7 +19,7 @@
  */
 package hu.netmind.bitcoin.net.p2p.source;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.net.p2p.AddressSource;
 import it.nibbles.bitcoin.utils.Base58;
 import it.nibbles.bitcoin.utils.BtcUtil;
@@ -215,7 +215,7 @@ public class IrcAddressSource implements AddressSource
             //
             // decodeChecked removes the checksum from the returned bytes.
             addressBytes = Base58.decodeChecked(user.substring(1));
-         } catch (BitCoinException e)
+         } catch (BitcoinException e)
          {
             logger.warn("IRC nick does not parse as base58: " + user+" error: "+e.getMessage());
             continue;

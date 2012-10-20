@@ -19,7 +19,7 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.ScriptFragment;
@@ -45,7 +45,7 @@ public class OrphanBlockSetTests
 {
 
    public void testEmptySet()
-      throws BitCoinException
+      throws BitcoinException
    {
       OrphanBlocksSet set = new OrphanBlocksSet();
       Assert.assertNull(set.removeBlockByPreviousHash(new byte[]
@@ -55,7 +55,7 @@ public class OrphanBlockSetTests
    }
 
    public void test2()
-      throws BitCoinException
+      throws BitcoinException
    {
       byte[] hash = new byte[]
       {

@@ -18,7 +18,7 @@
 
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
@@ -59,7 +59,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGenesisStoreRecall()
-      throws BitCoinException
+      throws BitcoinException
    {
      BitcoinFactory factory = new StandardBitcoinFactory(new ScriptFactoryImpl(new KeyFactoryImpl(null)));
      Block genesis = factory.getGenesisBlock();
@@ -78,7 +78,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testAllAttributesCorrectlyRecalled()
-      throws BitCoinException
+      throws BitcoinException
    {
       List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
       List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
@@ -132,7 +132,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testAllAttributesCorrectlyRecalledAfterRestart()
-      throws BitCoinException
+      throws BitcoinException
    {
       List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
       List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
@@ -189,20 +189,20 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testNonExistentGet()
-      throws BitCoinException
+      throws BitcoinException
    {
       Assert.assertNull(storage.getLink(
             new byte[] { 1,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }));
    }
 
    public void testGenesisEmpty()
-      throws BitCoinException
+      throws BitcoinException
    {
       Assert.assertNull(storage.getGenesisLink());      
    }
 
    public void testGenesisNormalBlocks()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -212,13 +212,13 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testLastLinkEmpty()
-      throws BitCoinException
+      throws BitcoinException
    {
       Assert.assertNull(storage.getLastLink());      
    }
 
    public void testLastLinkConcept()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -228,7 +228,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testLastLinkOnShorterBranch()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
 
@@ -244,7 +244,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testLastLinkConpetingBranches()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
 
@@ -260,7 +260,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetLinkConcept()
-      throws BitCoinException
+      throws BitcoinException
    {
       for ( int i=0; i<5; i++ )
          addLink(i+1,i,i,i+1,false);
@@ -269,7 +269,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetLinkAfterRestart()
-      throws BitCoinException
+      throws BitcoinException
    {
       for ( int i=0; i<5; i++ )
          addLink(i+1,i,i,i+1,false);
@@ -280,7 +280,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetNextLinksNonExistentHash()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -291,7 +291,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetNextLinksConcept()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -302,7 +302,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetNextLinksMultipleBranches()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -314,7 +314,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimedLinkConcept()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -325,7 +325,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimedLinkIsLastInBranch()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -336,7 +336,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimedLinkDoesNotExist()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -347,7 +347,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimedLinkOnMultipleBranches()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -359,7 +359,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimedLinkOnlyOnOtherBranch()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -373,7 +373,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimedLinkNotEnoughOutputs()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -384,7 +384,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimerLinkConcept()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -395,7 +395,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimerLinkIsLastInBranch()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -406,7 +406,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimerLinkDoesNotExist()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -417,7 +417,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimerLinkOnMultipleBranches()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -429,7 +429,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimerLinkOnlyOnOtherBranch()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -443,7 +443,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testGetClaimerLinkDifferingOutputs()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -454,7 +454,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testCommonAncestorConcept()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -481,7 +481,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testReachableConcept()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -497,7 +497,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testNonReachable()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -509,7 +509,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testSingleBranchNextBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -520,7 +520,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testMultiBranchNextBlock()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -535,7 +535,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testNextBlockWithInvalidTarget()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -546,7 +546,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    public void testNextBlockToUnreachableTarget()
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(23,0,0,1,false);
       addLink(24,23,1,2,false);
@@ -572,7 +572,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
     */
    private void addLink(int hash, int prevHash, long height, long totalDifficulty, boolean orphan,
          int claimedTxHash, int claimedOutputIndex)
-      throws BitCoinException
+      throws BitcoinException
    {
       // Generate random transactions (these are not even referentially valid)
       List<TransactionImpl> transactions = new LinkedList<TransactionImpl>();
@@ -616,7 +616,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
    private void addLink(int hash, int prevHash, long height, long totalDifficulty, boolean orphan)
-      throws BitCoinException
+      throws BitcoinException
    {
       addLink(hash,prevHash,height,totalDifficulty,orphan,0,0);
    }
@@ -642,7 +642,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
     * This method validates that a block is consistent by re-generating all hashes.
     */
    private void validateBlock(Block block)
-      throws BitCoinException
+      throws BitcoinException
    {
       // Copy
       List<TransactionImpl> transactions = new LinkedList<TransactionImpl>();
@@ -664,7 +664,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    }
 
 //   public void testGenesisOrphanBlocks()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      addLink(24,0,0,1,true);
 //      addLink(25,0,1,2,true);
@@ -674,7 +674,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   }
 //
 //   public void testGetNextLinkOrphan()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      addLink(23,0,0,1,false);
 //      addLink(24,23,1,2,false);
@@ -685,7 +685,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   }
 //
 //   public void testGetOrphanClaimerLink()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      addLink(23,0,0,1,false);
 //      addLink(24,23,1,2,false);
@@ -697,7 +697,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   }
 //
 //   public void testGetSomeOrphanLinks()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      for ( int i=0; i<5; i++ )
 //         addLink(i+1,i,i,i+1,i%2==0);
@@ -706,7 +706,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   }
 //
 //   public void testLastLinkWithHigherDifficultyOrphan()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      addLink(23,0,0,1,false);
 //      addLink(24,23,1,2,false);
@@ -717,7 +717,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   }
 //
 //   public void testNextBlockOfOrphan()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      addLink(23,0,0,1,false);
 //      addLink(24,23,1,2,false);
@@ -728,7 +728,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   }
 //
 //   public void testNextBlockWithOrphanTarget()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      addLink(23,0,0,1,false);
 //      addLink(24,23,1,2,false);
@@ -739,7 +739,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   }
 //
 //   public void testNoCommonAncestor()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      addLink(23,0,0,1,false);
 //      addLink(24,23,1,2,false);
@@ -752,7 +752,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   }
 //
 //   public void testNoLastLinkFromOrphans()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      addLink(23,0,0,1,true);
 //      addLink(24,23,1,2,true);
@@ -762,7 +762,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   }
 //
 //   public void testOrphanNotReachable()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      addLink(23,0,0,1,false);
 //      addLink(24,23,1,2,false);
@@ -774,7 +774,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   }
 //
 //   public void testUpdateOrphanLink()
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      addLink(23,0,0,1,true);
 //      BlockChainLink link = getLink(23);

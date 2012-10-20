@@ -65,14 +65,14 @@ public class TransactionImpl implements Transaction, Hashable
     */
    public TransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
          long lockTime)
-      throws BitCoinException
+      throws BitcoinException
    {
       this(inputs,outputs,lockTime,null);
    }
    
    public TransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
          long lockTime, long version)
-      throws BitCoinException
+      throws BitcoinException
    {
       this(inputs,outputs,lockTime,null,version);
    }
@@ -83,14 +83,14 @@ public class TransactionImpl implements Transaction, Hashable
     */
    public TransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
          long lockTime, byte[] hash)
-      throws BitCoinException
+      throws BitcoinException
    {
       this(inputs, outputs, lockTime, hash, TX_DEFAULT_VERSION);
    }
 
    public TransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs,
          long lockTime, byte[] hash, long version)
-      throws BitCoinException
+      throws BitcoinException
    {
       this.inputs=inputs;
       this.outputs=outputs;
@@ -158,7 +158,7 @@ public class TransactionImpl implements Transaction, Hashable
    }
 
    public static TransactionImpl createTransaction(ScriptFactory scriptFactory, Tx tx)
-      throws BitCoinException
+      throws BitcoinException
    {
       // First outs
       List<TransactionOutputImpl> outs = new LinkedList<TransactionOutputImpl>();
@@ -186,7 +186,7 @@ public class TransactionImpl implements Transaction, Hashable
     * Calculate the hash of the whole transaction, with some optional additional bytes.
     */
    byte[] calculateHash(byte[] postfix)
-      throws BitCoinException
+      throws BitcoinException
    {
       try
       {
@@ -211,9 +211,9 @@ public class TransactionImpl implements Transaction, Hashable
             logger.debug("hashed to: {}",BtcUtil.hexOut(result));
          return result;
       } catch ( NoSuchAlgorithmException e ) {
-         throw new BitCoinException("can not find sha-256 algorithm for hash calculation",e);
+         throw new BitcoinException("can not find sha-256 algorithm for hash calculation",e);
       } catch ( IOException e ) {
-         throw new BitCoinException("failed to calculate hash for transaction",e);
+         throw new BitcoinException("failed to calculate hash for transaction",e);
       }
    }
 

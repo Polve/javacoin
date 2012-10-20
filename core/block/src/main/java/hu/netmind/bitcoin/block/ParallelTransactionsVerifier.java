@@ -17,7 +17,7 @@
  */
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.Script;
 import hu.netmind.bitcoin.ScriptException;
@@ -37,44 +37,40 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Alessandro Polverini
  */
-public class ParallelTransactionVerifier
+public class ParallelTransactionsVerifier extends BlockTransactionsVerifier
 {
 
-   private static final Logger logger = LoggerFactory.getLogger(ParallelTransactionVerifier.class);
-   private static KnownExceptions exceptions = new KnownExceptions();
    private ExecutorService executorService;
-   private BlockChainLinkStorage linkStorage;
-   private ScriptFactory scriptFactory;
    private BlockChainLink link;
    private Block block;
-   private boolean simplifiedVerification;
    private int numThreads;
-   long inValue;
-   long outValue;
+   private long inValue;
+   private long outValue;
 
-   public ParallelTransactionVerifier(int maxThreads)
+   public ParallelTransactionsVerifier(BlockChainLinkStorage linkStorage, ScriptFactory scriptFactory, boolean simplifiedVerification)
    {
-      numThreads = maxThreads <= 0 ? Runtime.getRuntime().availableProcessors() : maxThreads;
-      executorService = Executors.newFixedThreadPool(numThreads, new DaemonThreadFactory());
-      logger.debug("Parallel Transaction Verifier instantiated with {} threads", numThreads);
+      this(linkStorage, scriptFactory, simplifiedVerification, 0);
    }
 
-   public long verifyTransactions(BlockChainLinkStorage linkStorage, ScriptFactory scriptFactory,
-      BlockChainLink previousLink, Block block, boolean simplifiedVerification)
-      throws VerificationException, BitCoinException
+   public ParallelTransactionsVerifier(BlockChainLinkStorage linkStorage, ScriptFactory scriptFactory, boolean simplifiedVerification, int maxThreads)
    {
-      this.linkStorage = linkStorage;
-      this.scriptFactory = scriptFactory;
+      super(linkStorage, scriptFactory, simplifiedVerification);
+      numThreads = maxThreads <= 0 ? Runtime.getRuntime().availableProcessors() : maxThreads;
+      executorService = Executors.newFixedThreadPool(numThreads, new DaemonThreadFactory());
+      logger.info("Parallel Transaction Verifier instantiated with {} threads", numThreads);
+   }
+
+   @Override
+   public long verifyBlockTransactions(BlockChainLink previousLink, Block block)
+      throws VerificationException, BitcoinException
+   {
       this.link = previousLink;
       this.block = block;
-      this.simplifiedVerification = simplifiedVerification;
       inValue = outValue = 0;
       logger.debug("Parallel checking of {} transactions...", block.getTransactions().size());
       List<Callable<Void>> todo = new ArrayList<>(block.getTransactions().size());
@@ -99,7 +95,7 @@ public class ParallelTransactionVerifier
                else
                {
                   logger.error("Unexpected error: " + t.getMessage(), t);
-                  throw new BitCoinException("Unexpected exception while veryfing block", t);
+                  throw new BitcoinException("Unexpected exception while veryfing block", t);
                }
             }
          }
@@ -188,7 +184,7 @@ public class ParallelTransactionVerifier
             TransactionOutput out = outTx.getOutputs().get(in.getClaimedOutputIndex());
             value += out.getValue(); // Remember value that goes in from this out
 
-            if (!exceptions.isExempt(tx.getHash(), ValidationCategory.ScriptValidation))
+            if (!transactionExceptions.isExempt(tx.getHash(), ValidationCategory.ScriptValidation))
             {
                Script script = scriptFactory.createScript(in.getSignatureScript(), out.getScript());
                try

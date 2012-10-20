@@ -17,7 +17,7 @@
  */
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.ScriptFragment;
@@ -53,7 +53,7 @@ public class StandardBitcoinFactory implements BitcoinFactory
    {
    }
 
-   public StandardBitcoinFactory(ScriptFactory scriptFactory) throws BitCoinException
+   public StandardBitcoinFactory(ScriptFactory scriptFactory) throws BitcoinException
    {
       this.scriptFactory = scriptFactory;
       setNetworkParams(0xf9beb4d9L, 1231006505000l, 2083236893l, 0x1d00ffffL, BtcUtil.hexIn("000000000019D6689C085AE165831E934FF763AE46A2A6C172B3F1B60A8CE26F"));
@@ -130,7 +130,7 @@ public class StandardBitcoinFactory implements BitcoinFactory
       long genesisCreationTime,
       long genesisNonce,
       long genesisCompressedTarget,
-      byte[] genesisHash) throws BitCoinException
+      byte[] genesisHash) throws BitcoinException
    {
       this.messageMagic = messageMagic;
       this.compressedTarget = genesisCompressedTarget;
@@ -140,11 +140,11 @@ public class StandardBitcoinFactory implements BitcoinFactory
          null);
       if (!Arrays.equals(GENESIS_BLOCK.getHash(), genesisHash))
       {
-         throw new BitCoinException("Computed Hash of genesis block does not match known value");
+         throw new BitcoinException("Computed Hash of genesis block does not match known value");
       }
    }
 
-   protected static List<TransactionImpl> getGenesisTransactions() throws BitCoinException
+   protected static List<TransactionImpl> getGenesisTransactions() throws BitcoinException
    {
       List<TransactionInputImpl> ins = new LinkedList<>();
       TransactionInputImpl input = new TransactionInputImpl(
@@ -206,7 +206,7 @@ public class StandardBitcoinFactory implements BitcoinFactory
       return transactions;
    }
 //   public TransactionImpl newTransactionImpl(List<TransactionInputImpl> inputs, List<TransactionOutputImpl> outputs, long lockTime, byte[] hash)
-//      throws BitCoinException
+//      throws BitcoinException
 //   {
 //      return new TransactionImpl(inputs, outputs, lockTime, hash);
 //   }
@@ -222,7 +222,7 @@ public class StandardBitcoinFactory implements BitcoinFactory
 //   }
 //
 //   public Block newBlock(List<TransactionImpl> transactions, long nTime, long nonce, long nBits,
-//      byte[] prevBlockHash, byte[] hashMerkleRoot, byte[] hash) throws BitCoinException
+//      byte[] prevBlockHash, byte[] hashMerkleRoot, byte[] hash) throws BitcoinException
 //   {
 //      return new BlockImpl(transactions, nTime, nonce, nBits, prevBlockHash, hashMerkleRoot, hash);
 //   }

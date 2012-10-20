@@ -17,7 +17,7 @@
  */
 package it.nibbles.bitcoin.utils;
 
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.keyfactory.ecc.BitcoinUtil;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
@@ -55,11 +55,11 @@ public class Base58
       return s.toString();
    }
 
-   public static byte[] decode(String input) throws BitCoinException
+   public static byte[] decode(String input) throws BitcoinException
    {
       if (input.length() == 0)
       {
-         throw new BitCoinException("Attempt to parse an empty address.");
+         throw new BitcoinException("Attempt to parse an empty address.");
       }
       byte[] bytes = decodeToBigInteger(input).toByteArray();
       // We may have got one more byte than we wanted, if the high bit of the next-to-last byte was not zero. This
@@ -79,7 +79,7 @@ public class Base58
       return tmp;
    }
 
-   public static BigInteger decodeToBigInteger(String input) throws BitCoinException
+   public static BigInteger decodeToBigInteger(String input) throws BitcoinException
    {
       BigInteger bi = BigInteger.valueOf(0);
       // Work backwards through the string.
@@ -89,7 +89,7 @@ public class Base58
          int alphaIndex = ALPHABET.indexOf(character);
          if (alphaIndex == -1)
          {
-            throw new BitCoinException("Illegal character " + input.charAt(i) + " at " + i);
+            throw new BitcoinException("Illegal character " + input.charAt(i) + " at " + i);
          }
          bi = bi.add(BigInteger.valueOf(alphaIndex).multiply(BASE.pow(input.length() - 1 - i)));
       }
@@ -103,12 +103,12 @@ public class Base58
     * @throws Exception if the input is not base 58 or the checksum does not
     * validate.
     */
-   public static byte[] decodeChecked(String input) throws BitCoinException
+   public static byte[] decodeChecked(String input) throws BitcoinException
    {
       byte[] tmp = decode(input);
       if (tmp.length < 4)
       {
-         throw new BitCoinException("Input too short");
+         throw new BitcoinException("Input too short");
       }
       byte[] checksum = new byte[4];
       System.arraycopy(tmp, tmp.length - 4, checksum, 0, 4);
@@ -119,13 +119,13 @@ public class Base58
          tmp = BitcoinUtil.doubleDigest(bytes);
       } catch (NoSuchAlgorithmException ex)
       {
-         throw new BitCoinException("SHA256 not available, can't compute base58 checksum");
+         throw new BitcoinException("SHA256 not available, can't compute base58 checksum");
       }
       byte[] hash = new byte[4];
       System.arraycopy(tmp, 0, hash, 0, 4);
       if (!Arrays.equals(hash, checksum))
       {
-         throw new BitCoinException("Checksum does not validate");
+         throw new BitcoinException("Checksum does not validate");
       }
       return bytes;
    }

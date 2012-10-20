@@ -23,7 +23,7 @@ package hu.netmind.bitcoin;
  * was already spent.
  * @author Robert Brautigam
  */
-public class InvalidCoinException extends BitCoinException
+public class InvalidCoinException extends BitcoinException
 {
    public InvalidCoinException(String message, Throwable e)
    {

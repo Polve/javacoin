@@ -23,7 +23,7 @@ import hu.netmind.bitcoin.Coin;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.InvalidCoinException;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.List;
@@ -44,7 +44,7 @@ public class WalletImpl extends Observable implements Wallet
    private BlockChain chain;
 
    public WalletImpl(BlockChain chain, CoinStorage coinStorage)
-      throws BitCoinException
+      throws BitcoinException
    {
       this.chain=chain;
       this.coinStorage=coinStorage;
@@ -56,7 +56,7 @@ public class WalletImpl extends Observable implements Wallet
                {
                   if ( arg == BlockChain.Event.LONGEST_PATH_CHANGE )
                      updateCoins();
-               } catch ( BitCoinException e ) {
+               } catch ( BitcoinException e ) {
                   logger.error("wallet could not update after a longest path change, wallet possibly returns false information",e);
                }
             }
@@ -70,7 +70,7 @@ public class WalletImpl extends Observable implements Wallet
     * invariant is kept in this update.
     */
    private void updateCoins()
-      throws BitCoinException
+      throws BitcoinException
    {
       synchronized ( coinStorage )
       {

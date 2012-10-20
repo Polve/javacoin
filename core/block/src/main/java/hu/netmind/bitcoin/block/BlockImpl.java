@@ -81,7 +81,7 @@ public class BlockImpl implements Block, Hashable
     */
    public BlockImpl(List<TransactionImpl> transactions,
          long creationTime, long nonce, long compressedTarget, byte[] previousBlockHash, byte[] merkleRoot)
-      throws BitCoinException
+      throws BitcoinException
    {
       this(transactions,creationTime,nonce,compressedTarget,previousBlockHash,merkleRoot,null);
    }
@@ -92,7 +92,7 @@ public class BlockImpl implements Block, Hashable
    public BlockImpl(List<TransactionImpl> transactions,
          long creationTime, long nonce, long compressedTarget, byte[] previousBlockHash, 
          byte[] merkleRoot, byte[] hash)
-      throws BitCoinException
+      throws BitcoinException
    {
       this(transactions, creationTime, nonce, compressedTarget, previousBlockHash, merkleRoot, hash, BLOCK_DEFAULT_VERSION);
    }
@@ -100,7 +100,7 @@ public class BlockImpl implements Block, Hashable
    public BlockImpl(List<TransactionImpl> transactions,
          long creationTime, long nonce, long compressedTarget, byte[] previousBlockHash, 
          byte[] merkleRoot, byte[] hash, long version)
-      throws BitCoinException
+      throws BitcoinException
    {
       this.version=version;
       this.creationTime=creationTime;
@@ -127,7 +127,7 @@ public class BlockImpl implements Block, Hashable
     * Calculate the hash of this block.
     */
    protected byte[] calculateHash()
-      throws BitCoinException
+      throws BitcoinException
    {
       try
       {
@@ -149,9 +149,9 @@ public class BlockImpl implements Block, Hashable
             logger.debug("hashed to: {}",HexUtil.toHexString(result));
          return result;
       } catch ( NoSuchAlgorithmException e ) {
-         throw new BitCoinException("can not find sha-256 algorithm for hash calculation",e);
+         throw new BitcoinException("can not find sha-256 algorithm for hash calculation",e);
       } catch ( IOException e ) {
-         throw new BitCoinException("failed to calculate hash for block header",e);
+         throw new BitcoinException("failed to calculate hash for block header",e);
       }
    }
 
@@ -200,7 +200,7 @@ public class BlockImpl implements Block, Hashable
                   BtcUtil.hexOut(tree.getRoot()));
       } catch ( VerificationException e ) {
          throw e;
-      } catch ( BitCoinException e ) {
+      } catch ( BitcoinException e ) {
          throw new VerificationException("unable to create merkle tree for block "+this,e);
       }
       // Additional check: All inputs refer to a different output
@@ -268,7 +268,7 @@ public class BlockImpl implements Block, Hashable
    }
 
    public static BlockImpl createBlock(ScriptFactory scriptFactory, BlockMessage blockMessage)
-      throws BitCoinException
+      throws BitcoinException
    {
       List<TransactionImpl> txs = new LinkedList<TransactionImpl>();
       for ( Tx tx : blockMessage.getTransactions() )
@@ -350,8 +350,8 @@ public class BlockImpl implements Block, Hashable
 //               BtcUtil.hexIn("4A5E1E4BAAB89F3A32518A88C31BC87F618F76673E2CC77AB2127B7AFDEDA33B"),
 //               null);
 //         if (!Arrays.equals(MAIN_GENESIS.getHash(), BtcUtil.hexIn("000000000019D6689C085AE165831E934FF763AE46A2A6C172B3F1B60A8CE26F")))
-//            throw new BitCoinException("Can't compute correct hash for production network genesis block");
-//      } catch ( BitCoinException e ) {
+//            throw new BitcoinException("Can't compute correct hash for production network genesis block");
+//      } catch ( BitcoinException e ) {
 //         logger.error("can not construct main genesis block, main network will not be usable",e);
 //      }
 //         
@@ -415,8 +415,8 @@ public class BlockImpl implements Block, Hashable
 //               null);
 //               //HexUtil.toByteArray("00 00 00 07 19 95 08 E3 4A 9F F8 1E 6E C0 C4 77 A4 CC CF F2 A4 76 7A 8E EE 39 C1 1D B3 67 B0 08 "));
 //         if (!Arrays.equals(TESTNET_GENESIS.getHash(), BtcUtil.hexIn("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008")))
-//            throw new BitCoinException("Can't compute correct hash for test network genesis block");
-//      } catch ( BitCoinException e ) {
+//            throw new BitcoinException("Can't compute correct hash for test network genesis block");
+//      } catch ( BitcoinException e ) {
 //         logger.error("can not construct old test genesis block, test network will not be usable",e);
 //      }
 //
@@ -479,8 +479,8 @@ public class BlockImpl implements Block, Hashable
 //               BtcUtil.hexIn("4A5E1E4BAAB89F3A32518A88C31BC87F618F76673E2CC77AB2127B7AFDEDA33B"),
 //               null);
 //         if (!Arrays.equals(TESTNET3_GENESIS.getHash(), BtcUtil.hexIn("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943")))
-//            throw new BitCoinException("Can't compute correct hash for testnet3 genesis block");
-//      } catch ( BitCoinException e ) {
+//            throw new BitcoinException("Can't compute correct hash for testnet3 genesis block");
+//      } catch ( BitcoinException e ) {
 //         logger.error("can not construct testnet3 genesis block, test network will not be usable",e);
 //      }
 //   }

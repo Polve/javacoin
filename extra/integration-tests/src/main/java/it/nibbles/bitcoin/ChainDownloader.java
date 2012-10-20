@@ -22,8 +22,8 @@ import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.StandardBitcoinFactory;
-import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
+import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import hu.netmind.bitcoin.block.jdbc.DatasourceUtils;
 import hu.netmind.bitcoin.block.jdbc.JdbcChainLinkStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
@@ -132,7 +132,7 @@ public class ChainDownloader
     * Initialize and bind components together.
     */
    public void init()
-      throws BitCoinException, ClassNotFoundException
+      throws BitcoinException, ClassNotFoundException
    {
       // Initialize the chain
       ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
@@ -187,7 +187,7 @@ public class ChainDownloader
       nodeHandler = new StdNodeHandler(node, bitcoinFactory, chain, storage);
    }
 
-   public void testBlock41980OfTestnet2() throws BitCoinException
+   public void testBlock41980OfTestnet2() throws BitcoinException
    {
       BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(BtcUtil.hexIn(
          "FABFB5DA626C6F636B00000000000000550600008F8306AC0100000017467951795F6"

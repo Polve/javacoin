@@ -19,7 +19,7 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.BitCoinException;
+import hu.netmind.bitcoin.BitcoinException;
 import org.testng.annotations.Test;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -34,7 +34,7 @@ import java.util.ArrayList;
 public class MerkleTreeTests
 {
    public void testSingleTransactionMerkleRoot()
-      throws BitCoinException
+      throws BitcoinException
    {
       Transaction tx1 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx1.getHash()).andReturn(
@@ -48,7 +48,7 @@ public class MerkleTreeTests
    }
 
    public void testBlockMerkleRootCalculation()
-      throws BitCoinException
+      throws BitcoinException
    {
       // This is from the real block (with 5 transactions):
       // 0000000000000426bbdb6dd53d4477009de06cd3264178f724e6fff2a9768c65
@@ -88,7 +88,7 @@ public class MerkleTreeTests
    }
 
    public void testMerkleRootAllTransactionsRemoved()
-      throws BitCoinException
+      throws BitcoinException
    {
       Transaction tx1 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx1.getHash()).andReturn(
@@ -135,7 +135,7 @@ public class MerkleTreeTests
    }
 
    public void testMerkleRootPartialReconstruction()
-      throws BitCoinException
+      throws BitcoinException
    {
       Transaction tx1 = EasyMock.createMock(Transaction.class);
       EasyMock.expect(tx1.getHash()).andReturn(
