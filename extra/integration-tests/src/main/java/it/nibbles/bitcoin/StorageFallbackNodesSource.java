@@ -38,42 +38,42 @@ import java.util.StringTokenizer;
 public class StorageFallbackNodesSource extends RandomizedNodesSource
 {
 
-   private JdbcChainLinkStorage storage;
-   private int maxSources = 100;
-   private AddressSource fallbackSource;
+  private JdbcChainLinkStorage storage;
+  private int maxSources = 100;
+  private AddressSource fallbackSource;
 
-   public StorageFallbackNodesSource(JdbcChainLinkStorage storage)
-   {
-      super();
-      this.storage = storage;
-   }
+  public StorageFallbackNodesSource(JdbcChainLinkStorage storage)
+  {
+    super();
+    this.storage = storage;
+  }
 
-   public StorageFallbackNodesSource(JdbcChainLinkStorage storage, int defaultPort)
-   {
-      super(defaultPort);
-      this.storage = storage;
-   }
+  public StorageFallbackNodesSource(JdbcChainLinkStorage storage, int defaultPort)
+  {
+    super(defaultPort);
+    this.storage = storage;
+  }
 
-   public void setMaxSources(int maxSources)
-   {
-      this.maxSources = maxSources;
-   }
+  public void setMaxSources(int maxSources)
+  {
+    this.maxSources = maxSources;
+  }
 
-   public void setFallbackSource(AddressSource fallbackSource)
-   {
-      this.fallbackSource = fallbackSource;
-   }
+  public void setFallbackSource(AddressSource fallbackSource)
+  {
+    this.fallbackSource = fallbackSource;
+  }
 
-   @Override
-   public List<InetSocketAddress> getInitialAddresses()
-   {
-      List<InetSocketAddress> addresses = new LinkedList<>();
-      List<NodeAddress> nodes = storage.loadNodeAddesses(maxSources);
-      for (NodeAddress node : nodes)
-         addresses.add(node.getAddress());
-      logger.debug("Added {} nodes previously stored on db", addresses.size());
-      if (fallbackSource != null)
-         addresses.addAll(fallbackSource.getAddresses());
-      return addresses;
-   }
+  @Override
+  public List<InetSocketAddress> getInitialAddresses()
+  {
+    List<InetSocketAddress> addresses = new LinkedList<>();
+    List<NodeAddress> nodes = storage.loadNodeAddesses(maxSources);
+    for (NodeAddress node : nodes)
+      addresses.add(node.getAddress());
+    logger.debug("Added {} nodes previously stored on db", addresses.size());
+    if (fallbackSource != null)
+      addresses.addAll(fallbackSource.getAddresses());
+    return addresses;
+  }
 }
