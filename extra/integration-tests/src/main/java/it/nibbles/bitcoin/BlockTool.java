@@ -23,7 +23,7 @@ import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
-import hu.netmind.bitcoin.block.StandardBitcoinFactory;
+import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
@@ -172,7 +172,7 @@ public class BlockTool
       scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
       bitcoinFactory = isTestNet3 ? new Testnet3BitcoinFactory(scriptFactory)
          : isTestNet2 ? new Testnet2BitcoinFactory(scriptFactory)
-         : new StandardBitcoinFactory(scriptFactory);
+         : new ProdnetBitcoinFactory(scriptFactory);
       // Initialize the correct storage engine
       if (STORAGE_BDB.equalsIgnoreCase(storageType))
       {

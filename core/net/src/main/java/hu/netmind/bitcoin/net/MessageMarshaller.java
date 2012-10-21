@@ -38,6 +38,16 @@ public class MessageMarshaller
    private static final Map<String,Class> messageTypes = new HashMap<>();
    private Map<Class,Object> params = new HashMap<>();
    private long version = -1;
+   private long messageMagic = 0x42;   // Random value -- TODO: Use Prodnet magic
+
+   public MessageMarshaller()
+   {
+   }
+
+   public MessageMarshaller(long messageMagic)
+   {
+      this.messageMagic = messageMagic;
+   }
 
    static
    {
@@ -87,6 +97,8 @@ public class MessageMarshaller
       {
          input.mark(20);
          header.readFrom(input,version,null);
+         if ( header.getMagic() != messageMagic)
+            throw new IOException("wrong magic number for message: "+new Long(header.getMagic()).toString(16));
          input.reset(); // Rewind, so message will read header again
          // Now search for a suitable message
          messageType = messageTypes.get(header.getCommand());

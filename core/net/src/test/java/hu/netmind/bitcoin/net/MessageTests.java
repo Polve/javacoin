@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.net;
 
+import hu.netmind.bitcoin.Constants;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import hu.netmind.bitcoin.keyfactory.ecc.BitcoinUtil;
 import org.testng.Assert;
@@ -25,10 +26,6 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.util.Date;
-import java.util.Calendar;
 import java.util.List;
 import java.util.ArrayList;
 import java.net.InetSocketAddress;
@@ -51,10 +48,10 @@ public class MessageTests
             "00 00 00 00 "+                          // Payload is 0 bytes long
             "5D F6 E0 E2")));                        // Checksum (mandatory from Feb 20, 2012)
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       VerackMessage message = (VerackMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"verack");
       Assert.assertEquals(message.getLength(),0);
    }
@@ -63,9 +60,9 @@ public class MessageTests
       throws IOException
    {
       // Setup a verack message
-      VerackMessage verack = new VerackMessage(Message.MAGIC_MAIN);
+      VerackMessage verack = new VerackMessage(Constants.PRODNET_MESSAGE_MAGIC);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(verack,output);
@@ -95,10 +92,10 @@ public class MessageTests
           "00 "+                                                                            // "" sub-version string (string is 0 bytes long)
           "55 81 01 00 ")));                                                                // Last block sending node has is block #98645
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       VersionMessage message = (VersionMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"version");
       Assert.assertEquals(message.getLength(),85);
       Assert.assertEquals(message.getVersion(),31900);
@@ -122,12 +119,12 @@ public class MessageTests
       throws IOException
    {
       // Setup a verack message
-      VersionMessage version = new VersionMessage(Message.MAGIC_MAIN,31900,1,1000l*0x4D1015e6l,
+      VersionMessage version = new VersionMessage(Constants.PRODNET_MESSAGE_MAGIC,31900,1,1000l*0x4D1015e6l,
             new NodeAddress(1,new InetSocketAddress(InetAddress.getByName("10.0.0.1"),56054)),
             new NodeAddress(1,new InetSocketAddress(InetAddress.getByName("10.0.0.2"),8333)),
             0x1357B43A2C209DDDl,"",98645);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(version,output);
@@ -162,11 +159,11 @@ public class MessageTests
           "00 00 00 00 00 00 00 00 00 00 FF FF 0A 00 00 01 "+ // IPv4: 10.0.0.1, IPv6: ::ffff:10.0.0.1 (IPv4-mapped IPv6 address)
           "20 8D")));                                         // port 8333
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       marshal.setVersion(39010);
       AddrMessage message = (AddrMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"addr");
       Assert.assertEquals(message.getAddressEntries().size(),1);
       Assert.assertEquals(message.getChecksum(),0x9b3952edl);
@@ -186,9 +183,9 @@ public class MessageTests
             new NodeAddress(1,new InetSocketAddress(InetAddress.getByName("10.0.0.1"),8333)));
       List<AddrMessage.AddressEntry> entries = new ArrayList<AddrMessage.AddressEntry>();
       entries.add(entry);
-      AddrMessage addr = new AddrMessage(Message.MAGIC_MAIN,entries);
+      AddrMessage addr = new AddrMessage(Constants.PRODNET_MESSAGE_MAGIC,entries);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       marshal.setVersion(39010);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
@@ -221,10 +218,10 @@ public class MessageTests
           "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
           "16 17 18 19 1A 1B 1C 1D 1E 1F")));
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       InvMessage message = (InvMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"inv");
       Assert.assertEquals(message.getInventoryItems().size(),1);
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
@@ -243,9 +240,9 @@ public class MessageTests
             { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
       List<InventoryItem> items = new ArrayList<InventoryItem>();
       items.add(item);
-      InvMessage inv = new InvMessage(Message.MAGIC_MAIN,items);
+      InvMessage inv = new InvMessage(Constants.PRODNET_MESSAGE_MAGIC,items);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(inv,output);
@@ -277,10 +274,10 @@ public class MessageTests
           "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
           "16 17 18 19 1A 1B 1C 1D 1E 1F")));
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       GetDataMessage message = (GetDataMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"getdata");
       Assert.assertEquals(message.getInventoryItems().size(),1);
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
@@ -299,9 +296,9 @@ public class MessageTests
             { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 });
       List<InventoryItem> items = new ArrayList<InventoryItem>();
       items.add(item);
-      GetDataMessage getdata = new GetDataMessage(Message.MAGIC_MAIN,items);
+      GetDataMessage getdata = new GetDataMessage(Constants.PRODNET_MESSAGE_MAGIC,items);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(getdata,output);
@@ -334,10 +331,10 @@ public class MessageTests
           "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
           "16 17 18 19 1A 1B 1C 1D 1E 1F")));
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       GetBlocksMessage message = (GetBlocksMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"getblocks");
       Assert.assertEquals(message.getMessageVersion(),0x04030201l);
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
@@ -359,9 +356,9 @@ public class MessageTests
       byte[] hashStop = 
             new byte[] 
             { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 };
-      GetBlocksMessage getblocks = new GetBlocksMessage(Message.MAGIC_MAIN,0x04030201l,hashStarts,hashStop);
+      GetBlocksMessage getblocks = new GetBlocksMessage(Constants.PRODNET_MESSAGE_MAGIC,0x04030201l,hashStarts,hashStop);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(getblocks,output);
@@ -394,10 +391,10 @@ public class MessageTests
           "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
           "16 17 18 19 1A 1B 1C 1D 1E 1F")));
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       GetHeadersMessage message = (GetHeadersMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"getheaders");
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
       Assert.assertEquals(message.getHashStarts().size(),1);
@@ -418,9 +415,9 @@ public class MessageTests
       byte[] hashStop = 
             new byte[] 
             { 31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 };
-      GetHeadersMessage getheaders = new GetHeadersMessage(Message.MAGIC_MAIN,hashStarts,hashStop);
+      GetHeadersMessage getheaders = new GetHeadersMessage(Constants.PRODNET_MESSAGE_MAGIC,hashStarts,hashStop);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(getheaders,output);
@@ -452,10 +449,10 @@ public class MessageTests
             "00 00 00 00 "+                          // Payload is 0 bytes long
             "5D F6 E0 E2")));                        // Checksum
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       VerackMessage message = (VerackMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"verack");
       Assert.assertEquals(message.getLength(),0);
    }
@@ -496,10 +493,10 @@ public class MessageTests
           "FD A0 B7 8B 4E CC 52 88 AC "+
           "00 00 00 00 ")));                                    // lock time
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       TxMessage message = (TxMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"tx");
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
       Assert.assertEquals(message.getTx().getVersion(),1);
@@ -546,9 +543,9 @@ public class MessageTests
       List<TxOut> outputs = new ArrayList<TxOut>();
       outputs.add(out1);
       outputs.add(out2);
-      TxMessage tx = new TxMessage(Message.MAGIC_MAIN,new Tx(1,inputs,outputs,0));
+      TxMessage tx = new TxMessage(Constants.PRODNET_MESSAGE_MAGIC,new Tx(1,inputs,outputs,0));
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(tx,output);
@@ -620,7 +617,7 @@ public class MessageTests
       Tx tx = new Tx(1,inputs,outputs,0);
       List<Tx> transactions = new ArrayList<Tx>();
       transactions.add(tx);
-      BlockMessage block = new BlockMessage(Message.MAGIC_MAIN,
+      BlockMessage block = new BlockMessage(Constants.PRODNET_MESSAGE_MAGIC,
             new BlockHeader(1,
             HexUtil.toByteArray(
                "1F 1E 1D 1C 1B 1A 19 18 17 16 15 14 13 12 11 10 "+
@@ -631,7 +628,7 @@ public class MessageTests
             123000,22,33),
             transactions);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(block,output);
@@ -723,10 +720,10 @@ public class MessageTests
           "FD A0 B7 8B 4E CC 52 88 AC "+
           "00 00 00 00")));                                     // lock time
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       BlockMessage message = (BlockMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"block");
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
       Assert.assertEquals(message.getHeader().getVersion(),1);
@@ -760,9 +757,9 @@ public class MessageTests
             123000,22,33);
       List<BlockHeader> headers = new ArrayList<BlockHeader>();
       headers.add(header);
-      HeadersMessage headersMessage = new HeadersMessage(Message.MAGIC_MAIN,headers);
+      HeadersMessage headersMessage = new HeadersMessage(Constants.PRODNET_MESSAGE_MAGIC,headers);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(headersMessage,output);
@@ -802,10 +799,10 @@ public class MessageTests
           "16 00 00 00 "+                                       // difficulty
           "21 00 00 00")));                                     // nonce
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       HeadersMessage message = (HeadersMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"headers");
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
       Assert.assertEquals(message.getHeaders().get(0).getVersion(),1);
@@ -824,10 +821,10 @@ public class MessageTests
             "00 00 00 00 "+                          // payload is 0 bytes
             "5D F6 E0 E2")));                        // checksum is null
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       GetAddrMessage message = (GetAddrMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"getaddr");
       Assert.assertEquals(message.getLength(),0);
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
@@ -837,9 +834,9 @@ public class MessageTests
       throws IOException
    {
       // Setup a verack message
-      GetAddrMessage getaddr = new GetAddrMessage(Message.MAGIC_MAIN);
+      GetAddrMessage getaddr = new GetAddrMessage(Constants.PRODNET_MESSAGE_MAGIC);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(getaddr,output);
@@ -861,10 +858,10 @@ public class MessageTests
             "00 00 00 00 "+                          // payload is 0 bytes
             "5D F6 E0 E2")));                        // checksum is null
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       PingMessage message = (PingMessage) marshal.read(input);
       // Check
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"ping");
       Assert.assertEquals(message.getLength(),0);
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
@@ -874,9 +871,9 @@ public class MessageTests
       throws IOException
    {
       // Setup a verack message
-      PingMessage ping = new PingMessage(Message.MAGIC_MAIN);
+      PingMessage ping = new PingMessage(Constants.PRODNET_MESSAGE_MAGIC);
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(ping,output);
@@ -910,11 +907,11 @@ public class MessageTests
             "2B 3F 57 30 60 D5 B7 0C 3A 46 72 33 26 E4 E8 A4 F1"
             )));
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       AlertMessage message = (AlertMessage) marshal.read(input);
       // Check header
       System.out.println("Signature: "+BtcUtil.hexOut(message.getSignature())+" len: "+message.getSignature().length);
-      Assert.assertEquals(message.getMagic(),Message.MAGIC_MAIN);
+      Assert.assertEquals(message.getMagic(),Constants.PRODNET_MESSAGE_MAGIC);
       Assert.assertEquals(message.getCommand(),"alert");
       Assert.assertEquals(message.getLength(),178);
       Assert.assertTrue(message.verify(),"message could not be verified, checksum error");
@@ -945,7 +942,7 @@ public class MessageTests
       throws IOException
    {
       // Setup the message
-      AlertMessage alert = new AlertMessage(Message.MAGIC_MAIN,"See bitcoin.org/feb20 if you have trouble connecting after 20 February");
+      AlertMessage alert = new AlertMessage(Constants.PRODNET_MESSAGE_MAGIC,"See bitcoin.org/feb20 if you have trouble connecting after 20 February");
       alert.setVersion(1);
       alert.setRelayUntil(1329620535);
       alert.setExpiration(1329792435);
@@ -956,7 +953,7 @@ public class MessageTests
       alert.setPriority(100);
       alert.setSignature(new byte[] { 0x33, 0x44 });
       // Serialize it
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
       BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
       marshal.write(alert,output);
@@ -1038,7 +1035,7 @@ public class MessageTests
             "76 65 72 61 63 6B 00 00 00 00 00 00 "+  // "verack" command
             "00 00 00 00")));                        // Payload is 0 bytes long
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       VerackMessage message = (VerackMessage) marshal.read(input);
    }
 
@@ -1057,7 +1054,7 @@ public class MessageTests
           "0B 0C 0D 0E 0F 10 11 12 13 14 15 "+
           "16 17 18 19 1A 1B 1C 1D 1E 1F")));
       // Try to deserialize
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(Constants.PRODNET_MESSAGE_MAGIC);
       InvMessage message = (InvMessage) marshal.read(input);
    }
 }

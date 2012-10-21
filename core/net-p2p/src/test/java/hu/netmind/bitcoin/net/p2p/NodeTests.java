@@ -18,11 +18,15 @@
 
 package hu.netmind.bitcoin.net.p2p;
 
+import hu.netmind.bitcoin.BitcoinException;
+import hu.netmind.bitcoin.block.BitcoinFactory;
+import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import hu.netmind.bitcoin.net.AlertMessage;
 import hu.netmind.bitcoin.net.BitCoinInputStream;
 import hu.netmind.bitcoin.net.BitCoinOutputStream;
 import hu.netmind.bitcoin.net.Message;
 import hu.netmind.bitcoin.net.MessageMarshaller;
+import hu.netmind.bitcoin.net.NetworkMessageFactory;
 import hu.netmind.bitcoin.net.NodeAddress;
 import hu.netmind.bitcoin.net.PingMessage;
 import hu.netmind.bitcoin.net.VerackMessage;
@@ -38,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import org.easymock.EasyMock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,13 +62,20 @@ public class NodeTests
 
    private List<DummyNode> dummyNodes = new ArrayList<>();
    private Node savedNode = null;
+   private BitcoinFactory bitcoinFactory;
+   private NetworkMessageFactory messageFactory;
 
+   public NodeTests() throws BitcoinException
+   {
+      bitcoinFactory = new Testnet3BitcoinFactory(null);
+      messageFactory = bitcoinFactory.getMessageFactory();
+   }
    /**
     * Create a node which will be destroyed at the end of test.
     */
    public Node createNode()
    {
-      savedNode = new Node();
+      savedNode = new Node(bitcoinFactory.getMessageMagic());
       return savedNode;
    }
 
@@ -137,7 +149,7 @@ public class NodeTests
       throws IOException
    {
       // Create node with defaults
-      Node node = new Node();
+      Node node = new Node(bitcoinFactory.getMessageMagic());
       // Check that there are no node threads running before start
       Assert.assertFalse(isNodeThreadActive(),"there is a node thread before starting");
       // Start
@@ -181,9 +193,9 @@ public class NodeTests
       EasyMock.replay(source);
 
       final NodeAddress dummyNodeAddress = new NodeAddress(1, new InetSocketAddress(51234));
-      final VersionMessage verMsg1 = new VersionMessage(Message.MAGIC_TEST, BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
+      final VersionMessage verMsg1 = messageFactory.newVersionMessage(BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
          dummyNodeAddress, dummyNodeAddress, 123, "test", 1);
-      final VersionMessage verMsg2 = new VersionMessage(Message.MAGIC_TEST, BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
+      final VersionMessage verMsg2 = messageFactory.newVersionMessage(BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
          dummyNodeAddress, dummyNodeAddress, 124, "test", 1);
 
       // Create node
@@ -238,7 +250,7 @@ public class NodeTests
       dummyNode.accept();
       
       // Send a message to node
-      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message"));
+      dummyNode.send(messageFactory.newAlertMessage("Message"));
       // Get the repeated message right back
       AlertMessage answer = (AlertMessage) dummyNode.read();
       // Check
@@ -267,7 +279,7 @@ public class NodeTests
       for ( int i=0; i<dummyNodes.length; i++ )
          dummyNodes[i].accept();
       // Broadcast a message to all connected nodes
-      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message"));
+      node.broadcast(messageFactory.newAlertMessage("Message"));
       // Get the messages from all nodes
       for ( int i=0; i<dummyNodes.length; i++ )
       {
@@ -296,8 +308,8 @@ public class NodeTests
       // Accept the connection from node
       dummyNode.accept();
       // Broadcast 2 messages
-      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message1"));
-      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message2"));
+      node.broadcast(messageFactory.newAlertMessage("Message1"));
+      node.broadcast(messageFactory.newAlertMessage("Message2"));
       // Now check that the 1st message arrives only once
       AlertMessage message = (AlertMessage) dummyNode.read();
       Assert.assertEquals(message.getMessage(),"Message1");
@@ -318,7 +330,7 @@ public class NodeTests
       // Wait unilt the node really connected to the node
       waiter.waitForJoin();
       // Check connection
-      node.broadcast(new AlertMessage(Message.MAGIC_TEST,"Message"));
+      node.broadcast(messageFactory.newAlertMessage("Message"));
       AlertMessage message = (AlertMessage) dummyNode.read();
       Assert.assertEquals(message.getMessage(),"Message");
    }
@@ -388,7 +400,7 @@ public class NodeTests
          Assert.fail("didn't receive the 'leave' event of closed node in time");
       // Now try to connect new node and communicate
       DummyNode dummyNode2 = createDummyNode(new InetSocketAddress(node.getPort()));
-      dummyNode2.send(new PingMessage(Message.MAGIC_TEST));
+      dummyNode2.send(messageFactory.newPingMessage());
       Message message = dummyNode2.read();
    }
 
@@ -423,8 +435,8 @@ public class NodeTests
       // Accept the connection from node
       dummyNode.accept();
       // Send two messages to node
-      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message1"));
-      dummyNode.send(new AlertMessage(Message.MAGIC_TEST,"Message2"));
+      dummyNode.send(bitcoinFactory.getMessageFactory().newAlertMessage("Message1"));
+      dummyNode.send(bitcoinFactory.getMessageFactory().newAlertMessage("Message2"));
       // Check that easy is only replied once by the node, meaning that only one repeater handler
       // is allowed to answer.
       AlertMessage incoming = (AlertMessage) dummyNode.read();
@@ -462,7 +474,7 @@ public class NodeTests
          {
             try
             {
-               conn.send(new VerackMessage(Message.MAGIC_TEST));
+               conn.send(messageFactory.newVerackMessage());
             } catch (IOException ex)
             {
             }
@@ -530,7 +542,7 @@ public class NodeTests
          socket.connect(address,1000); // 0.5 seconds to connect
          input = new BitCoinInputStream(new BufferedInputStream(socket.getInputStream()));
          output = new BitCoinOutputStream(socket.getOutputStream());
-         marshaller = new MessageMarshaller();
+         marshaller = new MessageMarshaller(bitcoinFactory.getMessageMagic());
       }
 
       /**
@@ -542,7 +554,7 @@ public class NodeTests
          serverSocket = new ServerSocket(0);
          address = (InetSocketAddress) serverSocket.getLocalSocketAddress();
          serverSocket.setSoTimeout(1000); // Wait for incoming for 0.5 sec
-         marshaller = new MessageMarshaller();
+         marshaller = new MessageMarshaller(bitcoinFactory.getMessageMagic());
       }
 
       public InetSocketAddress getAddress()

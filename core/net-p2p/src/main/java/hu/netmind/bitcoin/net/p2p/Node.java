@@ -70,15 +70,18 @@ public class Node
    private List<MessageHandler> handlers = new ArrayList<>();
    private final List<NodeWorker> workers = new ArrayList<>();
    private NodeListener nodeListener;
+   protected long messageMagic;
 
+   // TODO: We need to pass the
    /**
     * Create this node which will then listen for incoming connections from
     * other nodes. Note that node will not work until it's started.
     *
     * @param port The port to listen on instead of the default port.
     */
-   public Node(int port)
+   public Node(long messageMagic, int port)
    {
+      this.messageMagic = messageMagic;
       this.port = port;
    }
 
@@ -86,8 +89,9 @@ public class Node
     * Create this node which will then listen for incoming connections from
     * other nodes. Note that node will not work until it's started.
     */
-   public Node()
+   public Node(long messageMagic)
    {
+      this.messageMagic = messageMagic;
    }
 
    /**
@@ -373,7 +377,7 @@ public class Node
       private BitCoinOutputStream output;
       private boolean running;
       private Thread workerThread;
-      private MessageMarshaller marshaller = new MessageMarshaller();
+      private MessageMarshaller marshaller = new MessageMarshaller(messageMagic);
       private Connection connection;
       private long lastIncomingTime = 0;
       private long creationTime = 0;

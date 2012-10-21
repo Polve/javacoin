@@ -21,7 +21,7 @@ import hu.netmind.bitcoin.*;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockImpl;
-import hu.netmind.bitcoin.block.StandardBitcoinFactory;
+import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import hu.netmind.bitcoin.block.jdbc.DatasourceUtils;
@@ -140,7 +140,7 @@ public class ChainDownloader
          ? new Testnet2BitcoinFactory(scriptFactory)
          : isTestnet3
          ? new Testnet3BitcoinFactory(scriptFactory)
-         : new StandardBitcoinFactory(scriptFactory);
+         : new ProdnetBitcoinFactory(scriptFactory);
       logger.debug("bitcoin factory initialized");
       JdbcChainLinkStorage storage = new JdbcChainLinkStorage(bitcoinFactory);
       storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
@@ -156,7 +156,7 @@ public class ChainDownloader
       genesisBlock.validate();
       logger.info((isTestnet2 ? "[TESTNET2]" : isTestnet3 ? "[TESTNET3]" : "[PRODNET]") + " initialized chain, last link height: " + chain.getHeight());
       // Initialize p2p node
-      node = new Node();
+      node = new Node(bitcoinFactory.getMessageMagic());
       node.setPort((isTestnet2 || isTestnet3) ? 18733 : 7333);
       node.setMinConnections(10);
       node.setMaxConnections(100);
@@ -238,8 +238,10 @@ public class ChainDownloader
          + "FFCCA755624487CDA56A74801654749FFFFFFFF02C0B72CED040000001976A914426F"
          + "8309EC847B40DC00C66DA3B9D3799684072188AC00809698000000001976A91456827"
          + "81E9AFA6C0B039E32D469D5212A61D8A8FA88AC00000000")));
+      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
+      BitcoinFactory bitcoinFactory = new Testnet2BitcoinFactory(scriptFactory);
       // Unmarshall
-      MessageMarshaller marshal = new MessageMarshaller();
+      MessageMarshaller marshal = new MessageMarshaller(bitcoinFactory.getMessageMagic());
       BlockMessage message = null;
       try
       {
@@ -249,8 +251,6 @@ public class ChainDownloader
          logger.error("Marshaller IO err: " + ex.getMessage());
          System.exit(0);
       }
-      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
-      BitcoinFactory bitcoinFactory = new Testnet2BitcoinFactory(scriptFactory);
       // Check
       assert message.getMagic() == bitcoinFactory.getMessageMagic();
       assert message.getCommand().equals("block");

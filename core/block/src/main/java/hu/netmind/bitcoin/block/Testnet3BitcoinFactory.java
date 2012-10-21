@@ -18,6 +18,7 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BitcoinException;
+import hu.netmind.bitcoin.Constants;
 import hu.netmind.bitcoin.ScriptFactory;
 import it.nibbles.bitcoin.utils.BtcUtil;
 
@@ -25,13 +26,13 @@ import it.nibbles.bitcoin.utils.BtcUtil;
  *
  * @author Alessandro Polverini
  */
-public class Testnet3BitcoinFactory extends StandardBitcoinFactory
+public class Testnet3BitcoinFactory extends ProdnetBitcoinFactory
 {
 
    public Testnet3BitcoinFactory(ScriptFactory scriptFactory) throws BitcoinException
    {
       this.scriptFactory = scriptFactory;
-      setNetworkParams(0x0b110907, 1296688602000L, 414098458L, 0x1d00ffffL, BtcUtil.hexIn("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
+      setNetworkParams(Constants.TESTNET3_MESSAGE_MAGIC, 1296688602000L, 414098458L, 0x1d00ffffL, BtcUtil.hexIn("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
    }
 
    @Override

@@ -36,7 +36,7 @@ public class DifficultyTests
    static {
       try
       {
-         prodnetFactory = new StandardBitcoinFactory(null);
+         prodnetFactory = new ProdnetBitcoinFactory(null);
          testnet2Factory = new Testnet2BitcoinFactory(null);
       } catch (BitcoinException ex)
       {

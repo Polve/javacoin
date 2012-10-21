@@ -61,7 +61,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGenesisStoreRecall()
       throws BitcoinException
    {
-     BitcoinFactory factory = new StandardBitcoinFactory(new ScriptFactoryImpl(new KeyFactoryImpl(null)));
+     BitcoinFactory factory = new ProdnetBitcoinFactory(new ScriptFactoryImpl(new KeyFactoryImpl(null)));
      Block genesis = factory.getGenesisBlock();
       // Store
       BlockChainLink genesisLink = new BlockChainLink(genesis, factory.newDifficulty(),
@@ -80,9 +80,9 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testAllAttributesCorrectlyRecalled()
       throws BitcoinException
    {
-      List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
-      List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
-      List<TransactionImpl> txs = new LinkedList<TransactionImpl>();
+      List<TransactionInputImpl> inputs = new LinkedList<>();
+      List<TransactionOutputImpl> outputs = new LinkedList<>();
+      List<TransactionImpl> txs = new LinkedList<>();
       inputs.add(new TransactionInputImpl(new byte[] {
                0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },1,
@@ -100,7 +100,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       outputs.add(new TransactionOutputImpl(100001,scriptFactory.createFragment(
                   new byte[] { 10,11,12,13,14,15 })));
       txs.add(new TransactionImpl(inputs,outputs,1));
-      inputs = new LinkedList<TransactionInputImpl>();
+      inputs = new LinkedList<>();
       inputs.add(new TransactionInputImpl(new byte[] {
                0,6,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },1,
@@ -109,7 +109,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                1,1,7,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },2,
                scriptFactory.createFragment(new byte[] { 2,1,2,3,22,5,6,7 }),48l));
-      outputs = new LinkedList<TransactionOutputImpl>();
+      outputs = new LinkedList<>();
       outputs.add(new TransactionOutputImpl(100002,scriptFactory.createFragment(
                   new byte[] { 10,11,12,13,14,17 })));
       txs.add(new TransactionImpl(inputs,outputs,2));
@@ -118,7 +118,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 }, new byte[] {
                111,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 });
-      BitcoinFactory factory = new StandardBitcoinFactory(null);
+      BitcoinFactory factory = new ProdnetBitcoinFactory(null);
       BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(),BlockChainLink.ROOT_HEIGHT,false);
       // Store & Recall
       storage.addLink(link);
@@ -134,9 +134,9 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testAllAttributesCorrectlyRecalledAfterRestart()
       throws BitcoinException
    {
-      List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
-      List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
-      List<TransactionImpl> txs = new LinkedList<TransactionImpl>();
+      List<TransactionInputImpl> inputs = new LinkedList<>();
+      List<TransactionOutputImpl> outputs = new LinkedList<>();
+      List<TransactionImpl> txs = new LinkedList<>();
       inputs.add(new TransactionInputImpl(new byte[] {
                0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },1,
@@ -154,7 +154,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       outputs.add(new TransactionOutputImpl(100001,scriptFactory.createFragment(
                   new byte[] { 10,11,12,13,14,15 })));
       txs.add(new TransactionImpl(inputs,outputs,1));
-      inputs = new LinkedList<TransactionInputImpl>();
+      inputs = new LinkedList<>();
       inputs.add(new TransactionInputImpl(new byte[] {
                0,6,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },1,
@@ -163,7 +163,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                1,1,7,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 },2,
                scriptFactory.createFragment(new byte[] { 2,1,2,3,22,5,6,7 }),48l));
-      outputs = new LinkedList<TransactionOutputImpl>();
+      outputs = new LinkedList<>();
       outputs.add(new TransactionOutputImpl(100002,scriptFactory.createFragment(
                   new byte[] { 10,11,12,13,14,17 })));
       txs.add(new TransactionImpl(inputs,outputs,2));
@@ -172,7 +172,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 }, new byte[] {
                111,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 });
-      BitcoinFactory factory = new StandardBitcoinFactory(null);
+      BitcoinFactory factory = new ProdnetBitcoinFactory(null);
       BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(),BlockChainLink.ROOT_HEIGHT,false);
       // Store -> Restart -> Recall
       storage.addLink(link);
@@ -597,11 +597,11 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       // If a claimedtxhash and output index is supplied, then add an input which claims those
       if ( (claimedTxHash>0) && (claimedOutputIndex>0) )
       {
-         List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
+         List<TransactionInputImpl> inputs = new LinkedList<>();
          inputs.add(new TransactionInputImpl(
                   new byte[] { (byte)claimedTxHash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },claimedOutputIndex,
                   scriptFactory.createFragment(new byte[] {}),1l));
-         List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
+         List<TransactionOutputImpl> outputs = new LinkedList<>();
          outputs.add(new TransactionOutputImpl(100,scriptFactory.createFragment(new byte[] {})));
          transactions.add(new TransactionImpl(inputs,outputs,0));
       }
@@ -610,7 +610,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
             new byte[] { (byte)prevHash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
             new byte[] { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
             new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
-      BitcoinFactory factory = new StandardBitcoinFactory(null);
+      BitcoinFactory factory = new ProdnetBitcoinFactory(null);
       BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(new BigDecimal(""+totalDifficulty)),height,orphan);
       storage.addLink(link);
    }
@@ -645,14 +645,14 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       throws BitcoinException
    {
       // Copy
-      List<TransactionImpl> transactions = new LinkedList<TransactionImpl>();
+      List<TransactionImpl> transactions = new LinkedList<>();
       for ( Transaction tx : block.getTransactions() )
       {
-         List<TransactionInputImpl> inputs = new LinkedList<TransactionInputImpl>();
+         List<TransactionInputImpl> inputs = new LinkedList<>();
          for ( TransactionInput txIn : tx.getInputs() )
             inputs.add(new TransactionInputImpl(txIn.getClaimedTransactionHash(),
                      txIn.getClaimedOutputIndex(),txIn.getSignatureScript(), txIn.getSequence()));
-         List<TransactionOutputImpl> outputs = new LinkedList<TransactionOutputImpl>();
+         List<TransactionOutputImpl> outputs = new LinkedList<>();
          for ( TransactionOutput txOut : tx.getOutputs() )
             outputs.add(new TransactionOutputImpl(txOut.getValue(),txOut.getScript()));
          transactions.add(new TransactionImpl(inputs,outputs,tx.getLockTime()));
