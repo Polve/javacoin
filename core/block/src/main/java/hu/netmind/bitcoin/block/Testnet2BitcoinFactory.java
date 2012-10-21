@@ -18,6 +18,7 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BitcoinException;
+import hu.netmind.bitcoin.Constants;
 import hu.netmind.bitcoin.ScriptFactory;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import java.math.BigInteger;
@@ -26,15 +27,16 @@ import java.math.BigInteger;
  *
  * @author Alessandro Polverini
  */
-public class Testnet2BitcoinFactory extends StandardBitcoinFactory
+public class Testnet2BitcoinFactory extends ProdnetBitcoinFactory
 {
-   public static final DifficultyTarget MAX_TESTNET_TARGET =
+
+   public static final DifficultyTarget MAX_TARGET =
       new DifficultyTarget(new BigInteger("FFFFF0000000000000000000000000000000000000000000000000000", 16));
 
    public Testnet2BitcoinFactory(ScriptFactory scriptFactory) throws BitcoinException
    {
       this.scriptFactory = scriptFactory;
-      setNetworkParams(0xfabfb5daL, 1296688602000l, 384568319l, 0x1d07fff8L, BtcUtil.hexIn("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
+      setNetworkParams(Constants.TESTNET2_MESSAGE_MAGIC, 1296688602000l, 384568319l, 0x1d07fff8L, BtcUtil.hexIn("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
    }
 
    @Override
@@ -46,6 +48,6 @@ public class Testnet2BitcoinFactory extends StandardBitcoinFactory
    @Override
    public DifficultyTarget maxDifficultyTarget()
    {
-      return MAX_TESTNET_TARGET;
+      return MAX_TARGET;
    }
 }

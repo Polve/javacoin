@@ -19,6 +19,7 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
+import hu.netmind.bitcoin.Constants;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.net.NetworkMessageFactory;
@@ -35,26 +36,26 @@ import org.slf4j.LoggerFactory;
  *
  * @author Alessandro Polverini
  */
-public class StandardBitcoinFactory implements BitcoinFactory
+public class ProdnetBitcoinFactory implements BitcoinFactory
 {
 
    protected Logger logger = LoggerFactory.getLogger(this.getClass());
-   protected static final DifficultyTarget MAX_PRODNET_TARGET =
+   protected static final DifficultyTarget MAX_TARGET =
       new DifficultyTarget(new BigInteger("FFFF0000000000000000000000000000000000000000000000000000", 16));
    private Block GENESIS_BLOCK;
    protected ScriptFactory scriptFactory;
    protected NetworkMessageFactory messageFactory;
    protected long compressedTarget;
-   protected long messageMagic;
+   private long protocolMessageMagic;
 
-   protected StandardBitcoinFactory()
+   protected ProdnetBitcoinFactory()
    {
    }
 
-   public StandardBitcoinFactory(ScriptFactory scriptFactory) throws BitcoinException
+   public ProdnetBitcoinFactory(ScriptFactory scriptFactory) throws BitcoinException
    {
       this.scriptFactory = scriptFactory;
-      setNetworkParams(0xf9beb4d9L, 1231006505000l, 2083236893l, 0x1d00ffffL, BtcUtil.hexIn("000000000019D6689C085AE165831E934FF763AE46A2A6C172B3F1B60A8CE26F"));
+      setNetworkParams(Constants.PRODNET_MESSAGE_MAGIC, 1231006505000l, 2083236893l, 0x1d00ffffL, BtcUtil.hexIn("000000000019D6689C085AE165831E934FF763AE46A2A6C172B3F1B60A8CE26F"));
    }
 
    @Override
@@ -66,7 +67,7 @@ public class StandardBitcoinFactory implements BitcoinFactory
    @Override
    public long getMessageMagic()
    {
-      return messageMagic;
+      return protocolMessageMagic;
    }
 
    @Override
@@ -96,7 +97,7 @@ public class StandardBitcoinFactory implements BitcoinFactory
    @Override
    public DifficultyTarget maxDifficultyTarget()
    {
-      return MAX_PRODNET_TARGET;
+      return MAX_TARGET;
    }
 
    @Override
@@ -136,7 +137,7 @@ public class StandardBitcoinFactory implements BitcoinFactory
       long genesisCompressedTarget,
       byte[] genesisHash) throws BitcoinException
    {
-      this.messageMagic = messageMagic;
+      this.protocolMessageMagic = messageMagic;
       this.compressedTarget = genesisCompressedTarget;
       this.messageFactory = new NetworkMessageFactory(messageMagic);
       GENESIS_BLOCK = new BlockImpl(getGenesisTransactions(), genesisCreationTime, genesisNonce, genesisCompressedTarget,

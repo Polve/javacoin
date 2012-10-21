@@ -8,7 +8,7 @@ import hu.netmind.bitcoin.ScriptFactory;
  *
  * @author Alessandro Polverini
  */
-public class TesterBitcoinFactory extends StandardBitcoinFactory
+public class TesterBitcoinFactory extends ProdnetBitcoinFactory
 {
    private Block genesisBlock;
 

@@ -40,9 +40,10 @@ import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.BlockChainLink;
-import hu.netmind.bitcoin.block.StandardBitcoinFactory;
+import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
+import hu.netmind.bitcoin.net.NetworkMessageFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -100,7 +101,7 @@ public class chaintester
       // Initialize the chain
 
       ScriptFactory scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
-      bitcoinFactory = new StandardBitcoinFactory(scriptFactory);
+      bitcoinFactory = new ProdnetBitcoinFactory(scriptFactory);
 //      storage = new BDBChainLinkStorage(scriptFactory);
 //      storage.setDbPath("data");
 //      storage.init();
@@ -111,7 +112,7 @@ public class chaintester
 //      storage.getGenesisLink().getBlock().validate();
 //      logger.info("initialized chain, last link height: "+storage.getLastLink().getHeight());
       // Initialize p2p node
-      node = new Node();
+      node = new Node(bitcoinFactory.getMessageMagic());
       node.setPort(7321);
       node.setMinConnections(1);
       node.setMaxConnections(1);
@@ -144,7 +145,9 @@ public class chaintester
       private byte[] highestHashKnownBeforeRequest = null;
       private byte[] highestHashPromised = null;
       private boolean downloading = false;
+      private NetworkMessageFactory messageFactory = bitcoinFactory.getMessageFactory();
 
+      @Override
       public void onJoin(Connection conn)
          throws IOException
       {
@@ -158,12 +161,14 @@ public class chaintester
 //         conn.send(version);
       }
 
+      @Override
       public void onLeave(Connection conn)
          throws IOException
       {
          logger.debug("disconnected from "+conn.getRemoteAddress()+" (on local: "+conn.getLocalAddress()+")");
       }
 
+      @Override
       public void onMessage(Connection conn, Message message)
          throws IOException
       {
@@ -175,7 +180,7 @@ public class chaintester
             if ( version.getStartHeight() > knownHighestBlock )
                knownHighestBlock = version.getStartHeight();
             // Let's answer version, so we get more messages
-            VerackMessage verack = new VerackMessage(bitcoinFactory.getMessageMagic());
+            VerackMessage verack = messageFactory.newVerackMessage();
             logger.debug("answering: "+verack);
             conn.send(verack);
          }
@@ -199,7 +204,7 @@ public class chaintester
                // Determine the last promised block, so we know later when we're finished
                if ( highestHashPromised == null )
                   highestHashPromised = invMessage.getInventoryItems().get(invMessage.getInventoryItems().size()-1).getHash();
-               conn.send(new GetDataMessage(bitcoinFactory.getMessageMagic(),items));
+               conn.send(messageFactory.newGetDataMessage(items));
                logger.debug("sent getdata, waiting for blocks...");
             }
          }

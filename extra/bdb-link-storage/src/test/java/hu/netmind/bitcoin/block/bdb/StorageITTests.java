@@ -19,7 +19,7 @@ package hu.netmind.bitcoin.block.bdb;
 
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.block.BitcoinFactory;
-import hu.netmind.bitcoin.block.StandardBitcoinFactory;
+import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.StorageProvider;
 import hu.netmind.bitcoin.block.TestSuiteFactory;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
@@ -43,7 +43,7 @@ public class StorageITTests {
       public BDBChainLinkStorage newStorage() {
         BitcoinFactory bitcoinFactory;
         try {
-          bitcoinFactory = new StandardBitcoinFactory(new ScriptFactoryImpl(null));
+          bitcoinFactory = new ProdnetBitcoinFactory(new ScriptFactoryImpl(null));
         } catch (BitcoinException ex) {
           logger.error("Cant instantiate StandardBitcoinFactory: " + ex.getMessage(), ex);
           return null;
