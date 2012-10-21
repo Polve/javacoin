@@ -23,7 +23,7 @@ import java.io.IOException;
 /**
  * @author Robert Brautigam
  */
-public class TxMessage extends ChecksummedMessage
+public class TxMessage extends Message
 {
    private Tx tx;
 

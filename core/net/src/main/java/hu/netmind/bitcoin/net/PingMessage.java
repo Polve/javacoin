@@ -23,7 +23,7 @@ import java.io.IOException;
 /**
  * @author Robert Brautigam
  */
-public class PingMessage extends ChecksummedMessage
+public class PingMessage extends Message
 {
    public PingMessage(long magic)
       throws IOException

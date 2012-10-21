@@ -23,7 +23,7 @@ import java.io.IOException;
 /**
  * @author Robert Brautigam
  */
-public class VerackMessage extends ChecksummedMessage
+public class VerackMessage extends Message
 {
    public VerackMessage(long magic) throws IOException
    {

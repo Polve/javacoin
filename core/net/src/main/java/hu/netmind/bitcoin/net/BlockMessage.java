@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public class BlockMessage extends ChecksummedMessage
+public class BlockMessage extends Message
 {
    private BlockHeader header;
    private List<Tx> transactions;

@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Alessandro Polverini
  */
-public class AlertMessage extends ChecksummedMessage
+public class AlertMessage extends Message
 {
 
    private static final Logger logger = LoggerFactory.getLogger(AlertMessage.class);

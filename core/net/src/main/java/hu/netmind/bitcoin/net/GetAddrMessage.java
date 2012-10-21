@@ -23,7 +23,7 @@ import java.io.IOException;
 /**
  * @author Robert Brautigam
  */
-public class GetAddrMessage extends ChecksummedMessage
+public class GetAddrMessage extends Message
 {
    public GetAddrMessage(long magic)
       throws IOException

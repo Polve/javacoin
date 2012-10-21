@@ -20,6 +20,9 @@ package hu.netmind.bitcoin.net;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is the base class for all messages, provides serialization and
@@ -28,6 +31,7 @@ import java.io.OutputStream;
  */
 public class Message
 {
+   private static final Logger logger = LoggerFactory.getLogger(Message.class);
    public static final long MAGIC_MAIN = 0xF9BEB4D9l;
    public static final long MAGIC_TEST = 0xFABFB5DAl;
    public static final long MAGIC_TESTNET3 = 0x0b110907L;
@@ -35,24 +39,39 @@ public class Message
    private long magic;
    private String command;
    private long length = -1;
+   private long checksum = 0;
+   private long calculatedChecksum = 0;
+   private MessageDigest digest = null;
 
    /**
     * All messages must provide a constructor to construct
     * the message by supplying all attributes. Note: length of
     * payload will be automatically calculated.
     */
-   public Message(long magic, String command)
+   public Message(long magic, String command) throws IOException
    {
       this.magic=magic;
       this.command=command;
+      try
+      {
+         digest = MessageDigest.getInstance("SHA-256");
+      } catch ( Exception e ) {
+         throw new IOException("could not initialize SHA-256 digest",e);
+      }
    }
 
    /**
     * An empty contructor must always be present to construct an empty
     * message for the deserialization.
     */
-   Message()
+   Message() throws IOException
    {
+      try
+      {
+         digest = MessageDigest.getInstance("SHA-256");
+      } catch ( Exception e ) {
+         throw new IOException("could not initialize SHA-256 digest",e);
+      }
    }
 
    /**
@@ -72,6 +91,15 @@ public class Message
          throw new IOException("wrong magic number for message: "+new Long(magic).toString(16));
       command = input.readString(12);
       length = input.readUInt32();
+      checksum = input.readUInt32();
+      // Now let's make sure we keep track of the real checksum
+      input.setListener(new BitCoinInputStream.Listener() {
+         @Override
+               public void update(int value)
+               {
+                  digest.update((byte) value);
+               }
+            });
    }
 
    /**
@@ -86,6 +114,15 @@ public class Message
     */
    void postReadFrom(BitCoinInputStream input, long version, Object param)
    {
+      // Calculate the checksum as sha256(sha256(content))
+      input.clearListener();
+      byte[] tmp = digest.digest();
+      digest.reset();
+      byte[] result = digest.digest(tmp);
+      // Calculate checksum first 4 bytes
+      calculatedChecksum = (long) ((long) result[0]&0xff) | (((long) result[1]&0xff)<<8) |
+         (((long) result[2]&0xff)<<16) | (((long) result[3]&0xff)<<24);
+      logger.debug("digest checksum: {}",calculatedChecksum);
    }
 
    public long getMagic()
@@ -126,7 +163,8 @@ public class Message
    {
       output.writeUInt32BE(magic);
       output.writeString(command,12);
-      output.writeUInt32(0); // We don't know the length yet
+      output.writeUInt32(0);  // We don't know the length yet
+      output.writeUInt32(0);  // We don't know the checksum yet
    }
 
    /**
@@ -141,14 +179,38 @@ public class Message
    {
       // Let's fill out the length now (we couldn't have known that
       // in the writeTo method)
-      if ( this instanceof ChecksummedMessage )
+      //if ( this instanceof ChecksummedMessage )
          length = serializedBytes.length - 24;
-      else
-         length = serializedBytes.length - 20;
-      // Overwrite previous 0 value
+      //else
+      //   length = serializedBytes.length - 20;
+      // Overwrite previous 0 value of length
       BitCoinOutputStream output = new BitCoinOutputStream(
             new OverwriterByteArrayOutputStream(serializedBytes,16));
       output.writeUInt32(length);
+      // Calculate checksum
+      digest.reset();
+      digest.update(serializedBytes,24,serializedBytes.length-24);
+      byte[] tmp = digest.digest();
+      digest.reset();
+      byte[] result = digest.digest(tmp);
+      // Overwrite previous 0 value with first 4 bytes of checksum
+      BitCoinOutputStream tmpOut = new BitCoinOutputStream(
+            new OverwriterByteArrayOutputStream(serializedBytes,20));
+      tmpOut.writeU(result[0]&0xff);
+      tmpOut.writeU(result[1]&0xff);
+      tmpOut.writeU(result[2]&0xff);
+      tmpOut.writeU(result[3]&0xff);
+   }
+
+   public long getChecksum()
+   {
+      return checksum;
+   }
+
+   public boolean verify()
+   {
+      logger.debug("verifying message calculated: {} vs. {}",calculatedChecksum,checksum);
+      return calculatedChecksum == checksum;
    }
 
    /**

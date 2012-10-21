@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public class GetBlocksMessage extends ChecksummedMessage
+public class GetBlocksMessage extends Message
 {
    private static final byte[] ZERO_HASH = new byte[] { 
       0,0,0,0,0,0,0,0,

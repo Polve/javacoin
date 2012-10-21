@@ -23,7 +23,7 @@ import java.io.IOException;
 /**
  * @author Robert Brautigam
  */
-public class VersionMessage extends ChecksummedMessage
+public class VersionMessage extends Message
 {
    private long version;
    private long services;

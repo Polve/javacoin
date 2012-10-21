@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public class AddrMessage extends ChecksummedMessage
+public class AddrMessage extends Message
 {
    private List<AddressEntry> addressEntries;
 
