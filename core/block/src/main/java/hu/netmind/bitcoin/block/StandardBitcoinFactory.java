@@ -21,6 +21,7 @@ import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.ScriptFragment;
+import hu.netmind.bitcoin.net.NetworkMessageFactory;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -38,16 +39,13 @@ public class StandardBitcoinFactory implements BitcoinFactory
 {
 
    protected Logger logger = LoggerFactory.getLogger(this.getClass());
+   protected static final DifficultyTarget MAX_PRODNET_TARGET =
+      new DifficultyTarget(new BigInteger("FFFF0000000000000000000000000000000000000000000000000000", 16));
    private Block GENESIS_BLOCK;
    protected ScriptFactory scriptFactory;
+   protected NetworkMessageFactory messageFactory;
    protected long compressedTarget;
    protected long messageMagic;
-   protected boolean isOldTestnet = false;
-   protected boolean isTestnet3 = false;
-   public static final DifficultyTarget MAX_PRODNET_TARGET =
-      new DifficultyTarget(new BigInteger("FFFF0000000000000000000000000000000000000000000000000000", 16));
-   public static final DifficultyTarget MAX_TESTNET_TARGET =
-      new DifficultyTarget(new BigInteger("FFFFF0000000000000000000000000000000000000000000000000000", 16));
 
    protected StandardBitcoinFactory()
    {
@@ -98,7 +96,7 @@ public class StandardBitcoinFactory implements BitcoinFactory
    @Override
    public DifficultyTarget maxDifficultyTarget()
    {
-      return isOldTestnet ? MAX_TESTNET_TARGET : MAX_PRODNET_TARGET;
+      return MAX_PRODNET_TARGET;
    }
 
    @Override
@@ -114,15 +112,21 @@ public class StandardBitcoinFactory implements BitcoinFactory
    }
 
    @Override
-   public boolean isTestnet3()
+   public boolean isTestnet2()
    {
-      return isTestnet3;
+      return false;
    }
 
    @Override
-   public boolean isTestnet2()
+   public boolean isTestnet3()
    {
-      return isOldTestnet;
+      return false;
+   }
+
+   @Override
+   public NetworkMessageFactory getMessageFactory()
+   {
+      return messageFactory;
    }
 
    protected final void setNetworkParams(
@@ -134,6 +138,7 @@ public class StandardBitcoinFactory implements BitcoinFactory
    {
       this.messageMagic = messageMagic;
       this.compressedTarget = genesisCompressedTarget;
+      this.messageFactory = new NetworkMessageFactory(messageMagic);
       GENESIS_BLOCK = new BlockImpl(getGenesisTransactions(), genesisCreationTime, genesisNonce, genesisCompressedTarget,
          BtcUtil.hexIn("0000000000000000000000000000000000000000000000000000000000000000"),
          BtcUtil.hexIn("4A5E1E4BAAB89F3A32518A88C31BC87F618F76673E2CC77AB2127B7AFDEDA33B"),

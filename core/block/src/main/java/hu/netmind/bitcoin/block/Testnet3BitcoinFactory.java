@@ -31,7 +31,12 @@ public class Testnet3BitcoinFactory extends StandardBitcoinFactory
    public Testnet3BitcoinFactory(ScriptFactory scriptFactory) throws BitcoinException
    {
       this.scriptFactory = scriptFactory;
-      this.isTestnet3 = true;
       setNetworkParams(0x0b110907, 1296688602000L, 414098458L, 0x1d00ffffL, BtcUtil.hexIn("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
+   }
+
+   @Override
+   public boolean isTestnet3()
+   {
+      return true;
    }
 }

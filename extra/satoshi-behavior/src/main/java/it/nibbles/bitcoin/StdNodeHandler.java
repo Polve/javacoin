@@ -56,10 +56,9 @@ public class StdNodeHandler implements MessageHandler, Runnable
    private static long BC_PROTOCOL_VERSION = 32100;
    private Node node;
    private BitcoinFactory bitcoinFactory;
-   //private ScriptFactory scriptFactory;
-   //private long messageMagic;
    private BlockChain chain;
    private BlockChainLinkStorage storage;
+   private NetworkMessageFactory messageFactory;
    private byte[] highestHashKnownBeforeRequest = null;
    private byte[] highestHashPromised = null;
    private transient Connection downloadingFromPeer = null;
@@ -71,6 +70,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
       this.bitcoinFactory = bitcoinFactory;
       this.chain = chain;
       this.storage = storage;
+      this.messageFactory = bitcoinFactory.getMessageFactory();
       node.addHandler(this);
    }
 
@@ -81,7 +81,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
       long ourHeight = chain.getHeight();
       logger.debug("connected to " + conn.getRemoteAddress() + " (from: " + conn.getLocalAddress() + ") sending out height: " + ourHeight);
       // Send our version information
-      VersionMessage version = new VersionMessage(bitcoinFactory.getMessageMagic(), BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
+      VersionMessage version = messageFactory.newVersionMessage(BC_PROTOCOL_VERSION, 0, System.currentTimeMillis() / 1000,
               new NodeAddress(1, (InetSocketAddress) conn.getRemoteAddress()),
               new NodeAddress(1, new InetSocketAddress(((InetSocketAddress) conn.getLocalAddress()).getAddress(), node.getPort())),
               //new NodeAddress(1, new InetSocketAddress("127.0.0.1", node.getPort())),
@@ -120,7 +120,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
       {
          VersionMessage version = (VersionMessage) message;
          // Let's answer version, so we get more messages
-         VerackMessage verack = new VerackMessage(bitcoinFactory.getMessageMagic());
+         VerackMessage verack = messageFactory.newVerackMessage();
          logger.debug("Answering verack to VersionMessage: " + version);
          conn.send(verack);
       } else if (message instanceof VerackMessage)
@@ -166,7 +166,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
          // Do the request for all blocks remaining
          if (!items.isEmpty())
          {
-            conn.send(new GetDataMessage(bitcoinFactory.getMessageMagic(), items));
+            conn.send(messageFactory.newGetDataMessage(items));
             logger.debug("Reply to INV using getdata -- highestHashPromised: " + BtcUtil.hexOut(highestHashPromised));
          }
       } else if (message instanceof TxMessage)
@@ -211,7 +211,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
       } else if (message instanceof PingMessage)
       {
          logger.debug("Ping message: " + message);
-         conn.send(new PingMessage(bitcoinFactory.getMessageMagic()));
+         conn.send(messageFactory.newPingMessage());
       } else
          logger.debug("[#" + numMessages + "] unhandled message (" + conn.getRemoteAddress() + "): " + message.getClass());
 
@@ -225,7 +225,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
             List<byte[]> startBlocks = chain.buildBlockLocator();
             logger.debug("We are at " + lastStoredLink.getHeight() + " / " + BtcUtil.hexOut(highestHashKnownBeforeRequest)
                     + ", while known max is: " + peerData.getVersion().getStartHeight() + " Sending getblocks to " + downloadingFromPeer);
-            GetBlocksMessage getBlocks = new GetBlocksMessage(bitcoinFactory.getMessageMagic(), BC_PROTOCOL_VERSION, startBlocks, null);
+            GetBlocksMessage getBlocks = messageFactory.newGetBlocksMessage(BC_PROTOCOL_VERSION, startBlocks, null);
             conn.send(getBlocks);
          }
       }
