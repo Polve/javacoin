@@ -19,7 +19,11 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.net.InventoryItem;
+import hu.netmind.bitcoin.net.Message;
+import hu.netmind.bitcoin.net.NetworkMessageFactory;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  *
@@ -29,6 +33,8 @@ public interface BitcoinFactory
 {
 
    public ScriptFactory getScriptFactory();
+
+   public NetworkMessageFactory getMessageFactory();
 
    public long getMessageMagic();
 
