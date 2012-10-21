@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public class GetDataMessage extends ChecksummedMessage
+public class GetDataMessage extends Message
 {
    private List<InventoryItem> items;
 

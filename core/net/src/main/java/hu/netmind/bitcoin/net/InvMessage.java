@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public class InvMessage extends ChecksummedMessage
+public class InvMessage extends Message
 {
    private List<InventoryItem> items;
 

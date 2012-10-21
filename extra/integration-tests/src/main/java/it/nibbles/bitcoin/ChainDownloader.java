@@ -249,8 +249,10 @@ public class ChainDownloader
          logger.error("Marshaller IO err: " + ex.getMessage());
          System.exit(0);
       }
+      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
+      BitcoinFactory bitcoinFactory = new Testnet2BitcoinFactory(scriptFactory);
       // Check
-      assert message.getMagic() == Message.MAGIC_TEST;
+      assert message.getMagic() == bitcoinFactory.getMessageMagic();
       assert message.getCommand().equals("block");
       assert message.verify();
       assert message.getHeader().getVersion() == 1;
@@ -258,7 +260,6 @@ public class ChainDownloader
       assert message.getHeader().getDifficulty() == 470014038;
       assert message.getHeader().getNonce() == 679291059;
       assert message.getTransactions().size() == 6;
-      ScriptFactoryImpl scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
       BlockImpl block = BlockImpl.createBlock(scriptFactory, (BlockMessage) message);
       for (Transaction tx : block.getTransactions())
       {

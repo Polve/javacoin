@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public class HeadersMessage extends ChecksummedMessage
+public class HeadersMessage extends Message
 {
    private List<BlockHeader> headers;
 

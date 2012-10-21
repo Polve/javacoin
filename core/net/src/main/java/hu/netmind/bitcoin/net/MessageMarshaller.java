@@ -18,13 +18,12 @@
 
 package hu.netmind.bitcoin.net;
 
-import java.io.IOException;
 import java.io.ByteArrayOutputStream;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ResourceBundle;
+import java.io.IOException;
 import java.util.Enumeration;
-import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ResourceBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +35,8 @@ public class MessageMarshaller
 {
    private static final Logger logger = LoggerFactory.getLogger(MessageMarshaller.class);
 
-   private static Map<String,Class> messageTypes = new HashMap<String,Class>();
-   private Map<Class,Object> params = new HashMap<Class,Object>();
+   private static final Map<String,Class> messageTypes = new HashMap<>();
+   private Map<Class,Object> params = new HashMap<>();
    private long version = -1;
 
    static
@@ -110,10 +109,12 @@ public class MessageMarshaller
          // If we read less bytes than the announced length of message,
          // it is probable there was an extension to this message and we don't know it
          // yet. Just skip the rest of message, hopefully it was not important :)
-         input.skip(header.getLength()+((message instanceof ChecksummedMessage)?24:20)-input.getByteCount());
+         //input.skip(header.getLength()+((message instanceof ChecksummedMessage)?24:20)-input.getByteCount());
+         input.skip(header.getLength()+24-input.getByteCount());
          message.postReadFrom(input,version,param);
          logger.debug("deserialized message: {}",message);
-         if ( (message instanceof ChecksummedMessage) && (!((ChecksummedMessage)message).verify()) )
+         //if ( (message instanceof ChecksummedMessage) && (!((ChecksummedMessage)message).verify()) )
+         if (!message.verify())
             throw new IOException("message checksum wrong for message: "+message);
          return message;
       } catch ( IOException e ) {

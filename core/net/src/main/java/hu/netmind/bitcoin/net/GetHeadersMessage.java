@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Robert Brautigam
  */
-public class GetHeadersMessage extends ChecksummedMessage
+public class GetHeadersMessage extends Message
 {
    private List<byte[]> hashStarts;
    private byte[] hashStop;
