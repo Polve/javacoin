@@ -17,7 +17,6 @@ package hu.netmind.bitcoin.block.jdbc;
 
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
@@ -25,7 +24,6 @@ import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
 import hu.netmind.bitcoin.block.BlockImpl;
-import hu.netmind.bitcoin.block.Difficulty;
 import hu.netmind.bitcoin.block.TransactionImpl;
 import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
@@ -44,6 +42,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -71,8 +70,6 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    private boolean transactional = DEFAULT_TRANSACTIONAL;
    private int idReserveSize = DEFAULT_RESERVE_SIZE;
    private BitcoinFactory bitcoinFactory = null;
-   //private ScriptFactory scriptFactory = null;
-   //private boolean isTestnet = false;
    private DataSource dataSource;
    //
    // Id generators for rows inserted in the DB tables
@@ -343,10 +340,10 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    {
       try (Connection dbConnection = getDbConnection())
       {
-         Map<byte[], SimplifiedStoredBlock> blocks = getBlocksAtHeight(dbConnection, BlockChainLink.ROOT_HEIGHT);
+         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(dbConnection, BlockChainLink.ROOT_HEIGHT);
          if (blocks.isEmpty())
             return null;
-         return getLink(blocks.keySet().iterator().next());
+         return getLink(blocks.get(0).hash);
       } catch (SQLException ex)
       {
          throw new JdbcStorageException("getGenesisLinkEx: " + ex.getMessage(), ex);
@@ -598,14 +595,14 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
    {
       try (Connection dbConnection = getDbConnection())
       {
-         Map<byte[], SimplifiedStoredBlock> blocks = getBlocksAtHeight(dbConnection, height);
+         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(dbConnection, height);
          if (blocks.isEmpty())
             return null;
          if (blocks.size() == 1)
-            return blocks.keySet().iterator().next();
+            return blocks.get(0).hash;
          BlockChainLink top = getLastLink();       // TODO: Optimize that function, we can keep top cached
          SimplifiedStoredBlock topBlock = new SimplifiedStoredBlock(top);
-         for (SimplifiedStoredBlock b : blocks.values())
+         for (SimplifiedStoredBlock b : blocks)
             if (isReachable(dbConnection, b, topBlock))
                return b.hash;
 
@@ -662,9 +659,9 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
       }
    }
 
-   protected Map<byte[], SimplifiedStoredBlock> getBlocksAtHeight(final Connection dbConnection, long height) throws SQLException
+   protected List<SimplifiedStoredBlock> getBlocksAtHeight(final Connection dbConnection, long height) throws SQLException
    {
-      Map<byte[], SimplifiedStoredBlock> blocks = new HashMap<>();
+      List<SimplifiedStoredBlock> blocks = new ArrayList<>();
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetSimplifiedBlockHeadersAtHeight))
       {
          ps.setLong(1, height);
@@ -672,7 +669,7 @@ public class JdbcChainLinkStorage implements BlockChainLinkStorage, NodeStorage
          while (rs.next())
          {
             SimplifiedStoredBlock ssb = new SimplifiedStoredBlock(rs);
-            blocks.put(ssb.hash, ssb);
+            blocks.add(ssb);
          }
       }
       return blocks;
