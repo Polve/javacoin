@@ -21,15 +21,10 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.Script;
-import hu.netmind.bitcoin.ScriptException;
 import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
-import it.nibbles.bitcoin.utils.BtcUtil;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -62,7 +57,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    private static final Map<BigInteger,Map<Long,BigInteger>> knownHashes =
       new HashMap<>();
 
-   private OrphanBlocksSet orphanBlocks = new OrphanBlocksSet();
+   private OrphanBlockSet orphanBlocks = new OrphanBlockSet();
    //private Block genesisBlock = null;
    private BlockChainLinkStorage linkStorage = null;
    private BlockChainListener listener = null;
