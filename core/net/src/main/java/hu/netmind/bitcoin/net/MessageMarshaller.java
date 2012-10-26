@@ -18,6 +18,7 @@
 
 package hu.netmind.bitcoin.net;
 
+import hu.netmind.bitcoin.Constants;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Enumeration;
@@ -38,7 +39,7 @@ public class MessageMarshaller
    private static final Map<String,Class> messageTypes = new HashMap<>();
    private Map<Class,Object> params = new HashMap<>();
    private long version = -1;
-   private long messageMagic = 0x42;   // Random value -- TODO: Use Prodnet magic
+   private long messageMagic = Constants.PRODNET_MESSAGE_MAGIC;   // Random value -- TODO: Use Prodnet magic
 
    public MessageMarshaller()
    {

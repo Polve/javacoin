@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2011 NetMind Consulting Bt.
+ * Copyright (C) 2012 nibbles.it
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,37 +17,24 @@
  */
 package hu.netmind.bitcoin.block;
 
-import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.VerificationException;
-import hu.netmind.bitcoin.ScriptFragment;
-import hu.netmind.bitcoin.ScriptFactory;
-import hu.netmind.bitcoin.ScriptException;
-import hu.netmind.bitcoin.Script;
-import org.testng.annotations.Test;
-import java.io.IOException;
-import org.easymock.EasyMock;
-import org.testng.Assert;
-import hu.netmind.bitcoin.net.HexUtil;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Iterator;
-import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * @author Alessandro Polverini
  */
 @Test
-public class OrphanBlockSetTests
+public class OrphanBlockSetTest
 {
 
    public void testEmptySet()
       throws BitcoinException
    {
-      OrphanBlocksSet set = new OrphanBlocksSet();
+      OrphanBlockSet set = new OrphanBlockSet();
       Assert.assertNull(set.removeBlockByPreviousHash(new byte[]
          {
             3, 2
@@ -57,11 +44,19 @@ public class OrphanBlockSetTests
    public void test2()
       throws BitcoinException
    {
-      byte[] hash = new byte[]
+      byte[] hash0 = new byte[]
+      {
+         33, 22
+      };
+      byte[] hash0Copy = new byte[]
       {
          33, 22
       };
       byte[] hash1 = new byte[]
+      {
+         33, 34
+      };
+      byte[] hash1Copy = new byte[]
       {
          33, 34
       };
@@ -78,36 +73,46 @@ public class OrphanBlockSetTests
          4, 5
       };
       List<TransactionImpl> txs = new LinkedList<>();
-      Block b1 = new BlockImpl(txs, 0, 0, 0, hash, null, hash1);
-      Block b2 = new BlockImpl(txs, 0, 0, 0, hash, null, hash2);
+      Block b1 = new BlockImpl(txs, 0, 0, 0, hash0, null, hash1);
+      Block b2 = new BlockImpl(txs, 0, 0, 0, hash0, null, hash2);
       Block b3 = new BlockImpl(txs, 0, 0, 0, hash4, null, hash3);
-      OrphanBlocksSet set = new OrphanBlocksSet();
+      OrphanBlockSet set = new OrphanBlockSet();
 
       // Check that a single block is correctly retrieved and deleted from the set
       set.addBlock(b1);
       Assert.assertNull(set.removeBlockByPreviousHash(hash1));
-      Block b = set.removeBlockByPreviousHash(hash);
-      Assert.assertTrue(b == null || b == b1);
-      Assert.assertNull(set.removeBlockByPreviousHash(hash));
+
+      Block r1 = set.removeBlockByPreviousHash(hash0Copy);
+      Block r2 = set.removeBlockByPreviousHash(hash0);
+
+      // Remember we have a weak cache so it's ok that we are unable to retrieve
+      // an item just inserted.
+      // But it must not happen to be able to retrieve an item that previously
+      // failed to be retrieved: we use that property to check that we implemented
+      // correctly the hash comparison (normal Maps uses identity for equals)
+      Assert.assertNull(r2);
+
+      Assert.assertTrue((r1 == null && r2 == null)
+         || b1.equals(r1));
 
       // Check that two blocks with same previous hash are correctly retrieved
-      set = new OrphanBlocksSet();
+      set = new OrphanBlockSet();
       set.addBlock(b1);
       set.addBlock(b2);
-      Block r1 = set.removeBlockByPreviousHash(hash);
-      Block r2 = set.removeBlockByPreviousHash(hash);
+      r1 = set.removeBlockByPreviousHash(hash0);
+      r2 = set.removeBlockByPreviousHash(hash0Copy);
       Assert.assertTrue((r1 == null && r2 == null)
          || (r1 == null && (r2 == b1 || r2 == b2))
          || ((r1 == b1 || r1 == b2) && r2 == null)
          || (r1 == b1 && r2 == b2)
          || (r2 == b1 && r1 == b2));
-      Assert.assertNull(set.removeBlockByPreviousHash(hash));
+      Assert.assertNull(set.removeBlockByPreviousHash(hash0));
 
-      set = new OrphanBlocksSet();
+      set = new OrphanBlockSet();
       set.addBlock(b1);
       set.addBlock(b3);
       set.addBlock(b2);
-      b = set.removeBlockByPreviousHash(hash4);
+      Block b = set.removeBlockByPreviousHash(hash4);
       Assert.assertTrue(b == null || b == b3);
       Assert.assertNull(set.removeBlockByPreviousHash(hash4));
    }
