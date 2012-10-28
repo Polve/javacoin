@@ -19,16 +19,11 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.Script;
-import hu.netmind.bitcoin.ScriptException;
 import hu.netmind.bitcoin.ScriptFactory;
 import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
-import it.nibbles.bitcoin.utils.BtcUtil;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -121,6 +116,7 @@ public class ParallelTransactionsVerifier extends BlockTransactionsVerifier
       @Override
       public Void call() throws VerificationException
       {
+         InOutValues inOutValues = new InOutValues();
          // Validate without context
          tx.validate();
          // Checks 16.1.1-7: Verify only if this is supposed to be a full node
@@ -161,5 +157,12 @@ public class ParallelTransactionsVerifier extends BlockTransactionsVerifier
          t.setName("Transaction Verifier " + counter);
          return t;
       }
+   }
+
+   class InOutValues
+   {
+
+      public long inValue = 0;
+      public long outValue = 0;
    }
 }

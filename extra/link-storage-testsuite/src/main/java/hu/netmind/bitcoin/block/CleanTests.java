@@ -214,7 +214,8 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testLastLinkEmpty()
       throws BitcoinException
    {
-      Assert.assertNull(storage.getLastLink());      
+      Assert.assertNull(storage.getLastLink());
+      Assert.assertEquals(storage.getHeight(), 0);
    }
 
    public void testLastLinkConcept()

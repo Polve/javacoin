@@ -57,10 +57,6 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockImpl implements Block, Hashable
 {
-//   public static BlockImpl MAIN_GENESIS;
-//   public static BlockImpl TESTNET_GENESIS;
-//   public static BlockImpl TESTNET3_GENESIS;
-
    private static final int BLOCK_DEFAULT_VERSION = 1;
    private static final long BLOCK_FUTURE_VALIDITY = 2*60*60*1000 ; // 2 hrs millis
    private static Logger logger = LoggerFactory.getLogger(BlockImpl.class);
@@ -111,7 +107,8 @@ public class BlockImpl implements Block, Hashable
       this.hash=hash;
       if ( hash == null )
          this.hash = calculateHash();
-      this.transactions = Collections.unmodifiableList(new LinkedList<TransactionImpl>(transactions));
+      if (transactions != null)
+         this.transactions = Collections.unmodifiableList(new LinkedList<>(transactions));
    }
 
    /**
@@ -158,6 +155,7 @@ public class BlockImpl implements Block, Hashable
    /**
     * Run all validations that require no context.
     */
+   @Override
    public void validate()
       throws VerificationException
    {
@@ -218,46 +216,56 @@ public class BlockImpl implements Block, Hashable
       }
    }
 
+   @Override
    public long getCreationTime()
    {
       return creationTime;
    }
+   @Override
    public long getNonce()
    {
       return nonce;
    }
+   @Override
    public long getCompressedTarget()
    {
       return compressedTarget;
    }
+   @Override
    public byte[] getMerkleRoot()
    {
       return merkleRoot;
    }
+   @Override
    public byte[] getHash()
    {
       return hash;
    }
+   @Override
    public byte[] getPreviousBlockHash()
    {
       return previousBlockHash;
    }
 
+   @Override
    public List<Transaction> getTransactions()
    {
       return Collections.<Transaction>unmodifiableList(transactions);
    }
 
+   @Override
    public int hashCode()
    {
       return Arrays.hashCode(hash);
    }
 
+   @Override
    public long getVersion()
    {
       return version;
    }
 
+   @Override
    public boolean equals(Object o)
    {
       if ( o == null )
@@ -270,7 +278,7 @@ public class BlockImpl implements Block, Hashable
    public static BlockImpl createBlock(ScriptFactory scriptFactory, BlockMessage blockMessage)
       throws BitcoinException
    {
-      List<TransactionImpl> txs = new LinkedList<TransactionImpl>();
+      List<TransactionImpl> txs = new LinkedList<>();
       for ( Tx tx : blockMessage.getTransactions() )
          txs.add(TransactionImpl.createTransaction(scriptFactory,tx));
       BlockImpl block = new BlockImpl(txs,blockMessage.getHeader().getTimestamp(),
@@ -282,209 +290,14 @@ public class BlockImpl implements Block, Hashable
    public BlockMessage createBlockMessage(long magic)
       throws IOException
    {
-      List<Tx> txs = new LinkedList<Tx>();
+      List<Tx> txs = new LinkedList<>();
       for ( TransactionImpl transaction : transactions )
          txs.add(transaction.createTx());
       BlockMessage message = new BlockMessage(magic,createBlockHeader(),txs);
       return message;
    }
 
-//   static
-//   {
-//      try
-//      {
-//         // Create genesis transaction for production network
-//         List<TransactionInputImpl> ins = new LinkedList<>();
-//         TransactionInputImpl input = new TransactionInputImpl(
-//               BtcUtil.hexIn("0000000000000000000000000000000000000000000000000000000000000000"),
-//               -1,
-//               new ScriptFragment() {
-//                  private byte[] scriptBytes = 
-//                     BtcUtil.hexIn("04FFFF001D0104455468652054696D65732030332F4A616E2F32303039204368616E63656C6C6F72206F6E206272696E6B206F66207365636F6E64206261696C6F757420666F722062616E6B73");
-//                  @Override
-//                  public byte[] toByteArray()
-//                  {
-//                     return scriptBytes;                  
-//                  }
-//                  @Override
-//                  public boolean isComputationallyExpensive()
-//                  {
-//                     return false;
-//                  }
-//                  @Override
-//                  public ScriptFragment getSubscript(byte[]... sigs)
-//                  {
-//                     return this;
-//                  }
-//               },
-//               0xFFFFFFFFl);
-//         ins.add(input);
-//         List<TransactionOutputImpl> outs = new LinkedList<>();
-//         TransactionOutputImpl output = new TransactionOutputImpl(5000000000l,
-//               new ScriptFragment() {
-//                  private byte[] scriptBytes = 
-//                     BtcUtil.hexIn("4104678AFDB0FE5548271967F1A67130B7105CD6A828E03909A67962E0EA1F61DEB649F6BC3F4CEF38C4F35504E51EC112DE5C384DF7BA0B8D578A4C702B6BF11D5FAC");
-//                  @Override
-//                  public byte[] toByteArray()
-//                  {
-//                     return scriptBytes;                  
-//                  }
-//                  @Override
-//                  public boolean isComputationallyExpensive()
-//                  {
-//                     return false;
-//                  }
-//                  @Override
-//                  public ScriptFragment getSubscript(byte[]... sigs)
-//                  {
-//                     return this;
-//                  }
-//               });
-//         outs.add(output);
-//         List<TransactionImpl> transactions = new LinkedList<>();
-//         TransactionImpl tx = new TransactionImpl(ins,outs,0l);
-//         transactions.add(tx);
-//         // Create the main network genesis block as a constant
-//         MAIN_GENESIS = new BlockImpl(transactions,1231006505000l,2083236893l,0x1d00ffffl,
-//               BtcUtil.hexIn("0000000000000000000000000000000000000000000000000000000000000000"),
-//               BtcUtil.hexIn("4A5E1E4BAAB89F3A32518A88C31BC87F618F76673E2CC77AB2127B7AFDEDA33B"),
-//               null);
-//         if (!Arrays.equals(MAIN_GENESIS.getHash(), BtcUtil.hexIn("000000000019D6689C085AE165831E934FF763AE46A2A6C172B3F1B60A8CE26F")))
-//            throw new BitcoinException("Can't compute correct hash for production network genesis block");
-//      } catch ( BitcoinException e ) {
-//         logger.error("can not construct main genesis block, main network will not be usable",e);
-//      }
-//         
-//      try
-//      {
-//         // Create genesis transaction for old testnet (before bitcoin 0.7)
-//         List<TransactionInputImpl> ins = new LinkedList<>();
-//         TransactionInputImpl input = new TransactionInputImpl(
-//               BtcUtil.hexIn("0000000000000000000000000000000000000000000000000000000000000000"),
-//               -1,
-//               new ScriptFragment() {
-//                  private byte[] scriptBytes = 
-//                     BtcUtil.hexIn("04FFFF001D0104455468652054696D65732030332F4A616E2F32303039204368616E63656C6C6F72206F6E206272696E6B206F66207365636F6E64206261696C6F757420666F722062616E6B73");
-//                  @Override
-//                  public byte[] toByteArray()
-//                  {
-//                     return scriptBytes;                  
-//                  }
-//                  @Override
-//                  public boolean isComputationallyExpensive()
-//                  {
-//                     return false;
-//                  }
-//                  @Override
-//                  public ScriptFragment getSubscript(byte[]... sigs)
-//                  {
-//                     return this;
-//                  }
-//               },
-//               0xFFFFFFFFl);
-//         ins.add(input);
-//         List<TransactionOutputImpl> outs = new LinkedList<>();
-//         TransactionOutputImpl output = new TransactionOutputImpl(5000000000l,
-//               new ScriptFragment() {
-//                  private byte[] scriptBytes = 
-//                     BtcUtil.hexIn("4104678AFDB0FE5548271967F1A67130B7105CD6A828E03909A67962E0EA1F61DEB649F6BC3F4CEF38C4F35504E51EC112DE5C384DF7BA0B8D578A4C702B6BF11D5FAC");
-//                  @Override
-//                  public byte[] toByteArray()
-//                  {
-//                     return scriptBytes;                  
-//                  }
-//                  @Override
-//                  public boolean isComputationallyExpensive()
-//                  {
-//                     return false;
-//                  }
-//                  @Override
-//                  public ScriptFragment getSubscript(byte[]... sigs)
-//                  {
-//                     return this;
-//                  }
-//               });
-//         outs.add(output);
-//         List<TransactionImpl> transactions = new LinkedList<>();
-//         TransactionImpl tx = new TransactionImpl(ins,outs,0l);
-//         transactions.add(tx);
-//         // Create the test network genesis block as a constant
-//         TESTNET_GENESIS = new BlockImpl(transactions,1296688602000l,384568319l,0x1d07fff8l,
-//               BtcUtil.hexIn("0000000000000000000000000000000000000000000000000000000000000000"),
-//               BtcUtil.hexIn("4A5E1E4BAAB89F3A32518A88C31BC87F618F76673E2CC77AB2127B7AFDEDA33B"),
-//               null);
-//               //HexUtil.toByteArray("00 00 00 07 19 95 08 E3 4A 9F F8 1E 6E C0 C4 77 A4 CC CF F2 A4 76 7A 8E EE 39 C1 1D B3 67 B0 08 "));
-//         if (!Arrays.equals(TESTNET_GENESIS.getHash(), BtcUtil.hexIn("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008")))
-//            throw new BitcoinException("Can't compute correct hash for test network genesis block");
-//      } catch ( BitcoinException e ) {
-//         logger.error("can not construct old test genesis block, test network will not be usable",e);
-//      }
-//
-//      try
-//      {
-//         // Create genesis transaction for testnet3 (bitcoin >= 0.7)
-//         List<TransactionInputImpl> ins = new LinkedList<>();
-//         TransactionInputImpl input = new TransactionInputImpl(
-//               BtcUtil.hexIn("0000000000000000000000000000000000000000000000000000000000000000"),
-//               -1,
-//               new ScriptFragment() {
-//                  private byte[] scriptBytes = 
-//                     BtcUtil.hexIn("04FFFF001D0104455468652054696D65732030332F4A616E2F32303039204368616E63656C6C6F72206F6E206272696E6B206F66207365636F6E64206261696C6F757420666F722062616E6B73");
-//                  @Override
-//                  public byte[] toByteArray()
-//                  {
-//                     return scriptBytes;                  
-//                  }
-//                  @Override
-//                  public boolean isComputationallyExpensive()
-//                  {
-//                     return false;
-//                  }
-//                  @Override
-//                  public ScriptFragment getSubscript(byte[]... sigs)
-//                  {
-//                     return this;
-//                  }
-//               },
-//               0xFFFFFFFFl);
-//         ins.add(input);
-//         List<TransactionOutputImpl> outs = new LinkedList<>();
-//         TransactionOutputImpl output = new TransactionOutputImpl(5000000000l,
-//               new ScriptFragment() {
-//                  private byte[] scriptBytes = 
-//                     BtcUtil.hexIn("4104678AFDB0FE5548271967F1A67130B7105CD6A828E03909A67962E0EA1F61DEB649F6BC3F4CEF38C4F35504E51EC112DE5C384DF7BA0B8D578A4C702B6BF11D5FAC");
-//                  @Override
-//                  public byte[] toByteArray()
-//                  {
-//                     return scriptBytes;                  
-//                  }
-//                  @Override
-//                  public boolean isComputationallyExpensive()
-//                  {
-//                     return false;
-//                  }
-//                  @Override
-//                  public ScriptFragment getSubscript(byte[]... sigs)
-//                  {
-//                     return this;
-//                  }
-//               });
-//         outs.add(output);
-//         List<TransactionImpl> transactions = new LinkedList<>();
-//         TransactionImpl tx = new TransactionImpl(ins,outs,0l);
-//         transactions.add(tx);
-//         // Create the test network genesis block as a constant
-//         TESTNET3_GENESIS = new BlockImpl(transactions, 1296688602000L, 414098458L, 0x1d00ffffL,
-//               BtcUtil.hexIn("0000000000000000000000000000000000000000000000000000000000000000"),
-//               BtcUtil.hexIn("4A5E1E4BAAB89F3A32518A88C31BC87F618F76673E2CC77AB2127B7AFDEDA33B"),
-//               null);
-//         if (!Arrays.equals(TESTNET3_GENESIS.getHash(), BtcUtil.hexIn("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943")))
-//            throw new BitcoinException("Can't compute correct hash for testnet3 genesis block");
-//      } catch ( BitcoinException e ) {
-//         logger.error("can not construct testnet3 genesis block, test network will not be usable",e);
-//      }
-//   }
-
+   @Override
    public String toString()
    {
       return "Block (hash "+BtcUtil.hexOut(hash)+") created at "+new Date(creationTime)+", transactions: "+transactions;

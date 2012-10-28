@@ -31,7 +31,7 @@
     <dependency>
       <groupId>com.sleepycat</groupId>
       <artifactId>je</artifactId>
-      <version>4.0.92</version>
+      <version>5.0.58</version>
     </dependency>
     <dependency>
       <groupId>hu.netmind.bitcoin</groupId>
@@ -48,5 +48,14 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>oracleReleases</id>
+      <name>Oracle Released Java Packages</name>
+      <url>http://download.oracle.com/maven</url>
+      <layout>default</layout>
+    </repository>
+  </repositories>
 
 </project>

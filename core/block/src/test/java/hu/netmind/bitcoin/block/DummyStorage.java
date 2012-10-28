@@ -21,14 +21,14 @@ package hu.netmind.bitcoin.block;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
-import java.util.List;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.math.BigInteger;
 
 /**
  * A primitive implementation of a storage which stores all blocks
@@ -125,6 +125,18 @@ public class DummyStorage implements BlockChainLinkStorage
    }
 
    @Override
+   public BlockChainLink getLinkBlockHeader(byte[] hash)
+   {
+      return getLink(hash);
+   }
+
+   @Override
+   public boolean blockExists(byte[] hash)
+   {
+      return getLink(hash) != null;
+   }
+
+   @Override
    public BlockChainLink getNextLink(byte[] current, byte[] target)
    {
       logger.debug("getting next link for current: {}, target: {}",Arrays.toString(current),Arrays.toString(target));
@@ -210,12 +222,6 @@ public class DummyStorage implements BlockChainLinkStorage
       newLinks.add(link);
    }
 
-   @Override
-   public void updateLink(BlockChainLink link)
-   {
-      addLink(link);
-   }
-
    public List<BlockChainLink> getNewLinks()
    {
       return newLinks;
@@ -241,4 +247,11 @@ public class DummyStorage implements BlockChainLinkStorage
          return null;
       return lastLink.getBlock().getHash();
    }
+
+   @Override
+   public BlockChainLink getLinkAtHeight(long height)
+   {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
 }

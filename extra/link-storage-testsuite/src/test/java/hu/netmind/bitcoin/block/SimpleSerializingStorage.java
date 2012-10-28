@@ -18,21 +18,19 @@
 
 package hu.netmind.bitcoin.block;
 
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Arrays;
-import java.util.ArrayList;
+import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.TransactionInput;
 import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.Block;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +43,7 @@ import org.slf4j.LoggerFactory;
 public class SimpleSerializingStorage implements BlockChainLinkStorage
 {
    private static Logger logger = LoggerFactory.getLogger(SimpleSerializingStorage.class);
-   private Map<List<Byte>, BlockChainLink> links = new HashMap<List<Byte>, BlockChainLink>();
+   private Map<List<Byte>, BlockChainLink> links = new HashMap<>();
    private String dbFileName = null;
 
    public void init(String dbFileName)
@@ -79,6 +77,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
       }
    }
 
+  @Override
    public BlockChainLink getGenesisLink()
    {
       for ( BlockChainLink link : links.values() )
@@ -87,6 +86,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
       return null;
    }
 
+  @Override
    public BlockChainLink getLastLink()
    {
       BlockChainLink last = null;
@@ -96,16 +96,23 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
       return last;
    }
 
+  @Override
    public long getHeight()
    {
-     return getLastLink().getHeight();
+     BlockChainLink lastLink = getLastLink();
+     if (lastLink == null)
+       return 0;
+     else
+       return lastLink.getHeight();
    }
    
+  @Override
    public BlockChainLink getLink(byte[] hash)
    {
       return links.get(toByteList(hash));
    }
 
+  @Override
    public BlockChainLink getNextLink(byte[] current, byte[] target)
    {
       BlockChainLink result = getLink(target);
@@ -114,15 +121,17 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
       return result;
    }
 
+  @Override
    public List<BlockChainLink> getNextLinks(byte[] hash)
    {
-      List<BlockChainLink> nexts = new LinkedList<BlockChainLink>();
+      List<BlockChainLink> nexts = new LinkedList<>();
       for ( BlockChainLink link : links.values() )
          if ( Arrays.equals(link.getBlock().getPreviousBlockHash(),hash) )
             nexts.add(link);
       return nexts;
    }
 
+  @Override
    public BlockChainLink getCommonLink(byte[] first, byte[] second)
    {
       BlockChainLink firstLink = getLink(first);
@@ -139,12 +148,14 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
       return null;
    }
 
+  @Override
    public boolean isReachable(byte[] target, byte[] source)
    {
       BlockChainLink link = getCommonLink(target,source);
       return (link!=null) && (Arrays.equals(link.getBlock().getHash(),source));
    }
 
+  @Override
    public BlockChainLink getClaimedLink(BlockChainLink link, TransactionInput in)
    {
       while ( link != null )
@@ -157,6 +168,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
       return null;
    }
 
+  @Override
    public BlockChainLink getClaimerLink(BlockChainLink link, TransactionInput in)
    {
       while ( link != null )
@@ -171,6 +183,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
       return null;
    }
 
+  @Override
    public void addLink(BlockChainLink link)
    {
       links.put(toByteList(link.getBlock().getHash()),link);
@@ -183,21 +196,40 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
 
    private List<Byte> toByteList(byte[] hash)
    {
-      List<Byte> byteList = new ArrayList<Byte>(hash.length);
+      List<Byte> byteList = new ArrayList<>(hash.length);
       for ( byte v : hash )
          byteList.add(v);
       return byteList;
    }
 
+  @Override
   public byte[] getHashOfMainChainAtHeight(long height) {
     return getLastLink().getBlock().getHash();
   }
 
+  @Override
   public BlockChainLink getPartialClaimedLink(BlockChainLink link, TransactionInput in) {
     return getClaimedLink(link, in);
   }
 
+  @Override
   public boolean outputClaimedInSameBranch(BlockChainLink link, TransactionInput in) {
     return getClaimerLink(link, in) != null;
   }
+
+  @Override
+  public BlockChainLink getLinkAtHeight(long height) {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public boolean blockExists(byte[] hash) {
+    return getLinkBlockHeader(hash) != null;
+  }
+
+  @Override
+  public BlockChainLink getLinkBlockHeader(byte[] hash) {
+    return getLink(hash);
+  }
+
 }

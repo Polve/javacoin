@@ -24,6 +24,7 @@ import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
+import hu.netmind.bitcoin.net.BlockHeader;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
@@ -130,6 +131,14 @@ public class BlockChainImpl extends Observable implements BlockChain
       return link.getBlock();
    }
 
+   public Block getBlockHeader(byte[] hash)
+   {
+      BlockChainLink link = linkStorage.getLinkBlockHeader(hash);
+      if ( link == null )
+         return null;
+      return link.getBlock();
+   }
+
    /**
     * Get the previous block.
     */
@@ -211,14 +220,13 @@ public class BlockChainImpl extends Observable implements BlockChain
       block.validate();
 
       logger.debug("Checking whether block is already in the chain...");
-      BlockChainLink link = linkStorage.getLink(block.getHash());
-      if (link != null)
+      if (linkStorage.blockExists(block.getHash()))
          return 0;
 
       // Check 11: Check whether block is orphan block, in which case notify
       // listener to try to get that block and stop
       logger.debug("Checking whether block is orphan...");
-      BlockChainLink previousLink = linkStorage.getLink(block.getPreviousBlockHash());
+      BlockChainLink previousLink = linkStorage.getLinkBlockHeader(block.getPreviousBlockHash());
       if (previousLink == null)
       {
          orphanBlocks.addBlock(block);
@@ -234,7 +242,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       // Check 12: Check that nBits value matches the difficulty rules
       logger.debug("checking whether block has the appropriate target...");
       DifficultyTarget blockTarget = new DifficultyTarget(block.getCompressedTarget());
-      link = new BlockChainLink(block, // Create link for block
+      BlockChainLink link = new BlockChainLink(block, // Create link for block
          previousLink.getTotalDifficulty().add(bitcoinFactory.newDifficulty(blockTarget)),
          previousLink.getHeight() + 1, false);
       DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousLink, link);
@@ -243,7 +251,7 @@ public class BlockChainImpl extends Observable implements BlockChain
          // considered invalid!
          throw new VerificationException("block has wrong target " + blockTarget
             + ", when calculated is: " + calculatedTarget);
-      
+
       // Check 13: Reject if timestamp is before the median time of the last 11 blocks
       long medianTimestamp = getMedianTimestamp(previousLink);
       logger.debug("checking timestamp {} against median {}", block.getCreationTime(), medianTimestamp);
@@ -381,7 +389,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       for ( int i=0; (block!=null) && (i<MEDIAN_BLOCKS); i++ )
       {
          times.add(block.getCreationTime());
-         block=getPreviousBlock(block);
+         block=getBlockHeader(block.getPreviousBlockHash());
       }
       Collections.sort(times);
       return times.get(times.size()/2);
@@ -416,7 +424,7 @@ public class BlockChainImpl extends Observable implements BlockChain
                // but this lack of performance is only for the testnet so we don't care
                while (link != null && (link.getHeight() % TARGET_RECALC) != 0 && 
                   link.getBlock().getCompressedTarget() == bitcoinFactory.maxDifficultyTarget().getCompressedTarget())
-                  link = linkStorage.getLink(link.getBlock().getPreviousBlockHash());
+                  link = linkStorage.getLinkBlockHeader(link.getBlock().getPreviousBlockHash());
                if (link != null)
                   return new DifficultyTarget(link.getBlock().getCompressedTarget());
                else
@@ -430,7 +438,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       // blocks (including the given block) 
       Block startBlock = link.getBlock();
       for ( int i=0; (i<TARGET_RECALC-1) && (startBlock!=null); i++ )
-         startBlock = getPreviousBlock(startBlock);
+         startBlock = getBlockHeader(startBlock.getPreviousBlockHash());
       // This shouldn't happen, we reached genesis
       if ( startBlock == null )
          return bitcoinFactory.maxDifficultyTarget();

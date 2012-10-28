@@ -26,10 +26,10 @@ import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import hu.netmind.bitcoin.block.jdbc.DatasourceUtils;
 import hu.netmind.bitcoin.block.jdbc.JdbcChainLinkStorage;
+import hu.netmind.bitcoin.block.jdbc.MysqlStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.net.BitCoinInputStream;
 import hu.netmind.bitcoin.net.BlockMessage;
-import hu.netmind.bitcoin.net.Message;
 import hu.netmind.bitcoin.net.MessageMarshaller;
 import hu.netmind.bitcoin.net.p2p.AddressSource;
 import hu.netmind.bitcoin.net.p2p.Node;
@@ -142,10 +142,15 @@ public class ChainDownloader
        ? new Testnet3BitcoinFactory(scriptFactory)
        : new ProdnetBitcoinFactory(scriptFactory);
     logger.debug("bitcoin factory initialized");
-    JdbcChainLinkStorage storage = new JdbcChainLinkStorage(bitcoinFactory);
+    //JdbcChainLinkStorage storage = new JdbcChainLinkStorage(bitcoinFactory);
+    MysqlStorage storage = new MysqlStorage(bitcoinFactory);
     storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
        + (isTestnet2 ? "testnet2" : isTestnet3 ? "testnet3" : "prodnet"), "javacoin", "pw"));
     storage.init();
+    JdbcChainLinkStorage nodeStorage = new JdbcChainLinkStorage(bitcoinFactory);
+    nodeStorage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
+       + (isTestnet2 ? "testnet2" : isTestnet3 ? "testnet3" : "prodnet"), "javacoin", "pw"));
+    nodeStorage.init();
     logger.debug("storage initialized");
     //BlockChain chain = new BlockChainImpl(isTestnet ? BlockImpl.TESTNET_GENESIS : BlockImpl.MAIN_GENESIS, storage, scriptFactory, false, isTestnet);
     BlockChain chain = new BlockChainImpl(bitcoinFactory, storage, false);
@@ -164,27 +169,27 @@ public class ChainDownloader
     if (isTestnet2)
     {
       // addressSource = new LocalhostTestnetNodeSource();
-      StorageFallbackNodesSource source = new StorageFallbackNodesSource(storage);
+      StorageFallbackNodesSource source = new StorageFallbackNodesSource(nodeStorage);
       //source.setFallbackSource(new LocalhostTestnetNodeSource());
       source.setFallbackSource(new IrcAddressSource("#bitcoinTEST"));
       addressSource = source;
     } else if (isTestnet3)
     {
-      StorageFallbackNodesSource source = new StorageFallbackNodesSource(storage);
+      StorageFallbackNodesSource source = new StorageFallbackNodesSource(nodeStorage);
       source.setFallbackSource(new IrcAddressSource("#bitcoinTEST3"));
       addressSource = source;
     } else
     {
       // node.setAddressSource(new LocalhostNodeSource());
       // addressSource = new DNSFallbackNodesSource();
-      StorageFallbackNodesSource source = new StorageFallbackNodesSource(storage);
+      StorageFallbackNodesSource source = new StorageFallbackNodesSource(nodeStorage);
       source.setFallbackSource(new DNSFallbackNodesSource());
       addressSource = source;
     }
     node.setAddressSource(addressSource);
     //node.addHandler(new DownloaderHandler());
     logger.debug(addressSource.toString());
-    nodeHandler = new StdNodeHandler(node, bitcoinFactory, chain, storage);
+    nodeHandler = new StdNodeHandler(node, bitcoinFactory, chain, storage, nodeStorage);
   }
 
   public void testBlock41980OfTestnet2() throws BitcoinException

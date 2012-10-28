@@ -58,18 +58,20 @@ public class StdNodeHandler implements MessageHandler, Runnable
    private BitcoinFactory bitcoinFactory;
    private BlockChain chain;
    private BlockChainLinkStorage storage;
+   private NodeStorage nodeStorage;
    private NetworkMessageFactory messageFactory;
    private byte[] highestHashKnownBeforeRequest = null;
    private byte[] highestHashPromised = null;
    private transient Connection downloadingFromPeer = null;
    private int numMessages = 0;
 
-   public StdNodeHandler(Node node, BitcoinFactory bitcoinFactory, BlockChain chain, BlockChainLinkStorage storage)
+   public StdNodeHandler(Node node, BitcoinFactory bitcoinFactory, BlockChain chain, BlockChainLinkStorage storage, NodeStorage nodeStorage)
    {
       this.node = node;
       this.bitcoinFactory = bitcoinFactory;
       this.chain = chain;
       this.storage = storage;
+      this.nodeStorage = nodeStorage;
       this.messageFactory = bitcoinFactory.getMessageFactory();
       node.addHandler(this);
    }
@@ -134,10 +136,10 @@ public class StdNodeHandler implements MessageHandler, Runnable
          for (AddrMessage.AddressEntry entry : addr.getAddressEntries())
          {
             if ((entry.getAddress().getServices() & 1) != 0)
-               if (storage instanceof NodeStorage)
-                  ((NodeStorage) storage).storeNodeAddress(entry.getAddress());
+               if (nodeStorage != null)
+                  nodeStorage.storeNodeAddress(entry.getAddress());
                else
-                  logger.debug("Entry " + entry + " not stored because no service capability");
+                  logger.debug("Entry " + entry + " not stored because no nodeStorage provided");
             peers += entry.getAddress() + " ";
          }
          logger.debug(peers);
@@ -187,7 +189,7 @@ public class StdNodeHandler implements MessageHandler, Runnable
          try
          {
             block = BlockImpl.createBlock(bitcoinFactory.getScriptFactory(), (BlockMessage) message);
-            logger.debug("Inserting block {} created {}", BtcUtil.hexOut(block.getHash()), new Date(block.getCreationTime()));
+            logger.debug("Received block {} created {}", BtcUtil.hexOut(block.getHash()), new Date(block.getCreationTime()));
             // Check whether we are finished with the download, even before trying to add
             if (Arrays.equals(highestHashPromised, block.getHash()))
             {
