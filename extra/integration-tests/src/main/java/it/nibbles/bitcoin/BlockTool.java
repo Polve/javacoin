@@ -26,19 +26,30 @@ import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
+import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
+import hu.netmind.bitcoin.block.TransactionImpl;
+import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
 import hu.netmind.bitcoin.block.jdbc.DatasourceUtils;
 import hu.netmind.bitcoin.block.jdbc.JdbcChainLinkStorage;
+import hu.netmind.bitcoin.block.jdbc.MysqlStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
+import hu.netmind.bitcoin.net.ArraysUtil;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
+import hu.netmind.bitcoin.script.ScriptFragmentImpl;
 import it.nibbles.bitcoin.utils.BtcUtil;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import joptsimple.OptionParser;
@@ -132,6 +143,9 @@ public class BlockTool {
       println(HELP_TEXT);
       return;
     }
+    if (options.hasArgument("port")) {
+      listenPort = ((Integer) options.valueOf("port")).intValue();
+    }
     cmdSaveBlockchain = options.has("save");
     cmdLoadBlockchain = options.has("load");
     isProdnet = options.has("prodnet");
@@ -142,34 +156,51 @@ public class BlockTool {
       if (!options.hasArgument("last"))
         lastBlock = firstBlock;
     }
-    if (options.hasArgument("hash"))
-      blockHash = (String) options.valueOf("hash");
     if (options.hasArgument("last")) {
       lastBlock = ((Integer) options.valueOf("last")).intValue();
+      if (!options.hasArgument("first"))
+        firstBlock = lastBlock;
     }
-    if (options.hasArgument("port")) {
-      listenPort = ((Integer) options.valueOf("port")).intValue();
+    if (options.hasArgument("hash"))
+      blockHash = (String) options.valueOf("hash");
+    if (cmdSaveBlockchain && blockHash == null && firstBlock == 0 && lastBlock == 0) {
+      println("To save blocks you have to specify a range or an hash");
+      return;
     }
 
-    println("save: " + cmdSaveBlockchain + " load: " + cmdLoadBlockchain + " prodnet: " + isProdnet + " testnet2: " + isTestNet2 + " testnet3: " + isTestNet3);
+    //println("save: " + cmdSaveBlockchain + " load: " + cmdLoadBlockchain + " prodnet: " + isProdnet + " testnet2: " + isTestNet2 + " testnet3: " + isTestNet3);
+    //println("FirstBlock: " + firstBlock + " lastBlock: " + lastBlock + " inputfile: " + inputfile.value(options) + " outputfile: " + outputfile.value(options));
     BlockTool app = new BlockTool();
-    try {
-      println("FirstBlock: " + firstBlock + " lastBlock: " + lastBlock + " inputfile: " + inputfile.value(options) + " outputfile: " + outputfile.value(options));
-      app.init(options);
-      if (cmdLoadBlockchain) {
-        app.readBlock(inputfile.value(options));
-      } else if (cmdSaveBlockchain) {
-        BlockChainLink blockLink;
-        if (blockHash != null)
-          blockLink = storage.getLink(BtcUtil.hexIn(blockHash));
-        else
-          blockLink = storage.getLastLink();
-        app.writeBlock(outputfile.value(options), blockLink.getBlock());
+
+    app.init(options);
+    if (cmdLoadBlockchain) {
+      BufferedReader reader;
+      if ("-".equals(inputfile.value(options)))
+        reader = new BufferedReader(new InputStreamReader(System.in));
+      else
+        reader = new BufferedReader(new FileReader(inputfile.value(options)));
+      int numBlocks = 0;
+      Block block = app.readBlock(reader);
+      while (block != null) {
+        numBlocks++;
+        block = app.readBlock(reader);
       }
-    } finally {
-      println("close...");
-      app.close();
+      System.out.println("Numero blocchi letti: " + numBlocks);
+    } else if (cmdSaveBlockchain) {
+      BlockChainLink blockLink;
+      try (PrintWriter writer = new PrintWriter(new File(outputfile.value(options)))) {
+        if (blockHash != null) {
+          blockLink = storage.getLink(BtcUtil.hexIn(blockHash));
+          app.writeBlock(writer, blockLink.getBlock());
+        } else {
+          for (int i = firstBlock; i <= lastBlock; i++) {
+            blockLink = storage.getLinkAtHeight(i);
+            app.writeBlock(writer, blockLink.getBlock());
+          }
+        }
+      }
     }
+    app.close();
   }
 
   /**
@@ -188,7 +219,8 @@ public class BlockTool {
 //         engine.setDbPath(optBdbPath.value(options));
 //         storage = engine;
     } else if (STORAGE_JDBC.equalsIgnoreCase(storageType)) {
-      JdbcChainLinkStorage engine = new JdbcChainLinkStorage(bitcoinFactory);
+      //JdbcChainLinkStorage engine = new JdbcChainLinkStorage(bitcoinFactory);
+      MysqlStorage engine = new MysqlStorage(bitcoinFactory);
       engine.setDataSource(DatasourceUtils.getMysqlDatasource(
               optJdbcUrl.value(options), optJdbcUser.value(options), optJdbcPassword.value(options)));
       engine.init();
@@ -208,7 +240,7 @@ public class BlockTool {
     }
   }
 
-  public void readBlock(String fileName) throws FileNotFoundException, IOException {
+  public void readJsonBlock(String fileName) throws FileNotFoundException, IOException {
     ObjectMapper mapper = new ObjectMapper();
     Map jsonObj = (Map) mapper.readValue(new File(fileName), Object.class);
     String hash = (String) jsonObj.get("hash");
@@ -230,9 +262,85 @@ public class BlockTool {
     println("Lettura da " + fileName + " hash: " + hash + " txs: " + txs);
   }
 
-  public void writeBlock(String filename, Block block) throws IOException {
-    println("write to " + filename + " block: " + block);
-    println("block " + BtcUtil.hexOut(block.getHash()) + " "
+  public Block readBlock(BufferedReader reader) throws IOException, BitcoinException {
+    String line = reader.readLine();
+    if (line == null) {
+      System.out.println("Fine blocchi in input");
+      return null;
+    }
+    if (line.startsWith("block ")) {
+      String[] tokens = line.split("\\s");
+      byte[] hash = BtcUtil.hexIn(tokens[1]);
+      byte[] previousHash = BtcUtil.hexIn(tokens[2]);
+      byte[] merkleRoot = BtcUtil.hexIn(tokens[3]);
+      long compressedTarget = Long.parseLong(tokens[4]);
+      long creationTime = Long.parseLong(tokens[5]);
+      long nonce = Long.parseLong(tokens[6]);
+      long version = Long.parseLong(tokens[7]);
+      int numTransactions = Integer.parseInt(tokens[8]);
+      List<TransactionImpl> txs = new ArrayList<>(numTransactions);
+      for (int i = 0; i < numTransactions; i++) {
+        txs.add(readTransaction(reader));
+      }
+      Block block = new BlockImpl(txs, creationTime, nonce, compressedTarget, previousHash, merkleRoot, null, version);
+      if (!Arrays.equals(hash, block.getHash())) {
+        System.out.println("Block hash non corrispondente: " + BtcUtil.hexOut(hash) + " vs " + BtcUtil.hexOut(block.getHash()));
+        return null;
+      }
+      System.out.println("Blocco " + BtcUtil.hexOut(hash) + " nonce: " + nonce + " numTransazioni: " + numTransactions);
+      return block;
+    } else
+      return null;
+  }
+
+  public TransactionImpl readTransaction(BufferedReader reader) throws IOException, BitcoinException {
+    String line = reader.readLine();
+    if (line == null || !line.startsWith(" tx ")) {
+      System.out.println("Error: expecting TX and got: " + line);
+      return null;
+    }
+    String[] tokens = line.substring(4).split("\\s");
+    byte[] hash = BtcUtil.hexIn(tokens[0]);
+    long lockTime = Long.parseLong(tokens[1]);
+    long version = Long.parseLong(tokens[2]);
+    int numInputs = Integer.parseInt(tokens[3]);
+    int numOutputs = Integer.parseInt(tokens[4]);
+    List<TransactionInputImpl> inputs = new ArrayList<>(numInputs);
+    for (int i = 0; i < numInputs; i++) {
+      String l = reader.readLine();
+      if (l == null || !l.startsWith("  in ")) {
+        System.out.println("Error: expecting TX IN and got: " + l);
+        return null;
+      }
+      String[] tk = l.substring(5).split("\\s");
+      byte[] refHash = BtcUtil.hexIn(tk[0]);
+      int refIndex = Integer.parseInt(tk[1]);
+      long sequence = Long.parseLong(tk[2]);
+      byte[] sig = BtcUtil.hexIn(tk[3]);
+      inputs.add(new TransactionInputImpl(refHash, refIndex, bitcoinFactory.getScriptFactory().createFragment(sig), sequence));
+    }
+    List<TransactionOutputImpl> outputs = new ArrayList<>(numOutputs);
+    for (int i = 0; i < numOutputs; i++) {
+      String l = reader.readLine();
+      if (!l.startsWith("   out ")) {
+        System.out.println("Error: expecting TX OUT and got: " + l);
+        return null;
+      }
+      String[] tk = l.substring(7).split("\\s");
+      long value = Long.parseLong(tk[0]);
+      byte[] script = BtcUtil.hexIn(tk[1]);
+      outputs.add(new TransactionOutputImpl(value, bitcoinFactory.getScriptFactory().createFragment(script)));
+    }
+    TransactionImpl tx = new TransactionImpl(inputs, outputs, lockTime, version);
+    if (!Arrays.equals(hash, tx.getHash())) {
+      System.out.println("TX hash non corrispondente: " + BtcUtil.hexOut(hash) + " vs " + BtcUtil.hexOut(tx.getHash()));
+      return null;
+    }
+    return tx;
+  }
+
+  public void writeBlock(PrintWriter writer, Block block) throws IOException {
+    writer.println("block " + BtcUtil.hexOut(block.getHash()) + " "
             + BtcUtil.hexOut(block.getPreviousBlockHash()) + " "
             + BtcUtil.hexOut(block.getMerkleRoot()) + " "
             //+ Long.toHexString(block.getCompressedTarget()) + " "
@@ -242,23 +350,23 @@ public class BlockTool {
             + block.getVersion() + " "
             + block.getTransactions().size());
     for (Transaction t : block.getTransactions()) {
-      writeTransaction(t);
+      writeTransaction(writer, t);
     }
   }
 
-  public void writeTransaction(Transaction t) {
+  public void writeTransaction(PrintWriter writer, Transaction t) {
     List<TransactionInput> inputs = t.getInputs();
     List<TransactionOutput> outputs = t.getOutputs();
-    println(" tx " + BtcUtil.hexOut(
-            t.getHash()) + " " + t.getLockTime() + " " + t.getVersion() + " " + inputs.size() + " " + outputs.size());
+    writer.println(" tx " + BtcUtil.hexOut(t.getHash()) + " "
+            + t.getLockTime() + " " + t.getVersion() + " " + inputs.size() + " " + outputs.size());
     for (TransactionInput input : inputs) {
-      println("  in " + BtcUtil.hexOut(input.getClaimedTransactionHash()) + " "
+      writer.println("  in " + BtcUtil.hexOut(input.getClaimedTransactionHash()) + " "
               + input.getClaimedOutputIndex() + " "
               + input.getSequence() + " "
               + BtcUtil.hexOut(input.getSignatureScript().toByteArray()));
     }
     for (TransactionOutput output : outputs) {
-      println("   out " + output.getValue() + " "
+      writer.println("   out " + output.getValue() + " "
               + BtcUtil.hexOut(output.getScript().toByteArray()));
     }
   }

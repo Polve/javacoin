@@ -24,32 +24,20 @@ import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainLink;
-import hu.netmind.bitcoin.block.BlockChainLinkStorage;
 import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.TransactionImpl;
 import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
-import hu.netmind.bitcoin.net.HexUtil;
-import hu.netmind.bitcoin.net.NodeAddress;
-import hu.netmind.bitcoin.net.p2p.NodeStorage;
-import it.nibbles.bitcoin.utils.BtcUtil;
 import java.math.BigDecimal;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import javax.sql.DataSource;
@@ -61,13 +49,13 @@ import org.slf4j.LoggerFactory;
  *
  * @author Alessandro Polverini
  */
-public class JdbcChainLinkStorage implements NodeStorage
+public class MysqlStorage extends BaseChainLinkStorage
 {
 
+   private static Logger logger = LoggerFactory.getLogger(MysqlStorage.class);
    private static final boolean DEFAULT_AUTOCREATE = true;
    private static final boolean DEFAULT_TRANSACTIONAL = true;
    private static final int DEFAULT_RESERVE_SIZE = 100;
-   private static Logger logger = LoggerFactory.getLogger(JdbcChainLinkStorage.class);
    private boolean autoCreate = DEFAULT_AUTOCREATE;
    private boolean transactional = DEFAULT_TRANSACTIONAL;
    private int idReserveSize = DEFAULT_RESERVE_SIZE;
@@ -80,16 +68,15 @@ public class JdbcChainLinkStorage implements NodeStorage
    protected JdbcIdGenerator txInputsIdGen;
    protected JdbcIdGenerator txOutputsIdGen;
    //
-   // We keep cached the top of the chain for a faster response
-   protected BlockChainLink topLink;
-   //
    // Block Headers SQL statements and PS
    final private String blockSqlFields =
            "id, height, nTime, nBits, nonce, version, hash, prevBlockHash, hashMerkleRoot, chainWork";
    final private String sqlPutBlock =
            "INSERT INTO Block(" + blockSqlFields + ") VALUES(?,?,?,?,?,?,?,?,?,?)"; // ON DUPLICATE KEY UPDATE nTime=nTime";
-   final private String sqlGetBlock =
+   final private String sqlGetBlockHeader =
            "SELECT " + blockSqlFields + " FROM Block WHERE hash=?";
+   final private String sqlGetBlockId =
+           "SELECT id FROM Block WHERE hash=?";
    //
    // SQL statements used to write to the DB
    final private String sqlPutTransaction =
@@ -103,7 +90,7 @@ public class JdbcChainLinkStorage implements NodeStorage
    final private String sqlGetSimplifiedBlockHeadersAtHeight =
            "SELECT hash,prevBlockHash,height FROM Block WHERE height=?";
    final private String sqlGetHigherWorkBlock =
-           "SELECT hash, height FROM Block ORDER BY chainWork DESC LIMIT 1";
+           "SELECT hash,prevBlockHash,height FROM Block ORDER BY chainWork DESC LIMIT 1";
    final private String sqlGetSimplifiedBlocksWithPrevHash =
            "SELECT hash,prevBlockHash,height FROM Block WHERE prevBlockHash=?";
    final private String sqlGetNumBlocksWithPrevHash =
@@ -161,7 +148,7 @@ public class JdbcChainLinkStorage implements NodeStorage
 //      this.isTestnet = isTestnet;
 //      readConfiguration();
 //   }
-   public JdbcChainLinkStorage(BitcoinFactory bitcoinFactory)
+   public MysqlStorage(BitcoinFactory bitcoinFactory)
    {
       this.bitcoinFactory = bitcoinFactory;
       readConfiguration();
@@ -189,8 +176,7 @@ public class JdbcChainLinkStorage implements NodeStorage
    {
       commonInit();
       initializeDatabases();
-      logger.debug(this.getClass() + " Initialized with "
-              + (topLink == null ? "empty DB" : "top hash: " + BtcUtil.hexOut(topLink.getBlock().getHash())));
+      logger.debug(this.getClass() + " Initialized");
    }
 
    private void initializeDatabases()
@@ -209,10 +195,10 @@ public class JdbcChainLinkStorage implements NodeStorage
       transactionIdGen.setIdName("Transaction").setIdReserveSize(idReserveSize);
       txInputsIdGen.setIdName("TxInput").setIdReserveSize(idReserveSize);
       txOutputsIdGen.setIdName("TxOutput").setIdReserveSize(idReserveSize);
-      topLink = getLastLink();
    }
 
-   private Connection getDbConnection()
+   @Override
+   protected Connection newSession()
    {
       try
       {
@@ -229,7 +215,7 @@ public class JdbcChainLinkStorage implements NodeStorage
    public void removeDatabase()
    {
       //orphanBlocks.clear();
-      try (Connection dbConnection = getDbConnection(); Statement st = dbConnection.createStatement())
+      try (Connection dbConnection = newSession(); Statement st = dbConnection.createStatement())
       {
          String[] tables =
          {
@@ -245,378 +231,14 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
-   // TODO: Handle correctly transactions so that if addLink fails the block is not removed from orphans
-   public synchronized void addLink(final BlockChainLink link)
+   @Override
+   public boolean blockExists(final Connection dbConnection, byte[] hash) throws SQLException
    {
-      long startTime = System.currentTimeMillis();
-      //logger.debug("addLink: " + HexUtil.toSingleHexString(link.getBlock().getHash())
-      //       + " height: " + link.getHeight() + " totalDifficulty: " + link.getTotalDifficulty() + " isOrphan: " + link.isOrphan());
-      if (link.isOrphan())
+      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockId))
       {
-         logger.error("Requested to persist orphan block");
-         throw new JdbcStorageException("Requested to persist orphan block");
-      }
-      Connection dbConnection = getDbConnection();
-      try
-      {
-         if (transactional)
-            dbConnection.setAutoCommit(false);
-         long blockId = storeBlockHeader(dbConnection, link);
-
-         List<Transaction> transactions = link.getBlock().getTransactions();
-         int pos = 0;
-         for (Transaction tx : transactions)
-         {
-            long txId = getTransactionId(dbConnection, tx.getHash());
-            if (txId == -1)
-               txId = storeTransaction(dbConnection, tx);
-            storeBlkTxLink(dbConnection, blockId, txId, pos++);
-         }
-
-         if (topLink == null || link.getTotalDifficulty().compareTo(topLink.getTotalDifficulty()) > 0)
-            topLink = link;
-
-         if (transactional)
-         {
-            dbConnection.commit();
-            dbConnection.setAutoCommit(true);
-         }
-      } catch (SQLException e)
-      {
-         try
-         {
-            if (transactional)
-            {
-               dbConnection.rollback();
-               dbConnection.setAutoCommit(true);
-            }
-         } catch (SQLException ex)
-         {
-         }
-         logger.error("AddLinkEx: " + e.getMessage(), e);
-         throw new JdbcStorageException("Error while storing link: " + e.getMessage(), e);
-      } finally
-      {
-         try
-         {
-            dbConnection.close();
-         } catch (SQLException e)
-         {
-            logger.error("AddLinkEx: " + e.getMessage(), e);
-            throw new JdbcStorageException("Error while closing connection: " + e.getMessage(), e);
-         }
-         long stopTime = System.currentTimeMillis();
-         logger.debug("exec time: " + (stopTime - startTime) + " ms height: " + link.getHeight() + " total difficulty: " + link.getTotalDifficulty());
-      }
-   }
-
-   public BlockChainLink getLink(final byte[] hash)
-   {
-//      long startTime = System.currentTimeMillis();
-      try (Connection dbConnection = getDbConnection())
-      {
-         // logger.debug("getLink: " + HexUtil.toSingleHexString(hash));
-         return getCompleteBlock(dbConnection, hash, getBlockTransactions(dbConnection, hash));
-      } catch (Exception e)
-      {
-         logger.error("getLinkEx: " + e.getMessage(), e);
-         throw new JdbcStorageException("getLinkEx: " + e.getMessage(), e);
-      } finally
-      {
-//         long stopTime = System.currentTimeMillis();
-//         logger.debug("exec time: " + (stopTime - startTime) + " ms");
-      }
-   }
-
-   public BlockChainLink getGenesisLink()
-   {
-      try (Connection dbConnection = getDbConnection())
-      {
-         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(dbConnection, BlockChainLink.ROOT_HEIGHT);
-         if (blocks.isEmpty())
-            return null;
-         return getLink(blocks.get(0).hash);
-      } catch (SQLException ex)
-      {
-         throw new JdbcStorageException("getGenesisLinkEx: " + ex.getMessage(), ex);
-      }
-   }
-
-   public BlockChainLink getLastLink()
-   {
-      if (topLink != null)
-         return topLink;
-      try (Connection dbConnection = getDbConnection(); PreparedStatement ps = dbConnection.prepareStatement(sqlGetHigherWorkBlock))
-      {
+         ps.setBytes(1, hash);
          ResultSet rs = ps.executeQuery();
-         if (rs.next())
-            return topLink = getLink(rs.getBytes("hash"));
-         else
-            return null;
-      } catch (SQLException e)
-      {
-         logger.error("getLastLinkEx: " + e.getMessage(), e);
-         throw new JdbcStorageException("getLastLinkEx: " + e.getMessage(), e);
-      }
-   }
-
-   public long getHeight()
-   {
-      if (topLink != null)
-         return topLink.getHeight();
-      try (Connection dbConnection = getDbConnection(); PreparedStatement ps = dbConnection.prepareStatement(sqlGetHigherWorkBlock))
-      {
-         ResultSet rs = ps.executeQuery();
-         if (rs.next())
-            return rs.getLong("height");
-         else
-            return 0;
-      } catch (SQLException e)
-      {
-         logger.error("getHeight: " + e.getMessage(), e);
-         throw new JdbcStorageException("getHeight: " + e.getMessage(), e);
-      }
-   }
-
-   public List<BlockChainLink> getNextLinks(final byte[] hash)
-   {
-      //long startTime = System.currentTimeMillis();
-      try (Connection dbConnection = getDbConnection())
-      {
-         List<SimplifiedStoredBlock> blocks = getBlocksWithPrevHash(dbConnection, hash);
-         List<BlockChainLink> storedLinks = new LinkedList<>();
-         for (SimplifiedStoredBlock b : blocks)
-            storedLinks.add(getLink(b.hash));
-         return storedLinks;
-      } catch (SQLException e)
-      {
-         logger.error("getNextLinks: " + e.getMessage(), e);
-         throw new JdbcStorageException("getNextLinks: " + e.getMessage(), e);
-      } finally
-      {
-         //long stopTime = System.currentTimeMillis();
-         //logger.debug("exec time: " + (stopTime - startTime) + " ms");
-      }
-   }
-
-   public BlockChainLink getNextLink(final byte[] current, final byte[] target)
-   {
-      try (Connection dbConnection = getDbConnection())
-      {
-         SimplifiedStoredBlock targetBlock = getSimplifiedStoredBlock(dbConnection, target);
-         if (targetBlock == null)
-            return null;
-         SimplifiedStoredBlock currentBlock = getSimplifiedStoredBlock(dbConnection, current);
-         if (currentBlock == null || targetBlock.height < currentBlock.height)
-            return null;
-         for (SimplifiedStoredBlock candidate : getBlocksWithPrevHash(dbConnection, current))
-            if (isReachable(dbConnection, targetBlock, candidate))
-               return getLink(candidate.hash);
-         return null;
-      } catch (SQLException e)
-      {
-         logger.error("getNextLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getNextLink: " + e.getMessage(), e);
-      }
-   }
-
-   public boolean isReachable(final byte[] target, final byte[] source)
-   {
-      long startTime = System.currentTimeMillis();
-      try (Connection dbConnection = getDbConnection())
-      {
-         SimplifiedStoredBlock targetBlock = getSimplifiedStoredBlock(dbConnection, target);
-         if (targetBlock == null)
-            return false;
-         SimplifiedStoredBlock sourceBlock = getSimplifiedStoredBlock(dbConnection, source);
-         if (sourceBlock == null)
-            return false;
-         return isReachable(dbConnection, targetBlock, sourceBlock);
-      } catch (SQLException e)
-      {
-         logger.error("isReacheble: " + e.getMessage(), e);
-         throw new JdbcStorageException("isReachable: " + e.getMessage(), e);
-      } finally
-      {
-         long stopTime = System.currentTimeMillis();
-         logger.debug("exec time: " + (stopTime - startTime) + " ms");
-      }
-   }
-
-   public BlockChainLink getClaimedLink(final BlockChainLink link, final TransactionInput in)
-   {
-      long startTime = System.currentTimeMillis();
-      try (Connection dbConnection = getDbConnection())
-      {
-         List<SimplifiedStoredBlock> potentialBlocks = getBlocksWithTx(dbConnection, in.getClaimedTransactionHash());
-         SimplifiedStoredBlock linkBlock = new SimplifiedStoredBlock(link);
-         for (SimplifiedStoredBlock b : potentialBlocks)
-            if (b.height <= link.getHeight() && isReachable(dbConnection, linkBlock, b))
-               return getLink(b.hash);
-         return null;
-      } catch (SQLException e)
-      {
-         logger.error("getClaimedLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getClaimedLinks: " + e.getMessage(), e);
-      } finally
-      {
-         long stopTime = System.currentTimeMillis();
-         logger.debug(HexUtil.toSingleHexString(in.getClaimedTransactionHash()) + " exec time: " + (stopTime - startTime) + " ms");
-      }
-   }
-
-   public BlockChainLink getPartialClaimedLink(final BlockChainLink link, final TransactionInput in)
-   {
-      long startTime = System.currentTimeMillis();
-      try (Connection dbConnection = getDbConnection())
-      {
-         List<SimplifiedStoredBlock> potentialBlocks = getBlocksWithTx(dbConnection, in.getClaimedTransactionHash());
-         SimplifiedStoredBlock linkBlock = new SimplifiedStoredBlock(link);
-         for (SimplifiedStoredBlock b : potentialBlocks)
-            if (b.height <= link.getHeight() && isReachable(dbConnection, linkBlock, b))
-            {
-               List<TransactionImpl> txs = new LinkedList<>();
-               txs.add(getTransaction(dbConnection, in.getClaimedTransactionHash()));
-               return getCompleteBlock(dbConnection, b.hash, txs);
-            }
-         return null;
-      } catch (SQLException | BitcoinException e)
-      {
-         logger.error("getClaimedLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getClaimedLinks: " + e.getMessage(), e);
-      } finally
-      {
-         long stopTime = System.currentTimeMillis();
-         logger.debug(HexUtil.toSingleHexString(in.getClaimedTransactionHash()) + " /" + in.getClaimedOutputIndex() + " exec time: " + (stopTime - startTime) + " ms");
-      }
-   }
-
-   public BlockChainLink getClaimerLink(final BlockChainLink link, final TransactionInput in)
-   {
-      try (Connection dbConnection = getDbConnection())
-      {
-         byte[] hash = getClaimerHash(dbConnection, link, in);
-         if (hash == null)
-            return null;
-         else
-            return getLink(hash);
-      } catch (SQLException e)
-      {
-         logger.error("getClaimerLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getClaimerLinks: " + e.getMessage(), e);
-      }
-   }
-
-   public boolean outputClaimedInSameBranch(final BlockChainLink link, final TransactionInput in)
-   {
-      try (Connection dbConnection = getDbConnection())
-      {
-         return getClaimerHash(dbConnection, link, in) != null;
-      } catch (SQLException e)
-      {
-         logger.error("outputClaimedInSameBranch: " + e.getMessage(), e);
-         throw new JdbcStorageException("outputClaimedInSameBranch: " + e.getMessage(), e);
-      }
-   }
-
-   public BlockChainLink getCommonLink(final byte[] first, final byte[] second)
-   {
-      long startTime = System.currentTimeMillis();
-      //logger.debug("getCommonLink " + HexUtil.toSingleHexString(first) + " " + HexUtil.toSingleHexString(second));
-      try (Connection dbConnection = getDbConnection())
-      {
-         SimplifiedStoredBlock block1 = getSimplifiedStoredBlock(dbConnection, first);
-         SimplifiedStoredBlock block2 = getSimplifiedStoredBlock(dbConnection, second);
-         if (block1 == null || block2 == null)
-            return null;
-
-         if (block1.equals(block2))
-            return getLink(block1.hash);
-
-         // We need block1 height lower than block2 height
-         if (block2.height < block1.height)
-         {
-            SimplifiedStoredBlock tmp = block1;
-            block1 = block2;
-            block2 = tmp;
-         }
-
-         // loop until we reach the genesis block
-         while (true)
-         {
-            //logger.debug("getCommonLinkLoop block1: " + block1);
-            // Genesis link reaches all non-orphan blocks
-            if (block1.height == BlockChainLink.ROOT_HEIGHT)
-               return getGenesisLink();
-
-            // If we have no side branches there is only one possibility to have a common link
-            // and it is the lowest block between the two: block1
-            if (isReachable(dbConnection, block2, block1))
-               return getLink(block1.hash);
-            else if (getNumBlocksAtHeight(dbConnection, block1.height) == 1)
-               return null;
-
-            // If the two blocks are not reachable find a lower branch intersection
-            do
-               block1 = getSimplifiedStoredBlock(dbConnection, block1.prevBlockHash);
-            while (getNumBlocksWithPrevHash(dbConnection, block1.hash) == 1);
-         }
-
-      } catch (SQLException ex)
-      {
-         throw new JdbcStorageException("getCommonLinkEx: " + ex.getMessage(), ex);
-      } finally
-      {
-         long stopTime = System.currentTimeMillis();
-         logger.debug("exec time: " + (stopTime - startTime) + " ms");
-      }
-   }
-
-   public BlockChainLink getLinkAtHeight(long height)
-   {
-      try (Connection dbConnection = getDbConnection())
-      {
-         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(dbConnection, height);
-         if (blocks.isEmpty())
-            return null;
-         if (blocks.size() == 1)
-            return getCompleteBlock(dbConnection, blocks.get(0).hash, getBlockTransactions(dbConnection, blocks.get(0).hash));
-         SimplifiedStoredBlock topBlock = new SimplifiedStoredBlock(getLastLink());
-         for (SimplifiedStoredBlock b : blocks)
-            if (isReachable(dbConnection, b, topBlock))
-               return getCompleteBlock(dbConnection, b.hash, getBlockTransactions(dbConnection, b.hash));
-
-         // We should never arrive here
-         assert false;
-         return null;
-      } catch (SQLException e)
-      {
-         logger.error("getNextLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getNextLink: " + e.getMessage(), e);
-      }
-   }
-
-   public byte[] getHashOfMainChainAtHeight(long height)
-   {
-      try (Connection dbConnection = getDbConnection())
-      {
-         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(dbConnection, height);
-         if (blocks.isEmpty())
-            return null;
-         if (blocks.size() == 1)
-            return blocks.get(0).hash;
-         SimplifiedStoredBlock topBlock = new SimplifiedStoredBlock(getLastLink());
-         for (SimplifiedStoredBlock b : blocks)
-            if (isReachable(dbConnection, b, topBlock))
-               return b.hash;
-
-         // We should never arrive here
-         assert false;
-         return null;
-      } catch (SQLException e)
-      {
-         logger.error("getNextLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getNextLink: " + e.getMessage(), e);
+         return rs.next();
       }
    }
 
@@ -627,6 +249,7 @@ public class JdbcChainLinkStorage implements NodeStorage
     * a1d7c19f72ce5b24a1001bf9c5452babed6734eaa478642379f8c702a46d5e27 in block
     * 0000000013aa9f67da178005f9ced61c7064dd6e8464b35f6a8ca8fabc1ca2cf
     */
+   @Override
    protected byte[] getClaimerHash(final Connection dbConnection, final BlockChainLink link, final TransactionInput in)
    {
       if (link == null || in == null)
@@ -663,6 +286,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
+   @Override
    protected List<SimplifiedStoredBlock> getBlocksAtHeight(final Connection dbConnection, long height) throws SQLException
    {
       List<SimplifiedStoredBlock> blocks = new ArrayList<>();
@@ -679,6 +303,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       return blocks;
    }
 
+   @Override
    protected List<SimplifiedStoredBlock> getBlocksReferringTx(final Connection dbConnection, final TransactionInput in) throws SQLException
    {
       List<SimplifiedStoredBlock> blocks = new LinkedList<>();
@@ -693,6 +318,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       return blocks;
    }
 
+   @Override
    protected List<SimplifiedStoredBlock> getBlocksWithTx(final Connection dbConnection, final byte[] hash) throws SQLException
    {
       List<SimplifiedStoredBlock> blocks = new LinkedList<>();
@@ -706,6 +332,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       return blocks;
    }
 
+   @Override
    protected List<SimplifiedStoredBlock> getBlocksWithPrevHash(final Connection dbConnection, final byte[] hash) throws SQLException
    {
       List<SimplifiedStoredBlock> blocks = new LinkedList<>();
@@ -719,6 +346,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       return blocks;
    }
 
+   @Override
    protected int getNumBlocksAtHeight(final Connection dbConnection, long height) throws SQLException
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetNumBlockHeadersAtHeight))
@@ -730,6 +358,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
+   @Override
    protected int getNumBlocksWithPrevHash(final Connection dbConnection, byte[] hash) throws SQLException
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetNumBlocksWithPrevHash))
@@ -741,6 +370,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
+   @Override
    protected long storeBlockHeader(final Connection dbConnection, final BlockChainLink link)
    {
       Block block = link.getBlock();
@@ -767,6 +397,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
+   @Override
    protected long storeTransaction(final Connection dbConnection, final Transaction tx)
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlPutTransaction);
@@ -808,6 +439,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
+   @Override
    protected void storeBlkTxLink(final Connection dbConnection, long blockId, long txId, int pos) throws SQLException
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlPutBlkTxLink))
@@ -819,6 +451,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
+   @Override
    protected List<TransactionInputImpl> loadTxInputs(final Connection dbConnection, long txId) throws SQLException
    {
       List<TransactionInputImpl> inputs = new LinkedList<>();
@@ -835,6 +468,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       return inputs;
    }
 
+   @Override
    protected List<TransactionOutputImpl> loadTxOutputs(final Connection dbConnection, long txId) throws SQLException
    {
       List<TransactionOutputImpl> outputs = new LinkedList<>();
@@ -849,6 +483,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       return outputs;
    }
 
+   @Override
    protected long getTransactionId(final Connection dbConnection, byte[] hash) throws SQLException
    {
       long txId = -1;
@@ -862,6 +497,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
+   @Override
    protected TransactionImpl getTransaction(final Connection dbConnection, byte[] hash) throws SQLException, BitcoinException
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetTransaction))
@@ -877,6 +513,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
+   @Override
    protected List<TransactionImpl> getBlockTransactions(final Connection dbConnection, ResultSet rs) throws SQLException, BitcoinException
    {
       List<TransactionImpl> res = new LinkedList<>();
@@ -888,6 +525,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       return res;
    }
 
+   @Override
    protected List<TransactionImpl> getBlockTransactions(final Connection dbConnection, byte[] hash)
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockTransactionsFromHash))
@@ -901,6 +539,7 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
+   @Override
    protected List<TransactionImpl> getBlockTransactions(final Connection dbConnection, long blockId)
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockTransactionsFromId))
@@ -914,15 +553,11 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
-   protected BlockChainLink getBlockHeader(final Connection dbConnection, final byte[] hash)
+   @Override
+   protected BlockChainLink createBlockWithTxs(final Connection dbConnection, final byte[] hash, List<TransactionImpl> transactions)
    {
-      return getCompleteBlock(dbConnection, hash, new LinkedList<TransactionImpl>());
-   }
-
-   protected BlockChainLink getCompleteBlock(final Connection dbConnection, final byte[] hash, List<TransactionImpl> transactions)
-   {
-      //logger.debug("[getCompleteBlock " + HexUtil.toSingleHexString(hash) + " ]");
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlock))
+      //logger.debug("[createBlockWithTxs " + HexUtil.toSingleHexString(hash) + " ]");
+      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockHeader))
       {
          ps.setBytes(1, hash);
          ResultSet rs = ps.executeQuery();
@@ -942,11 +577,25 @@ public class JdbcChainLinkStorage implements NodeStorage
       }
    }
 
+   @Override
    protected SimplifiedStoredBlock getSimplifiedStoredBlock(final Connection dbConnection, final byte[] hash) throws SQLException
    {
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlock))
+      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockHeader))
       {
          ps.setBytes(1, hash);
+         ResultSet rs = ps.executeQuery();
+         if (rs.next())
+            return new SimplifiedStoredBlock(rs);
+         else
+            return null;
+      }
+   }
+
+   @Override
+   protected SimplifiedStoredBlock getHigherWorkHash(final Connection dbConnection) throws SQLException
+   {
+      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetHigherWorkBlock))
+      {
          ResultSet rs = ps.executeQuery();
          if (rs.next())
             return new SimplifiedStoredBlock(rs);
@@ -962,61 +611,60 @@ public class JdbcChainLinkStorage implements NodeStorage
     * @param target
     * @return
     */
-   protected boolean isReachable(final Connection dbConnection, SimplifiedStoredBlock target, SimplifiedStoredBlock source) throws SQLException
-   {
-      // Sanity checks
-      if (source == null || target == null)
-         return false;
-
-      // Handle special cases
-      if (source.equals(target))
-         return true;
-
-      // If at same height and not same block we are in different branches
-      if (target.height == source.height)
-         return false;
-
-      // We need source height lower than target height
-      if (target.height < source.height)
-      {
-         SimplifiedStoredBlock tmp = source;
-         source = target;
-         target = tmp;
-      }
-
-      long currHeight = source.height;
-      List<SimplifiedStoredBlock> chains = new LinkedList<>();
-      chains.add(source);
-
-      // Follow all the chains we discover from our starting point
-      // until we are certain whether we are in the same chain of the target or not
-      do
-      {
-         //logger.debug("isRechableLoop - currHeight: " + currHeight + " chains.size: " + chains.size());
-         // Check if we are the only chain at this height
-         // then we are in the same branch for sure because we know the target is connected
-         if (chains.size() == 1)
-            if (getNumBlocksAtHeight(dbConnection, currHeight) == 1)
-               return true;
-         List<SimplifiedStoredBlock> newChains = new LinkedList<>();
-         for (SimplifiedStoredBlock block : chains)
-            if (block.equals(target))
-               return true;
-            else
-               newChains.addAll(getBlocksWithPrevHash(dbConnection, block.hash));
-         chains = newChains;
-         currHeight++;
-      } while (!chains.isEmpty() && currHeight <= target.height);
-
-      // We reached the top of all our chain without finding the target
-      // so we are in different branches
-      return false;
-   }
-
+//   protected boolean isReachable(final Connection dbConnection, SimplifiedStoredBlock target, SimplifiedStoredBlock source) throws SQLException
+//   {
+//      // Sanity checks
+//      if (source == null || target == null)
+//         return false;
+//
+//      // Handle special cases
+//      if (source.equals(target))
+//         return true;
+//
+//      // If at same height and not same block we are in different branches
+//      if (target.height == source.height)
+//         return false;
+//
+//      // We need source height lower than target height
+//      if (target.height < source.height)
+//      {
+//         SimplifiedStoredBlock tmp = source;
+//         source = target;
+//         target = tmp;
+//      }
+//
+//      long currHeight = source.height;
+//      List<SimplifiedStoredBlock> chains = new LinkedList<>();
+//      chains.add(source);
+//
+//      // Follow all the chains we discover from our starting point
+//      // until we are certain whether we are in the same chain of the target or not
+//      do
+//      {
+//         //logger.debug("isRechableLoop - currHeight: " + currHeight + " chains.size: " + chains.size());
+//         // Check if we are the only chain at this height
+//         // then we are in the same branch for sure because we know the target is connected
+//         if (chains.size() == 1)
+//            if (getNumBlocksAtHeight(dbConnection, currHeight) == 1)
+//               return true;
+//         List<SimplifiedStoredBlock> newChains = new LinkedList<>();
+//         for (SimplifiedStoredBlock block : chains)
+//            if (block.equals(target))
+//               return true;
+//            else
+//               newChains.addAll(getBlocksWithPrevHash(dbConnection, block.hash));
+//         chains = newChains;
+//         currHeight++;
+//      } while (!chains.isEmpty() && currHeight <= target.height);
+//
+//      // We reached the top of all our chain without finding the target
+//      // so we are in different branches
+//      return false;
+//   }
    public void purgeBlocksUpToHeight(long height, boolean purgeTransactions) throws SQLException
    {
       long startTime = System.currentTimeMillis();
-      Connection dbConnection = getDbConnection();
+      Connection dbConnection = newSession();
       int blocksDeleted = -1, txDeleted = -1;
       try
       {
@@ -1094,71 +742,5 @@ public class JdbcChainLinkStorage implements NodeStorage
    public void setDataSource(DataSource dataSource)
    {
       this.dataSource = dataSource;
-   }
-
-   //
-   // Node address storage
-   //
-   @Override
-   public void storeNodeAddress(NodeAddress node)
-   {
-      try (Connection dbConnection = getDbConnection(); PreparedStatement psReadOld = dbConnection.prepareStatement(sqlGetNodeAddress))
-      {
-         InetAddress addr = node.getAddress().getAddress();
-         String textAddr;
-         if (addr instanceof Inet4Address)
-            textAddr = addr.toString().substring(1);
-         else
-            textAddr = addr.toString();
-         psReadOld.setString(1, textAddr);
-         psReadOld.setLong(2, node.getAddress().getPort());
-         ResultSet rs = psReadOld.executeQuery();
-         if (rs.next())
-            try (PreparedStatement ps = dbConnection.prepareStatement(sqlUpdateNodeAddress))
-            {
-               ps.setLong(1, node.getServices());
-               ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
-               ps.setString(3, textAddr);
-               ps.setInt(4, node.getAddress().getPort());
-               ps.executeUpdate();
-            }
-         else
-            try (PreparedStatement ps = dbConnection.prepareStatement(sqlPutNodeAddress))
-            {
-               ps.setString(1, textAddr);
-               ps.setInt(2, node.getAddress().getPort());
-               ps.setLong(3, node.getServices());
-               ps.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
-               ps.executeUpdate();
-            }
-      } catch (SQLException e)
-      {
-         logger.error("putNodeAddress: " + e.getMessage(), e);
-         throw new JdbcStorageException("putNodeAddress: " + e.getMessage(), e);
-      }
-   }
-
-   @Override
-   public List<NodeAddress> loadNodeAddesses(int maxNum)
-   {
-      try (Connection dbConnection = getDbConnection(); PreparedStatement ps = dbConnection.prepareStatement(sqlGetNodeAddresses);
-              ResultSet rs = ps.executeQuery())
-      {
-         List<NodeAddress> list = new LinkedList<>();
-         while (rs.next())
-            try
-            {
-               list.add(new NodeAddress(rs.getLong("services"),
-                       new InetSocketAddress(InetAddress.getByName(rs.getString("address")), rs.getInt("port"))));
-            } catch (UnknownHostException ex)
-            {
-               logger.info("Could not create node address from stored address: " + rs.getString("address") + " port: ", rs.getInt("port"));
-            }
-         return list;
-      } catch (SQLException e)
-      {
-         logger.error("getNodeAddesses: " + e.getMessage(), e);
-         throw new JdbcStorageException("getNodeAddesses: " + e.getMessage(), e);
-      }
    }
 }

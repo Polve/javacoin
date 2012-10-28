@@ -30,16 +30,16 @@ import org.testng.annotations.Test;
 public class StorageITTests
 {
 
-   private StorageProvider<JdbcChainLinkStorage> createProvider()
+   private StorageProvider<MysqlStorage> createProvider()
    {
-      return new StorageProvider<JdbcChainLinkStorage>()
+      return new StorageProvider<MysqlStorage>()
       {
 
-         protected JdbcChainLinkStorage getStorageInstance()
+         protected MysqlStorage getStorageInstance()
          {
             try
             {
-            JdbcChainLinkStorage storage = new JdbcChainLinkStorage(new ProdnetBitcoinFactory(new ScriptFactoryImpl(null)));
+            MysqlStorage storage = new MysqlStorage(new ProdnetBitcoinFactory(new ScriptFactoryImpl(null)));
                storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_test", "javacoin", "pw"));
             return storage;
             } catch (BitcoinException ex) {
@@ -51,22 +51,22 @@ public class StorageITTests
          }
 
          @Override
-         public JdbcChainLinkStorage newStorage()
+         public MysqlStorage newStorage()
          {
-            JdbcChainLinkStorage storage = getStorageInstance();
+            MysqlStorage storage = getStorageInstance();
             storage.init();
             return storage;
          }
 
          @Override
-         public void closeStorage(JdbcChainLinkStorage storage)
+         public void closeStorage(MysqlStorage storage)
          {
          }
 
          @Override
          public void cleanStorage()
          {
-            JdbcChainLinkStorage storage = getStorageInstance();
+            MysqlStorage storage = getStorageInstance();
             storage.removeDatabase();
          }
       };

@@ -47,10 +47,22 @@ public interface BlockChainLinkStorage
    public long getHeight();
 
    /**
-    * Get the link to the given hash value. Orphan blocks are returned.
+    * Get the link to the given hash value.
     * @return The link with the block with the given hash, or null if no such link exists.
     */
    BlockChainLink getLink(byte[] hash);
+
+   /**
+    * Returns true if a link with the given hash value is in the storage.
+    * @return The link with the block with the given hash, or null if no such link exists.
+    */
+   boolean blockExists(byte[] hash);
+
+   /**
+    * Get the link to the given hash value.
+    * @return The link with the block header with the given hash, or null if no such link exists.
+    */
+   BlockChainLink getLinkBlockHeader(byte[] hash);
 
    /**
     * Get the link following the current one given on the same
@@ -134,14 +146,14 @@ public interface BlockChainLinkStorage
    void addLink(BlockChainLink link);
 
    /**
-    * Update an orphan block to make it non-orphan. All other use-cases are undefined.
-    */
-   void updateLink(BlockChainLink link);
-
-   /**
     * @param height
     * @return The block at specified height of the best chain
     */
-   public byte[] getHashOfMainChainAtHeight(long height);
-}
+   byte[] getHashOfMainChainAtHeight(long height);
 
+   /**
+    * @param height
+    * @return The block link at specified height of the best chain
+    */
+   BlockChainLink getLinkAtHeight(long height);
+}

@@ -392,6 +392,11 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
          });
    }
 
+  @Override
+  public BlockChainLink getLinkAtHeight(long height) {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
    public void updateLink(BlockChainLink link)
    {
       addLink(link);
