@@ -57,11 +57,11 @@ public abstract class BlockTransactionsVerifier
     * Verify that a transaction is valid according to sub-rules applying to the
     * block tree.
     *
-    * @param link The link that represents the branch if the new transaction.
+    * @param previousLink The link that represents the branch if the new transaction.
     * @param block The block we're trying to add.
     * @return The total value of the inputs after verification.
     */
-   public long verifyTransaction(BlockChainLink link, Block block, Transaction tx)
+   public long verifyTransaction(BlockChainLink previousLink, Block block, Transaction tx)
       throws VerificationException
    {
       long value = 0;
@@ -70,7 +70,7 @@ public abstract class BlockTransactionsVerifier
          // Check 16.1.1: For each input, look in the [same] branch to find the
          // referenced output transaction. Reject if the output transaction is missing for any input.
          Transaction outTx = null;
-         BlockChainLink outLink = linkStorage.getPartialClaimedLink(link, in);
+         BlockChainLink outLink = linkStorage.getPartialClaimedLink(previousLink, in);
          if (outLink != null) // Check in chain before
             outTx = getTransaction(outLink.getBlock(), in.getClaimedTransactionHash());
          if (outTx == null) // Check in this block if not yet found
@@ -84,9 +84,10 @@ public abstract class BlockTransactionsVerifier
                + (in.getClaimedOutputIndex() + 1) + " vs. " + outTx.getOutputs().size());
          // Check 16.1.3: For each input, if the referenced output transaction is coinbase,
          // it must have at least COINBASE_MATURITY confirmations; else reject.
-         if ((outTx.isCoinbase()) && (outLink.getHeight() + BlockChainImpl.COINBASE_MATURITY > link.getHeight()))
+         if (outTx.isCoinbase() && (outLink.getHeight() + BlockChainImpl.COINBASE_MATURITY > (previousLink.getHeight()+1)))
             throw new VerificationException("input (" + in + ") referenced coinbase transaction "
-               + outTx + " which was not mature enough (only " + (link.getHeight() - outLink.getHeight() + 1) + " blocks before)");
+               + outTx + " in block at height "+outLink.getHeight()+" which was not mature enough (only " + (previousLink.getHeight() - outLink.getHeight() + 1) + " blocks before)"
+               +" current link height is "+previousLink.getHeight());
          // Check 16.1.4: Verify crypto signatures for each input; reject if any are bad
          TransactionOutput out = outTx.getOutputs().get(in.getClaimedOutputIndex());
          value += out.getValue(); // Remember value that goes in from this out
@@ -112,10 +113,10 @@ public abstract class BlockTransactionsVerifier
          }
          // Check 16.1.5: For each input, if the referenced output has already been
          // spent by a transaction in the [same] branch, reject
-         if (linkStorage.outputClaimedInSameBranch(link, in))
+         if (linkStorage.outputClaimedInSameBranch(previousLink, in))
             throw new VerificationException("Block: " + BtcUtil.hexOut(block.getHash()) + " Tx: " + BtcUtil.hexOut(tx.getHash())
                + " output claimed by " + in + " is already claimed in another block of the same branch: "
-               + BtcUtil.hexOut(linkStorage.getClaimerLink(link, in).getBlock().getHash()));
+               + BtcUtil.hexOut(linkStorage.getClaimerLink(previousLink, in).getBlock().getHash()));
       }
       return value;
    }
