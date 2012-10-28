@@ -68,20 +68,22 @@ public class ParallelTransactionsVerifier extends BlockTransactionsVerifier
       this.block = block;
       inValue = outValue = 0;
       logger.debug("Parallel checking of {} transactions...", block.getTransactions().size());
-      List<Callable<Void>> todo = new ArrayList<>(block.getTransactions().size());
+      List<Callable<InOutValues>> todo = new ArrayList<>(block.getTransactions().size());
       for (Transaction tx : block.getTransactions())
       {
          todo.add(new SingleTxVerifier(tx));
       }
       try
       {
-         List<Future<Void>> allRes = executorService.invokeAll(todo);
-         for (Iterator<Future<Void>> it = allRes.iterator(); it.hasNext();)
+         List<Future<InOutValues>> allRes = executorService.invokeAll(todo);
+         for (Iterator<Future<InOutValues>> it = allRes.iterator(); it.hasNext();)
          {
-            Future<Void> res = it.next();
+            Future<InOutValues> res = it.next();
             try
             {
-               res.get();
+               InOutValues values = res.get();
+               inValue += values.localInValue;
+               outValue += values.localOutValue;
             } catch (ExecutionException ex)
             {
                Throwable t = ex.getCause();
@@ -103,7 +105,7 @@ public class ParallelTransactionsVerifier extends BlockTransactionsVerifier
       return inValue - outValue;
    }
 
-   class SingleTxVerifier implements Callable<Void>
+   class SingleTxVerifier implements Callable<InOutValues>
    {
 
       private Transaction tx;
@@ -114,32 +116,26 @@ public class ParallelTransactionsVerifier extends BlockTransactionsVerifier
       }
 
       @Override
-      public Void call() throws VerificationException
+      public InOutValues call() throws VerificationException
       {
          InOutValues inOutValues = new InOutValues();
          // Validate without context
          tx.validate();
          // Checks 16.1.1-7: Verify only if this is supposed to be a full node
-         long localOutValue = 0;
          if ((!simplifiedVerification) && (!tx.isCoinbase()))
          {
-            long localInValue = verifyTransaction(link, block, tx);
+            inOutValues.localInValue = verifyTransaction(link, block, tx);
             for (TransactionOutput out : tx.getOutputs())
             {
-               localOutValue += out.getValue();
-            }
-            synchronized (this)
-            {
-               inValue += localInValue;
-               outValue += localOutValue;
+               inOutValues.localOutValue += out.getValue();
             }
             // Check 16.1.6: Using the referenced output transactions to get
             // input values, check that each input value, as well as the sum, are in legal money range
             // Check 16.1.7: Reject if the sum of input values < sum of output values
-            if (localInValue < localOutValue)
-               throw new VerificationException("more money spent (" + localOutValue + ") then available (" + localInValue + ") in transaction: " + tx);
+            if (inOutValues.localInValue < inOutValues.localOutValue)
+               throw new VerificationException("more money spent (" + inOutValues.localOutValue + ") then available (" + inOutValues.localInValue + ") in transaction: " + tx);
          }
-         return null;
+         return inOutValues;
       }
    }
 
@@ -162,7 +158,7 @@ public class ParallelTransactionsVerifier extends BlockTransactionsVerifier
    class InOutValues
    {
 
-      public long inValue = 0;
-      public long outValue = 0;
+      public long localInValue = 0;
+      public long localOutValue = 0;
    }
 }
