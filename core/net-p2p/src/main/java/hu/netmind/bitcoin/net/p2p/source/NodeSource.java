@@ -26,11 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This abstract nodes source takes a prepared list of addresses, and each time
- * asked provides a shuffled version of the list thereby making sure that nodes
- * are used randomly.
+ * This node source takes a prepared list of addresses
  *
- * @author Robert Brautigam, Alessandro Polverini
+ * @author Alessandro Polverini
  */
 public class NodeSource implements AddressSource
 {
