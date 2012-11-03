@@ -21,29 +21,28 @@ package hu.netmind.bitcoin.keyfactory.ecc;
 import hu.netmind.bitcoin.Key;
 import hu.netmind.bitcoin.PublicKey;
 import hu.netmind.bitcoin.VerificationException;
-import java.io.IOException;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.security.SecureRandom;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.DERSequenceGenerator;
+import org.bouncycastle.asn1.DLSequence;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.DERSequenceGenerator;
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Integer;
-import org.bouncycastle.asn1.DLSequence;
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The key implementation using ECC.
@@ -94,6 +93,7 @@ public class KeyImpl implements Key
       this.publicKeyObject = new PublicKeyImpl(publicKey,pubHash); // No need to generate hash
    }
    
+   @Override
    public long getCreationTime()
    {
       return creationTime;
@@ -106,12 +106,13 @@ public class KeyImpl implements Key
    /**
     * Sign a block of data with this private key.
     * @param data The data to sign.
-    * @return The signature of the data compatible with BitCoin specification.
+    * @return The signature of the data compatible with Bitcoin specification.
     */
+   @Override
    public byte[] sign(byte[] data)
       throws VerificationException
    {
-      // BitCoin wiki specifies signature to be produced by EC-DSA, so init 
+      // Bitcoin wiki specifies signature to be produced by EC-DSA, so init
       ECDSASigner signer = new ECDSASigner();
       signer.init(true,new ECPrivateKeyParameters(privateKey,domainParameters));
       // Sign
@@ -134,6 +135,7 @@ public class KeyImpl implements Key
    /**
     * Get the public key of this private key.
     */
+   @Override
    public PublicKey getPublicKey()
    {
       return publicKeyObject;
@@ -187,6 +189,7 @@ public class KeyImpl implements Key
        * @return True if the signature is a correct signature of the given data
        * for the private key counterpart of this public key, false otherwise.
        */
+      @Override
       public boolean verify(byte[] data, byte[] signature)
          throws VerificationException
       {
@@ -212,6 +215,7 @@ public class KeyImpl implements Key
       {
          return publicKey;
       }
+      @Override
       public byte[] getHash()
       {
          return hash;

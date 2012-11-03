@@ -19,11 +19,11 @@ package hu.netmind.bitcoin.net.p2p;
 
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
-import hu.netmind.bitcoin.net.p2p.source.DNSFallbackNodesSource;
+import hu.netmind.bitcoin.net.Message;
+import hu.netmind.bitcoin.net.NodeAddress;
 import hu.netmind.bitcoin.net.VerackMessage;
 import hu.netmind.bitcoin.net.VersionMessage;
-import hu.netmind.bitcoin.net.NodeAddress;
-import hu.netmind.bitcoin.net.Message;
+import hu.netmind.bitcoin.net.p2p.source.DNSFallbackNodesSource;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
@@ -41,7 +41,7 @@ public class networkTap
       throws Exception
    {
       bitcoinFactory = new ProdnetBitcoinFactory(null);
-      System.out.println("BitCoin Network Tapper... Press CTRL-C to exit.");
+      System.out.println("Bitcoin Network Tapper... Press CTRL-C to exit.");
       // Initialize node
       final Node node = new Node(bitcoinFactory.getMessageMagic());
       node.setMinConnections(1);

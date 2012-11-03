@@ -18,17 +18,17 @@
 
 package hu.netmind.bitcoin.block;
 
-import java.util.List;
-import java.util.ArrayList;
-import hu.netmind.bitcoin.ScriptFragment;
 import hu.netmind.bitcoin.BitcoinException;
-import it.nibbles.bitcoin.utils.BtcUtil;
+import hu.netmind.bitcoin.ScriptFragment;
+import hu.netmind.bitcoin.SignatureHashType;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
-import hu.netmind.bitcoin.SignatureHashType;
 import hu.netmind.bitcoin.net.ArraysUtil;
+import it.nibbles.bitcoin.utils.BtcUtil;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Robert Brautigam
@@ -161,7 +161,7 @@ public class TransactionInputImpl implements TransactionInput
             inputs,outputs,transaction.getLockTime(),new byte[] {},transaction.getVersion());
       byte[] hash = txCopy.calculateHash(new byte[] { (byte)type.getValue(), 0, 0, 0});
       // Return the hash of this specially created transaction with the type added
-      // We have to reverse this signature hash back to original "BitCoin" order.
+      // We have to reverse this signature hash back to original "Bitcoin" order.
       return ArraysUtil.reverse(hash);
    }
 

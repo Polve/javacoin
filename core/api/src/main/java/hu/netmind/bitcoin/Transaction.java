@@ -18,11 +18,11 @@
 
 package hu.netmind.bitcoin;
 
-import java.util.List;
 import java.io.Serializable;
+import java.util.List;
 
 /**
- * A Transaction represents a transfer of BitCoin money. There are
+ * A Transaction represents a transfer of Bitcoin money. There are
  * two types of transactions:
  * <ul>
  *    <li>A "coinbase", which means money is created, and not just transferred.
@@ -88,6 +88,3 @@ public interface Transaction extends Serializable
    void validate()
       throws VerificationException;
 }
-
-
-

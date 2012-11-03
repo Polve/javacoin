@@ -18,14 +18,14 @@
 
 package hu.netmind.bitcoin;
 
-import java.util.List;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * A Block is an already accepted collection of transactions in the
  * block chain, although it may not be part of the longest chain.
  * Blocks are created by "Miners", machines that participate in the
- * BitCoin network in order to earn money for this effort. Creating
+ * Bitcoin network in order to earn money for this effort. Creating
  * Blocks is (computationally) difficult, adjusted so that the combined
  * processing power of all the machines participating will generate
  * approximately one Block every 10 minutes (for all times). Miners earn

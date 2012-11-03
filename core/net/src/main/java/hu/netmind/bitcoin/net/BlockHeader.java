@@ -48,7 +48,7 @@ public class BlockHeader
    {
    }
 
-   void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
+   void readFrom(BitcoinInputStream input, long protocolVersion, Object param)
       throws IOException
    {
       version = input.readUInt32();
@@ -59,7 +59,7 @@ public class BlockHeader
       nonce = input.readUInt32();
    }
 
-   public void writeTo(BitCoinOutputStream output)
+   public void writeTo(BitcoinOutputStream output)
       throws IOException
    {
       output.writeUInt32(version);

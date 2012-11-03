@@ -6,7 +6,7 @@
    <artifactId>bitcoin-net-p2p</artifactId>
    <packaging>jar</packaging>
    <version>1.0.0-SNAPSHOT</version>
-   <name>BitCoin Network Node P2P Implementation</name>
+   <name>Bitcoin Network Node P2P Implementation</name>
 
    <parent>
       <groupId>hu.netmind.bitcoin</groupId>

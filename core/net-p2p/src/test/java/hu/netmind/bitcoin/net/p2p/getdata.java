@@ -20,27 +20,24 @@ package hu.netmind.bitcoin.net.p2p;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
-import it.nibbles.bitcoin.utils.BtcUtil;
-import hu.netmind.bitcoin.net.p2p.source.FallbackNodesSource;
-import hu.netmind.bitcoin.net.BitCoinOutputStream;
-import hu.netmind.bitcoin.net.GetDataMessage;
-import hu.netmind.bitcoin.net.Message;
-import hu.netmind.bitcoin.net.VersionMessage;
-import hu.netmind.bitcoin.net.VerackMessage;
-import hu.netmind.bitcoin.net.NodeAddress;
+import hu.netmind.bitcoin.net.BitcoinOutputStream;
 import hu.netmind.bitcoin.net.BlockMessage;
-import hu.netmind.bitcoin.net.TxMessage;
+import hu.netmind.bitcoin.net.GetDataMessage;
 import hu.netmind.bitcoin.net.InventoryItem;
+import hu.netmind.bitcoin.net.Message;
 import hu.netmind.bitcoin.net.MessageMarshaller;
+import hu.netmind.bitcoin.net.NodeAddress;
+import hu.netmind.bitcoin.net.TxMessage;
+import hu.netmind.bitcoin.net.VerackMessage;
+import hu.netmind.bitcoin.net.VersionMessage;
 import hu.netmind.bitcoin.net.p2p.source.DNSFallbackNodesSource;
 import hu.netmind.bitcoin.net.p2p.source.RandomizedNodesSource;
-import java.net.SocketAddress;
-import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.ArrayList;
-import java.io.IOException;
+import it.nibbles.bitcoin.utils.BtcUtil;
 import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Execute a getdata with the given parameters.
@@ -71,7 +68,7 @@ public class getdata
       final byte[] hash = BtcUtil.hexIn(argv[2]);
       //final long messageMagic = bitcoinFactory.getMessageMagic();
 
-      System.out.println("BitCoin getdata request " + type + " " + BtcUtil.hexOut(hash) + " on " + (isTestnet ? "testnet" : "prodnet"));
+      System.out.println("Bitcoin getdata request " + type + " " + BtcUtil.hexOut(hash) + " on " + (isTestnet ? "testnet" : "prodnet"));
       // Initialize node
       final Node node = new Node(bitcoinFactory.getMessageMagic());
       node.setMinConnections(1);
@@ -96,11 +93,13 @@ public class getdata
             conn.send(version);
          }
 
+         @Override
          public void onLeave(Connection conn)
          {
             System.out.println("Disconnected from " + conn.getRemoteAddress() + " (on local: " + conn.getLocalAddress() + ")");
          }
 
+         @Override
          public void onMessage(Connection conn, Message message)
             throws IOException
          {
@@ -116,7 +115,7 @@ public class getdata
             {
                // Send our request
                InventoryItem item = new InventoryItem(type, hash);
-               List<InventoryItem> items = new ArrayList<InventoryItem>();
+               List<InventoryItem> items = new ArrayList<>();
                items.add(item);
                GetDataMessage getdataMessage = bitcoinFactory.getMessageFactory().newGetDataMessage(items);
                System.out.println("Sending a request to get data: " + getdataMessage);
@@ -131,7 +130,7 @@ public class getdata
                }
                // Serialize it and display
                ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-               BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+               BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
                MessageMarshaller marshaller = new MessageMarshaller(bitcoinFactory.getMessageMagic());
                marshaller.write(message, output);
                System.out.println("Got data:\n" + BtcUtil.hexOut(byteOutput.toByteArray()));

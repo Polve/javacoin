@@ -36,7 +36,7 @@ public class VerackMessage extends Message
    }
 
    @Override
-   void readFrom(BitCoinInputStream input, long version, Object param)
+   void readFrom(BitcoinInputStream input, long version, Object param)
       throws IOException
    {
       super.readFrom(input,version,param);

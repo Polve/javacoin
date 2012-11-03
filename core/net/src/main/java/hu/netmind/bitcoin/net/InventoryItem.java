@@ -43,14 +43,14 @@ public class InventoryItem
    {
    }
 
-   void readFrom(BitCoinInputStream input)
+   void readFrom(BitcoinInputStream input)
       throws IOException
    {
       type = (int) input.readUInt32();
       hash = input.readReverseBytes(32);
    }
 
-   void writeTo(BitCoinOutputStream output)
+   void writeTo(BitcoinOutputStream output)
       throws IOException
    {
       output.writeUInt32(type);

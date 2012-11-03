@@ -18,22 +18,22 @@
 
 package hu.netmind.bitcoin.net;
 
-import java.io.OutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 /**
- * This is an output stream supporting the types in the BitCoin
+ * This is an output stream supporting the types in the Bitcoin
  * protocol.
  * @author Robert Brautigam
  */
-public class BitCoinOutputStream extends OutputStream
+public class BitcoinOutputStream extends OutputStream
 {
    private OutputStream output;
 
    /**
     * Construct this output with an underlying output.
     */
-   public BitCoinOutputStream(OutputStream output)
+   public BitcoinOutputStream(OutputStream output)
    {
       this.output=output;
    }
@@ -41,6 +41,7 @@ public class BitCoinOutputStream extends OutputStream
    /**
     * Forward to underlying stream.
     */
+   @Override
    public void write(int value)
       throws IOException
    {
@@ -50,6 +51,7 @@ public class BitCoinOutputStream extends OutputStream
    /**
     * Forward bulk write to underlying output.
     */
+   @Override
    public void write(byte[] array)
       throws IOException
    {
@@ -68,6 +70,7 @@ public class BitCoinOutputStream extends OutputStream
    /**
     * Forward flush call to underlying stream.
     */
+   @Override
    public void flush()
       throws IOException
    {
@@ -77,6 +80,7 @@ public class BitCoinOutputStream extends OutputStream
    /**
     * Forward to underlying stream.
     */
+   @Override
    public void close()
       throws IOException
    {

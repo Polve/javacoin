@@ -44,7 +44,7 @@ public class Tx
    {
    }
 
-   void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
+   void readFrom(BitcoinInputStream input, long protocolVersion, Object param)
       throws IOException
    {
       version = input.readUInt32();
@@ -70,13 +70,13 @@ public class Tx
    /**
     * Write this transaction object with the latest protocol version to the output.
     */
-   public void writeTo(BitCoinOutputStream output)
+   public void writeTo(BitcoinOutputStream output)
       throws IOException
    {
       writeTo(output,0);
    }
 
-   void writeTo(BitCoinOutputStream output, long protocolVersion)
+   void writeTo(BitcoinOutputStream output, long protocolVersion)
       throws IOException
    {
       output.writeUInt32(version);

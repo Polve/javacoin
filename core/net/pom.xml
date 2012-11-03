@@ -6,7 +6,7 @@
    <artifactId>bitcoin-net</artifactId>
    <packaging>jar</packaging>
    <version>1.0.0-SNAPSHOT</version>
-   <name>BitCoin Network Objects</name>
+   <name>Bitcoin Network Objects</name>
 
    <parent>
       <groupId>hu.netmind.bitcoin</groupId>

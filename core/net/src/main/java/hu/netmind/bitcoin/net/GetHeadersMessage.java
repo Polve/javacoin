@@ -45,7 +45,7 @@ public class GetHeadersMessage extends Message
    }
 
    @Override
-   void readFrom(BitCoinInputStream input, long version, Object param)
+   void readFrom(BitcoinInputStream input, long version, Object param)
       throws IOException
    {
       super.readFrom(input,version,param);
@@ -57,7 +57,7 @@ public class GetHeadersMessage extends Message
    }
 
    @Override
-   void writeTo(BitCoinOutputStream output, long version)
+   void writeTo(BitcoinOutputStream output, long version)
       throws IOException
    {
       super.writeTo(output,version);

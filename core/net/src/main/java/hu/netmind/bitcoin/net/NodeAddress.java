@@ -40,7 +40,7 @@ public class NodeAddress
    {
    }
 
-   void readFrom(BitCoinInputStream input)
+   void readFrom(BitcoinInputStream input)
       throws IOException
    {
       services = input.readUInt64();
@@ -50,7 +50,7 @@ public class NodeAddress
       address = new InetSocketAddress(addr, (int) port);
    }
 
-   void writeTo(BitCoinOutputStream output)
+   void writeTo(BitcoinOutputStream output)
       throws IOException
    {
       output.writeUInt64(services);

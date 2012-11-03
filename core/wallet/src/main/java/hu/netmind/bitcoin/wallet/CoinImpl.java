@@ -19,13 +19,6 @@
 package hu.netmind.bitcoin.wallet;
 
 import hu.netmind.bitcoin.Coin;
-import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.Wallet;
-import hu.netmind.bitcoin.TransactionOutput;
-import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.InvalidCoinException;
-import java.util.Arrays;
 import java.math.BigInteger;
 
 /**
@@ -35,7 +28,7 @@ import java.math.BigInteger;
  * never change, that means it doesn't account (allow) keys to be lost (or
  * imported). Coins can have different values, so not all coins are equal.
  * Coins can be used for calculating the total amount
- * of "BitCoins" (or value) the owner has, and can be used to create new transactions
+ * of "Bitcoins" (or value) the owner has, and can be used to create new transactions
  * (spend coins). Only full coins can be spent, however it is possible to reclaim
  * "change" from a transaction as a new coin.
  * @author Robert Brautigam

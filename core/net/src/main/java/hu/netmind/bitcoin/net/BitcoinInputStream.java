@@ -18,17 +18,16 @@
 
 package hu.netmind.bitcoin.net;
 
-import java.io.InputStream;
 import java.io.IOException;
-import java.util.Observer;
+import java.io.InputStream;
 
 /**
  * This is an input stream that supports the various types defined in the
- * BitCoin protocol. This still has to be subclassed to provide the actual
+ * Bitcoin protocol. This still has to be subclassed to provide the actual
  * <code>read()</code>. Note: input stream must support the mark mechanism!
  * @author Robert Brautigam
  */
-public class BitCoinInputStream extends InputStream
+public class BitcoinInputStream extends InputStream
 {
    private static final int MAX_SKIP = 4096;
 
@@ -39,7 +38,7 @@ public class BitCoinInputStream extends InputStream
    /**
     * Create this bitcoin input stream using another input stream to read bytes from.
     */
-   public BitCoinInputStream(InputStream input)
+   public BitcoinInputStream(InputStream input)
    {
       this.input=input;
    }
@@ -61,6 +60,7 @@ public class BitCoinInputStream extends InputStream
     * skip the number of bytes given, or throw an exception if that
     * was not successful (for example stream ended).
     */
+   @Override
    public long skip(long size)
       throws IOException
    {
@@ -85,6 +85,7 @@ public class BitCoinInputStream extends InputStream
    /**
     * Implement read by forwarding the request to the underlying stream.
     */
+   @Override
    public int read()
       throws IOException
    {
@@ -107,6 +108,7 @@ public class BitCoinInputStream extends InputStream
    /**
     * Forward to underlying stream.
     */
+   @Override
    public boolean markSupported()
    {
       return input.markSupported();
@@ -115,6 +117,7 @@ public class BitCoinInputStream extends InputStream
    /**
     * Forward to underlying stream.
     */
+   @Override
    public void mark(int readLimit)
    {
       input.mark(readLimit);
@@ -123,6 +126,7 @@ public class BitCoinInputStream extends InputStream
    /**
     * Forward to underlying stream.
     */
+   @Override
    public void reset()
       throws IOException
    {
@@ -132,6 +136,7 @@ public class BitCoinInputStream extends InputStream
    /**
     * Forward to underlying stream.
     */
+   @Override
    public void close()
       throws IOException
    {

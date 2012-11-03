@@ -18,15 +18,22 @@
 
 package hu.netmind.bitcoin.script;
 
-import hu.netmind.bitcoin.*;
+import hu.netmind.bitcoin.BitcoinException;
+import hu.netmind.bitcoin.KeyFactory;
+import hu.netmind.bitcoin.PublicKey;
+import hu.netmind.bitcoin.Script;
+import hu.netmind.bitcoin.ScriptException;
+import hu.netmind.bitcoin.ScriptFragment;
+import hu.netmind.bitcoin.TransactionInput;
+import hu.netmind.bitcoin.VerificationException;
 import it.nibbles.bitcoin.utils.BtcUtil;
+import java.io.IOException;
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
-import java.io.IOException;
-import java.util.Stack;
 import java.util.Arrays;
-import java.math.BigInteger;
+import java.util.Stack;
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

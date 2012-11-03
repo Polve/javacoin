@@ -72,7 +72,7 @@ public class BtcUtil
    {
       if (byteArray == null)
       {
-         return "null";
+         return null;
       } else
       {
          return DatatypeConverter.printHexBinary(byteArray);

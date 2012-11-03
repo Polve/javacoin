@@ -22,9 +22,9 @@ package hu.netmind.bitcoin.block;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.BlockChain;
 import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.VerificationException;
-import hu.netmind.bitcoin.net.BlockHeader;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
@@ -245,7 +245,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       BlockChainLink link = new BlockChainLink(block, // Create link for block
          previousLink.getTotalDifficulty().add(bitcoinFactory.newDifficulty(blockTarget)),
          previousLink.getHeight() + 1, false);
-      DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousLink, link);
+      DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousLink, link.getBlock());
       if (blockTarget.compareTo(calculatedTarget) != 0)
          // Target has to exactly match the one calculated, otherwise it is
          // considered invalid!
@@ -398,7 +398,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    /**
     * Calculate the difficulty for the next block after the one supplied.
     */
-   public DifficultyTarget getNextDifficultyTarget(BlockChainLink link, BlockChainLink newLink)
+   public DifficultyTarget getNextDifficultyTarget(BlockChainLink link, Block newBlock)
    {
       // If we're calculating for the genesis block return
       // fixed difficulty
@@ -415,7 +415,7 @@ public class BlockChainImpl extends Observable implements BlockChain
          if (bitcoinFactory.isTestnet3() || (bitcoinFactory.isTestnet2() && currBlock.getCreationTime() > 1329180000000L)) {
             // If the new block's timestamp is more than 2* 10 minutes
             // then allow mining of a min-difficulty block.
-            if (newLink.getBlock().getCreationTime() > link.getBlock().getCreationTime() + 2*TARGET_SPACING)
+            if (newBlock.getCreationTime() > link.getBlock().getCreationTime() + 2*TARGET_SPACING)
                return bitcoinFactory.maxDifficultyTarget();
             else
             {
@@ -463,6 +463,19 @@ public class BlockChainImpl extends Observable implements BlockChain
       logger.debug("previous height {}, recalculated target is: {}",link.getHeight(),resultTarget);
       return resultTarget;
    }
+
+   /**
+    * Returns a block 
+    * @return 
+    */
+//   public Block createNewV2Block()
+//   {
+//      ScriptFragment coinbaseScript = bitcoinFactory.getScriptFactory().
+//         createFragment(new byte[] { 0x00 });
+//      TransactionInput txIn = new TransactionInputImpl(TransactionInput.ZERO_HASH, -1, coinbaseScript, 0);
+//      TransactionOutput txOut = new TransactionOutputImpl(, coinbaseScript)
+//      Block block = new BlockImpl(null, TARGET_RECALC, TARGET_RECALC, TARGET_TIMESPAN, previousBlockHash, merkleRoot, null, 2);
+//   }
 
    /**
     * Return a block locator to be used by getBlocks using the specs defined by the wiki:

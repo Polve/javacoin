@@ -35,6 +35,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -417,7 +418,10 @@ public class MysqlStorage extends BaseChainLinkStorage
             long id = txInputsIdGen.getNewId();
             psPutTxInput.setLong(1, id);
             psPutTxInput.setLong(2, txId);
-            psPutTxInput.setBytes(3, tinput.getClaimedTransactionHash());
+            if (Arrays.equals(TransactionInput.ZERO_HASH, tinput.getClaimedTransactionHash()))
+               psPutTxInput.setNull(3, java.sql.Types.BINARY);
+            else
+               psPutTxInput.setBytes(3, tinput.getClaimedTransactionHash());
             psPutTxInput.setLong(4, tinput.getClaimedOutputIndex());
             psPutTxInput.setLong(5, tinput.getSequence());
             psPutTxInput.setBytes(6, tinput.getSignatureScript().toByteArray());
@@ -460,10 +464,15 @@ public class MysqlStorage extends BaseChainLinkStorage
          ps.setLong(1, txId);
          ResultSet rs = ps.executeQuery();
          while (rs.next())
+         {
+            byte[] referredTxHash = rs.getBytes("referredTxHash");
+            if (rs.wasNull())
+               referredTxHash = TransactionInput.ZERO_HASH;
             inputs.add(new TransactionInputImpl(
-                    rs.getBytes("referredTxHash"), rs.getInt("referredTxIndex"),
+                    referredTxHash, rs.getInt("referredTxIndex"),
                     bitcoinFactory.getScriptFactory().createFragment(rs.getBytes("scriptBytes")),
                     rs.getLong("sequence")));
+         }
       }
       return inputs;
    }

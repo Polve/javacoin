@@ -39,7 +39,7 @@ public class TxOut
    {
    }
 
-   void readFrom(BitCoinInputStream input)
+   void readFrom(BitcoinInputStream input)
       throws IOException
    {
       value = input.readUInt64();
@@ -51,7 +51,7 @@ public class TxOut
       script = input.readBytes((int) scriptLength);
    }
 
-   void writeTo(BitCoinOutputStream output)
+   void writeTo(BitcoinOutputStream output)
       throws IOException
    {
       output.writeUInt64(value);
