@@ -177,7 +177,7 @@ public class ChainDownloader {
             + (isTestnet2 ? "testnet2" : isTestnet3 ? "testnet3" : "prodnet"), "javacoin", "pw"));
             */
     storage.init();
-    JdbcChainLinkStorage nodeStorage = new JdbcChainLinkStorage(bitcoinFactory);
+    JdbcChainLinkStorage nodeStorage = new JdbcChainLinkStorage();
     nodeStorage.setDataSource(DatasourceUtils.getMysqlDatasource(jdbcUrl, jdbcUser, jdbcPassword));
     /*
     nodeStorage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
