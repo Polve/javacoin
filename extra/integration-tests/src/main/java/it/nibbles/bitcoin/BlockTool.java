@@ -65,7 +65,6 @@ public class BlockTool {
   private static final String STORAGE_BDB = "bdb";
   private static final String STORAGE_JDBC = "jdbc";
   private static final String STORAGE_MEMORY = "memory";
-  private static BlockChain chain;
   private static BlockChainLinkStorage storage;
   private static ScriptFactoryImpl scriptFactory;
   private static BitcoinFactory bitcoinFactory;
@@ -91,7 +90,6 @@ public class BlockTool {
           + "  --driver=<class>     Specifies the class name of the JDBC driver. Defaults to 'com.mysql.jdbc.Driver'\n"
           + "  --dbuser=<username>  Specify database username. Defaults to 'bitcoinj'\n"
           + "  --dbpass=<password>  Specify database password to use for the connection.\n";
-  private static int listenPort = -1;
   private static int firstBlock, lastBlock;
   private static String blockHash;
   private static String storageType = STORAGE_JDBC;
@@ -141,7 +139,7 @@ public class BlockTool {
       return;
     }
     if (options.hasArgument("port")) {
-      listenPort = ((Integer) options.valueOf("port")).intValue();
+      //listenPort = ((Integer) options.valueOf("port")).intValue();
     }
     cmdSaveBlockchain = options.has("save");
     cmdLoadBlockchain = options.has("load");
@@ -223,7 +221,7 @@ public class BlockTool {
       engine.init();
       storage = engine;
     }
-    chain = new BlockChainImpl(bitcoinFactory, storage, false);
+    //chain = new BlockChainImpl(bitcoinFactory, storage, false);
     // Introduce a small check here that we can read back the genesis block correctly
     storage.getGenesisLink().getBlock().validate();
     println("Storage initialized, last link height: " + storage.getLastLink().getHeight());
