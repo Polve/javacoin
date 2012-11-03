@@ -19,6 +19,7 @@ package hu.netmind.bitcoin.net.p2p.source;
 
 import hu.netmind.bitcoin.net.p2p.AddressSource;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
@@ -31,38 +32,44 @@ import org.slf4j.LoggerFactory;
  *
  * @author Robert Brautigam, Alessandro Polverini
  */
-public abstract class RandomizedNodesSource implements AddressSource
+public class NodeSource implements AddressSource
 {
 
    protected Logger logger = LoggerFactory.getLogger(this.getClass());
    protected int defaultPort = 8333;
-   private List<InetSocketAddress> addresses;
+   private List<InetSocketAddress> addresses = new ArrayList<>();
 
-   public RandomizedNodesSource()
-   {
-   }
-
-   public RandomizedNodesSource(int defaultPort)
+   public NodeSource(List<String> peers, int defaultPort)
    {
       this.defaultPort = defaultPort;
+      addPeers(peers, defaultPort);
    }
 
-   /**
-    * Implement this method to collect the initial list of addresses. This will
-    * be called only once when the source is initializing.
-    */
-   protected abstract List<InetSocketAddress> getInitialAddresses();
+   public NodeSource(List<String> peers)
+   {
+      addPeers(peers, defaultPort);
+   }
 
-   /**
-    * Implement address source method to always shuffle list before giving it
-    * back. The list returned is unmodifiable.
-    */
+   public final void addPeers(List<String> peers, int defaultPort)
+   {
+      for (String peer : peers)
+      {
+         String[] s = peer.split(":");
+         if (s.length > 2)
+         {
+            logger.info("Bad peer format: " + peer);
+            continue;
+         }
+         int port = defaultPort;
+         if (s.length == 2)
+            port = Integer.parseInt(s[1]);
+         addresses.add(new InetSocketAddress(s[0], port));
+      }
+   }
+
    @Override
    public List<InetSocketAddress> getAddresses()
    {
-      if (addresses == null)
-         addresses = getInitialAddresses();
-      Collections.shuffle(addresses);
       return Collections.unmodifiableList(addresses);
    }
 

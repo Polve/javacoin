@@ -36,9 +36,10 @@ public class FallbackNodesSource extends RandomizedNodesSource
 {
    private static final int DEFAULT_PORT = 8333;
 
+   @Override
    public List<InetSocketAddress> getInitialAddresses()
    {
-      List<InetSocketAddress> addresses = new LinkedList<InetSocketAddress>();
+      List<InetSocketAddress> addresses = new LinkedList<>();
       // Read addresses from properties file
       String addressesString = ResourceBundle.getBundle("fallback-nodes").getString("seed.addresses");
       StringTokenizer tokens = new StringTokenizer(addressesString,",");
