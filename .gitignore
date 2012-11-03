@@ -1,10 +1,11 @@
+/logs/
+/target/
 /core/net/target/
 /core/api/target/
 /core/block/target/
 /core/keyfactory-ecc/target/
 /core/script/target/
 /core/net-p2p/target/
-/target/
 /core/wallet/target/
 /extra/integration-tests/target/
 /extra/link-storage-testsuite/target/
@@ -13,3 +14,4 @@
 /core/script/target.old/
 /core/utils/target/
 /extra/satoshi-behavior/target/
+/extra/integration-tests/blocks-data/
