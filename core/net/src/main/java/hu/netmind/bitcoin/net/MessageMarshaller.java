@@ -80,12 +80,12 @@ public class MessageMarshaller
    }
 
    /**
-    * Deserialize a message using the specified BitCoin input
+    * Deserialize a message using the specified Bitcoin input
     * stream. The call will block until all the bytes for one
     * message arrives.
     * @param input The stream to read the message from.
     */
-   public Message read(BitCoinInputStream input)
+   public Message read(BitcoinInputStream input)
       throws IOException
    {
       // First read the header from the stream, repeat this step
@@ -146,12 +146,12 @@ public class MessageMarshaller
     * as much memory as the message itself.
     * @param output The output stream to write to.
     */
-   public void write(Message message, BitCoinOutputStream output)
+   public void write(Message message, BitcoinOutputStream output)
       throws IOException
    {
       // Serialize known values into a byte array stream
       ByteArrayOutputStream byteArrayOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream byteOutput = new BitCoinOutputStream(byteArrayOutput);
+      BitcoinOutputStream byteOutput = new BitcoinOutputStream(byteArrayOutput);
       message.writeTo(byteOutput,version);
       byteOutput.close();
       byte[] byteArray = byteArrayOutput.toByteArray();

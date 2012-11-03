@@ -18,25 +18,31 @@
 
 package hu.netmind.bitcoin.block;
 
-import it.nibbles.bitcoin.utils.BtcUtil;
-import hu.netmind.bitcoin.*;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Arrays;
-import java.math.BigInteger;
-import java.io.IOException;
-import java.io.ByteArrayOutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import hu.netmind.bitcoin.BitcoinException;
+import hu.netmind.bitcoin.ScriptException;
+import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.TransactionInput;
+import hu.netmind.bitcoin.TransactionOutput;
+import hu.netmind.bitcoin.VerificationException;
+import hu.netmind.bitcoin.net.ArraysUtil;
+import hu.netmind.bitcoin.net.BitcoinOutputStream;
+import hu.netmind.bitcoin.net.Tx;
 import hu.netmind.bitcoin.net.TxIn;
 import hu.netmind.bitcoin.net.TxOut;
-import hu.netmind.bitcoin.net.Tx;
-import hu.netmind.bitcoin.net.BitCoinOutputStream;
-import hu.netmind.bitcoin.net.ArraysUtil;
+import it.nibbles.bitcoin.utils.BtcUtil;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,26 +117,31 @@ public class TransactionImpl implements Transaction, Hashable
       }
    }
    
+   @Override
    public List<TransactionInput> getInputs()
    {
       return Collections.unmodifiableList((List<? extends TransactionInput>) inputs);
    }
 
+   @Override
    public List<TransactionOutput> getOutputs()
    {
       return Collections.unmodifiableList((List<? extends TransactionOutput>) outputs);
    }
 
+   @Override
    public long getLockTime()
    {
       return lockTime;
    }
 
+   @Override
    public byte[] getHash()
    {
       return hash;
    }
 
+   @Override
    public long getVersion()
    {
       return version;
@@ -142,12 +153,12 @@ public class TransactionImpl implements Transaction, Hashable
    public Tx createTx()
    {
       // Create txouts
-      List<TxOut> outs = new ArrayList<TxOut>();
+      List<TxOut> outs = new ArrayList<>();
       for ( TransactionOutput output : outputs )
          outs.add(new TxOut(output.getValue(),
                   (output.getScript()==null?new byte[] {}:output.getScript().toByteArray())));
       // Create txins
-      List<TxIn> ins = new ArrayList<TxIn>();
+      List<TxIn> ins = new ArrayList<>();
       for ( TransactionInput input : inputs )
          ins.add(new TxIn(input.getClaimedTransactionHash(),input.getClaimedOutputIndex(),
                   (input.getSignatureScript()==null?new byte[] {}:input.getSignatureScript().toByteArray()), 
@@ -161,7 +172,7 @@ public class TransactionImpl implements Transaction, Hashable
       throws BitcoinException
    {
       // First outs
-      List<TransactionOutputImpl> outs = new LinkedList<TransactionOutputImpl>();
+      List<TransactionOutputImpl> outs = new LinkedList<>();
       for ( TxOut txOut : tx.getOutputs() )
       {
          TransactionOutputImpl out = new TransactionOutputImpl(txOut.getValue(),
@@ -169,7 +180,7 @@ public class TransactionImpl implements Transaction, Hashable
          outs.add(out);
       }
       // Then ins
-      List<TransactionInputImpl> ins = new LinkedList<TransactionInputImpl>();
+      List<TransactionInputImpl> ins = new LinkedList<>();
       for ( TxIn txIn : tx.getInputs() )
       {
          TransactionInputImpl in = new TransactionInputImpl(txIn.getReferencedTxHash(),
@@ -193,7 +204,7 @@ public class TransactionImpl implements Transaction, Hashable
          Tx tx = createTx();
          // Now serialize this to byte array
          ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-         BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+         BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
          tx.writeTo(output);
          // Add postfix if it's there
          if ( postfix != null )
@@ -220,6 +231,7 @@ public class TransactionImpl implements Transaction, Hashable
    /**
     * Do internal validations.
     */
+   @Override
    public void validate()
       throws VerificationException
    {
@@ -242,7 +254,7 @@ public class TransactionImpl implements Transaction, Hashable
          Tx tx = createTx();
          // Now serialize this to byte array
          ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-         BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+         BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
          tx.writeTo(output);
          output.close();
          int totalSize = byteOutput.toByteArray().length;
@@ -308,7 +320,7 @@ public class TransactionImpl implements Transaction, Hashable
                throw new VerificationException("input for transaction ("+this+") has wrong reference to previous transaction");
       }
       // Additional check: All inputs refer to a different output
-      Set<String> usedOuts = new HashSet<String>();
+      Set<String> usedOuts = new HashSet<>();
       for ( TransactionInput in : getInputs() )
       {
          String referredOut = Arrays.toString(in.getClaimedTransactionHash())+"-"+
@@ -329,13 +341,16 @@ public class TransactionImpl implements Transaction, Hashable
       }
    }
 
+   @Override
    public boolean isCoinbase()
    {
-      return (inputs.size()==1) &&
-         (inputs.get(0).getClaimedOutputIndex()==-1) &&
-         (new BigInteger(1,inputs.get(0).getClaimedTransactionHash()).equals(BigInteger.ZERO));
+      return (inputs.size() == 1)
+         && (inputs.get(0).getClaimedOutputIndex() == -1)
+         && Arrays.equals(TransactionInput.ZERO_HASH, inputs.get(0).getClaimedTransactionHash());
+//         (new BigInteger(1,inputs.get(0).getClaimedTransactionHash()).equals(BigInteger.ZERO));
    }
 
+   @Override
    public String toString()
    {
       return "Transaction (hash: "+BtcUtil.hexOut(hash)+", locked: "+lockTime+") has ins: "+

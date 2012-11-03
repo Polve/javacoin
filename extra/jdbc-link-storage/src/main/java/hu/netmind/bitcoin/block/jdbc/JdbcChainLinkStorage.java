@@ -827,10 +827,15 @@ public class JdbcChainLinkStorage implements NodeStorage
          ps.setLong(1, txId);
          ResultSet rs = ps.executeQuery();
          while (rs.next())
+         {
+            byte[] referredTxHash = rs.getBytes("referredTxHash");
+            if (rs.wasNull())
+               referredTxHash = TransactionInput.ZERO_HASH;
             inputs.add(new TransactionInputImpl(
-                    rs.getBytes("referredTxHash"), rs.getInt("referredTxIndex"),
+                    referredTxHash, rs.getInt("referredTxIndex"),
                     bitcoinFactory.getScriptFactory().createFragment(rs.getBytes("scriptBytes")),
                     rs.getLong("sequence")));
+         }
       }
       return inputs;
    }

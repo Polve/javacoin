@@ -18,28 +18,26 @@
 
 package hu.netmind.bitcoin.net;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import java.util.Arrays;
-import java.io.IOException;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * @author Robert Brautigam
  */
 @Test
-public class BitCoinOutputStreamTests
+public class BitcoinOutputStreamTests
 {
-   private static final Logger logger = LoggerFactory.getLogger(BitCoinOutputStreamTests.class);
+   private static final Logger logger = LoggerFactory.getLogger(BitcoinOutputStreamTests.class);
 
    public void testWriteUMax()
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeU(0xff);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"FF");
    }
@@ -48,7 +46,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeUInt16(0xfdec);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"EC FD");
    }
@@ -57,7 +55,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeUInt16BE(0xfdec);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"FD EC");
    }
@@ -66,7 +64,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeUInt32(0xfdec1122);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"22 11 EC FD");
    }
@@ -75,7 +73,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeUInt32BE(0xfdec1122);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"FD EC 11 22");
    }
@@ -84,7 +82,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeUInt64(0xfdec112255667788l);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"88 77 66 55 22 11 EC FD");
    }
@@ -93,7 +91,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeUIntVar(0xec);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"EC");
    }
@@ -102,7 +100,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeUIntVar(0xec22);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"FD 22 EC");
    }
@@ -111,7 +109,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeUIntVar(0xec221100l);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"FE 00 11 22 EC");
    }
@@ -120,7 +118,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeUIntVar(0xec11223344556677l);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"FF 77 66 55 44 33 22 11 EC");
    }
@@ -129,7 +127,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeString("",8);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"00 00 00 00 00 00 00 00");
    }
@@ -138,7 +136,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeString("ABCD",8);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"41 42 43 44 00 00 00 00");
    }
@@ -147,7 +145,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeString("ABCDEFGH",8);
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"41 42 43 44 45 46 47 48");
    }
@@ -156,7 +154,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeString("");
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"00");
    }
@@ -165,7 +163,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeString("ABCD");
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"04 41 42 43 44");
    }
@@ -174,7 +172,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.write(new byte[] { (byte)0x04, (byte)0x10, (byte)0xFF });
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"04 10 FF");
    }
@@ -183,7 +181,7 @@ public class BitCoinOutputStreamTests
       throws IOException
    {
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+      BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
       output.writeReverse(new byte[] { (byte)0x04, (byte)0x10, (byte)0xFF });
       Assert.assertEquals(HexUtil.toHexString(byteOutput.toByteArray()),"FF 10 04");
    }

@@ -1,0 +1,1 @@
+./scripts/blocktool.sh --prodnet --hash 000000000000022568a30bbb665c12c8c6ea5ac0420c47ee86e303367de7d495 --save --url jdbc:mysql://localhost/javacoin_prodnet --outputfile 000000000000022568a30bbb665c12c8c6ea5ac0420c47ee86e303367de7d495.out

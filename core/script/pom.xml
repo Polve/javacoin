@@ -6,7 +6,7 @@
    <artifactId>bitcoin-script</artifactId>
    <packaging>jar</packaging>
    <version>1.0.0-SNAPSHOT</version>
-   <name>BitCoin Script Engine</name>
+   <name>Bitcoin Script Engine</name>
 
    <parent>
       <groupId>hu.netmind.bitcoin</groupId>

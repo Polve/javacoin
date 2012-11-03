@@ -62,13 +62,13 @@ public class AlertMessage extends Message
    }
 
    @Override
-   void readFrom(BitCoinInputStream input, long protocolVersion, Object param)
+   void readFrom(BitcoinInputStream input, long protocolVersion, Object param)
       throws IOException
    {
       super.readFrom(input, protocolVersion, param);
       byte[] alertPayload = input.readBytes();
       signature = input.readBytes();
-      BitCoinInputStream alertStream = new BitCoinInputStream(new ByteArrayInputStream(alertPayload));
+      BitcoinInputStream alertStream = new BitcoinInputStream(new ByteArrayInputStream(alertPayload));
       version = alertStream.readUInt32();
       relayUntil = alertStream.readUInt64();
       expiration = alertStream.readUInt64();
@@ -116,7 +116,7 @@ public class AlertMessage extends Message
    }
 
    @Override
-   void writeTo(BitCoinOutputStream output, long protocolVersion)
+   void writeTo(BitcoinOutputStream output, long protocolVersion)
       throws IOException
    {
       super.writeTo(output, protocolVersion);
@@ -132,7 +132,7 @@ public class AlertMessage extends Message
       try
       {
          ByteArrayOutputStream payload = new ByteArrayOutputStream();
-         BitCoinOutputStream payloadStream = new BitCoinOutputStream(payload);
+         BitcoinOutputStream payloadStream = new BitcoinOutputStream(payload);
          payloadStream.writeUInt32(version);
          payloadStream.writeUInt64(relayUntil);
          payloadStream.writeUInt64(expiration);

@@ -6,7 +6,7 @@
    <artifactId>bitcoin-utils</artifactId>
    <packaging>jar</packaging>
    <version>1.0.0-SNAPSHOT</version>
-   <name>BitCoin Utilities</name>
+   <name>Bitcoin Utilities</name>
 
    <parent>
       <groupId>hu.netmind.bitcoin</groupId>

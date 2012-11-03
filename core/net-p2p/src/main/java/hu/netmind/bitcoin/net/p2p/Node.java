@@ -17,8 +17,8 @@
  */
 package hu.netmind.bitcoin.net.p2p;
 
-import hu.netmind.bitcoin.net.BitCoinInputStream;
-import hu.netmind.bitcoin.net.BitCoinOutputStream;
+import hu.netmind.bitcoin.net.BitcoinInputStream;
+import hu.netmind.bitcoin.net.BitcoinOutputStream;
 import hu.netmind.bitcoin.net.Message;
 import hu.netmind.bitcoin.net.MessageMarshaller;
 import hu.netmind.bitcoin.net.VersionMessage;
@@ -279,7 +279,7 @@ public class Node
          serverSocket = new ServerSocket(port);
          serverSocket.setSoTimeout(soTimeout);
          // Start thread
-         thread = new Thread(this, "BitCoin Node Listener");
+         thread = new Thread(this, "Bitcoin Node Listener");
          thread.setDaemon(true);
          thread.start();
       }
@@ -373,8 +373,8 @@ public class Node
    {
 
       private Socket socket;
-      private BitCoinInputStream input;
-      private BitCoinOutputStream output;
+      private BitcoinInputStream input;
+      private BitcoinOutputStream output;
       private boolean running;
       private Thread workerThread;
       private MessageMarshaller marshaller = new MessageMarshaller(messageMagic);
@@ -385,8 +385,8 @@ public class Node
       private NodeWorker(Socket socket, boolean isOutgoing)
          throws IOException
       {
-         input = new BitCoinInputStream(new BufferedInputStream(socket.getInputStream()));
-         output = new BitCoinOutputStream(socket.getOutputStream());
+         input = new BitcoinInputStream(new BufferedInputStream(socket.getInputStream()));
+         output = new BitcoinOutputStream(socket.getOutputStream());
          this.socket = socket;
          this.running = true;
          connection = new NodeWorkerConnection(isOutgoing);
@@ -396,7 +396,7 @@ public class Node
       public void start()
       {
          // Start worker
-         workerThread = new Thread(this, "BitCoin Node Connection (" + getAddress() + ")");
+         workerThread = new Thread(this, "Bitcoin Node Connection (" + getAddress() + ")");
          workerThread.setDaemon(true);
          workerThread.start();
          // Invoke listeners

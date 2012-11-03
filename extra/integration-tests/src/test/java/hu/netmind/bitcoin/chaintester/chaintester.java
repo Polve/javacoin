@@ -17,41 +17,35 @@
  */
 package hu.netmind.bitcoin.chaintester;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import hu.netmind.bitcoin.net.p2p.source.DNSFallbackNodesSource;
-import hu.netmind.bitcoin.net.p2p.Node;
-import hu.netmind.bitcoin.net.p2p.MessageHandler;
-import hu.netmind.bitcoin.net.p2p.Connection;
-import hu.netmind.bitcoin.net.VersionMessage;
-import hu.netmind.bitcoin.net.VerackMessage;
-import hu.netmind.bitcoin.net.GetBlocksMessage;
-import hu.netmind.bitcoin.net.Message;
-import hu.netmind.bitcoin.net.NodeAddress;
+import hu.netmind.bitcoin.BitcoinException;
+import hu.netmind.bitcoin.BlockChain;
+import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.block.BitcoinFactory;
+import hu.netmind.bitcoin.block.BlockImpl;
+import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
+import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.net.BlockMessage;
 import hu.netmind.bitcoin.net.InvMessage;
 import hu.netmind.bitcoin.net.InventoryItem;
-import hu.netmind.bitcoin.net.GetDataMessage;
-import hu.netmind.bitcoin.BlockChain;
-import hu.netmind.bitcoin.BitcoinException;
-import hu.netmind.bitcoin.ScriptFactory;
-import hu.netmind.bitcoin.block.BitcoinFactory;
-import hu.netmind.bitcoin.block.BlockChainImpl;
-import hu.netmind.bitcoin.block.BlockImpl;
-import hu.netmind.bitcoin.block.BlockChainLink;
-import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
-import hu.netmind.bitcoin.script.ScriptFactoryImpl;
-import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
+import hu.netmind.bitcoin.net.Message;
 import hu.netmind.bitcoin.net.NetworkMessageFactory;
+import hu.netmind.bitcoin.net.VerackMessage;
+import hu.netmind.bitcoin.net.VersionMessage;
+import hu.netmind.bitcoin.net.p2p.Connection;
+import hu.netmind.bitcoin.net.p2p.MessageHandler;
+import hu.netmind.bitcoin.net.p2p.Node;
+import hu.netmind.bitcoin.net.p2p.source.DNSFallbackNodesSource;
+import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Arrays;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * This application downloads all th blocks available on the BitCoin network and
+ * This application downloads all th blocks available on the Bitcoin network and
  * adds them to the chain.
  *
  * @author Robert Brautigam
@@ -159,7 +153,7 @@ public class chaintester
 //         VersionMessage version = new VersionMessage(bitcoinFactory.getMessageMagic(),BC_PROTOCOL_VERSION,0,System.currentTimeMillis()/1000,
 //               new NodeAddress(1,(InetSocketAddress) conn.getRemoteAddress()),
 //               new NodeAddress(1,new InetSocketAddress(((InetSocketAddress)conn.getLocalAddress()).getAddress(),node.getPort())),
-//               123,"NetMind BitCoin/1.0.0-SNAPSHOT",storage.getLastLink().getHeight());
+//               123,"NetMind Bitcoin/1.0.0-SNAPSHOT",storage.getLastLink().getHeight());
 //         logger.debug("sending version information: "+version);
 //         conn.send(version);
     }

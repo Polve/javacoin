@@ -18,33 +18,37 @@
 
 package hu.netmind.bitcoin.block;
 
-import it.nibbles.bitcoin.utils.BtcUtil;
-import hu.netmind.bitcoin.*;
-import hu.netmind.bitcoin.keyfactory.ecc.BitcoinUtil;
-import hu.netmind.bitcoin.net.BlockHeader;
-import hu.netmind.bitcoin.net.Tx;
-import hu.netmind.bitcoin.net.BlockMessage;
-import hu.netmind.bitcoin.net.BitCoinOutputStream;
-import hu.netmind.bitcoin.net.HexUtil;
+import hu.netmind.bitcoin.BitcoinException;
+import hu.netmind.bitcoin.Block;
+import hu.netmind.bitcoin.ScriptFactory;
+import hu.netmind.bitcoin.Transaction;
+import hu.netmind.bitcoin.TransactionInput;
+import hu.netmind.bitcoin.VerificationException;
 import hu.netmind.bitcoin.net.ArraysUtil;
+import hu.netmind.bitcoin.net.BitcoinOutputStream;
+import hu.netmind.bitcoin.net.BlockHeader;
+import hu.netmind.bitcoin.net.BlockMessage;
+import hu.netmind.bitcoin.net.HexUtil;
+import hu.netmind.bitcoin.net.Tx;
+import it.nibbles.bitcoin.utils.BtcUtil;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.LinkedList;
 import java.util.Collections;
-import java.util.Set;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A Block is a container in which BitCoin transactions are grouped. Generating a
+ * A Block is a container in which Bitcoin transactions are grouped. Generating a
  * Block is a relatively hard computational task that is constantly adjusted so that
- * the whole BitCoin network is able to produce one Block approximately every 10  minutes.
+ * the whole Bitcoin network is able to produce one Block approximately every 10  minutes.
  * When a Miner succeeds in generating a Block it will include all the pending transactions
  * in the network into this Block thereby claiming transaction fees (and generating new coins
  * also). Transactions are considered valid if they are in a Block on a longest path, all other
@@ -131,7 +135,7 @@ public class BlockImpl implements Block, Hashable
          BlockHeader blockHeader = createBlockHeader();
          // Now serialize this to byte array
          ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-         BitCoinOutputStream output = new BitCoinOutputStream(byteOutput);
+         BitcoinOutputStream output = new BitcoinOutputStream(byteOutput);
          blockHeader.writeTo(output);
          output.close();
          byte[] blockHeaderBytes = byteOutput.toByteArray();

@@ -22,13 +22,12 @@ import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import hu.netmind.bitcoin.net.AlertMessage;
-import hu.netmind.bitcoin.net.BitCoinInputStream;
-import hu.netmind.bitcoin.net.BitCoinOutputStream;
+import hu.netmind.bitcoin.net.BitcoinInputStream;
+import hu.netmind.bitcoin.net.BitcoinOutputStream;
 import hu.netmind.bitcoin.net.Message;
 import hu.netmind.bitcoin.net.MessageMarshaller;
 import hu.netmind.bitcoin.net.NetworkMessageFactory;
 import hu.netmind.bitcoin.net.NodeAddress;
-import hu.netmind.bitcoin.net.PingMessage;
 import hu.netmind.bitcoin.net.VerackMessage;
 import hu.netmind.bitcoin.net.VersionMessage;
 import java.io.BufferedInputStream;
@@ -42,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import org.easymock.EasyMock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,9 +130,9 @@ public class NodeTests
    {
       Map<Thread,StackTraceElement[]> traces = Thread.getAllStackTraces();
       for ( Map.Entry<Thread,StackTraceElement[]> entry : traces.entrySet() )
-         if ( entry.getKey().getName().contains("BitCoin") )
+         if ( entry.getKey().getName().contains("Bitcoin") )
          {
-            logger.debug("found running BitCoin thread: "+entry.getKey().getName()+", stacktrace: "+Arrays.toString(entry.getValue()));
+            logger.debug("found running Bitcoin thread: "+entry.getKey().getName()+", stacktrace: "+Arrays.toString(entry.getValue()));
             return entry.getValue();
          }
       return null;
@@ -526,8 +524,8 @@ public class NodeTests
       private ServerSocket serverSocket;
       private Socket socket = null;
       private MessageMarshaller marshaller;
-      private BitCoinInputStream input;
-      private BitCoinOutputStream output;
+      private BitcoinInputStream input;
+      private BitcoinOutputStream output;
       private InetSocketAddress address;
 
       /**
@@ -540,8 +538,8 @@ public class NodeTests
          socket = new Socket();
          socket.setSoTimeout(1000);
          socket.connect(address,1000); // 0.5 seconds to connect
-         input = new BitCoinInputStream(new BufferedInputStream(socket.getInputStream()));
-         output = new BitCoinOutputStream(socket.getOutputStream());
+         input = new BitcoinInputStream(new BufferedInputStream(socket.getInputStream()));
+         output = new BitcoinOutputStream(socket.getOutputStream());
          marshaller = new MessageMarshaller(bitcoinFactory.getMessageMagic());
       }
 
@@ -597,8 +595,8 @@ public class NodeTests
          throws IOException
       {
          socket = serverSocket.accept();
-         input = new BitCoinInputStream(new BufferedInputStream(socket.getInputStream()));
-         output = new BitCoinOutputStream(socket.getOutputStream());
+         input = new BitcoinInputStream(new BufferedInputStream(socket.getInputStream()));
+         output = new BitcoinOutputStream(socket.getOutputStream());
       }
    }
 

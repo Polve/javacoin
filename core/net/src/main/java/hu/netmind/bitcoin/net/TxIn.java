@@ -44,7 +44,7 @@ public class TxIn
    {
    }
 
-   void readFrom(BitCoinInputStream input)
+   void readFrom(BitcoinInputStream input)
       throws IOException
    {
       referencedTxHash = input.readReverseBytes(32);
@@ -56,7 +56,7 @@ public class TxIn
       sequence = input.readUInt32();
    }
 
-   void writeTo(BitCoinOutputStream output)
+   void writeTo(BitcoinOutputStream output)
       throws IOException
    {
       output.writeReverse(referencedTxHash);

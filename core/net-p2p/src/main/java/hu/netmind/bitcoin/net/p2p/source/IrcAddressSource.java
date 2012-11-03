@@ -198,7 +198,7 @@ public class IrcAddressSource implements AddressSource
       ArrayList<InetSocketAddress> addresses = new ArrayList<>();
       for (String user : userNames)
       {
-         // All BitCoin peers start their nicknames with a 'u' character.
+         // All Bitcoin peers start their nicknames with a 'u' character.
          if (!user.startsWith("u"))
          {
             continue;
@@ -211,7 +211,7 @@ public class IrcAddressSource implements AddressSource
          try
          {
             // Strip off the "u" before decoding. Note that it's possible for anyone to join these IRC channels and
-            // so simply beginning with "u" does not imply this is a valid BitCoin encoded address.
+            // so simply beginning with "u" does not imply this is a valid Bitcoin encoded address.
             //
             // decodeChecked removes the checksum from the returned bytes.
             addressBytes = Base58.decodeChecked(user.substring(1));

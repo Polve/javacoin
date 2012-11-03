@@ -28,7 +28,7 @@ package hu.netmind.bitcoin;
 public interface Coin
 {
    /**
-    * Get the value of this coin in 100.000.000th of BitCoin.
+    * Get the value of this coin in 100.000.000th of Bitcoin.
     */
    long getValue();
 

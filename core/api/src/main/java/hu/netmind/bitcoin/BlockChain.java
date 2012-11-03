@@ -21,7 +21,7 @@ package hu.netmind.bitcoin;
 import java.util.List;
 
 /**
- * The main technical artifact in the BitCoin network is the shared
+ * The main technical artifact in the Bitcoin network is the shared
  * knowledge collected in every node called BlockChain. This chain
  * contains Blocks (which in turn contain transactions) starting from
  * the very first Block called the "Genesis Block". Every Block in the
@@ -32,7 +32,7 @@ import java.util.List;
  * must accept as the official chain. Although it's named "longest", it is
  * the chain that required the most work, not necessarily the longest by
  * number of blocks. <br><i>Note:</i> Implementations are responsible for
- * keeping the block chain consistent and following the rules of the BitCoin
+ * keeping the block chain consistent and following the rules of the Bitcoin
  * network.
  * @author Robert Brautigam
  */
@@ -104,7 +104,7 @@ public interface BlockChain extends Observable
 
    /**
     * Add a block to the chain. Block is first validated against
-    * BitCoin rules, then added if it passed all tests.
+    * Bitcoin rules, then added if it passed all tests.
     */
    void addBlock(Block block)
       throws VerificationException;

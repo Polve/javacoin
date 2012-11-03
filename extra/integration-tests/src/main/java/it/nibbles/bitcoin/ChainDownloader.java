@@ -28,7 +28,7 @@ import hu.netmind.bitcoin.block.jdbc.DatasourceUtils;
 import hu.netmind.bitcoin.block.jdbc.JdbcChainLinkStorage;
 import hu.netmind.bitcoin.block.jdbc.MysqlStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
-import hu.netmind.bitcoin.net.BitCoinInputStream;
+import hu.netmind.bitcoin.net.BitcoinInputStream;
 import hu.netmind.bitcoin.net.BlockMessage;
 import hu.netmind.bitcoin.net.MessageMarshaller;
 import hu.netmind.bitcoin.net.p2p.AddressSource;
@@ -47,7 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This application downloads all th blocks available on the BitCoin network and
+ * Download all the blocks available on the Bitcoin network and
  * adds them to the chain.
  *
  */
@@ -194,7 +194,7 @@ public class ChainDownloader
 
   public void testBlock41980OfTestnet2() throws BitcoinException
   {
-    BitCoinInputStream input = new BitCoinInputStream(new ByteArrayInputStream(BtcUtil.hexIn(
+    BitcoinInputStream input = new BitcoinInputStream(new ByteArrayInputStream(BtcUtil.hexIn(
        "FABFB5DA626C6F636B00000000000000550600008F8306AC0100000017467951795F6"
        + "230920B28555A78DBA1DF352BF74CA98CFC2A00250200000000F1889B2E7D20AF6515"
        + "E3880E2E63951814BD96ECB8389FE37342CC6B7045D796DBE0BD4E56D8031CB3287D2"

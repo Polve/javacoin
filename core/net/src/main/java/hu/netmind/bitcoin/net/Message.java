@@ -80,7 +80,7 @@ public class Message
     * deserialization process. Original intent is to allow for block pre-filtering,
     * so that client does not construct potentially large objects in memory.
     */
-   void readFrom(BitCoinInputStream input, long version, Object param)
+   void readFrom(BitcoinInputStream input, long version, Object param)
       throws IOException
    {
       magic = input.readUInt32BE();
@@ -88,7 +88,7 @@ public class Message
       length = input.readUInt32();
       checksum = input.readUInt32();
       // Now let's make sure we keep track of the real checksum
-      input.setListener(new BitCoinInputStream.Listener() {
+      input.setListener(new BitcoinInputStream.Listener() {
          @Override
                public void update(int value)
                {
@@ -107,7 +107,7 @@ public class Message
     * deserialization process. Original intent is to allow for block pre-filtering,
     * so that client does not construct potentially large objects in memory.
     */
-   void postReadFrom(BitCoinInputStream input, long version, Object param)
+   void postReadFrom(BitcoinInputStream input, long version, Object param)
    {
       // Calculate the checksum as sha256(sha256(content))
       input.clearListener();
@@ -147,13 +147,13 @@ public class Message
     * must write a placeholder, because the post processing may
     * change values but not add or remove.
     * All messages must override this method to serialize
-    * the contents of the message to the BitCoin protocol. Note,
+    * the contents of the message to the Bitcoin protocol. Note,
     * implementations must call the superclass' <code>preWriteTo()</code>
     * always <strong>first</strong>.
     * @param output The output stream to write to.
     * @param version The protocol version to use.
     */
-   void writeTo(BitCoinOutputStream output, long version)
+   void writeTo(BitcoinOutputStream output, long version)
       throws IOException
    {
       output.writeUInt32BE(magic);
@@ -179,7 +179,7 @@ public class Message
       //else
       //   length = serializedBytes.length - 20;
       // Overwrite previous 0 value of length
-      BitCoinOutputStream output = new BitCoinOutputStream(
+      BitcoinOutputStream output = new BitcoinOutputStream(
             new OverwriterByteArrayOutputStream(serializedBytes,16));
       output.writeUInt32(length);
       // Calculate checksum
@@ -189,7 +189,7 @@ public class Message
       digest.reset();
       byte[] result = digest.digest(tmp);
       // Overwrite previous 0 value with first 4 bytes of checksum
-      BitCoinOutputStream tmpOut = new BitCoinOutputStream(
+      BitcoinOutputStream tmpOut = new BitcoinOutputStream(
             new OverwriterByteArrayOutputStream(serializedBytes,20));
       tmpOut.writeU(result[0]&0xff);
       tmpOut.writeU(result[1]&0xff);
@@ -215,7 +215,7 @@ public class Message
     */
    public String toString()
    {
-      return "BitCoin command "+command+" ("+Long.toHexString(magic)+")";
+      return "Bitcoin command "+command+" ("+Long.toHexString(magic)+")";
    }
 
    protected static class OverwriterByteArrayOutputStream extends OutputStream

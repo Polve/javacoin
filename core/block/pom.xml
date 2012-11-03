@@ -6,7 +6,7 @@
    <artifactId>bitcoin-block</artifactId>
    <packaging>jar</packaging>
    <version>1.0.0-SNAPSHOT</version>
-   <name>BitCoin Block Implementation</name>
+   <name>Bitcoin Block Implementation</name>
 
    <parent>
       <groupId>hu.netmind.bitcoin</groupId>

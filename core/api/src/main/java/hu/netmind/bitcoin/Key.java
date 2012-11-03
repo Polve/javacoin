@@ -19,7 +19,7 @@
 package hu.netmind.bitcoin;
 
 /**
- * A key capable of being used in BitCoin transactions.
+ * A key capable of being used in Bitcoin transactions.
  * @author Robert Brautigam
  */
 public interface Key
