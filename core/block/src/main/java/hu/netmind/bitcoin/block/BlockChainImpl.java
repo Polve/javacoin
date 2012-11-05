@@ -36,6 +36,7 @@ import java.util.Observable;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
+import org.apache.commons.collections.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,8 @@ public class BlockChainImpl extends Observable implements BlockChain
    public static final long COINBASE_MATURITY = 100;
    public static final long INITIAL_COINBASE_VALUE = 5000000000l;
    public static final long COINBASE_VALUE_HALFTIME = 210000l;
+
+   private LRUMap blockHeadersCache = new LRUMap(100);
 
    private static final Map<BigInteger,Map<Long,BigInteger>> knownHashes =
       new HashMap<>();
@@ -131,11 +134,21 @@ public class BlockChainImpl extends Observable implements BlockChain
       return link.getBlock();
    }
 
+   /**
+    * Returns a block header. Sometimes it can have transactions but there is no guarantee
+    * It uses a little LRU cache to speedup things for getMedianTimestamp()
+    * @param hash
+    * @return The
+    */
    public Block getBlockHeader(byte[] hash)
    {
+      Block block = (Block) blockHeadersCache.get(new HashWrapper(hash));
+      if (block != null)
+         return block;
       BlockChainLink link = linkStorage.getLinkBlockHeader(hash);
-      if ( link == null )
+      if (link == null)
          return null;
+      blockHeadersCache.put(new HashWrapper(hash), link.getBlock());
       return link.getBlock();
    }
 
@@ -468,8 +481,12 @@ public class BlockChainImpl extends Observable implements BlockChain
     * Returns a block 
     * @return 
     */
-//   public Block createNewV2Block()
+//   public Block prepareNewBlock(int version)
 //   {
+//      if (version <1 || version > 2) {
+//         logger.error("Unsupported block version: "+version);
+//         return null;
+//      }
 //      ScriptFragment coinbaseScript = bitcoinFactory.getScriptFactory().
 //         createFragment(new byte[] { 0x00 });
 //      TransactionInput txIn = new TransactionInputImpl(TransactionInput.ZERO_HASH, -1, coinbaseScript, 0);

@@ -17,8 +17,8 @@
  */
 package hu.netmind.bitcoin.block.jdbc;
 
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import javax.sql.DataSource;
+import org.apache.tomcat.jdbc.pool.PoolProperties;
 
 /**
  *
@@ -27,16 +27,50 @@ import javax.sql.DataSource;
 public class DatasourceUtils
 {
 
-   public static DataSource getMysqlDatasource(String url, String user, String pw) throws ClassNotFoundException
+   public static DataSource getMysqlDatasource(String url, String user, String pw)
+           throws ClassNotFoundException
    {
-      Class.forName("com.mysql.jdbc.Driver");
-      MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
-      ds.setURL(url);
-      ds.setUser(user);
-      ds.setPassword(pw);
-      return ds;
+      PoolProperties p = new PoolProperties();
+      p.setDriverClassName("com.mysql.jdbc.Driver");
+      p.setUrl(url);
+      p.setUsername(user);
+      p.setPassword(pw);
+      p.setJmxEnabled(false);
+      p.setTestWhileIdle(false);
+      p.setTestOnBorrow(true);
+      p.setValidationQuery("SELECT 1");
+      p.setTestOnReturn(false);
+      p.setValidationInterval(30000);
+      p.setTimeBetweenEvictionRunsMillis(30000);
+      p.setMaxActive(100);
+      p.setInitialSize(6);
+      p.setMaxWait(10000);
+      p.setRemoveAbandonedTimeout(60);
+      p.setMinEvictableIdleTimeMillis(30000);
+      p.setMinIdle(10);
+      p.setLogAbandoned(true);
+      p.setRemoveAbandoned(true);
+      org.apache.tomcat.jdbc.pool.DataSource datasource = new org.apache.tomcat.jdbc.pool.DataSource(p);
+      return datasource;
+      /*
+       try
+       {
+       ComboPooledDataSource cpds = new ComboPooledDataSource();
+       cpds.setDriverClass("com.mysql.jdbc.Driver");
+       cpds.setJdbcUrl(url);
+       cpds.setUser(user);
+       cpds.setPassword(pw);
+       cpds.setMaxStatements(100);
+       cpds.setMinPoolSize(4);
+       cpds.setAcquireIncrement(2);
+       cpds.setMaxPoolSize(64);
+       return cpds;
+       } catch (PropertyVetoException ex)
+       {
+       return null;
+       }
+       */
    }
-
 //   public static DataSource getEmbeddedDerbyDatasource(String databaseName) throws ClassNotFoundException
 //   {
 //      Class.forName("org.apache.derby.jdbc.EmbeddedDriver");

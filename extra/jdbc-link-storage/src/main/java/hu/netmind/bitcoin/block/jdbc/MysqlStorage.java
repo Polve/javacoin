@@ -30,6 +30,7 @@ import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -54,11 +55,7 @@ public class MysqlStorage extends BaseChainLinkStorage
 {
 
    private static Logger logger = LoggerFactory.getLogger(MysqlStorage.class);
-   private static final boolean DEFAULT_AUTOCREATE = true;
-   private static final boolean DEFAULT_TRANSACTIONAL = true;
    private static final int DEFAULT_RESERVE_SIZE = 100;
-   private boolean autoCreate = DEFAULT_AUTOCREATE;
-   private boolean transactional = DEFAULT_TRANSACTIONAL;
    private int idReserveSize = DEFAULT_RESERVE_SIZE;
    private BitcoinFactory bitcoinFactory = null;
    private DataSource dataSource;
@@ -143,12 +140,6 @@ public class MysqlStorage extends BaseChainLinkStorage
    final private String sqlGetNodeAddresses =
            "SELECT * FROM Node ORDER BY discovered DESC";
 
-//   public JdbcChainLinkStorage(ScriptFactory scriptFactory, boolean isTestnet)
-//   {
-//      this.scriptFactory = scriptFactory;
-//      this.isTestnet = isTestnet;
-//      readConfiguration();
-//   }
    public MysqlStorage(BitcoinFactory bitcoinFactory)
    {
       this.bitcoinFactory = bitcoinFactory;
@@ -161,8 +152,8 @@ public class MysqlStorage extends BaseChainLinkStorage
       {
          final String prefix = "storage.jdbc.";
          ResourceBundle config = ResourceBundle.getBundle("jdbc-link-storage");
-         autoCreate = Boolean.valueOf(config.getString(prefix + "autocreate"));
-         transactional = Boolean.valueOf(config.getString(prefix + "transactional"));
+         setAutoCreate(Boolean.valueOf(config.getString(prefix + "autocreate")));
+         //setTransactional(Boolean.valueOf(config.getString(prefix + "transactional")));
          idReserveSize = Integer.parseInt(config.getString(prefix + "idReserveSize"));
       } catch (MissingResourceException e)
       {
@@ -188,10 +179,10 @@ public class MysqlStorage extends BaseChainLinkStorage
 
    private void commonInit()
    {
-      blockIdGen = new JdbcIdGenerator(dataSource);
-      transactionIdGen = new JdbcIdGenerator(dataSource);
-      txInputsIdGen = new JdbcIdGenerator(dataSource);
-      txOutputsIdGen = new JdbcIdGenerator(dataSource);
+      blockIdGen = new JdbcIdGenerator(dataSource, getTransactional());
+      transactionIdGen = new JdbcIdGenerator(dataSource, getTransactional());
+      txInputsIdGen = new JdbcIdGenerator(dataSource, getTransactional());
+      txOutputsIdGen = new JdbcIdGenerator(dataSource, getTransactional());
       blockIdGen.setIdName("Block").setIdReserveSize(idReserveSize);
       transactionIdGen.setIdName("Transaction").setIdReserveSize(idReserveSize);
       txInputsIdGen.setIdName("TxInput").setIdReserveSize(idReserveSize);
@@ -199,14 +190,14 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected Connection newSession()
+   protected Connection newConnection()
    {
       try
       {
          return dataSource.getConnection();
-      } catch (SQLException e)
+      } catch (SQLException ex)
       {
-         throw new JdbcStorageException("Unable to obtain a connection to database: " + e.getMessage(), e);
+         throw new LowLevelStorageException("Can't get a connection to database: " + ex.getMessage(), ex.getCause());
       }
    }
 
@@ -215,9 +206,9 @@ public class MysqlStorage extends BaseChainLinkStorage
     */
    public void removeDatabase()
    {
-      //orphanBlocks.clear();
-      try (Connection dbConnection = newSession(); Statement st = dbConnection.createStatement())
+      try (Connection dbConnection = newConnection(); Statement st = dbConnection.createStatement())
       {
+         dbConnection.setAutoCommit(true);
          String[] tables =
          {
             "TxOutput", "TxInput", "Transaction", "Counter", "BlockTx", "Block"
@@ -225,7 +216,7 @@ public class MysqlStorage extends BaseChainLinkStorage
 
          for (String table : tables)
             st.execute("TRUNCATE TABLE " + table);
-         logger.debug("Database tables truncated");
+         logger.info("Database tables truncated");
       } catch (SQLException e)
       {
          throw new JdbcStorageException("Error while truncating tables: " + e.getMessage(), e);
@@ -613,71 +604,14 @@ public class MysqlStorage extends BaseChainLinkStorage
       }
    }
 
-   /**
-    * Returns true if both blocks are in the same branch and b1 precedes b2
-    *
-    * @param source
-    * @param target
-    * @return
-    */
-//   protected boolean isReachable(final Connection dbConnection, SimplifiedStoredBlock target, SimplifiedStoredBlock source) throws SQLException
-//   {
-//      // Sanity checks
-//      if (source == null || target == null)
-//         return false;
-//
-//      // Handle special cases
-//      if (source.equals(target))
-//         return true;
-//
-//      // If at same height and not same block we are in different branches
-//      if (target.height == source.height)
-//         return false;
-//
-//      // We need source height lower than target height
-//      if (target.height < source.height)
-//      {
-//         SimplifiedStoredBlock tmp = source;
-//         source = target;
-//         target = tmp;
-//      }
-//
-//      long currHeight = source.height;
-//      List<SimplifiedStoredBlock> chains = new LinkedList<>();
-//      chains.add(source);
-//
-//      // Follow all the chains we discover from our starting point
-//      // until we are certain whether we are in the same chain of the target or not
-//      do
-//      {
-//         //logger.debug("isRechableLoop - currHeight: " + currHeight + " chains.size: " + chains.size());
-//         // Check if we are the only chain at this height
-//         // then we are in the same branch for sure because we know the target is connected
-//         if (chains.size() == 1)
-//            if (getNumBlocksAtHeight(dbConnection, currHeight) == 1)
-//               return true;
-//         List<SimplifiedStoredBlock> newChains = new LinkedList<>();
-//         for (SimplifiedStoredBlock block : chains)
-//            if (block.equals(target))
-//               return true;
-//            else
-//               newChains.addAll(getBlocksWithPrevHash(dbConnection, block.hash));
-//         chains = newChains;
-//         currHeight++;
-//      } while (!chains.isEmpty() && currHeight <= target.height);
-//
-//      // We reached the top of all our chain without finding the target
-//      // so we are in different branches
-//      return false;
-//   }
    public void purgeBlocksUpToHeight(long height, boolean purgeTransactions) throws SQLException
    {
       long startTime = System.currentTimeMillis();
-      Connection dbConnection = newSession();
+      Connection dbConnection = newConnection();
       int blocksDeleted = -1, txDeleted = -1;
       try
       {
-         if (transactional)
+         if (getTransactional())
             dbConnection.setAutoCommit(false);
          try (PreparedStatement ps = dbConnection.prepareStatement(sqlPurgeBlocksUpToHeight))
          {
@@ -689,19 +623,17 @@ public class MysqlStorage extends BaseChainLinkStorage
             {
                txDeleted = ps.executeUpdate();
             }
-         if (transactional)
+         if (getTransactional())
          {
             dbConnection.commit();
-            dbConnection.setAutoCommit(true);
          }
       } catch (SQLException e)
       {
          try
          {
-            if (transactional)
+            if (getTransactional())
             {
                dbConnection.rollback();
-               dbConnection.setAutoCommit(true);
             }
          } catch (SQLException ex)
          {
@@ -721,26 +653,6 @@ public class MysqlStorage extends BaseChainLinkStorage
          long stopTime = System.currentTimeMillis();
          logger.debug("exec time: " + (stopTime - startTime) + " ms blocksDeleted: " + blocksDeleted + " txDeleted: " + txDeleted);
       }
-   }
-
-   public boolean getAutoCreate()
-   {
-      return autoCreate;
-   }
-
-   public void setAutoCreate(boolean autoCreate)
-   {
-      this.autoCreate = autoCreate;
-   }
-
-   public boolean getTransactional()
-   {
-      return transactional;
-   }
-
-   public void setTransactional(boolean transactional)
-   {
-      this.transactional = transactional;
    }
 
    public DataSource getDataSource()

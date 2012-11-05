@@ -44,6 +44,10 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
 {
 
    private static Logger logger = LoggerFactory.getLogger(BaseChainLinkStorage.class);
+   private static final boolean DEFAULT_AUTOCREATE = true;
+   private static final boolean DEFAULT_TRANSACTIONAL = true;
+   private boolean autoCreate = DEFAULT_AUTOCREATE;
+   private boolean transactional = DEFAULT_TRANSACTIONAL;
    //
    // We keep cached the top of the chain for a little performance improvement
    private BlockChainLink topLink;
@@ -59,36 +63,51 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
          logger.error("Requested to persist orphan block");
          throw new JdbcStorageException("Requested to persist orphan block");
       }
-      Connection storageSession = newSession();
+      Connection connection = null;
       try
       {
+         connection = newConnection();
+         if (transactional)
+            connection.setAutoCommit(false);
          // TODO: Check that the block does not exists and it's linkable
-         long blockId = storeBlockHeader(storageSession, link);
+         long blockId = storeBlockHeader(connection, link);
 
          List<Transaction> transactions = link.getBlock().getTransactions();
          int pos = 0;
          for (Transaction tx : transactions)
          {
-            long txId = getTransactionId(storageSession, tx.getHash());
+            long txId = getTransactionId(connection, tx.getHash());
             if (txId == -1)
-               txId = storeTransaction(storageSession, tx);
-            storeBlkTxLink(storageSession, blockId, txId, pos++);
+               txId = storeTransaction(connection, tx);
+            storeBlkTxLink(connection, blockId, txId, pos++);
          }
 
          // Little optimization: keep track of top of the chain
          if (topLink == null || link.getTotalDifficulty().compareTo(topLink.getTotalDifficulty()) > 0)
             topLink = link;
 
+         if (transactional)
+            connection.commit();
       } catch (SQLException e)
       {
-         //storageSession.unclose();
+         try
+         {
+            if (connection != null && transactional)
+               connection.rollback();
+         } catch (SQLException ex)
+         {
+         }
          logger.error("AddLinkEx: " + e.getMessage(), e);
          throw new LowLevelStorageException("Error while storing link: " + e.getMessage(), e.getCause());
       } finally
       {
          try
          {
-            storageSession.close();
+            if (connection != null)
+            {
+               connection.setAutoCommit(true);
+               connection.close();
+            }
          } catch (SQLException e)
          {
             logger.error("AddLinkEx: " + e.getMessage(), e);
@@ -103,10 +122,10 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    public BlockChainLink getLink(final byte[] hash)
    {
 //      long startTime = System.currentTimeMillis();
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
          // logger.debug("getLink: " + HexUtil.toSingleHexString(hash));
-         return createBlockWithTxs(storageSession, hash, getBlockTransactions(storageSession, hash));
+         return createBlockWithTxs(connection, hash, getBlockTransactions(connection, hash));
       } catch (Exception e)
       {
          logger.error("getLinkEx: " + e.getMessage(), e);
@@ -121,9 +140,9 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    @Override
    public boolean blockExists(byte[] hash)
    {
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         return blockExists(storageSession, hash);
+         return blockExists(connection, hash);
       } catch (Exception e)
       {
          logger.error("blockExists ex: " + e.getMessage(), e);
@@ -134,9 +153,9 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    @Override
    public BlockChainLink getLinkBlockHeader(byte[] hash)
    {
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         return createBlockWithTxs(storageSession, hash, null);
+         return createBlockWithTxs(connection, hash, null);
       } catch (Exception e)
       {
          logger.error("getLinkBlockHeader Ex: " + e.getMessage(), e);
@@ -147,9 +166,9 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    @Override
    public BlockChainLink getGenesisLink()
    {
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(storageSession, BlockChainLink.ROOT_HEIGHT);
+         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(connection, BlockChainLink.ROOT_HEIGHT);
          if (blocks.isEmpty())
             return null;
          return getLink(blocks.get(0).hash);
@@ -164,9 +183,9 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    {
       if (topLink != null)
          return topLink;
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         SimplifiedStoredBlock b = getHigherWorkHash(storageSession);
+         SimplifiedStoredBlock b = getHigherWorkHash(connection);
          if (b == null)
             return null;
          else
@@ -182,13 +201,13 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    {
       if (topLink != null)
          return topLink.getHeight();
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         SimplifiedStoredBlock b = getHigherWorkHash(storageSession);
+         SimplifiedStoredBlock b = getHigherWorkHash(connection);
          if (b == null)
             return 0;
          else
-            return getHigherWorkHash(storageSession).height;
+            return getHigherWorkHash(connection).height;
       } catch (SQLException ex)
       {
          throw new JdbcStorageException("getGenesisLinkEx: " + ex.getMessage(), ex);
@@ -199,9 +218,9 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    public List<BlockChainLink> getNextLinks(final byte[] hash)
    {
       //long startTime = System.currentTimeMillis();
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         List<SimplifiedStoredBlock> blocks = getBlocksWithPrevHash(storageSession, hash);
+         List<SimplifiedStoredBlock> blocks = getBlocksWithPrevHash(connection, hash);
          List<BlockChainLink> storedLinks = new LinkedList<>();
          for (SimplifiedStoredBlock b : blocks)
             storedLinks.add(getLink(b.hash));
@@ -220,16 +239,16 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    @Override
    public BlockChainLink getNextLink(final byte[] current, final byte[] target)
    {
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         SimplifiedStoredBlock targetBlock = getSimplifiedStoredBlock(storageSession, target);
+         SimplifiedStoredBlock targetBlock = getSimplifiedStoredBlock(connection, target);
          if (targetBlock == null)
             return null;
-         SimplifiedStoredBlock currentBlock = getSimplifiedStoredBlock(storageSession, current);
+         SimplifiedStoredBlock currentBlock = getSimplifiedStoredBlock(connection, current);
          if (currentBlock == null || targetBlock.height < currentBlock.height)
             return null;
-         for (SimplifiedStoredBlock candidate : getBlocksWithPrevHash(storageSession, current))
-            if (isReachable(storageSession, targetBlock, candidate))
+         for (SimplifiedStoredBlock candidate : getBlocksWithPrevHash(connection, current))
+            if (isReachable(connection, targetBlock, candidate))
                return getLink(candidate.hash);
          return null;
       } catch (SQLException e)
@@ -243,15 +262,15 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    public boolean isReachable(final byte[] target, final byte[] source)
    {
       long startTime = System.currentTimeMillis();
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         SimplifiedStoredBlock targetBlock = getSimplifiedStoredBlock(storageSession, target);
+         SimplifiedStoredBlock targetBlock = getSimplifiedStoredBlock(connection, target);
          if (targetBlock == null)
             return false;
-         SimplifiedStoredBlock sourceBlock = getSimplifiedStoredBlock(storageSession, source);
+         SimplifiedStoredBlock sourceBlock = getSimplifiedStoredBlock(connection, source);
          if (sourceBlock == null)
             return false;
-         return isReachable(storageSession, targetBlock, sourceBlock);
+         return isReachable(connection, targetBlock, sourceBlock);
       } catch (SQLException e)
       {
          logger.error("isReacheble: " + e.getMessage(), e);
@@ -267,12 +286,12 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    public BlockChainLink getClaimedLink(final BlockChainLink link, final TransactionInput in)
    {
       long startTime = System.currentTimeMillis();
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         List<SimplifiedStoredBlock> potentialBlocks = getBlocksWithTx(storageSession, in.getClaimedTransactionHash());
+         List<SimplifiedStoredBlock> potentialBlocks = getBlocksWithTx(connection, in.getClaimedTransactionHash());
          SimplifiedStoredBlock linkBlock = new SimplifiedStoredBlock(link);
          for (SimplifiedStoredBlock b : potentialBlocks)
-            if (b.height <= link.getHeight() && isReachable(storageSession, linkBlock, b))
+            if (b.height <= link.getHeight() && isReachable(connection, linkBlock, b))
                return getLink(b.hash);
          return null;
       } catch (SQLException e)
@@ -290,16 +309,16 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    public BlockChainLink getPartialClaimedLink(final BlockChainLink link, final TransactionInput in)
    {
       long startTime = System.currentTimeMillis();
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         List<SimplifiedStoredBlock> potentialBlocks = getBlocksWithTx(storageSession, in.getClaimedTransactionHash());
+         List<SimplifiedStoredBlock> potentialBlocks = getBlocksWithTx(connection, in.getClaimedTransactionHash());
          SimplifiedStoredBlock linkBlock = new SimplifiedStoredBlock(link);
          for (SimplifiedStoredBlock b : potentialBlocks)
-            if (b.height <= link.getHeight() && isReachable(storageSession, linkBlock, b))
+            if (b.height <= link.getHeight() && isReachable(connection, linkBlock, b))
             {
                List<TransactionImpl> txs = new LinkedList<>();
-               txs.add(getTransaction(storageSession, in.getClaimedTransactionHash()));
-               return createBlockWithTxs(storageSession, b.hash, txs);
+               txs.add(getTransaction(connection, in.getClaimedTransactionHash()));
+               return createBlockWithTxs(connection, b.hash, txs);
             }
          return null;
       } catch (SQLException | BitcoinException e)
@@ -316,9 +335,9 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    @Override
    public BlockChainLink getClaimerLink(final BlockChainLink link, final TransactionInput in)
    {
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         byte[] hash = getClaimerHash(storageSession, link, in);
+         byte[] hash = getClaimerHash(connection, link, in);
          if (hash == null)
             return null;
          else
@@ -333,9 +352,9 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    @Override
    public boolean outputClaimedInSameBranch(final BlockChainLink link, final TransactionInput in)
    {
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         return getClaimerHash(storageSession, link, in) != null;
+         return getClaimerHash(connection, link, in) != null;
       } catch (SQLException e)
       {
          logger.error("outputClaimedInSameBranch: " + e.getMessage(), e);
@@ -348,10 +367,10 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    {
       long startTime = System.currentTimeMillis();
       //logger.debug("getCommonLink " + HexUtil.toSingleHexString(first) + " " + HexUtil.toSingleHexString(second));
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         SimplifiedStoredBlock block1 = getSimplifiedStoredBlock(storageSession, first);
-         SimplifiedStoredBlock block2 = getSimplifiedStoredBlock(storageSession, second);
+         SimplifiedStoredBlock block1 = getSimplifiedStoredBlock(connection, first);
+         SimplifiedStoredBlock block2 = getSimplifiedStoredBlock(connection, second);
          if (block1 == null || block2 == null)
             return null;
 
@@ -376,15 +395,15 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
 
             // If we have no side branches there is only one possibility to have a common link
             // and it is the lowest block between the two: block1
-            if (isReachable(storageSession, block2, block1))
+            if (isReachable(connection, block2, block1))
                return getLink(block1.hash);
-            else if (getNumBlocksAtHeight(storageSession, block1.height) == 1)
+            else if (getNumBlocksAtHeight(connection, block1.height) == 1)
                return null;
 
             // If the two blocks are not reachable find a lower branch intersection
             do
-               block1 = getSimplifiedStoredBlock(storageSession, block1.prevBlockHash);
-            while (getNumBlocksWithPrevHash(storageSession, block1.hash) == 1);
+               block1 = getSimplifiedStoredBlock(connection, block1.prevBlockHash);
+            while (getNumBlocksWithPrevHash(connection, block1.hash) == 1);
          }
 
       } catch (SQLException ex)
@@ -400,17 +419,17 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    @Override
    public BlockChainLink getLinkAtHeight(long height)
    {
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(storageSession, height);
+         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(connection, height);
          if (blocks.isEmpty())
             return null;
          if (blocks.size() == 1)
-            return createBlockWithTxs(storageSession, blocks.get(0).hash, getBlockTransactions(storageSession, blocks.get(0).hash));
+            return createBlockWithTxs(connection, blocks.get(0).hash, getBlockTransactions(connection, blocks.get(0).hash));
          SimplifiedStoredBlock topBlock = new SimplifiedStoredBlock(getLastLink());
          for (SimplifiedStoredBlock b : blocks)
-            if (isReachable(storageSession, b, topBlock))
-               return createBlockWithTxs(storageSession, b.hash, getBlockTransactions(storageSession, b.hash));
+            if (isReachable(connection, b, topBlock))
+               return createBlockWithTxs(connection, b.hash, getBlockTransactions(connection, b.hash));
 
          // We should never arrive here
          assert false;
@@ -425,16 +444,16 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    @Override
    public byte[] getHashOfMainChainAtHeight(long height)
    {
-      try (Connection storageSession = newSession())
+      try (Connection connection = newConnection())
       {
-         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(storageSession, height);
+         List<SimplifiedStoredBlock> blocks = getBlocksAtHeight(connection, height);
          if (blocks.isEmpty())
             return null;
          if (blocks.size() == 1)
             return blocks.get(0).hash;
          SimplifiedStoredBlock topBlock = new SimplifiedStoredBlock(getLastLink());
          for (SimplifiedStoredBlock b : blocks)
-            if (isReachable(storageSession, b, topBlock))
+            if (isReachable(connection, b, topBlock))
                return b.hash;
 
          // We should never arrive here
@@ -454,20 +473,20 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
     * a1d7c19f72ce5b24a1001bf9c5452babed6734eaa478642379f8c702a46d5e27 in block
     * 0000000013aa9f67da178005f9ced61c7064dd6e8464b35f6a8ca8fabc1ca2cf
     */
-   protected byte[] getClaimerHash(final Connection storageSession, final BlockChainLink link, final TransactionInput in)
+   protected byte[] getClaimerHash(final Connection connection, final BlockChainLink link, final TransactionInput in)
    {
       if (link == null || in == null)
          return null;
       try
       {
-         List<SimplifiedStoredBlock> potentialBlocks = getBlocksReferringTx(storageSession, in);
+         List<SimplifiedStoredBlock> potentialBlocks = getBlocksReferringTx(connection, in);
          Collections.sort(potentialBlocks);
          SimplifiedStoredBlock linkBlock = new SimplifiedStoredBlock(link);
          for (SimplifiedStoredBlock b : potentialBlocks)
-            if (b.height <= link.getHeight() && isReachable(storageSession, linkBlock, b))
+            if (b.height <= link.getHeight() && isReachable(connection, linkBlock, b))
             {
                // Check if a tx with same hash has been created after being reclaimed
-               List<SimplifiedStoredBlock> blocks = getBlocksWithTx(storageSession, in.getClaimedTransactionHash());
+               List<SimplifiedStoredBlock> blocks = getBlocksWithTx(connection, in.getClaimedTransactionHash());
                // We sort blocks on height to discard the ones below
                Collections.sort(blocks);
                for (SimplifiedStoredBlock block : blocks)
@@ -477,7 +496,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
                      break;
                   // If we find a block higher in the chain with the same transaction we have found a not spent tx with the same hash
                   // So we need to return null, indicating that no block is claiming it
-                  if (isReachable(storageSession, new SimplifiedStoredBlock(link), block))
+                  if (isReachable(connection, new SimplifiedStoredBlock(link), block))
                      return null;
                }
                return b.hash;
@@ -490,48 +509,6 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       }
    }
 
-   protected abstract Connection newSession();
-
-   protected abstract boolean blockExists(final Connection dbConnection, byte[] hash) throws SQLException;
-
-   protected abstract List<SimplifiedStoredBlock> getBlocksAtHeight(final Connection storageSession, long height) throws SQLException;
-
-   protected abstract List<SimplifiedStoredBlock> getBlocksReferringTx(final Connection storageSession, final TransactionInput in) throws SQLException;
-
-   protected abstract List<SimplifiedStoredBlock> getBlocksWithTx(final Connection storageSession, final byte[] hash) throws SQLException;
-
-   protected abstract List<SimplifiedStoredBlock> getBlocksWithPrevHash(final Connection storageSession, final byte[] hash) throws SQLException;
-
-   protected abstract int getNumBlocksAtHeight(final Connection storageSession, long height) throws SQLException;
-
-   protected abstract int getNumBlocksWithPrevHash(final Connection storageSession, byte[] hash) throws SQLException;
-
-   protected abstract long storeBlockHeader(final Connection storageSession, final BlockChainLink link) throws SQLException;
-
-   protected abstract long storeTransaction(final Connection storageSession, final Transaction tx);
-
-   protected abstract void storeBlkTxLink(final Connection storageSession, long blockId, long txId, int pos) throws SQLException;
-
-   protected abstract List<TransactionInputImpl> loadTxInputs(final Connection storageSession, long txId) throws SQLException;
-
-   protected abstract List<TransactionOutputImpl> loadTxOutputs(final Connection storageSession, long txId) throws SQLException;
-
-   protected abstract long getTransactionId(final Connection storageSession, byte[] hash) throws SQLException;
-
-   protected abstract TransactionImpl getTransaction(final Connection storageSession, byte[] hash) throws SQLException, BitcoinException;
-
-   protected abstract List<TransactionImpl> getBlockTransactions(final Connection storageSession, ResultSet rs) throws SQLException, BitcoinException;
-
-   protected abstract List<TransactionImpl> getBlockTransactions(final Connection storageSession, byte[] hash);
-
-   protected abstract List<TransactionImpl> getBlockTransactions(final Connection storageSession, long blockId);
-
-   protected abstract BlockChainLink createBlockWithTxs(final Connection storageSession, final byte[] hash, List<TransactionImpl> transactions);
-
-   protected abstract SimplifiedStoredBlock getSimplifiedStoredBlock(final Connection storageSession, final byte[] hash) throws SQLException;
-
-   protected abstract SimplifiedStoredBlock getHigherWorkHash(final Connection storageSession) throws SQLException;
-
    /**
     * Returns true if both blocks are in the same branch and b1 precedes b2
     *
@@ -539,7 +516,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
     * @param target
     * @return
     */
-   protected boolean isReachable(final Connection storageSession, SimplifiedStoredBlock target, SimplifiedStoredBlock source) throws SQLException
+   protected boolean isReachable(final Connection connection, SimplifiedStoredBlock target, SimplifiedStoredBlock source) throws SQLException
    {
       // Sanity checks
       if (source == null || target == null)
@@ -573,14 +550,14 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
          // Check if we are the only chain at this height
          // then we are in the same branch for sure because we know the target is connected
          if (chains.size() == 1)
-            if (getNumBlocksAtHeight(storageSession, currHeight) == 1)
+            if (getNumBlocksAtHeight(connection, currHeight) == 1)
                return true;
          List<SimplifiedStoredBlock> newChains = new LinkedList<>();
          for (SimplifiedStoredBlock block : chains)
             if (block.equals(target))
                return true;
             else
-               newChains.addAll(getBlocksWithPrevHash(storageSession, block.hash));
+               newChains.addAll(getBlocksWithPrevHash(connection, block.hash));
          chains = newChains;
          currHeight++;
       } while (!chains.isEmpty() && currHeight <= target.height);
@@ -588,5 +565,62 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       // We reached the top of all our chain without finding the target
       // so we are in different branches
       return false;
+   }
+
+   protected abstract Connection newConnection();
+
+   protected abstract boolean blockExists(final Connection dbConnection, byte[] hash) throws SQLException;
+
+   protected abstract List<SimplifiedStoredBlock> getBlocksAtHeight(final Connection connection, long height) throws SQLException;
+
+   protected abstract List<SimplifiedStoredBlock> getBlocksReferringTx(final Connection connection, final TransactionInput in) throws SQLException;
+
+   protected abstract List<SimplifiedStoredBlock> getBlocksWithTx(final Connection connection, final byte[] hash) throws SQLException;
+
+   protected abstract List<SimplifiedStoredBlock> getBlocksWithPrevHash(final Connection connection, final byte[] hash) throws SQLException;
+
+   protected abstract int getNumBlocksAtHeight(final Connection connection, long height) throws SQLException;
+
+   protected abstract int getNumBlocksWithPrevHash(final Connection connection, byte[] hash) throws SQLException;
+
+   protected abstract long storeBlockHeader(final Connection connection, final BlockChainLink link) throws SQLException;
+
+   protected abstract long storeTransaction(final Connection connection, final Transaction tx);
+
+   protected abstract void storeBlkTxLink(final Connection connection, long blockId, long txId, int pos) throws SQLException;
+
+   protected abstract List<TransactionInputImpl> loadTxInputs(final Connection connection, long txId) throws SQLException;
+
+   protected abstract List<TransactionOutputImpl> loadTxOutputs(final Connection connection, long txId) throws SQLException;
+
+   protected abstract long getTransactionId(final Connection connection, byte[] hash) throws SQLException;
+
+   protected abstract TransactionImpl getTransaction(final Connection connection, byte[] hash) throws SQLException, BitcoinException;
+
+   protected abstract List<TransactionImpl> getBlockTransactions(final Connection connection, ResultSet rs) throws SQLException, BitcoinException;
+
+   protected abstract List<TransactionImpl> getBlockTransactions(final Connection connection, byte[] hash);
+
+   protected abstract List<TransactionImpl> getBlockTransactions(final Connection connection, long blockId);
+
+   protected abstract BlockChainLink createBlockWithTxs(final Connection connection, final byte[] hash, List<TransactionImpl> transactions);
+
+   protected abstract SimplifiedStoredBlock getSimplifiedStoredBlock(final Connection connection, final byte[] hash) throws SQLException;
+
+   protected abstract SimplifiedStoredBlock getHigherWorkHash(final Connection connection) throws SQLException;
+
+   public boolean getTransactional()
+   {
+      return transactional;
+   }
+
+   public boolean getAutoCreate()
+   {
+      return autoCreate;
+   }
+
+   public void setAutoCreate(boolean autoCreate)
+   {
+      this.autoCreate = autoCreate;
    }
 }

@@ -60,14 +60,13 @@ import joptsimple.OptionSpec;
  */
 public class BlockTool {
 
-  //private static Logger logger = LoggerFactory.getLogger(BlockTool.class);
-  private static final long BC_PROTOCOL_VERSION = 32100;
   private static final String STORAGE_BDB = "bdb";
   private static final String STORAGE_JDBC = "jdbc";
   private static final String STORAGE_MEMORY = "memory";
   private static BlockChainLinkStorage storage;
   private static ScriptFactoryImpl scriptFactory;
   private static BitcoinFactory bitcoinFactory;
+  private static BlockChain blockChain;
   private static final String HELP_TEXT =
           "BlockTool: Dump local BlockChain blocks for testint purposes\n\n"
           + "Usage:\n"
@@ -125,6 +124,9 @@ public class BlockTool {
     optJdbcPassword = parser.accepts("dbpass").withRequiredArg().defaultsTo("pw");
     inputfile = parser.accepts("inputfile").withRequiredArg();
     outputfile = parser.accepts("outputfile").withRequiredArg();
+//    String[] args = {
+//      "--inputfile", "blocks-0-100000.txt", "--prodnet", "--load", "--url", "jdbc:mysql://localhost/javacoin_test"
+//    };
     OptionSet options = parser.parse(args);
     if (args.length == 0
             || options.hasArgument("help")
@@ -169,16 +171,19 @@ public class BlockTool {
 
     app.init(options);
     if (cmdLoadBlockchain) {
+      //System.out.println("Press return to start import blocks to blockchain");
+      //System.in.read();
       BufferedReader reader;
       if ("-".equals(inputfile.value(options)))
         reader = new BufferedReader(new InputStreamReader(System.in));
       else
         reader = new BufferedReader(new FileReader(inputfile.value(options)));
       int numBlocks = 0;
-      Block block = app.readBlock(reader);
+      Block block = app.readBlock(reader, false);
       while (block != null) {
         numBlocks++;
-        block = app.readBlock(reader);
+        blockChain.addBlock(block);
+        block = app.readBlock(reader, false);
       }
       System.out.println("Numero blocchi letti: " + numBlocks);
     } else if (cmdSaveBlockchain) {
@@ -214,17 +219,14 @@ public class BlockTool {
 //         engine.setDbPath(optBdbPath.value(options));
 //         storage = engine;
     } else if (STORAGE_JDBC.equalsIgnoreCase(storageType)) {
-      //JdbcChainLinkStorage engine = new JdbcChainLinkStorage(bitcoinFactory);
       MysqlStorage engine = new MysqlStorage(bitcoinFactory);
       engine.setDataSource(DatasourceUtils.getMysqlDatasource(
               optJdbcUrl.value(options), optJdbcUser.value(options), optJdbcPassword.value(options)));
       engine.init();
       storage = engine;
     }
-    //chain = new BlockChainImpl(bitcoinFactory, storage, false);
-    // Introduce a small check here that we can read back the genesis block correctly
-    storage.getGenesisLink().getBlock().validate();
-    println("Storage initialized, last link height: " + storage.getLastLink().getHeight());
+    blockChain = new BlockChainImpl(bitcoinFactory, storage, false);
+    println("Storage initialized, last link height: " + (storage.getLastLink() == null ? 0 : storage.getLastLink().getHeight()));
   }
 
   /**
@@ -257,7 +259,7 @@ public class BlockTool {
     println("Lettura da " + fileName + " hash: " + hash + " txs: " + txs);
   }
 
-  public Block readBlock(BufferedReader reader) throws IOException, BitcoinException {
+  public Block readBlock(BufferedReader reader, boolean doHashCheck) throws IOException, BitcoinException {
     String line = reader.readLine();
     if (line == null) {
       System.out.println("Fine blocchi in input");
@@ -275,20 +277,24 @@ public class BlockTool {
       int numTransactions = Integer.parseInt(tokens[8]);
       List<TransactionImpl> txs = new ArrayList<>(numTransactions);
       for (int i = 0; i < numTransactions; i++) {
-        txs.add(readTransaction(reader));
-      }
-      Block block = new BlockImpl(txs, creationTime, nonce, compressedTarget, previousHash, merkleRoot, null, version);
-      if (!Arrays.equals(hash, block.getHash())) {
-        System.out.println("Block hash non corrispondente: " + BtcUtil.hexOut(hash) + " vs " + BtcUtil.hexOut(block.getHash()));
-        return null;
+        txs.add(readTransaction(reader, doHashCheck));
       }
       System.out.println("Blocco " + BtcUtil.hexOut(hash) + " nonce: " + nonce + " numTransazioni: " + numTransactions);
-      return block;
+      if (doHashCheck) {
+        Block block = new BlockImpl(txs, creationTime, nonce, compressedTarget, previousHash, merkleRoot, null, version);
+        if (!Arrays.equals(hash, block.getHash())) {
+          System.out.println("Block hash non corrispondente: " + BtcUtil.hexOut(hash) + " vs " + BtcUtil.hexOut(block.getHash()));
+          return null;
+        }
+        return block;
+      } else {
+        return new BlockImpl(txs, creationTime, nonce, compressedTarget, previousHash, merkleRoot, hash, version);
+      }
     } else
       return null;
   }
 
-  public TransactionImpl readTransaction(BufferedReader reader) throws IOException, BitcoinException {
+  public TransactionImpl readTransaction(BufferedReader reader, boolean doHashCheck) throws IOException, BitcoinException {
     String line = reader.readLine();
     if (line == null || !line.startsWith(" tx ")) {
       System.out.println("Error: expecting TX and got: " + line);
@@ -326,12 +332,16 @@ public class BlockTool {
       byte[] script = BtcUtil.hexIn(tk[1]);
       outputs.add(new TransactionOutputImpl(value, bitcoinFactory.getScriptFactory().createFragment(script)));
     }
-    TransactionImpl tx = new TransactionImpl(inputs, outputs, lockTime, version);
-    if (!Arrays.equals(hash, tx.getHash())) {
-      System.out.println("TX hash non corrispondente: " + BtcUtil.hexOut(hash) + " vs " + BtcUtil.hexOut(tx.getHash()));
-      return null;
+    if (doHashCheck) {
+      TransactionImpl tx = new TransactionImpl(inputs, outputs, lockTime, version);
+      if (!Arrays.equals(hash, tx.getHash())) {
+        System.out.println("TX hash non corrispondente: " + BtcUtil.hexOut(hash) + " vs " + BtcUtil.hexOut(tx.getHash()));
+        return null;
+      }
+      return tx;
+    } else {
+      return new TransactionImpl(inputs, outputs, lockTime, hash, version);
     }
-    return tx;
   }
 
   public void writeBlock(PrintWriter writer, Block block) throws IOException {

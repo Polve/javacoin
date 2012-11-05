@@ -20,6 +20,9 @@ import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.StorageProvider;
 import hu.netmind.bitcoin.block.TestSuiteFactory;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.sql.DataSource;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -34,16 +37,24 @@ public class StorageITTests
    {
       return new StorageProvider<MysqlStorage>()
       {
+         private final static String jdbcUrl = "jdbc:mysql://localhost/javacoin_test";
+         private final static String jdbcUser = "javacoin";
+         private final static String jdbcPw = "pw";
+         private DataSource datasource;
 
-         protected MysqlStorage getStorageInstance()
+         protected MysqlStorage newStorageInstance()
          {
             try
             {
-            MysqlStorage storage = new MysqlStorage(new ProdnetBitcoinFactory(new ScriptFactoryImpl(null)));
-               storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_test", "javacoin", "pw"));
-            return storage;
-            } catch (BitcoinException ex) {
-               throw new RuntimeException("Can't instance JDBC storage: "+ex.getMessage(), ex);
+               if (datasource == null)
+                  datasource = DatasourceUtils.getMysqlDatasource(jdbcUrl, jdbcUser, jdbcPw);
+               MysqlStorage myStorage = new MysqlStorage(new ProdnetBitcoinFactory(new ScriptFactoryImpl(null)));
+               myStorage.setDataSource(datasource);
+               myStorage.init();
+               return myStorage;
+            } catch (BitcoinException ex)
+            {
+               throw new RuntimeException("Can't instance JDBC storage: " + ex.getMessage(), ex);
             } catch (ClassNotFoundException ex)
             {
                throw new RuntimeException("Mysql Driver class not found", ex);
@@ -53,21 +64,21 @@ public class StorageITTests
          @Override
          public MysqlStorage newStorage()
          {
-            MysqlStorage storage = getStorageInstance();
-            storage.init();
-            return storage;
+            return newStorageInstance();
          }
 
          @Override
          public void closeStorage(MysqlStorage storage)
          {
+            // TODO... ?
          }
 
          @Override
          public void cleanStorage()
          {
-            MysqlStorage storage = getStorageInstance();
-            storage.removeDatabase();
+            MysqlStorage myStorage = newStorageInstance();
+            myStorage.removeDatabase();
+            closeStorage(myStorage);
          }
       };
    }
