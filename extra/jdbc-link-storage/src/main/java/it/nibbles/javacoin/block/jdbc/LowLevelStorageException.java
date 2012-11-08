@@ -14,19 +14,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.block.jdbc;
+package it.nibbles.javacoin.block.jdbc;
 
 /**
  * @author Alessandro Polverini
  */
-public class JdbcStorageException extends RuntimeException
+public class LowLevelStorageException extends RuntimeException
 {
-   public JdbcStorageException(String msg)
+   public LowLevelStorageException(String msg)
    {
       super(msg);
    }
 
-   public JdbcStorageException(String msg, Throwable t)
+   public LowLevelStorageException(String msg, Throwable t)
    {
       super(msg,t);
    }

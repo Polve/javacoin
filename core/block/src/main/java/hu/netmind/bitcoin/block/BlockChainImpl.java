@@ -103,7 +103,6 @@ public class BlockChainImpl extends Observable implements BlockChain
       {
          BlockChainLink genesisLink = new BlockChainLink(
             bitcoinFactory.getGenesisBlock(), bitcoinFactory.getGenesisDifficulty(),
-//            new Difficulty(new DifficultyTarget(bitcoinFactory.getGenesisBlock().getCompressedTarget()),isTestnet),
             BlockChainLink.ROOT_HEIGHT,false);
          linkStorage.addLink(genesisLink);
       } else {

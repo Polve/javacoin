@@ -29,11 +29,6 @@
       <type>jar</type>
     </dependency>
     <dependency>
-      <groupId>com.sleepycat</groupId>
-      <artifactId>je</artifactId>
-      <version>5.0.58</version>
-    </dependency>
-    <dependency>
       <groupId>hu.netmind.bitcoin</groupId>
       <artifactId>bitcoin-script</artifactId>
       <version>1.0.0-SNAPSHOT</version>
@@ -46,6 +41,11 @@
       <version>1.0.0-SNAPSHOT</version>
       <type>jar</type>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sleepycat</groupId>
+      <artifactId>je</artifactId>
+      <version>5.0.58</version>
     </dependency>
   </dependencies>
 

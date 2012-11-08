@@ -1,4 +1,4 @@
-package hu.netmind.bitcoin.block.jdbc;
+package it.nibbles.javacoin.block.jdbc;
 
 import java.io.Closeable;
 

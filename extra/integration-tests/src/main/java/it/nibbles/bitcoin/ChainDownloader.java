@@ -29,9 +29,9 @@ import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
-import hu.netmind.bitcoin.block.jdbc.DatasourceUtils;
-import hu.netmind.bitcoin.block.jdbc.JdbcChainLinkStorage;
-import hu.netmind.bitcoin.block.jdbc.MysqlStorage;
+import it.nibbles.javacoin.block.jdbc.DatasourceUtils;
+import it.nibbles.javacoin.block.jdbc.JdbcChainLinkStorage;
+import it.nibbles.javacoin.block.jdbc.MysqlStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.net.BitcoinInputStream;
 import hu.netmind.bitcoin.net.BlockMessage;
@@ -117,9 +117,9 @@ public class ChainDownloader {
     }
 
     ChainDownloader app = new ChainDownloader();
+    logger.debug("init...");
+    app.init();
     try {
-      logger.debug("init...");
-      app.init();
       logger.debug("run...");
       app.run();
     } catch (RuntimeException e) {
@@ -173,18 +173,19 @@ public class ChainDownloader {
     MysqlStorage storage = new MysqlStorage(bitcoinFactory);
     storage.setDataSource(DatasourceUtils.getMysqlDatasource(jdbcUrl, jdbcUser, jdbcPassword));
     /*
-    storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
-            + (isTestnet2 ? "testnet2" : isTestnet3 ? "testnet3" : "prodnet"), "javacoin", "pw"));
-            */
+     storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
+     + (isTestnet2 ? "testnet2" : isTestnet3 ? "testnet3" : "prodnet"), "javacoin", "pw"));
+     */
     storage.init();
+    logger.debug("block storage initialized");
     JdbcChainLinkStorage nodeStorage = new JdbcChainLinkStorage();
     nodeStorage.setDataSource(DatasourceUtils.getMysqlDatasource(jdbcUrl, jdbcUser, jdbcPassword));
     /*
-    nodeStorage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
-            + (isTestnet2 ? "testnet2" : isTestnet3 ? "testnet3" : "prodnet"), "javacoin", "pw"));
-    */
+     nodeStorage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
+     + (isTestnet2 ? "testnet2" : isTestnet3 ? "testnet3" : "prodnet"), "javacoin", "pw"));
+     */
     nodeStorage.init();
-    logger.debug("block and node storage initialized");
+    logger.debug("node storage initialized");
     BlockChain chain = new BlockChainImpl(bitcoinFactory, storage, false);
     logger.debug("blockchain initialized");
     // Introduce a small check here that we can read back the genesis block correctly
@@ -222,6 +223,7 @@ public class ChainDownloader {
     //node.addHandler(new DownloaderHandler());
     logger.debug(defaultAddressSource.toString());
     nodeHandler = new StdNodeHandler(node, bitcoinFactory, chain, storage, nodeStorage);
+    logger.info("Node handler: " + nodeHandler);
   }
 
   public void testBlock41980OfTestnet2() throws BitcoinException {

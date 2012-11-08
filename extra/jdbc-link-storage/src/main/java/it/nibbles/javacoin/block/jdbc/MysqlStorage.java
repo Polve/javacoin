@@ -15,29 +15,29 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package hu.netmind.bitcoin.block.jdbc;
+package it.nibbles.javacoin.block.jdbc;
 
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
+import hu.netmind.bitcoin.block.BaseChainLinkStorage;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockImpl;
+import hu.netmind.bitcoin.block.SimplifiedStoredBlock;
 import hu.netmind.bitcoin.block.TransactionImpl;
 import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -179,10 +179,10 @@ public class MysqlStorage extends BaseChainLinkStorage
 
    private void commonInit()
    {
-      blockIdGen = new JdbcIdGenerator(dataSource, getTransactional());
-      transactionIdGen = new JdbcIdGenerator(dataSource, getTransactional());
-      txInputsIdGen = new JdbcIdGenerator(dataSource, getTransactional());
-      txOutputsIdGen = new JdbcIdGenerator(dataSource, getTransactional());
+      blockIdGen = new JdbcIdGenerator(dataSource);
+      transactionIdGen = new JdbcIdGenerator(dataSource);
+      txInputsIdGen = new JdbcIdGenerator(dataSource);
+      txOutputsIdGen = new JdbcIdGenerator(dataSource);
       blockIdGen.setIdName("Block").setIdReserveSize(idReserveSize);
       transactionIdGen.setIdName("Transaction").setIdReserveSize(idReserveSize);
       txInputsIdGen.setIdName("TxInput").setIdReserveSize(idReserveSize);
@@ -231,50 +231,6 @@ public class MysqlStorage extends BaseChainLinkStorage
          ps.setBytes(1, hash);
          ResultSet rs = ps.executeQuery();
          return rs.next();
-      }
-   }
-
-   /*
-    * This check is complicated by BIP30, that a new tx can exist with same hash
-    * if the other one fully spent We sort blocks on height because we need to
-    * check only the last one in the given chain The problem arise from TX
-    * a1d7c19f72ce5b24a1001bf9c5452babed6734eaa478642379f8c702a46d5e27 in block
-    * 0000000013aa9f67da178005f9ced61c7064dd6e8464b35f6a8ca8fabc1ca2cf
-    */
-   @Override
-   protected byte[] getClaimerHash(final Connection dbConnection, final BlockChainLink link, final TransactionInput in)
-   {
-      if (link == null || in == null)
-         return null;
-      try
-      {
-         List<SimplifiedStoredBlock> potentialBlocks = getBlocksReferringTx(dbConnection, in);
-         Collections.sort(potentialBlocks);
-         SimplifiedStoredBlock linkBlock = new SimplifiedStoredBlock(link);
-         for (SimplifiedStoredBlock b : potentialBlocks)
-            if (b.height <= link.getHeight() && isReachable(dbConnection, linkBlock, b))
-            {
-               // Check if a tx with same hash has been created after being reclaimed
-               List<SimplifiedStoredBlock> blocks = getBlocksWithTx(dbConnection, in.getClaimedTransactionHash());
-               // We sort blocks on height to discard the ones below
-               Collections.sort(blocks);
-               for (SimplifiedStoredBlock block : blocks)
-               {
-                  // No potential good blocks left
-                  if (block.height < b.height)
-                     break;
-                  // If we find a block higher in the chain with the same transaction we have found a not spent tx with the same hash
-                  // So we need to return null, indicating that no block is claiming it
-                  if (isReachable(dbConnection, new SimplifiedStoredBlock(link), block))
-                     return null;
-               }
-               return b.hash;
-            }
-         return null;
-      } catch (SQLException e)
-      {
-         logger.error("getClaimerHash: " + e.getMessage(), e);
-         throw new JdbcStorageException("getClaimerHash: " + e.getMessage(), e);
       }
    }
 

@@ -1,4 +1,4 @@
-package hu.netmind.bitcoin.block.jdbc;
+package it.nibbles.javacoin.block.jdbc;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -19,11 +19,9 @@ public class JdbcIdGenerator
    private String idName;
    private String jdbcUrl, dbUser, dbPassword;
    private DataSource dataSource;
-   private boolean transactional;
 
-   public JdbcIdGenerator(String driverClassName, String url, String user, String pw, boolean transactional)
+   public JdbcIdGenerator(String driverClassName, String url, String user, String pw)
    {
-      this.transactional = transactional;
       this.jdbcUrl = url;
       this.dbUser = user;
       this.dbPassword = pw;
@@ -36,10 +34,9 @@ public class JdbcIdGenerator
       }
    }
 
-   public JdbcIdGenerator(DataSource dataSource, boolean transactional)
+   public JdbcIdGenerator(DataSource dataSource)
    {
       this.dataSource = dataSource;
-      this.transactional = transactional;
    }
 
    public JdbcIdGenerator setIdReserveSize(int idReserveSize)
@@ -83,8 +80,7 @@ public class JdbcIdGenerator
          try
          {
             con = getConnection();
-            if (transactional)
-               con.setAutoCommit(false);
+            con.setAutoCommit(false);
             psGetId = con.prepareStatement("SELECT value FROM Counter WHERE name = ?");
             psGetId.setString(1, idName);
             rs = psGetId.executeQuery();
@@ -102,8 +98,7 @@ public class JdbcIdGenerator
                psInsertId.setLong(2, idReserveSize);
                psInsertId.executeUpdate();
             }
-            if (transactional)
-               con.commit();
+            con.commit();
             idPoolSizeLeft = idReserveSize - 1;
             return (currentId = lastId + 1);
          } catch (SQLException e)

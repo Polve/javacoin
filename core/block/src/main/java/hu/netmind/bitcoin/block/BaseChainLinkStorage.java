@@ -15,16 +15,11 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package hu.netmind.bitcoin.block.jdbc;
+package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.block.BlockChainLink;
-import hu.netmind.bitcoin.block.BlockChainLinkStorage;
-import hu.netmind.bitcoin.block.TransactionImpl;
-import hu.netmind.bitcoin.block.TransactionInputImpl;
-import hu.netmind.bitcoin.block.TransactionOutputImpl;
 import hu.netmind.bitcoin.net.HexUtil;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -61,7 +56,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       if (link.isOrphan())
       {
          logger.error("Requested to persist orphan block");
-         throw new JdbcStorageException("Requested to persist orphan block");
+         throw new StorageException("Requested to persist orphan block");
       }
       Connection connection = null;
       try
@@ -98,7 +93,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
          {
          }
          logger.error("AddLinkEx: " + e.getMessage(), e);
-         throw new LowLevelStorageException("Error while storing link: " + e.getMessage(), e.getCause());
+         throw new StorageException("Error while storing link: " + e.getMessage(), e.getCause());
       } finally
       {
          try
@@ -111,7 +106,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
          } catch (SQLException e)
          {
             logger.error("AddLinkEx: " + e.getMessage(), e);
-            throw new JdbcStorageException("Error while closing connection: " + e.getMessage(), e);
+            throw new StorageException("Error while closing connection: " + e.getMessage(), e);
          }
          long stopTime = System.currentTimeMillis();
          logger.debug("exec time: " + (stopTime - startTime) + " ms height: " + link.getHeight() + " total difficulty: " + link.getTotalDifficulty());
@@ -129,7 +124,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (Exception e)
       {
          logger.error("getLinkEx: " + e.getMessage(), e);
-         throw new JdbcStorageException("getLinkEx: " + e.getMessage(), e);
+         throw new StorageException("getLinkEx: " + e.getMessage(), e);
       } finally
       {
 //         long stopTime = System.currentTimeMillis();
@@ -146,7 +141,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (Exception e)
       {
          logger.error("blockExists ex: " + e.getMessage(), e);
-         throw new JdbcStorageException("blockExists ex: " + e.getMessage(), e);
+         throw new StorageException("blockExists ex: " + e.getMessage(), e);
       }
    }
 
@@ -159,7 +154,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (Exception e)
       {
          logger.error("getLinkBlockHeader Ex: " + e.getMessage(), e);
-         throw new JdbcStorageException("getLinkBlockHeader ex: " + e.getMessage(), e);
+         throw new StorageException("getLinkBlockHeader ex: " + e.getMessage(), e);
       }
    }
 
@@ -174,7 +169,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
          return getLink(blocks.get(0).hash);
       } catch (SQLException ex)
       {
-         throw new JdbcStorageException("getGenesisLinkEx: " + ex.getMessage(), ex);
+         throw new StorageException("getGenesisLinkEx: " + ex.getMessage(), ex);
       }
    }
 
@@ -192,7 +187,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
             return topLink = getLink(b.hash);
       } catch (SQLException ex)
       {
-         throw new JdbcStorageException("getLastLinkEx: " + ex.getMessage(), ex);
+         throw new StorageException("getLastLinkEx: " + ex.getMessage(), ex);
       }
    }
 
@@ -210,7 +205,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
             return getHigherWorkHash(connection).height;
       } catch (SQLException ex)
       {
-         throw new JdbcStorageException("getGenesisLinkEx: " + ex.getMessage(), ex);
+         throw new StorageException("getGenesisLinkEx: " + ex.getMessage(), ex);
       }
    }
 
@@ -228,7 +223,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (SQLException e)
       {
          logger.error("getNextLinks: " + e.getMessage(), e);
-         throw new JdbcStorageException("getNextLinks: " + e.getMessage(), e);
+         throw new StorageException("getNextLinks: " + e.getMessage(), e);
       } finally
       {
          //long stopTime = System.currentTimeMillis();
@@ -254,7 +249,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (SQLException e)
       {
          logger.error("getNextLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getNextLink: " + e.getMessage(), e);
+         throw new StorageException("getNextLink: " + e.getMessage(), e);
       }
    }
 
@@ -274,7 +269,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (SQLException e)
       {
          logger.error("isReacheble: " + e.getMessage(), e);
-         throw new JdbcStorageException("isReachable: " + e.getMessage(), e);
+         throw new StorageException("isReachable: " + e.getMessage(), e);
       } finally
       {
          long stopTime = System.currentTimeMillis();
@@ -297,7 +292,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (SQLException e)
       {
          logger.error("getClaimedLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getClaimedLinks: " + e.getMessage(), e);
+         throw new StorageException("getClaimedLinks: " + e.getMessage(), e);
       } finally
       {
          long stopTime = System.currentTimeMillis();
@@ -324,7 +319,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (SQLException | BitcoinException e)
       {
          logger.error("getClaimedLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getClaimedLinks: " + e.getMessage(), e);
+         throw new StorageException("getClaimedLinks: " + e.getMessage(), e);
       } finally
       {
          long stopTime = System.currentTimeMillis();
@@ -345,7 +340,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (SQLException e)
       {
          logger.error("getClaimerLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getClaimerLinks: " + e.getMessage(), e);
+         throw new StorageException("getClaimerLinks: " + e.getMessage(), e);
       }
    }
 
@@ -358,7 +353,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (SQLException e)
       {
          logger.error("outputClaimedInSameBranch: " + e.getMessage(), e);
-         throw new JdbcStorageException("outputClaimedInSameBranch: " + e.getMessage(), e);
+         throw new StorageException("outputClaimedInSameBranch: " + e.getMessage(), e);
       }
    }
 
@@ -408,7 +403,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
 
       } catch (SQLException ex)
       {
-         throw new JdbcStorageException("getCommonLinkEx: " + ex.getMessage(), ex);
+         throw new StorageException("getCommonLinkEx: " + ex.getMessage(), ex);
       } finally
       {
          long stopTime = System.currentTimeMillis();
@@ -437,7 +432,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (SQLException e)
       {
          logger.error("getNextLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getNextLink: " + e.getMessage(), e);
+         throw new StorageException("getNextLink: " + e.getMessage(), e);
       }
    }
 
@@ -462,7 +457,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (SQLException e)
       {
          logger.error("getNextLink: " + e.getMessage(), e);
-         throw new JdbcStorageException("getNextLink: " + e.getMessage(), e);
+         throw new StorageException("getNextLink: " + e.getMessage(), e);
       }
    }
 
@@ -505,7 +500,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
       } catch (SQLException e)
       {
          logger.error("getClaimerHash: " + e.getMessage(), e);
-         throw new JdbcStorageException("getClaimerHash: " + e.getMessage(), e);
+         throw new StorageException("getClaimerHash: " + e.getMessage(), e);
       }
    }
 

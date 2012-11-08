@@ -450,4 +450,14 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
       return lastLink.getBlock().getHash();
    }
 
+  @Override
+  public boolean blockExists(byte[] hash) {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public BlockChainLink getLinkBlockHeader(byte[] hash) {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
 }

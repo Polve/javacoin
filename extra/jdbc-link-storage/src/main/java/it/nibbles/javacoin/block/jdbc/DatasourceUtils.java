@@ -15,7 +15,7 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 0211 1-13 07 USA
  */
-package hu.netmind.bitcoin.block.jdbc;
+package it.nibbles.javacoin.block.jdbc;
 
 import javax.sql.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;

@@ -27,17 +27,20 @@ import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
 import hu.netmind.bitcoin.block.BlockImpl;
+import hu.netmind.bitcoin.block.Difficulty;
 import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import hu.netmind.bitcoin.block.TransactionImpl;
 import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
-import hu.netmind.bitcoin.block.jdbc.DatasourceUtils;
-import hu.netmind.bitcoin.block.jdbc.MysqlStorage;
+import hu.netmind.bitcoin.block.bdb.BDBChainLinkStorage;
+import hu.netmind.bitcoin.block.bdb.BDBStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import it.nibbles.bitcoin.utils.BtcUtil;
+import it.nibbles.javacoin.block.jdbc.DatasourceUtils;
+import it.nibbles.javacoin.block.jdbc.MysqlStorage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -45,6 +48,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,8 +75,8 @@ public class BlockTool {
           "BlockTool: Dump local BlockChain blocks for testint purposes\n\n"
           + "Usage:\n"
           + "  commands:\n"
-          + "  --load               Read blocks from inputfile and store them to storage.\n"
-          + "  --save               Read blocks from storage and write them to the specified outputfile.\n"
+          + "  --import             Read blocks from inputfile and store them to storage.\n"
+          + "  --export             Read blocks from storage and write them to the specified outputfile.\n"
           + "  general options:\n"
           + "  --hash=n             Hash of block to operate.\n"
           + "  --first=n            First block to operate.\n"
@@ -102,14 +106,14 @@ public class BlockTool {
   private static OptionSpec<String> inputfile;
   private static OptionSpec<String> outputfile;
   private static OptionSpec<String> revalidateOption;
-  private static boolean cmdSaveBlockchain = false;
-  private static boolean cmdLoadBlockchain = false;
+  private static boolean cmdExportBlockchain = false;
+  private static boolean cmdImportBlockchain = false;
 
   public static void main(String[] args) throws Exception {
     OptionParser parser = new OptionParser();
     parser.accepts("help");
-    parser.accepts("load");
-    parser.accepts("save");
+    parser.accepts("import");
+    parser.accepts("export");
     parser.accepts("testnet2");
     parser.accepts("testnet3");
     parser.accepts("prodnet");
@@ -131,9 +135,9 @@ public class BlockTool {
     if (args.length == 0
             || options.hasArgument("help")
             || options.nonOptionArguments().size() > 0
-            || (options.has("save") && options.has("load"))
-            || (options.has("save") && !options.has("outputfile"))
-            || (options.has("load") && !options.has("inputfile"))
+            || (options.has("export") && options.has("import"))
+            || (options.has("export") && !options.has("outputfile"))
+            || (options.has("import") && !options.has("inputfile"))
             || (options.has("testnet2") && options.has("testnet3"))
             || (options.has("testnet2") && options.has("prodnet"))
             || (options.has("testnet3") && options.has("prodnet"))) {
@@ -143,8 +147,8 @@ public class BlockTool {
     if (options.hasArgument("port")) {
       //listenPort = ((Integer) options.valueOf("port")).intValue();
     }
-    cmdSaveBlockchain = options.has("save");
-    cmdLoadBlockchain = options.has("load");
+    cmdExportBlockchain = options.has("export");
+    cmdImportBlockchain = options.has("import");
     isProdnet = options.has("prodnet");
     isTestNet2 = options.has("testnet2");
     isTestNet3 = options.has("testnet3");
@@ -160,7 +164,7 @@ public class BlockTool {
     }
     if (options.hasArgument("hash"))
       blockHash = (String) options.valueOf("hash");
-    if (cmdSaveBlockchain && blockHash == null && firstBlock == 0 && lastBlock == 0) {
+    if (cmdExportBlockchain && blockHash == null && firstBlock == 0 && lastBlock == 0) {
       println("To save blocks you have to specify a range or an hash");
       return;
     }
@@ -169,8 +173,11 @@ public class BlockTool {
     //println("FirstBlock: " + firstBlock + " lastBlock: " + lastBlock + " inputfile: " + inputfile.value(options) + " outputfile: " + outputfile.value(options));
     BlockTool app = new BlockTool();
 
+    app.testBdb(options);
+    System.exit(22);
+
     app.init(options);
-    if (cmdLoadBlockchain) {
+    if (cmdImportBlockchain) {
       //System.out.println("Press return to start import blocks to blockchain");
       //System.in.read();
       BufferedReader reader;
@@ -186,7 +193,7 @@ public class BlockTool {
         block = app.readBlock(reader, false);
       }
       System.out.println("Numero blocchi letti: " + numBlocks);
-    } else if (cmdSaveBlockchain) {
+    } else if (cmdExportBlockchain) {
       BlockChainLink blockLink;
       try (PrintWriter writer = new PrintWriter(new File(outputfile.value(options)))) {
         if (blockHash != null) {
@@ -213,11 +220,10 @@ public class BlockTool {
             : new ProdnetBitcoinFactory(scriptFactory);
     // Initialize the correct storage engine
     if (STORAGE_BDB.equalsIgnoreCase(storageType)) {
-      println("BDB DISABLED");
-      System.exit(33);
-//         BDBChainLinkStorage engine = new BDBChainLinkStorage(scriptFactory);
-//         engine.setDbPath(optBdbPath.value(options));
-//         storage = engine;
+      BDBChainLinkStorage engine = new BDBChainLinkStorage(bitcoinFactory);
+      engine.setDbPath(optBdbPath.value(options));
+      engine.init();
+      storage = engine;
     } else if (STORAGE_JDBC.equalsIgnoreCase(storageType)) {
       MysqlStorage engine = new MysqlStorage(bitcoinFactory);
       engine.setDataSource(DatasourceUtils.getMysqlDatasource(
@@ -237,26 +243,30 @@ public class BlockTool {
     }
   }
 
-  public void readJsonBlock(String fileName) throws FileNotFoundException, IOException {
-    ObjectMapper mapper = new ObjectMapper();
-    Map jsonObj = (Map) mapper.readValue(new File(fileName), Object.class);
-    String hash = (String) jsonObj.get("hash");
-    ArrayList<Map> txs = (ArrayList<Map>) jsonObj.get("tx");
-    for (Map tx : txs) {
-      println("Processing tx: " + tx.get("hash"));
-      ArrayList<Map> inputs = (ArrayList<Map>) tx.get("inputs");
-      ArrayList<Map> outs = (ArrayList<Map>) tx.get("out");
-      for (Map input : inputs)
-        println(" Input: " + input.get("prev_out"));
-      for (Map output : outs) {
-        long value = ((Long) output.get("value")).longValue();
-        int type = ((Integer) output.get("type")).intValue();
-        println(" Out -- addr: " + output.get("addr") + " value: " + value + " type: " + type);
-        TransactionOutputImpl tout = new TransactionOutputImpl(value, scriptFactory.createFragment(null));
-        println(" Tout: " + tout);
-      }
+  public void testBdb(OptionSet options) throws FileNotFoundException, IOException, BitcoinException, SQLException {
+    scriptFactory = new ScriptFactoryImpl(new KeyFactoryImpl(null));
+    bitcoinFactory = new ProdnetBitcoinFactory(scriptFactory);
+    BDBStorage bdb = new BDBStorage(bitcoinFactory);
+    bdb.setDbPath(optBdbPath.value(options));
+    bdb.init();
+    bdb.printBlockHeaders();
+    String filename = (String) options.valueOf("inputfile");
+    BufferedReader reader;
+    if ("-".equals(filename))
+      reader = new BufferedReader(new InputStreamReader(System.in));
+    else
+      reader = new BufferedReader(new FileReader(filename));
+    int numBlocks = 0;
+    System.out.println("Infile: "+filename);
+    Block block = readBlock(reader, true);
+    while (block != null) {
+      numBlocks++;
+      System.out.println("Letto blocco con hash: " + BtcUtil.hexOut(block.getHash()));
+      BlockChainLink chainLink = new BlockChainLink(block, bitcoinFactory.newDifficulty(), numBlocks, false);
+      bdb.storeBlockHeader(chainLink);
+      block = readBlock(reader, true);
     }
-    println("Lettura da " + fileName + " hash: " + hash + " txs: " + txs);
+    bdb.close();
   }
 
   public Block readBlock(BufferedReader reader, boolean doHashCheck) throws IOException, BitcoinException {
@@ -275,11 +285,11 @@ public class BlockTool {
       long nonce = Long.parseLong(tokens[6]);
       long version = Long.parseLong(tokens[7]);
       int numTransactions = Integer.parseInt(tokens[8]);
+      System.out.println("Blocco " + BtcUtil.hexOut(hash) + " nonce: " + nonce + " numTransazioni: " + numTransactions);
       List<TransactionImpl> txs = new ArrayList<>(numTransactions);
       for (int i = 0; i < numTransactions; i++) {
         txs.add(readTransaction(reader, doHashCheck));
       }
-      System.out.println("Blocco " + BtcUtil.hexOut(hash) + " nonce: " + nonce + " numTransazioni: " + numTransactions);
       if (doHashCheck) {
         Block block = new BlockImpl(txs, creationTime, nonce, compressedTarget, previousHash, merkleRoot, null, version);
         if (!Arrays.equals(hash, block.getHash())) {
@@ -379,4 +389,28 @@ public class BlockTool {
   public static void println(String s) {
     System.out.println(s);
   }
+
+  // TEST -- not used
+  public void readJsonBlock(String fileName) throws FileNotFoundException, IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    Map jsonObj = (Map) mapper.readValue(new File(fileName), Object.class);
+    String hash = (String) jsonObj.get("hash");
+    ArrayList<Map> txs = (ArrayList<Map>) jsonObj.get("tx");
+    for (Map tx : txs) {
+      println("Processing tx: " + tx.get("hash"));
+      ArrayList<Map> inputs = (ArrayList<Map>) tx.get("inputs");
+      ArrayList<Map> outs = (ArrayList<Map>) tx.get("out");
+      for (Map input : inputs)
+        println(" Input: " + input.get("prev_out"));
+      for (Map output : outs) {
+        long value = ((Long) output.get("value")).longValue();
+        int type = ((Integer) output.get("type")).intValue();
+        println(" Out -- addr: " + output.get("addr") + " value: " + value + " type: " + type);
+        TransactionOutputImpl tout = new TransactionOutputImpl(value, scriptFactory.createFragment(null));
+        println(" Tout: " + tout);
+      }
+    }
+    println("Lettura da " + fileName + " hash: " + hash + " txs: " + txs);
+  }
+
 }

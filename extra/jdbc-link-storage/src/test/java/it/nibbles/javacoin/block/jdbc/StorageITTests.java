@@ -13,15 +13,13 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package hu.netmind.bitcoin.block.jdbc;
+package it.nibbles.javacoin.block.jdbc;
 
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.StorageProvider;
 import hu.netmind.bitcoin.block.TestSuiteFactory;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.sql.DataSource;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
