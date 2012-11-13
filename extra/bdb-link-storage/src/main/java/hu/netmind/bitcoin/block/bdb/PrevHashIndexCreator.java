@@ -17,39 +17,34 @@
  */
 package hu.netmind.bitcoin.block.bdb;
 
-import com.sleepycat.bind.tuple.IntegerBinding;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.SecondaryKeyCreator;
 import hu.netmind.bitcoin.block.BitcoinFactory;
+import hu.netmind.bitcoin.block.BlockChainLink;
 
 /**
- * Creates the secondary index for the height of the block
+ * Creates a secondary index from a link using the previous hash. This means the
+ * index will hold the next links for a given hash.
  *
  * @author Alessandro Polverini
  */
-//public class HeightIndexCreator extends TupleSecondaryKeyCreator<Long,StoredLink>
-public class HeightIndexCreator implements SecondaryKeyCreator {
+//public class PrevHashIndexCreator extends TupleSecondaryKeyCreator<byte[],StoredLink>
+public class PrevHashIndexCreator implements SecondaryKeyCreator {
 
-  private IntegerBinding keyBinding = new IntegerBinding();
+  private BytesBinding keyBinding = new BytesBinding();
   private BlockChainHeaderBinding dataBinding;
 
-  public HeightIndexCreator(BitcoinFactory bitcoinFactory) {
-//      super(new LongBinding(),new LinkBinding(bitcoinFactory));
+  public PrevHashIndexCreator(BitcoinFactory bitcoinFactory) {
     dataBinding = new BlockChainHeaderBinding(bitcoinFactory);
   }
-//
-//  @Override
-//   public Long createSecondaryKey(StoredLink link)
-//   {
-//      return link.getLink().getHeight();
-//   }
-//
 
   @Override
   public boolean createSecondaryKey(SecondaryDatabase sd, DatabaseEntry key, DatabaseEntry data, DatabaseEntry result) {
-    int height = (int) dataBinding.entryToObject(data).getHeight();
-    keyBinding.objectToEntry(height, result);
+    BlockChainLink storedBlockHeader = dataBinding.entryToObject(data);
+    if (storedBlockHeader.getHeight() == 1)
+      return false;
+    keyBinding.objectToEntry(storedBlockHeader.getBlock().getPreviousBlockHash(), result);
     return true;
   }
 }

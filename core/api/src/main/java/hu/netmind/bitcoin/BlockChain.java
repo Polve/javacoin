@@ -70,17 +70,17 @@ public interface BlockChain extends Observable
     */
    Block getPreviousBlock(Block current);
 
-   /**
-    * Get the next block on a given path denoted by a
-    * block further down the path.
-    * @param current The successor of this block is queried.
-    * @param target The target block in which direction
-    * the next block should be returned.
-    * @return The block after the current one in the direction
-    * of target. If target is not reachable from the current node
-    * null is returned.
-    */
-   Block getNextBlock(Block current, Block target);
+//   /**
+//    * Get the next block on a given path denoted by a
+//    * block further down the path.
+//    * @param current The successor of this block is queried.
+//    * @param target The target block in which direction
+//    * the next block should be returned.
+//    * @return The block after the current one in the direction
+//    * of target. If target is not reachable from the current node
+//    * null is returned.
+//    */
+//   Block getNextBlock(Block current, Block target);
 
    /**
     * Compute the latest common block for the two blocks given.

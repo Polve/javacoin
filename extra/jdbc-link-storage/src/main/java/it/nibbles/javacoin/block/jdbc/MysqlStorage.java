@@ -27,6 +27,8 @@ import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.SimplifiedStoredBlock;
+import hu.netmind.bitcoin.block.StorageException;
+import hu.netmind.bitcoin.block.StorageSession;
 import hu.netmind.bitcoin.block.TransactionImpl;
 import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
@@ -42,6 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -223,6 +226,56 @@ public class MysqlStorage extends BaseChainLinkStorage
       }
    }
 
+   public class StorageSessionImpl implements StorageSession
+   {
+
+      Connection connection;
+      boolean forWriting;
+
+      public StorageSessionImpl(Connection connection, boolean forWriting)
+      {
+         this.connection = connection;
+         this.forWriting = forWriting;
+      }
+
+      @Override
+      public void commit()
+      {
+         if (!forWriting)
+            return;
+         try
+         {
+            connection.commit();
+         } catch (SQLException ex)
+         {
+            throw new StorageException("SQLException during commit: " + ex.getMessage(), ex);
+         }
+      }
+
+      @Override
+      public void rollback()
+      {
+         if (!forWriting)
+            return;
+         try
+         {
+            connection.rollback();
+         } catch (SQLException ex)
+         {
+            throw new StorageException("SQLException during rollback: " + ex.getMessage(), ex);
+         }
+      }
+
+      public Connection getConnection() {
+         return connection;
+      }
+   }
+
+   public StorageSession newStorageSession(boolean forWriting)
+   {
+      return new StorageSessionImpl(newConnection(), forWriting);
+   }
+
    @Override
    public boolean blockExists(final Connection dbConnection, byte[] hash) throws SQLException
    {
@@ -319,6 +372,21 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
+   protected void storeBlockLink(final Connection connection, final BlockChainLink link) throws SQLException
+   {
+      long blockId = storeBlockHeader(connection, link);
+
+      List<Transaction> transactions = link.getBlock().getTransactions();
+      int pos = 0;
+      for (Transaction tx : transactions)
+      {
+         long txId = getTransactionId(connection, tx.getHash());
+         if (txId == -1)
+            txId = storeTransaction(connection, tx);
+         storeBlkTxLink(connection, blockId, txId, pos++);
+      }
+   }
+
    protected long storeBlockHeader(final Connection dbConnection, final BlockChainLink link)
    {
       Block block = link.getBlock();
@@ -345,7 +413,6 @@ public class MysqlStorage extends BaseChainLinkStorage
       }
    }
 
-   @Override
    protected long storeTransaction(final Connection dbConnection, final Transaction tx)
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlPutTransaction);
@@ -390,7 +457,6 @@ public class MysqlStorage extends BaseChainLinkStorage
       }
    }
 
-   @Override
    protected void storeBlkTxLink(final Connection dbConnection, long blockId, long txId, int pos) throws SQLException
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlPutBlkTxLink))
@@ -402,7 +468,6 @@ public class MysqlStorage extends BaseChainLinkStorage
       }
    }
 
-   @Override
    protected List<TransactionInputImpl> loadTxInputs(final Connection dbConnection, long txId) throws SQLException
    {
       List<TransactionInputImpl> inputs = new LinkedList<>();
@@ -424,7 +489,6 @@ public class MysqlStorage extends BaseChainLinkStorage
       return inputs;
    }
 
-   @Override
    protected List<TransactionOutputImpl> loadTxOutputs(final Connection dbConnection, long txId) throws SQLException
    {
       List<TransactionOutputImpl> outputs = new LinkedList<>();
@@ -439,7 +503,6 @@ public class MysqlStorage extends BaseChainLinkStorage
       return outputs;
    }
 
-   @Override
    protected long getTransactionId(final Connection dbConnection, byte[] hash) throws SQLException
    {
       long txId = -1;
@@ -469,7 +532,6 @@ public class MysqlStorage extends BaseChainLinkStorage
       }
    }
 
-   @Override
    protected List<TransactionImpl> getBlockTransactions(final Connection dbConnection, ResultSet rs) throws SQLException, BitcoinException
    {
       List<TransactionImpl> res = new LinkedList<>();
@@ -495,7 +557,6 @@ public class MysqlStorage extends BaseChainLinkStorage
       }
    }
 
-   @Override
    protected List<TransactionImpl> getBlockTransactions(final Connection dbConnection, long blockId)
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockTransactionsFromId))
@@ -580,17 +641,13 @@ public class MysqlStorage extends BaseChainLinkStorage
                txDeleted = ps.executeUpdate();
             }
          if (getTransactional())
-         {
             dbConnection.commit();
-         }
       } catch (SQLException e)
       {
          try
          {
             if (getTransactional())
-            {
                dbConnection.rollback();
-            }
          } catch (SQLException ex)
          {
          }

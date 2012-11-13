@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2011 NetMind Consulting Bt.
+ * Copyright (C) 2012 nibbles.it
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,17 +30,17 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
- * @author Robert Brautigam
+ * @author Alessandro Polverini
  */
 @Test
 public class StorageITTests {
 
   private static Logger logger = LoggerFactory.getLogger(StorageITTests.class);
 
-  private StorageProvider<BDBChainLinkStorage> createProvider() {
-    return new StorageProvider<BDBChainLinkStorage>() {
+  private StorageProvider<BDBStorage> createProvider() {
+    return new StorageProvider<BDBStorage>() {
       @Override
-      public BDBChainLinkStorage newStorage() {
+      public BDBStorage newStorage() {
         BitcoinFactory bitcoinFactory;
         try {
           bitcoinFactory = new ProdnetBitcoinFactory(new ScriptFactoryImpl(null));
@@ -48,14 +48,14 @@ public class StorageITTests {
           logger.error("Cant instantiate StandardBitcoinFactory: " + ex.getMessage(), ex);
           return null;
         }
-        BDBChainLinkStorage storage = new BDBChainLinkStorage(bitcoinFactory);
-        storage.setDbPath("target/bitcoin-db");
+        BDBStorage storage = new BDBStorage(bitcoinFactory);
+        storage.setDbPath("target/test-db");
         storage.init();
         return storage;
       }
 
       @Override
-      public void closeStorage(BDBChainLinkStorage storage) {
+      public void closeStorage(BDBStorage storage) {
         if (storage != null) {
           storage.close();
         }
@@ -63,7 +63,7 @@ public class StorageITTests {
 
       @Override
       public void cleanStorage() {
-        File dbFile = new File("target/bitcoin-db");
+        File dbFile = new File("target/test-db");
         if (dbFile.isDirectory()) {
           File[] files = dbFile.listFiles();
           for (File file : files) {

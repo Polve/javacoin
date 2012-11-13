@@ -1,5 +1,6 @@
 package it.nibbles.javacoin.block.jdbc;
 
+import hu.netmind.bitcoin.block.StorageSession;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;

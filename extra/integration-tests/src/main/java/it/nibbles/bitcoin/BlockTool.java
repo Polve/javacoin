@@ -27,7 +27,6 @@ import hu.netmind.bitcoin.block.BlockChainImpl;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockChainLinkStorage;
 import hu.netmind.bitcoin.block.BlockImpl;
-import hu.netmind.bitcoin.block.Difficulty;
 import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
@@ -48,6 +47,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -257,15 +257,36 @@ public class BlockTool {
     else
       reader = new BufferedReader(new FileReader(filename));
     int numBlocks = 0;
-    System.out.println("Infile: "+filename);
+    System.out.println("Infile: " + filename);
     Block block = readBlock(reader, true);
     while (block != null) {
       numBlocks++;
-      System.out.println("Letto blocco con hash: " + BtcUtil.hexOut(block.getHash()));
-      BlockChainLink chainLink = new BlockChainLink(block, bitcoinFactory.newDifficulty(), numBlocks, false);
-      bdb.storeBlockHeader(chainLink);
+      //System.out.println("Letto blocco con hash: " + BtcUtil.hexOut(block.getHash()));
+      BlockChainLink chainLink = new BlockChainLink(block, bitcoinFactory.newDifficulty(new BigDecimal(numBlocks*253)), numBlocks);
+      bdb.storeBlockLink(null, chainLink);
+//      BlockChainLink storedBlock = bdb.getLink(block.getHash());
+//      System.out.println("[reread] block: " + storedBlock+" with "+storedBlock.getBlock().getTransactions().size()+" txs");
+
+      //
+//      for (Transaction tx : block.getTransactions()) {
+//        Transaction storedTx = bdb.getTransaction(tx.getHash());
+//        System.out.println("[reread] tx: " + storedTx);
+//      }
+
       block = readBlock(reader, true);
     }
+
+//    System.out.println("Rileggo tutti i blocchi");
+//    for (int i = 1; i <= numBlocks; i++) {
+//      List<SimplifiedStoredBlock> l = bdb.getBlocksAtHeight(null, i);
+//      for (SimplifiedStoredBlock b : l) {
+//        System.out.println("HEIGHT " + i + ": " + b);
+//      }
+//    }
+//    bdb.printClaims();
+//    bdb.printPrevHashes();
+//    bdb.printDifficulty();
+    //bdb.printTxBlockIndex();
     bdb.close();
   }
 
@@ -412,5 +433,4 @@ public class BlockTool {
     }
     println("Lettura da " + fileName + " hash: " + hash + " txs: " + txs);
   }
-
 }

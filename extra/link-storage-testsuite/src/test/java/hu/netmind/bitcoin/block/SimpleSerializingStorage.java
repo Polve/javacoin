@@ -81,7 +81,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
    public BlockChainLink getGenesisLink()
    {
       for ( BlockChainLink link : links.values() )
-         if ( (link.getHeight()==BlockChainLink.ROOT_HEIGHT) && (!link.isOrphan()) )
+         if ( (link.getHeight()==BlockChainLink.ROOT_HEIGHT))
             return link;
       return null;
    }
@@ -91,7 +91,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
    {
       BlockChainLink last = null;
       for ( BlockChainLink link : links.values() )
-         if ( (!link.isOrphan()) && ((last==null) || (!link.isOrphan()) && (link.getTotalDifficulty().compareTo(last.getTotalDifficulty())>0)) )
+         if ( ((last==null) || (link.getTotalDifficulty().compareTo(last.getTotalDifficulty())>0)) )
             last = link;
       return last;
    }
@@ -112,24 +112,24 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
       return links.get(toByteList(hash));
    }
 
-  @Override
-   public BlockChainLink getNextLink(byte[] current, byte[] target)
-   {
-      BlockChainLink result = getLink(target);
-      while ( (result!=null) && (!Arrays.equals(result.getBlock().getPreviousBlockHash(),current)) )
-         result = getLink(result.getBlock().getPreviousBlockHash());
-      return result;
-   }
-
-  @Override
-   public List<BlockChainLink> getNextLinks(byte[] hash)
-   {
-      List<BlockChainLink> nexts = new LinkedList<>();
-      for ( BlockChainLink link : links.values() )
-         if ( Arrays.equals(link.getBlock().getPreviousBlockHash(),hash) )
-            nexts.add(link);
-      return nexts;
-   }
+//  @Override
+//   public BlockChainLink getNextLink(byte[] current, byte[] target)
+//   {
+//      BlockChainLink result = getLink(target);
+//      while ( (result!=null) && (!Arrays.equals(result.getBlock().getPreviousBlockHash(),current)) )
+//         result = getLink(result.getBlock().getPreviousBlockHash());
+//      return result;
+//   }
+//
+//  @Override
+//   public List<BlockChainLink> getNextLinks(byte[] hash)
+//   {
+//      List<BlockChainLink> nexts = new LinkedList<>();
+//      for ( BlockChainLink link : links.values() )
+//         if ( Arrays.equals(link.getBlock().getPreviousBlockHash(),hash) )
+//            nexts.add(link);
+//      return nexts;
+//   }
 
   @Override
    public BlockChainLink getCommonLink(byte[] first, byte[] second)

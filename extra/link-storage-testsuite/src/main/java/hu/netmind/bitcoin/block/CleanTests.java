@@ -65,13 +65,12 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
      Block genesis = factory.getGenesisBlock();
       // Store
       BlockChainLink genesisLink = new BlockChainLink(genesis, factory.newDifficulty(),
-            BlockChainLink.ROOT_HEIGHT,false);
+            BlockChainLink.ROOT_HEIGHT);
       storage.addLink(genesisLink);
       // Recall
       BlockChainLink readLink = storage.getLink(genesis.getHash());
       // Check link data
       Assert.assertEquals(readLink.getHeight(),BlockChainLink.ROOT_HEIGHT);
-      Assert.assertFalse(readLink.isOrphan());
       // Check block integrity
       Assert.assertEquals(readLink.getBlock().getHash(),genesis.getHash());
       validateBlock(readLink.getBlock());
@@ -119,13 +118,12 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                111,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 });
       BitcoinFactory factory = new ProdnetBitcoinFactory(null);
-      BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(),BlockChainLink.ROOT_HEIGHT,false);
+      BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(),BlockChainLink.ROOT_HEIGHT);
       // Store & Recall
       storage.addLink(link);
       BlockChainLink readLink = storage.getLink(link.getBlock().getHash());
       // Check link data
       Assert.assertEquals(readLink.getHeight(),BlockChainLink.ROOT_HEIGHT);
-      Assert.assertFalse(readLink.isOrphan());
       // Check block integrity
       Assert.assertEquals(readLink.getBlock().getHash(),link.getBlock().getHash());
       validateBlock(readLink.getBlock());
@@ -173,7 +171,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
                111,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
                16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32 });
       BitcoinFactory factory = new ProdnetBitcoinFactory(null);
-      BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(),BlockChainLink.ROOT_HEIGHT,false);
+      BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(),BlockChainLink.ROOT_HEIGHT);
       // Store -> Restart -> Recall
       storage.addLink(link);
       getProvider().closeStorage(storage);
@@ -182,7 +180,6 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       // Check link data
       Assert.assertNotNull(readLink,"link not found in storage after restart");
       Assert.assertEquals(readLink.getHeight(),BlockChainLink.ROOT_HEIGHT);
-      Assert.assertFalse(readLink.isOrphan());
       // Check block integrity
       Assert.assertEquals(readLink.getBlock().getHash(),link.getBlock().getHash());
       validateBlock(readLink.getBlock());
@@ -204,10 +201,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGenesisNormalBlocks()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,25,3,4);
       assertHash(storage.getGenesisLink(),23);
    }
 
@@ -221,25 +218,25 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testLastLinkConcept()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,25,3,4);
       assertHash(storage.getLastLink(),26);
    }
 
    public void testLastLinkOnShorterBranch()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
+      addLink(23,0,0,1);
 
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,10,false); // This is the most difficult
+      addLink(24,23,1,2);
+      addLink(25,24,2,10); // This is the most difficult
 
-      addLink(26,23,1,2,false);
-      addLink(27,26,2,3,false);
-      addLink(28,27,3,4,false);
-      addLink(29,28,4,5,false);
+      addLink(26,23,1,2);
+      addLink(27,26,2,3);
+      addLink(28,27,3,4);
+      addLink(29,28,4,5);
 
       assertHash(storage.getLastLink(),25);
    }
@@ -247,15 +244,15 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testLastLinkConpetingBranches()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
+      addLink(23,0,0,1);
 
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
 
-      addLink(26,23,1,2,false);
-      addLink(27,26,2,3,false);
-      addLink(28,27,3,4,false);
-      addLink(29,28,4,5,false);
+      addLink(26,23,1,2);
+      addLink(27,26,2,3);
+      addLink(28,27,3,4);
+      addLink(29,28,4,5);
 
       assertHash(storage.getLastLink(),29);
    }
@@ -264,7 +261,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       throws BitcoinException
    {
       for ( int i=0; i<5; i++ )
-         addLink(i+1,i,i,i+1,false);
+         addLink(i+1,i,i,i+1);
       for ( int i=0; i<5; i++ )
          Assert.assertNotNull(getLink(i+1));
    }
@@ -273,54 +270,54 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       throws BitcoinException
    {
       for ( int i=0; i<5; i++ )
-         addLink(i+1,i,i,i+1,false);
+         addLink(i+1,i,i,i+1);
       getProvider().closeStorage(storage);
       storage = getProvider().newStorage();
       for ( int i=0; i<5; i++ )
          Assert.assertNotNull(getLink(i+1));
    }
 
-   public void testGetNextLinksNonExistentHash()
-      throws BitcoinException
-   {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
-      Assert.assertNotNull(getNextLinks(99));
-      Assert.assertTrue(getNextLinks(99).isEmpty());
-   }
-
-   public void testGetNextLinksConcept()
-      throws BitcoinException
-   {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
-      Assert.assertEquals(getNextLinks(24).size(),1);
-      assertHash(getNextLinks(24).get(0),25);
-   }
-
-   public void testGetNextLinksMultipleBranches()
-      throws BitcoinException
-   {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
-      addLink(27,24,2,3,false);
-      addLink(28,24,2,3,false);
-      Assert.assertEquals(getNextLinks(24).size(),3);
-   }
+//   public void testGetNextLinksNonExistentHash()
+//      throws BitcoinException
+//   {
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
+//      Assert.assertNotNull(getNextLinks(99));
+//      Assert.assertTrue(getNextLinks(99).isEmpty());
+//   }
+//
+//   public void testGetNextLinksConcept()
+//      throws BitcoinException
+//   {
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
+//      Assert.assertEquals(getNextLinks(24).size(),1);
+//      assertHash(getNextLinks(24).get(0),25);
+//   }
+//
+//   public void testGetNextLinksMultipleBranches()
+//      throws BitcoinException
+//   {
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
+//      addLink(27,24,2,3);
+//      addLink(28,24,2,3);
+//      Assert.assertEquals(getNextLinks(24).size(),3);
+//   }
 
    public void testGetClaimedLinkConcept()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false,11,-1);
-      addLink(26,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3,11,-1);
+      addLink(26,25,3,4);
       assertHash(storage.getClaimedLink(getLink(26),createInput(11,0)),25);
       assertHash(storage.getPartialClaimedLink(getLink(26),createInput(11,0)),25);
    }
@@ -328,10 +325,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimedLinkIsLastInBranch()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false,11,-1);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,25,3,4,11,-1);
       assertHash(storage.getClaimedLink(getLink(26),createInput(11,0)),26);
       assertHash(storage.getPartialClaimedLink(getLink(26),createInput(11,0)),26);
    }
@@ -339,10 +336,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimedLinkDoesNotExist()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,25,3,4);
       Assert.assertNull(storage.getClaimedLink(getLink(26),createInput(11,0)));
       Assert.assertNull(storage.getPartialClaimedLink(getLink(26),createInput(11,0)));
    }
@@ -350,11 +347,11 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimedLinkOnMultipleBranches()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false,11,-1);
-      addLink(26,24,2,3,false,11,-1);
-      addLink(27,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3,11,-1);
+      addLink(26,24,2,3,11,-1);
+      addLink(27,25,3,4);
       assertHash(storage.getClaimedLink(getLink(27),createInput(11,0)),25);
       assertHash(storage.getPartialClaimedLink(getLink(27),createInput(11,0)),25);
    }
@@ -362,11 +359,11 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimedLinkOnlyOnOtherBranch()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,24,2,3,false,11,-1);
-      addLink(27,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,24,2,3,11,-1);
+      addLink(27,25,3,4);
       Assert.assertNull(storage.getClaimedLink(getLink(27),createInput(11,0)));
       Assert.assertNotNull(storage.getClaimedLink(getLink(26),createInput(11,0)));
       Assert.assertNull(storage.getPartialClaimedLink(getLink(27),createInput(11,0)));
@@ -376,10 +373,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimedLinkNotEnoughOutputs()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false,11,-1);
-      addLink(26,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3,11,-1);
+      addLink(26,25,3,4);
       assertHash(storage.getClaimedLink(getLink(26),createInput(11,99)),25);
       assertHash(storage.getPartialClaimedLink(getLink(26),createInput(11,99)),25);
    }
@@ -387,10 +384,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimerLinkConcept()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false,5,1);
-      addLink(26,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3,5,1);
+      addLink(26,25,3,4);
       assertHash(storage.getClaimerLink(getLink(26),createInput(5,1)),25);
       Assert.assertTrue(storage.outputClaimedInSameBranch(getLink(26),createInput(5,1)));
    }
@@ -398,10 +395,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimerLinkIsLastInBranch()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false,9,1);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,25,3,4,9,1);
       assertHash(storage.getClaimerLink(getLink(26),createInput(9,1)),26);
       Assert.assertTrue(storage.outputClaimedInSameBranch(getLink(26),createInput(9,1)));
    }
@@ -409,10 +406,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimerLinkDoesNotExist()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,25,3,4);
       Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(33,1)));
       Assert.assertFalse(storage.outputClaimedInSameBranch(getLink(26),createInput(33,1)));
    }
@@ -420,11 +417,11 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimerLinkOnMultipleBranches()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false,12,1);
-      addLink(26,24,2,3,false,12,1);
-      addLink(27,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3,12,1);
+      addLink(26,24,2,3,12,1);
+      addLink(27,25,3,4);
       assertHash(storage.getClaimerLink(getLink(27),createInput(12,1)),25);
       Assert.assertTrue(storage.outputClaimedInSameBranch(getLink(27),createInput(12,1)));
    }
@@ -432,11 +429,11 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimerLinkOnlyOnOtherBranch()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,24,2,3,false,11,1);
-      addLink(27,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,24,2,3,11,1);
+      addLink(27,25,3,4);
       Assert.assertNull(storage.getClaimerLink(getLink(27),createInput(11,1)));
       Assert.assertNotNull(storage.getClaimerLink(getLink(26),createInput(11,1)));
       Assert.assertFalse(storage.outputClaimedInSameBranch(getLink(27),createInput(11,1)));
@@ -446,10 +443,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testGetClaimerLinkDifferingOutputs()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false,6,1);
-      addLink(26,25,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3,6,1);
+      addLink(26,25,3,4);
       Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(6,99)));
       Assert.assertFalse(storage.outputClaimedInSameBranch(getLink(26),createInput(6,99)));
    }
@@ -457,14 +454,14 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testCommonAncestorConcept()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
-      addLink(27,24,2,3,false);
-      addLink(28,23,1,2,false);
-      addLink(29,28,2,3,false);
-      addLink(30,29,3,4,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,25,3,4);
+      addLink(27,24,2,3);
+      addLink(28,23,1,2);
+      addLink(29,28,2,3);
+      addLink(30,29,3,4);
       BlockChainLink link = storage.getCommonLink(getLink(27).getBlock().getHash(),
                getLink(26).getBlock().getHash());
       Assert.assertNotNull(link);
@@ -484,11 +481,11 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testReachableConcept()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
-      addLink(27,24,2,3,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,25,3,4);
+      addLink(27,24,2,3);
       Assert.assertTrue(storage.isReachable(getLink(26).getBlock().getHash(),
                getLink(24).getBlock().getHash()));
       Assert.assertTrue(storage.isReachable(getLink(27).getBlock().getHash(),
@@ -500,65 +497,65 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
    public void testNonReachable()
       throws BitcoinException
    {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
-      addLink(27,24,2,3,false);
+      addLink(23,0,0,1);
+      addLink(24,23,1,2);
+      addLink(25,24,2,3);
+      addLink(26,25,3,4);
+      addLink(27,24,2,3);
       Assert.assertFalse(storage.isReachable(getLink(26).getBlock().getHash(),
                getLink(27).getBlock().getHash()));
    }
 
-   public void testSingleBranchNextBlock()
-      throws BitcoinException
-   {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
-      addLink(27,26,4,5,false);
-      assertHash(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(27).getBlock().getHash()),25);
-   }
-
-   public void testMultiBranchNextBlock()
-      throws BitcoinException
-   {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
-      addLink(27,26,4,5,false);
-      addLink(28,24,2,3,false);
-      addLink(29,28,3,4,false);
-      addLink(30,29,4,5,false);
-      assertHash(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(27).getBlock().getHash()),25);
-      assertHash(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(30).getBlock().getHash()),28);
-   }
-
-   public void testNextBlockWithInvalidTarget()
-      throws BitcoinException
-   {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
-      addLink(27,26,4,5,false);
-      Assert.assertNull(storage.getNextLink(getLink(24).getBlock().getHash(),new byte[] { 1,1,1,1 }));
-   }
-
-   public void testNextBlockToUnreachableTarget()
-      throws BitcoinException
-   {
-      addLink(23,0,0,1,false);
-      addLink(24,23,1,2,false);
-      addLink(25,24,2,3,false);
-      addLink(26,25,3,4,false);
-      addLink(27,26,4,5,false);
-      addLink(28,24,2,3,false);
-      addLink(29,28,3,4,false);
-      addLink(30,29,4,5,false);
-      Assert.assertNull(storage.getNextLink(getLink(25).getBlock().getHash(),getLink(30).getBlock().getHash()));
-   }
+//   public void testSingleBranchNextBlock()
+//      throws BitcoinException
+//   {
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
+//      addLink(27,26,4,5);
+//      assertHash(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(27).getBlock().getHash()),25);
+//   }
+//
+//   public void testMultiBranchNextBlock()
+//      throws BitcoinException
+//   {
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
+//      addLink(27,26,4,5);
+//      addLink(28,24,2,3);
+//      addLink(29,28,3,4);
+//      addLink(30,29,4,5);
+//      assertHash(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(27).getBlock().getHash()),25);
+//      assertHash(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(30).getBlock().getHash()),28);
+//   }
+//
+//   public void testNextBlockWithInvalidTarget()
+//      throws BitcoinException
+//   {
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
+//      addLink(27,26,4,5);
+//      Assert.assertNull(storage.getNextLink(getLink(24).getBlock().getHash(),new byte[] { 1,1,1,1 }));
+//   }
+//
+//   public void testNextBlockToUnreachableTarget()
+//      throws BitcoinException
+//   {
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
+//      addLink(27,26,4,5);
+//      addLink(28,24,2,3);
+//      addLink(29,28,3,4);
+//      addLink(30,29,4,5);
+//      Assert.assertNull(storage.getNextLink(getLink(25).getBlock().getHash(),getLink(30).getBlock().getHash()));
+//   }
 
    private TransactionInputImpl createInput(int claimedTxHash, int claimedOutputIndex)
    {
@@ -571,7 +568,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
     * Add a link to the storage with some block data filled. The claimed txhash and output index
     * will be included in one of the many transactions randomly generated into the block.
     */
-   private void addLink(int hash, int prevHash, long height, long totalDifficulty, boolean orphan,
+   private void addLink(int hash, int prevHash, long height, long totalDifficulty,
          int claimedTxHash, int claimedOutputIndex)
       throws BitcoinException
    {
@@ -612,14 +609,14 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
             new byte[] { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
             new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
       BitcoinFactory factory = new ProdnetBitcoinFactory(null);
-      BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(new BigDecimal(""+totalDifficulty)),height,orphan);
+      BlockChainLink link = new BlockChainLink(block,factory.newDifficulty(new BigDecimal(""+totalDifficulty)),height);
       storage.addLink(link);
    }
 
-   private void addLink(int hash, int prevHash, long height, long totalDifficulty, boolean orphan)
+   private void addLink(int hash, int prevHash, long height, long totalDifficulty)
       throws BitcoinException
    {
-      addLink(hash,prevHash,height,totalDifficulty,orphan,0,0);
+      addLink(hash,prevHash,height,totalDifficulty,0,0);
    }
 
    private BlockChainLink getLink(int hash)
@@ -628,11 +625,11 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
             new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
    }
 
-   private List<BlockChainLink> getNextLinks(int hash)
-   {
-      return storage.getNextLinks(
-            new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
-   }
+//   private List<BlockChainLink> getNextLinks(int hash)
+//   {
+//      return storage.getNextLinks(
+//            new byte[] { (byte)hash,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 });
+//   }
 
    private void assertHash(BlockChainLink link, int hash)
    {
@@ -670,15 +667,15 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //      addLink(24,0,0,1,true);
 //      addLink(25,0,1,2,true);
 //      addLink(26,0,2,3,true);
-//      addLink(23,0,0,4,false);
+//      addLink(23,0,0,4);
 //      assertHash(storage.getGenesisLink(),23);
 //   }
 //
 //   public void testGetNextLinkOrphan()
 //      throws BitcoinException
 //   {
-//      addLink(23,0,0,1,false);
-//      addLink(24,23,1,2,false);
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
 //      addLink(25,24,2,3,true);
 //      addLink(26,25,3,4,true);
 //      Assert.assertEquals(getNextLinks(24).size(),1);
@@ -688,10 +685,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   public void testGetOrphanClaimerLink()
 //      throws BitcoinException
 //   {
-//      addLink(23,0,0,1,false);
-//      addLink(24,23,1,2,false);
-//      addLink(25,24,2,3,false);
-//      addLink(26,25,3,4,false);
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
 //      addLink(27,99,0,3,true,7,1);
 //      Assert.assertNull(storage.getClaimerLink(getLink(26),createInput(7,1)));
 //      Assert.assertFalse(storage.outputClaimedInSameBranch(getLink(26),createInput(7,1)));
@@ -709,10 +706,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   public void testLastLinkWithHigherDifficultyOrphan()
 //      throws BitcoinException
 //   {
-//      addLink(23,0,0,1,false);
-//      addLink(24,23,1,2,false);
-//      addLink(25,24,2,3,false);
-//      addLink(26,25,3,4,false);
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
 //      addLink(27,26,4,5,true);
 //      assertHash(storage.getLastLink(),26);
 //   }
@@ -720,10 +717,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   public void testNextBlockOfOrphan()
 //      throws BitcoinException
 //   {
-//      addLink(23,0,0,1,false);
-//      addLink(24,23,1,2,false);
-//      addLink(25,24,2,3,false);
-//      addLink(26,25,3,4,false);
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
 //      addLink(27,0,0,0,true);
 //      Assert.assertNull(storage.getNextLink(getLink(26).getBlock().getHash(),getLink(26).getBlock().getHash()));
 //   }
@@ -731,10 +728,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   public void testNextBlockWithOrphanTarget()
 //      throws BitcoinException
 //   {
-//      addLink(23,0,0,1,false);
-//      addLink(24,23,1,2,false);
-//      addLink(25,24,2,3,false);
-//      addLink(26,25,3,4,false);
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
 //      addLink(27,0,0,0,true);
 //      Assert.assertNull(storage.getNextLink(getLink(24).getBlock().getHash(),getLink(27).getBlock().getHash()));
 //   }
@@ -742,10 +739,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   public void testNoCommonAncestor()
 //      throws BitcoinException
 //   {
-//      addLink(23,0,0,1,false);
-//      addLink(24,23,1,2,false);
-//      addLink(25,24,2,3,false);
-//      addLink(26,25,3,4,false);
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
 //      addLink(27,0,0,3,true);
 //      BlockChainLink link = storage.getCommonLink(getLink(27).getBlock().getHash(),
 //               getLink(26).getBlock().getHash());
@@ -765,10 +762,10 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
 //   public void testOrphanNotReachable()
 //      throws BitcoinException
 //   {
-//      addLink(23,0,0,1,false);
-//      addLink(24,23,1,2,false);
-//      addLink(25,24,2,3,false);
-//      addLink(26,25,3,4,false);
+//      addLink(23,0,0,1);
+//      addLink(24,23,1,2);
+//      addLink(25,24,2,3);
+//      addLink(26,25,3,4);
 //      addLink(27,0,0,3,true);
 //      Assert.assertFalse(storage.isReachable(getLink(26).getBlock().getHash(),
 //               getLink(27).getBlock().getHash()));

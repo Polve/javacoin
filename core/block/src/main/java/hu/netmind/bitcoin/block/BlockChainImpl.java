@@ -103,7 +103,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       {
          BlockChainLink genesisLink = new BlockChainLink(
             bitcoinFactory.getGenesisBlock(), bitcoinFactory.getGenesisDifficulty(),
-            BlockChainLink.ROOT_HEIGHT,false);
+            BlockChainLink.ROOT_HEIGHT);
          linkStorage.addLink(genesisLink);
       } else {
          if ( ! storedGenesisLink.getBlock().equals(bitcoinFactory.getGenesisBlock()) )
@@ -160,18 +160,18 @@ public class BlockChainImpl extends Observable implements BlockChain
       return getBlock(current.getPreviousBlockHash());
    }
 
-   /**
-    * Get the next block.
-    */
-   @Override
-   public Block getNextBlock(Block current, Block target)
-   {
-      BlockChainLink link = linkStorage.getNextLink(current.getHash(),target.getHash());
-      if ( link == null )
-         return null;
-      return link.getBlock();
-   }
-
+//   /**
+//    * Get the next block.
+//    */
+//   @Override
+//   public Block getNextBlock(Block current, Block target)
+//   {
+//      BlockChainLink link = linkStorage.getNextLink(current.getHash(),target.getHash());
+//      if ( link == null )
+//         return null;
+//      return link.getBlock();
+//   }
+//
    /**
     * Add a block to the chain. The block is only added if it is verified, and
     * passes all known checks. If the block already exists in the chain, nothing
@@ -256,7 +256,7 @@ public class BlockChainImpl extends Observable implements BlockChain
       DifficultyTarget blockTarget = new DifficultyTarget(block.getCompressedTarget());
       BlockChainLink link = new BlockChainLink(block, // Create link for block
          previousLink.getTotalDifficulty().add(bitcoinFactory.newDifficulty(blockTarget)),
-         previousLink.getHeight() + 1, false);
+         previousLink.getHeight() + 1);
       DifficultyTarget calculatedTarget = getNextDifficultyTarget(previousLink, link.getBlock());
       if (blockTarget.compareTo(calculatedTarget) != 0)
          // Target has to exactly match the one calculated, otherwise it is

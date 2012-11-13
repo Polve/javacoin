@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2012 NetMind Consulting Bt.
+ * Copyright (C) 2012 nibbles.it
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,28 +18,37 @@
 
 package hu.netmind.bitcoin.block.bdb;
 
+import com.sleepycat.je.DatabaseEntry;
+import com.sleepycat.je.SecondaryDatabase;
+import com.sleepycat.je.SecondaryKeyCreator;
 import hu.netmind.bitcoin.block.BitcoinFactory;
-import hu.netmind.bitcoin.block.Difficulty;
 
 /**
- * Creates the secondary index for total difficulty. This only indexes if the link
- * is not orphan!
- * @author Robert Brautigam
+ * Creates the secondary index for total difficulty. Used to get the top block
+ * @author Alessandro Polverini
  */
-public class DifficultyIndexCreator extends TupleSecondaryKeyCreator<Difficulty,StoredLink>
+//public class DifficultyIndexCreator extends TupleSecondaryKeyCreator<Difficulty,StoredLink>
+public class DifficultyIndexCreator implements SecondaryKeyCreator
 {
-          
+  private LongBinding keyBinding = new LongBinding();
+  private BlockChainHeaderBinding dataBinding;
+
    public DifficultyIndexCreator(BitcoinFactory bitcoinFactory)
    {
-      super(new DifficultyBinding(bitcoinFactory),new LinkBinding(bitcoinFactory));
+      // super(new DifficultyBinding(bitcoinFactory),new LinkBinding(bitcoinFactory));
+    dataBinding = new BlockChainHeaderBinding(bitcoinFactory);
    }
+
+//  @Override
+//   public Difficulty createSecondaryKey(StoredLink link)
+//   {
+//      return link.getLink().getTotalDifficulty();
+//   }
 
   @Override
-   public Difficulty createSecondaryKey(StoredLink link)
-   {
-      if ( link.getLink().isOrphan() )
-         return null;
-      return link.getLink().getTotalDifficulty();
-   }
+  public boolean createSecondaryKey(SecondaryDatabase sd, DatabaseEntry key, DatabaseEntry data, DatabaseEntry result) {
+    long totalDifficulty = dataBinding.entryToObject(data).getTotalDifficulty().getDifficulty().longValue();
+    keyBinding.objectToEntry(totalDifficulty, result);
+    return true;
+  }
 }
-

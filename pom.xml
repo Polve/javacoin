@@ -23,7 +23,7 @@
     <module>core/utils</module>
     <module>extra/integration-tests</module>
     <module>extra/link-storage-testsuite</module>
-    <!-- <module>extra/bdb-link-storage</module> -->
+    <module>extra/bdb-link-storage</module>
     <module>extra/jdbc-link-storage</module>
     <module>extra/satoshi-behavior</module>
   </modules>

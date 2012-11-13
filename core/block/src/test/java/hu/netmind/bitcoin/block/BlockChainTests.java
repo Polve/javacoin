@@ -103,7 +103,6 @@ public class BlockChainTests
       BlockChainLink link = storage.getNewLinks().get(0);
       Assert.assertEquals(link.getHeight(), 0);
       Assert.assertEquals(link.getBlock(), genesisBlock);
-      Assert.assertFalse(link.isOrphan());
       Assert.assertEquals(link.getBlock().getCreationTime(),1234567);
       Assert.assertEquals(link.getBlock().getNonce(),1);
       Assert.assertEquals(link.getBlock().getCompressedTarget(),0x1b0404cbl);
@@ -167,7 +166,6 @@ public class BlockChainTests
       Assert.assertEquals(storage.getNewLinks().size(),1);
       BlockChainLink newLink = storage.getNewLinks().get(0);
       Assert.assertEquals(newLink.getHeight(),2);
-      Assert.assertEquals(newLink.isOrphan(),false);
    }
 
    @Test(expectedExceptions = VerificationException.class)

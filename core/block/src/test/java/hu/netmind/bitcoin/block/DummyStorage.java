@@ -77,15 +77,15 @@ public class DummyStorage implements BlockChainLinkStorage
          {
             if ( links.isEmpty() )
                addLinkInternal(new BlockChainLink(block,
-                        bitcoinFactory.newDifficulty(new DifficultyTarget(block.getCompressedTarget())),blockOffset,false));
+                        bitcoinFactory.newDifficulty(new DifficultyTarget(block.getCompressedTarget())),blockOffset));
             else
                addLinkInternal(new BlockChainLink(block,
-                        bitcoinFactory.newDifficulty(new DifficultyTarget(block.getCompressedTarget())),blockOffset,true));
+                        bitcoinFactory.newDifficulty(new DifficultyTarget(block.getCompressedTarget())),blockOffset));
          } else {
             addLinkInternal(new BlockChainLink(block,
                      previousLink.getTotalDifficulty().add(bitcoinFactory.newDifficulty(
                            new DifficultyTarget(block.getCompressedTarget()))),
-                     previousLink.getHeight()+1,false));
+                     previousLink.getHeight()+1));
          }
       }
    }
@@ -136,26 +136,26 @@ public class DummyStorage implements BlockChainLinkStorage
       return getLink(hash) != null;
    }
 
-   @Override
-   public BlockChainLink getNextLink(byte[] current, byte[] target)
-   {
-      logger.debug("getting next link for current: {}, target: {}",Arrays.toString(current),Arrays.toString(target));
-      BlockChainLink result = getLink(target);
-      while ( (result!=null) && (!Arrays.equals(result.getBlock().getPreviousBlockHash(),current)) )
-         result = getLink(result.getBlock().getPreviousBlockHash());
-      return result;
-   }
-
-   @Override
-   public List<BlockChainLink> getNextLinks(byte[] hash)
-   {
-      logger.debug("getting next links for hash: {}",Arrays.toString(hash));
-      List<BlockChainLink> nextLinks = new ArrayList<>();
-      for ( BlockChainLink link : links )
-         if ( Arrays.equals(link.getBlock().getPreviousBlockHash(),hash) )
-            nextLinks.add(link);
-      return nextLinks;
-   }
+//   @Override
+//   public BlockChainLink getNextLink(byte[] current, byte[] target)
+//   {
+//      logger.debug("getting next link for current: {}, target: {}",Arrays.toString(current),Arrays.toString(target));
+//      BlockChainLink result = getLink(target);
+//      while ( (result!=null) && (!Arrays.equals(result.getBlock().getPreviousBlockHash(),current)) )
+//         result = getLink(result.getBlock().getPreviousBlockHash());
+//      return result;
+//   }
+//
+//   @Override
+//   public List<BlockChainLink> getNextLinks(byte[] hash)
+//   {
+//      logger.debug("getting next links for hash: {}",Arrays.toString(hash));
+//      List<BlockChainLink> nextLinks = new ArrayList<>();
+//      for ( BlockChainLink link : links )
+//         if ( Arrays.equals(link.getBlock().getPreviousBlockHash(),hash) )
+//            nextLinks.add(link);
+//      return nextLinks;
+//   }
 
    @Override
    public BlockChainLink getCommonLink(byte[] first, byte[] second)

@@ -38,7 +38,6 @@ public class TxHashIndexCreator extends TupleMultiSecondaryKeyCreator<byte[],Sto
    public List<byte[]> createSecondaryKeys(StoredLink link)
    {
       List<byte[]> resultKeys = new LinkedList<>();
-      if ( !link.getLink().isOrphan() )
          for ( Transaction tx : link.getLink().getBlock().getTransactions() )
             resultKeys.add(tx.getHash());
       return resultKeys;

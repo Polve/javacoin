@@ -291,7 +291,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
    public BlockChainLink getNextLink(final byte[] current, final byte[] target)
    {
       StoredLink targetLink = getStoredLink(target);
-      if ( (targetLink == null) || (targetLink.getLink().isOrphan()) )
+      if ( (targetLink == null))
          return null;
       for ( StoredLink candidate : getNextStoredLinks(current) )
          if (candidate.getPath().isPrefix(targetLink.getPath()))
@@ -306,8 +306,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
             {
                StoredLink targetLink = getStoredLink(target);
                StoredLink sourceLink = getStoredLink(source);
-               if ( (targetLink==null) || (sourceLink==null) || 
-                  (targetLink.getLink().isOrphan()) || (sourceLink.getLink().isOrphan()) )
+               if ( (targetLink==null) || (sourceLink==null))
                   return false;
                return targetLink.getPath().isPrefix(sourceLink.getPath());
             }
@@ -321,8 +320,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
             {
                StoredLink firstLink = getStoredLink(first);
                StoredLink secondLink = getStoredLink(second);
-               if ( (firstLink==null) || (secondLink==null) || 
-                  (firstLink.getLink().isOrphan()) || (secondLink.getLink().isOrphan()) )
+               if ( (firstLink==null) || (secondLink==null))
                   return null;
                // Determine when the paths cross
                Path commonPath = Path.getCommonPath(firstLink.getPath(),secondLink.getPath());
@@ -379,7 +377,7 @@ public class BDBChainLinkStorage implements BlockChainLinkStorage
             public void doWork()
             {
                StoredLink previousLink = getStoredLink(link.getBlock().getPreviousBlockHash());
-               if ( (previousLink==null) && (!link.isOrphan()) && (link.getHeight()!=BlockChainLink.ROOT_HEIGHT) )
+               if ( (previousLink==null) && (link.getHeight()!=BlockChainLink.ROOT_HEIGHT) )
                   throw new BDBStorageException("could not find previous link on add, but link added is not marked as orphan: "+link);
                Path path = new Path();
                if ( previousLink != null )

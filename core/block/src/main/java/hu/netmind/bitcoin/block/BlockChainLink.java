@@ -35,36 +35,20 @@ public class BlockChainLink implements Serializable
    public static final long ROOT_HEIGHT = 0;
 
    private Block block;
-   private boolean orphan;
    private Difficulty totalDifficulty;
    private long height;
 
    public BlockChainLink(Block block, Difficulty totalDifficulty,
-         long height, boolean orphan)
+         long height)
    {
       this.block=block;
-      this.orphan=orphan;
       this.totalDifficulty=totalDifficulty;
       this.height=height;
    }
 
-   /**
-    * Set the orphan flag to true, this means block has a valid chain to
-    * genesis. This operation can not be reversed.
-    */
-   public void clearOrphan()
-   {
-      orphan=false;
-   }
-   
    public Block getBlock()
    {
       return block;
-   }
-
-   public boolean isOrphan()
-   {
-      return orphan;
    }
 
    public Difficulty getTotalDifficulty()
@@ -80,7 +64,7 @@ public class BlockChainLink implements Serializable
    @Override
    public String toString()
    {
-      return "Link at height "+height+" (orphan: "+orphan+"), block: "+block;
+      return "Link at height "+height+" block: "+block;
    }
 }
 

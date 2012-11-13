@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2011 NetMind Consulting Bt.
+ * Copyright (C) 2012 nibbles.it
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,20 +20,32 @@ package hu.netmind.bitcoin.block.bdb;
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.bind.tuple.TupleInput;
 import com.sleepycat.bind.tuple.TupleOutput;
+import static hu.netmind.bitcoin.block.bdb.BytesBinding.readBytes;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author Robert Brautigam
+ * Implements a one-to-many relationship between blocks and transactions
+ *
+ * @author Alessandro Polverini
  */
-public class ClaimBinding extends TupleBinding<Claim> {
+public class BlockTxBinding extends TupleBinding<List<byte[]>> {
 
   @Override
-  public Claim entryToObject(TupleInput in) {
-    return new Claim(BytesBinding.readBytes(in, 32), in.readInt());
+  public void objectToEntry(List<byte[]> txHashes, TupleOutput out) {
+    out.writeInt(txHashes.size());
+    for (byte[] hash : txHashes){
+      out.write(hash);
+    }
   }
 
   @Override
-  public void objectToEntry(Claim claim, TupleOutput out) {
-    out.write(claim.getClaimedTransactionHash());
-    out.writeInt(claim.getClaimedOutputIndex());
+  public List<byte[]> entryToObject(TupleInput in) {
+    int numTxs = in.readInt();
+    List<byte[]> txHashes = new ArrayList<>(numTxs);
+    for (int i=0; i<numTxs; i++)
+      txHashes.add(readBytes(in, 32));
+    return txHashes;
   }
+
 }

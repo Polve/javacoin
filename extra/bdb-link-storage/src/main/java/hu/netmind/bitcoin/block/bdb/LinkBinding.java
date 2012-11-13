@@ -66,10 +66,9 @@ public class LinkBinding extends TupleBinding<StoredLink>
    private BlockChainLink readLink(TupleInput in)
    {
       Block block = readBlock(in);
-      boolean orphan = in.readBoolean();
       long height = in.readLong();
       Difficulty totalDifficulty = bitcoinFactory.newDifficulty(new BigDecimal(in.readString()));
-      return new BlockChainLink(block,totalDifficulty,height,orphan);
+      return new BlockChainLink(block,totalDifficulty,height);
    }
 
    private Block readBlock(TupleInput in)
@@ -149,7 +148,6 @@ public class LinkBinding extends TupleBinding<StoredLink>
    private void write(BlockChainLink link, TupleOutput out)
    {
       write(link.getBlock(),out);
-      out.writeBoolean(link.isOrphan());
       out.writeLong(link.getHeight());
       out.writeString(link.getTotalDifficulty().getDifficulty().toString());
    }

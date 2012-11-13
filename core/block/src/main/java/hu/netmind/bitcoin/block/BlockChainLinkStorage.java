@@ -64,11 +64,17 @@ public interface BlockChainLinkStorage
     */
    BlockChainLink getLinkBlockHeader(byte[] hash);
 
-   /**
-    * Get the link following the current one given on the same
-    * branch the target is.
-    */
-   BlockChainLink getNextLink(byte[] current, byte[] target);
+//   /**
+//    * Get the link following the current one given on the same
+//    * branch the target is.
+//    */
+//   BlockChainLink getNextLink(byte[] current, byte[] target);
+//
+//   /**
+//    * Get the links for which the previous link contains the block with hash
+//    * given. Orphan blocks are returned.
+//    */
+//   List<BlockChainLink> getNextLinks(byte[] hash);
 
    /**
     * Get the common parent of the two given hashes if there is one.
@@ -85,12 +91,6 @@ public interface BlockChainLinkStorage
     * @return True if the target can be reached from the source, false otherwise.
     */
    boolean isReachable(byte[] target, byte[] source);
-
-   /**
-    * Get the links for which the previous link contains the block with hash
-    * given. Orphan blocks are returned.
-    */
-   List<BlockChainLink> getNextLinks(byte[] hash);
 
    /**
     * Find the link which contains the claimed transaction by the input given.
