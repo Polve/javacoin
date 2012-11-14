@@ -18,11 +18,9 @@
 package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.BitcoinException;
-import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.net.HexUtil;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.LinkedList;

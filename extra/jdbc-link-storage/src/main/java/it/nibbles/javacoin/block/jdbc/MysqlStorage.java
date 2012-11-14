@@ -44,7 +44,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -223,51 +222,6 @@ public class MysqlStorage extends BaseChainLinkStorage
       } catch (SQLException e)
       {
          throw new JdbcStorageException("Error while truncating tables: " + e.getMessage(), e);
-      }
-   }
-
-   public class StorageSessionImpl implements StorageSession
-   {
-
-      Connection connection;
-      boolean forWriting;
-
-      public StorageSessionImpl(Connection connection, boolean forWriting)
-      {
-         this.connection = connection;
-         this.forWriting = forWriting;
-      }
-
-      @Override
-      public void commit()
-      {
-         if (!forWriting)
-            return;
-         try
-         {
-            connection.commit();
-         } catch (SQLException ex)
-         {
-            throw new StorageException("SQLException during commit: " + ex.getMessage(), ex);
-         }
-      }
-
-      @Override
-      public void rollback()
-      {
-         if (!forWriting)
-            return;
-         try
-         {
-            connection.rollback();
-         } catch (SQLException ex)
-         {
-            throw new StorageException("SQLException during rollback: " + ex.getMessage(), ex);
-         }
-      }
-
-      public Connection getConnection() {
-         return connection;
       }
    }
 
@@ -676,5 +630,51 @@ public class MysqlStorage extends BaseChainLinkStorage
    public void setDataSource(DataSource dataSource)
    {
       this.dataSource = dataSource;
+   }
+
+   public class StorageSessionImpl implements StorageSession
+   {
+
+      Connection connection;
+      boolean forWriting;
+
+      public StorageSessionImpl(Connection connection, boolean forWriting)
+      {
+         this.connection = connection;
+         this.forWriting = forWriting;
+      }
+
+      @Override
+      public void commit()
+      {
+         if (!forWriting)
+            return;
+         try
+         {
+            connection.commit();
+         } catch (SQLException ex)
+         {
+            throw new StorageException("SQLException during commit: " + ex.getMessage(), ex);
+         }
+      }
+
+      @Override
+      public void rollback()
+      {
+         if (!forWriting)
+            return;
+         try
+         {
+            connection.rollback();
+         } catch (SQLException ex)
+         {
+            throw new StorageException("SQLException during rollback: " + ex.getMessage(), ex);
+         }
+      }
+
+      public Connection getConnection()
+      {
+         return connection;
+      }
    }
 }
