@@ -2,36 +2,36 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>hu.netmind.bitcoin</groupId>
-  <artifactId>link-storage-testsuite</artifactId>
+  <groupId>it.nibbles.javacoin</groupId>
+  <artifactId>javacoin-block-storage-testsuite</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.0-SNAPSHOT</version>
-  <name>Test Suite for Block Link Storages</name>
+  <version>0.3-dev</version>
+  <name>Javacoin Block Storage Test Suite</name>
 
   <parent>
-    <groupId>hu.netmind.bitcoin</groupId>
-    <artifactId>bitcoin-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <groupId>it.nibbles.javacoin</groupId>
+    <artifactId>javacoin-parent</artifactId>
+    <version>0.3-dev</version>
     <relativePath>../..</relativePath>
   </parent>
 
   <dependencies>
     <dependency>
-      <groupId>hu.netmind.bitcoin</groupId>
-      <artifactId>bitcoin-block</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <groupId>it.nibbles.javacoin</groupId>
+      <artifactId>javacoin-block</artifactId>
+      <version>0.3-dev</version>
       <type>jar</type>
     </dependency>
     <dependency>
-      <groupId>hu.netmind.bitcoin</groupId>
-      <artifactId>bitcoin-api</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <groupId>it.nibbles.javacoin</groupId>
+      <artifactId>javacoin-api</artifactId>
+      <version>0.3-dev</version>
       <type>jar</type>
     </dependency>
     <dependency>
-      <groupId>hu.netmind.bitcoin</groupId>
-      <artifactId>bitcoin-script</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <groupId>it.nibbles.javacoin</groupId>
+      <artifactId>javacoin-script</artifactId>
+      <version>0.3-dev</version>
       <type>jar</type>
     </dependency>
     <dependency>

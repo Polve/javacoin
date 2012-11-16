@@ -2,16 +2,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
-   <groupId>hu.netmind.bitcoin</groupId>
-   <artifactId>bitcoin-net-p2p</artifactId>
+   <groupId>it.nibbles.javacoin</groupId>
+   <artifactId>javacoin-net-p2p</artifactId>
    <packaging>jar</packaging>
-   <version>1.0.0-SNAPSHOT</version>
-   <name>Bitcoin Network Node P2P Implementation</name>
+   <version>0.3-dev</version>
+   <name>Javacoin Network Node P2P Implementation</name>
 
    <parent>
-      <groupId>hu.netmind.bitcoin</groupId>
-      <artifactId>bitcoin-parent</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <groupId>it.nibbles.javacoin</groupId>
+      <artifactId>javacoin-parent</artifactId>
+      <version>0.3-dev</version>
       <relativePath>../..</relativePath>
    </parent>
 
@@ -41,20 +41,20 @@
    </profiles>
    <dependencies>
       <dependency>
-         <groupId>hu.netmind.bitcoin</groupId>
-         <artifactId>bitcoin-net</artifactId>
-         <version>1.0.0-SNAPSHOT</version>
+         <groupId>it.nibbles.javacoin</groupId>
+         <artifactId>javacoin-net</artifactId>
+         <version>0.3-dev</version>
       </dependency>
       <dependency>
-         <groupId>hu.netmind.bitcoin</groupId>
-         <artifactId>bitcoin-utils</artifactId>
-         <version>1.0.0-SNAPSHOT</version>
+         <groupId>it.nibbles.javacoin</groupId>
+         <artifactId>javacoin-utils</artifactId>
+         <version>0.3-dev</version>
          <type>jar</type>
       </dependency>
       <dependency>
-         <groupId>hu.netmind.bitcoin</groupId>
-         <artifactId>bitcoin-block</artifactId>
-         <version>1.0.0-SNAPSHOT</version>
+         <groupId>it.nibbles.javacoin</groupId>
+         <artifactId>javacoin-block</artifactId>
+         <version>0.3-dev</version>
          <type>jar</type>
          <scope>test</scope>
       </dependency>

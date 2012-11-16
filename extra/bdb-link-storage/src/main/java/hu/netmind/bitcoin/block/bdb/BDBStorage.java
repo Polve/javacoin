@@ -120,7 +120,7 @@ public class BDBStorage extends BaseChainLinkStorage {
   private void initializeEnvironment() {
     EnvironmentConfig environmentConfig = new EnvironmentConfig();
     environmentConfig.setAllowCreate(autoCreate);
-    environmentConfig.setTransactional(getTransactional());
+    environmentConfig.setTransactional(useExplicitTransactions());
     File dbFile = new File(dbPath);
     if (autoCreate)
       dbFile.mkdirs();
@@ -132,7 +132,7 @@ public class BDBStorage extends BaseChainLinkStorage {
     // Main
     DatabaseConfig nodupsDbConfig = new DatabaseConfig();
     nodupsDbConfig.setAllowCreate(autoCreate);
-    nodupsDbConfig.setTransactional(getTransactional());
+    nodupsDbConfig.setTransactional(useExplicitTransactions());
 
     // Primary databases
     blockHeadersDatabase = environment.openDatabase(null, "blockHeader-db", nodupsDbConfig);
@@ -142,7 +142,7 @@ public class BDBStorage extends BaseChainLinkStorage {
     DatabaseConfig dupsAllowedDbConfig = new DatabaseConfig();
     dupsAllowedDbConfig.setAllowCreate(autoCreate);
     dupsAllowedDbConfig.setSortedDuplicates(true);
-    dupsAllowedDbConfig.setTransactional(getTransactional());
+    dupsAllowedDbConfig.setTransactional(useExplicitTransactions());
     claimDatabase = environment.openDatabase(null, "claim-blockHash-relation", dupsAllowedDbConfig);
     txBlockDatabase = environment.openDatabase(null, "tx-blockHash-relation", dupsAllowedDbConfig);
 
@@ -151,7 +151,7 @@ public class BDBStorage extends BaseChainLinkStorage {
     // Height index
     SecondaryConfig secondaryConfig = new SecondaryConfig();
     secondaryConfig.setAllowCreate(autoCreate);
-    secondaryConfig.setTransactional(getTransactional());
+    secondaryConfig.setTransactional(useExplicitTransactions());
     secondaryConfig.setSortedDuplicates(true);
     secondaryConfig.setKeyCreator(new HeightIndexCreator(bitcoinFactory));
     heightDatabase = environment.openSecondaryDatabase(null, "height-index", blockHeadersDatabase, secondaryConfig);
@@ -159,7 +159,7 @@ public class BDBStorage extends BaseChainLinkStorage {
     // Prev hash index
     secondaryConfig = new SecondaryConfig();
     secondaryConfig.setAllowCreate(autoCreate);
-    secondaryConfig.setTransactional(getTransactional());
+    secondaryConfig.setTransactional(useExplicitTransactions());
     secondaryConfig.setSortedDuplicates(true);
     secondaryConfig.setKeyCreator(new PrevHashIndexCreator(bitcoinFactory));
     prevHashDatabase = environment.openSecondaryDatabase(null, "prevhash-index", blockHeadersDatabase, secondaryConfig);
@@ -167,7 +167,7 @@ public class BDBStorage extends BaseChainLinkStorage {
     // Difficulty index
     secondaryConfig = new SecondaryConfig();
     secondaryConfig.setAllowCreate(autoCreate);
-    secondaryConfig.setTransactional(getTransactional());
+    secondaryConfig.setTransactional(useExplicitTransactions());
     secondaryConfig.setSortedDuplicates(true);
     secondaryConfig.setKeyCreator(new DifficultyIndexCreator(bitcoinFactory));
     //secondaryConfig.setBtreeComparator(new DifficultyComparator(bitcoinFactory));
@@ -212,29 +212,6 @@ public class BDBStorage extends BaseChainLinkStorage {
       environment.close();
   }
 
-  public class StorageSessionImpl implements StorageSession {
-    com.sleepycat.je.Transaction transaction;
-
-    public StorageSessionImpl(com.sleepycat.je.Transaction transaction) {
-      this.transaction = transaction;
-    }
-
-    @Override
-    public void commit() {
-      if (transaction != null)
-        transaction.commit();
-    }
-
-    @Override
-    public void rollback() {
-      transaction.abort();
-    }
-  }
-
-  public StorageSession newStorageSession(boolean forWriting) {
-    return new StorageSessionImpl(forWriting ? environment.beginTransaction(null, TransactionConfig.DEFAULT) : null);
-  }
-
   // TODO eliminare
   public void storeTransaction(Transaction tx) {
     transactions.put(tx.getHash(), tx);
@@ -271,7 +248,7 @@ public class BDBStorage extends BaseChainLinkStorage {
   }
 
   // TODO eliminare
-  public void printDifficulty() throws SQLException {
+  public void printDifficulty() {
     for (Entry<Difficulty, BlockChainLink> entrySet : difficultyIndex.entrySet()) {
       System.out.println("Difficulty: " + entrySet.getKey().getDifficulty().longValue() + " hash: " + BtcUtil.hexOut(entrySet.getValue().getBlock().getHash()));
     }
@@ -309,7 +286,7 @@ public class BDBStorage extends BaseChainLinkStorage {
 
   // TODO: Convertire a protected
   @Override
-  public void storeBlockLink(Connection connection, BlockChainLink link) throws SQLException {
+  public void storeBlockLink(StorageSession storageSession, BlockChainLink link) {
     blockHeaders.put(link.getBlock().getHash(), link);
     for (Transaction tx : link.getBlock().getTransactions()) {
       transactions.put(tx.getHash(), tx);
@@ -322,7 +299,7 @@ public class BDBStorage extends BaseChainLinkStorage {
     storeBlockTxRelation(link.getBlock());
   }
 
-//  protected long storeBlockHeader(Connection connection, BlockChainLink link) throws SQLException {
+//  protected long storeBlockHeader(StorageSession storageSession, BlockChainLink link) {
 //    DatabaseEntry key = new DatabaseEntry(link.getBlock().getHash());
 //    DatabaseEntry val = new DatabaseEntry();
 //    new BlockChainHeaderBinding(bitcoinFactory).objectToEntry(link, val);
@@ -339,7 +316,7 @@ public class BDBStorage extends BaseChainLinkStorage {
   }
 
   @Override
-  protected boolean blockExists(Connection dbConnection, byte[] hash) throws SQLException {
+  protected boolean blockExists(StorageSession storageSession, byte[] hash) {
     return blockHeaders.containsKey(hash);
   }
 
@@ -349,14 +326,13 @@ public class BDBStorage extends BaseChainLinkStorage {
   }
 
   @Override
-  protected SimplifiedStoredBlock getSimplifiedStoredBlock(Connection connection, byte[] hash) throws SQLException {
+  protected SimplifiedStoredBlock getSimplifiedStoredBlock(StorageSession storageSession, byte[] hash) {
     return new SimplifiedStoredBlock(blockHeaders.get(hash));
   }
 
-  // TODO: Cambiare a protected
   // TODO: Eliminare del tutto i SimplifiedStoredBlock
   @Override
-  public List<SimplifiedStoredBlock> getBlocksAtHeight(Connection connection, long height) throws SQLException {
+  protected List<SimplifiedStoredBlock> getBlocksAtHeight(StorageSession storageSession, long height) {
     Collection<BlockChainLink> headers = heightIndex.duplicates((int) height);
     if (headers == null)
       return new ArrayList<>(0);
@@ -368,12 +344,12 @@ public class BDBStorage extends BaseChainLinkStorage {
 
   // Con BDB questo metodo non è più efficiente, verificare se cambiare l'implementazione base
   @Override
-  protected int getNumBlocksAtHeight(Connection connection, long height) throws SQLException {
+  protected int getNumBlocksAtHeight(StorageSession storageSession, long height) {
     return heightIndex.duplicates((int) height).size();
   }
 
   @Override
-  protected BlockChainLink createBlockWithTxs(Connection connection, byte[] hash, List<TransactionImpl> transactions) {
+  protected BlockChainLink createBlockWithTxs(StorageSession storageSession, byte[] hash, List<TransactionImpl> transactions) {
     BlockChainLink storedBlock = blockHeaders.get(hash);
     if (storedBlock != null) {
       Block block = storedBlock.getBlock();
@@ -391,7 +367,7 @@ public class BDBStorage extends BaseChainLinkStorage {
   }
 
   @Override
-  protected List<TransactionImpl> getBlockTransactions(Connection connection, byte[] hash) {
+  protected List<TransactionImpl> getBlockTransactions(StorageSession storageSession, byte[] hash) {
     List<byte[]> hashes = blockTxRelationship.get(hash);
     if (hashes == null)
       return new ArrayList<>(0);
@@ -403,12 +379,12 @@ public class BDBStorage extends BaseChainLinkStorage {
   }
 
   @Override
-  protected TransactionImpl getTransaction(Connection connection, byte[] hash) throws SQLException, BitcoinException {
+  protected TransactionImpl getTransaction(StorageSession storageSession, byte[] hash) {
     return (TransactionImpl) transactions.get(hash);
   }
 
   @Override
-  protected List<SimplifiedStoredBlock> getBlocksReferringTx(Connection connection, TransactionInput in) throws SQLException {
+  protected List<SimplifiedStoredBlock> getBlocksReferringTx(StorageSession storageSession, TransactionInput in) {
     Collection<byte[]> hashes = claimedTxToBlockHash.duplicates(new Claim(in.getClaimedTransactionHash(), in.getClaimedOutputIndex()));
     if (hashes == null)
       return new ArrayList<>(0);
@@ -419,7 +395,7 @@ public class BDBStorage extends BaseChainLinkStorage {
   }
 
   @Override
-  protected List<SimplifiedStoredBlock> getBlocksWithPrevHash(Connection connection, byte[] hash) throws SQLException {
+  protected List<SimplifiedStoredBlock> getBlocksWithPrevHash(StorageSession storageSession, byte[] hash) {
     Collection<BlockChainLink> headers = prevHashIndex.duplicates(hash);
     if (headers == null)
       return new ArrayList<>(0);
@@ -430,12 +406,12 @@ public class BDBStorage extends BaseChainLinkStorage {
   }
 
   @Override
-  protected int getNumBlocksWithPrevHash(Connection connection, byte[] hash) throws SQLException {
+  protected int getNumBlocksWithPrevHash(StorageSession storageSession, byte[] hash) {
     return prevHashIndex.duplicates(hash).size();
   }
 
   @Override
-  protected SimplifiedStoredBlock getHigherWorkHash(Connection connection) throws SQLException {
+  protected SimplifiedStoredBlock getHigherWorkHash(StorageSession storageSession) {
     Difficulty lastKey = difficultyIndex.lastKey();
     if (lastKey == null)
       return null;
@@ -443,7 +419,7 @@ public class BDBStorage extends BaseChainLinkStorage {
   }
 
   @Override
-  protected List<SimplifiedStoredBlock> getBlocksWithTx(Connection connection, byte[] hash) throws SQLException {
+  protected List<SimplifiedStoredBlock> getBlocksWithTx(StorageSession storageSession, byte[] hash) {
     Collection<byte[]> blockHashes = txBlockRelationship.duplicates(hash);
     if (blockHashes == null)
       return new ArrayList<>(0);
@@ -460,5 +436,35 @@ public class BDBStorage extends BaseChainLinkStorage {
 
   public void setDbPath(String dbPath) {
     this.dbPath = dbPath;
+  }
+
+  @Override
+  public StorageSession newStorageSession(boolean forWriting) {
+    return new StorageSessionImpl(forWriting && useExplicitTransactions() ? environment.beginTransaction(null, TransactionConfig.DEFAULT) : null);
+  }
+
+  public class StorageSessionImpl implements StorageSession {
+
+    com.sleepycat.je.Transaction transaction;
+
+    public StorageSessionImpl(com.sleepycat.je.Transaction transaction) {
+      this.transaction = transaction;
+    }
+
+    @Override
+    public void close() {
+    }
+
+    @Override
+    public void rollback() {
+      if (transaction != null)
+        transaction.abort();
+    }
+
+    @Override
+    public void commit() {
+      if (transaction != null)
+        transaction.commit();
+    }
   }
 }

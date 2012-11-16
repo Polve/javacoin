@@ -248,6 +248,7 @@ public class BlockTool {
     bitcoinFactory = new ProdnetBitcoinFactory(scriptFactory);
     BDBStorage bdb = new BDBStorage(bitcoinFactory);
     bdb.setDbPath(optBdbPath.value(options));
+    bdb.setUseExplicitTransactions(true);
     bdb.init();
     bdb.printBlockHeaders();
     String filename = (String) options.valueOf("inputfile");

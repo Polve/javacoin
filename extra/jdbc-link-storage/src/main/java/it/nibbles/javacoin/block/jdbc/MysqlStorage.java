@@ -44,6 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -225,15 +226,10 @@ public class MysqlStorage extends BaseChainLinkStorage
       }
    }
 
-   public StorageSession newStorageSession(boolean forWriting)
-   {
-      return new StorageSessionImpl(newConnection(), forWriting);
-   }
-
    @Override
-   public boolean blockExists(final Connection dbConnection, byte[] hash) throws SQLException
+   public boolean blockExists(final StorageSession storageSession, byte[] hash) throws SQLException
    {
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockId))
+      try (PreparedStatement ps = ((StorageSessionImpl) storageSession).getConnection().prepareStatement(sqlGetBlockId))
       {
          ps.setBytes(1, hash);
          ResultSet rs = ps.executeQuery();
@@ -242,10 +238,10 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected List<SimplifiedStoredBlock> getBlocksAtHeight(final Connection dbConnection, long height) throws SQLException
+   protected List<SimplifiedStoredBlock> getBlocksAtHeight(final StorageSession storageSession, long height) throws SQLException
    {
       List<SimplifiedStoredBlock> blocks = new ArrayList<>();
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetSimplifiedBlockHeadersAtHeight))
+      try (PreparedStatement ps = ((StorageSessionImpl)storageSession).getConnection().prepareStatement(sqlGetSimplifiedBlockHeadersAtHeight))
       {
          ps.setLong(1, height);
          ResultSet rs = ps.executeQuery();
@@ -259,10 +255,10 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected List<SimplifiedStoredBlock> getBlocksReferringTx(final Connection dbConnection, final TransactionInput in) throws SQLException
+   protected List<SimplifiedStoredBlock> getBlocksReferringTx(final StorageSession storageSession, final TransactionInput in) throws SQLException
    {
       List<SimplifiedStoredBlock> blocks = new LinkedList<>();
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockHashesWithReferredTx))
+      try (PreparedStatement ps = ((StorageSessionImpl)storageSession).getConnection().prepareStatement(sqlGetBlockHashesWithReferredTx))
       {
          ps.setBytes(1, in.getClaimedTransactionHash());
          ps.setInt(2, in.getClaimedOutputIndex());
@@ -274,10 +270,10 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected List<SimplifiedStoredBlock> getBlocksWithTx(final Connection dbConnection, final byte[] hash) throws SQLException
+   protected List<SimplifiedStoredBlock> getBlocksWithTx(final StorageSession storageSession, final byte[] hash) throws SQLException
    {
       List<SimplifiedStoredBlock> blocks = new LinkedList<>();
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockHashesWithTx))
+      try (PreparedStatement ps = ((StorageSessionImpl)storageSession).getConnection().prepareStatement(sqlGetBlockHashesWithTx))
       {
          ps.setBytes(1, hash);
          ResultSet rs = ps.executeQuery();
@@ -288,10 +284,10 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected List<SimplifiedStoredBlock> getBlocksWithPrevHash(final Connection dbConnection, final byte[] hash) throws SQLException
+   protected List<SimplifiedStoredBlock> getBlocksWithPrevHash(final StorageSession storageSession, final byte[] hash) throws SQLException
    {
       List<SimplifiedStoredBlock> blocks = new LinkedList<>();
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetSimplifiedBlocksWithPrevHash))
+      try (PreparedStatement ps = ((StorageSessionImpl)storageSession).getConnection().prepareStatement(sqlGetSimplifiedBlocksWithPrevHash))
       {
          ps.setBytes(1, hash);
          ResultSet rs = ps.executeQuery();
@@ -302,9 +298,9 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected int getNumBlocksAtHeight(final Connection dbConnection, long height) throws SQLException
+   protected int getNumBlocksAtHeight(final StorageSession storageSession, long height) throws SQLException
    {
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetNumBlockHeadersAtHeight))
+      try (PreparedStatement ps = ((StorageSessionImpl)storageSession).getConnection().prepareStatement(sqlGetNumBlockHeadersAtHeight))
       {
          ps.setLong(1, height);
          ResultSet rs = ps.executeQuery();
@@ -314,9 +310,9 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected int getNumBlocksWithPrevHash(final Connection dbConnection, byte[] hash) throws SQLException
+   protected int getNumBlocksWithPrevHash(final StorageSession storageSession, byte[] hash) throws SQLException
    {
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetNumBlocksWithPrevHash))
+      try (PreparedStatement ps = ((StorageSessionImpl)storageSession).getConnection().prepareStatement(sqlGetNumBlocksWithPrevHash))
       {
          ps.setBytes(1, hash);
          ResultSet rs = ps.executeQuery();
@@ -326,22 +322,23 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected void storeBlockLink(final Connection connection, final BlockChainLink link) throws SQLException
+   protected void storeBlockLink(final StorageSession storageSession, final BlockChainLink link) throws SQLException
    {
-      long blockId = storeBlockHeader(connection, link);
+      Connection dbConnection = ((StorageSessionImpl) storageSession).getConnection();
+      long blockId = storeBlockHeader(dbConnection, link);
 
       List<Transaction> transactions = link.getBlock().getTransactions();
       int pos = 0;
       for (Transaction tx : transactions)
       {
-         long txId = getTransactionId(connection, tx.getHash());
+         long txId = getTransactionId(dbConnection, tx.getHash());
          if (txId == -1)
-            txId = storeTransaction(connection, tx);
-         storeBlkTxLink(connection, blockId, txId, pos++);
+            txId = storeTransaction(dbConnection, tx);
+         storeBlkTxLink(dbConnection, blockId, txId, pos++);
       }
    }
 
-   protected long storeBlockHeader(final Connection dbConnection, final BlockChainLink link)
+   protected long storeBlockHeader(final Connection dbConnection, final BlockChainLink link) throws SQLException
    {
       Block block = link.getBlock();
       long blockId = blockIdGen.getNewId();
@@ -360,14 +357,10 @@ public class MysqlStorage extends BaseChainLinkStorage
          ps.setLong(10, link.getTotalDifficulty().getDifficulty().longValue());
          ps.executeUpdate();
          return blockId;
-      } catch (SQLException e)
-      {
-         logger.error("Error while storing block header: " + e.getMessage(), e);
-         throw new JdbcStorageException("Error while storing block header: " + e.getMessage(), e);
       }
    }
 
-   protected long storeTransaction(final Connection dbConnection, final Transaction tx)
+   protected long storeTransaction(final Connection dbConnection, final Transaction tx) throws SQLException
    {
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlPutTransaction);
               PreparedStatement psPutTxInput = dbConnection.prepareStatement(sqlPutTxInput);
@@ -405,9 +398,6 @@ public class MysqlStorage extends BaseChainLinkStorage
             psPutTxOutput.executeUpdate();
          }
          return txId;
-      } catch (SQLException e)
-      {
-         throw new JdbcStorageException("Error while storing transaction: " + e.getMessage(), e);
       }
    }
 
@@ -471,8 +461,9 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected TransactionImpl getTransaction(final Connection dbConnection, byte[] hash) throws SQLException, BitcoinException
+   protected TransactionImpl getTransaction(final StorageSession storageSession, byte[] hash) throws SQLException, BitcoinException
    {
+      Connection dbConnection = ((StorageSessionImpl)storageSession).getConnection();
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetTransaction))
       {
          ps.setBytes(1, hash);
@@ -498,16 +489,13 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected List<TransactionImpl> getBlockTransactions(final Connection dbConnection, byte[] hash)
+   protected List<TransactionImpl> getBlockTransactions(final StorageSession storageSession, byte[] hash) throws SQLException, BitcoinException
    {
+      Connection dbConnection = ((StorageSessionImpl) storageSession).getConnection();
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockTransactionsFromHash))
       {
          ps.setBytes(1, hash);
          return getBlockTransactions(dbConnection, ps.executeQuery());
-      } catch (SQLException | BitcoinException e)
-      {
-         logger.error("getBlockByHashTransactionsEx: " + e.getMessage(), e);
-         throw new JdbcStorageException("getBlockByHashTransactionsEx: " + e.getMessage(), e);
       }
    }
 
@@ -525,10 +513,10 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected BlockChainLink createBlockWithTxs(final Connection dbConnection, final byte[] hash, List<TransactionImpl> transactions)
+   protected BlockChainLink createBlockWithTxs(final StorageSession storageSession, final byte[] hash, List<TransactionImpl> transactions)
    {
       //logger.debug("[createBlockWithTxs " + HexUtil.toSingleHexString(hash) + " ]");
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockHeader))
+      try (PreparedStatement ps = ((StorageSessionImpl) storageSession).getConnection().prepareStatement(sqlGetBlockHeader))
       {
          ps.setBytes(1, hash);
          ResultSet rs = ps.executeQuery();
@@ -549,9 +537,9 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected SimplifiedStoredBlock getSimplifiedStoredBlock(final Connection dbConnection, final byte[] hash) throws SQLException
+   protected SimplifiedStoredBlock getSimplifiedStoredBlock(final StorageSession storageSession, final byte[] hash) throws SQLException
    {
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetBlockHeader))
+      try (PreparedStatement ps = ((StorageSessionImpl)storageSession).getConnection().prepareStatement(sqlGetBlockHeader))
       {
          ps.setBytes(1, hash);
          ResultSet rs = ps.executeQuery();
@@ -563,9 +551,9 @@ public class MysqlStorage extends BaseChainLinkStorage
    }
 
    @Override
-   protected SimplifiedStoredBlock getHigherWorkHash(final Connection dbConnection) throws SQLException
+   protected SimplifiedStoredBlock getHigherWorkHash(final StorageSession storageSession) throws SQLException
    {
-      try (PreparedStatement ps = dbConnection.prepareStatement(sqlGetHigherWorkBlock))
+      try (PreparedStatement ps = ((StorageSessionImpl)storageSession).getConnection().prepareStatement(sqlGetHigherWorkBlock))
       {
          ResultSet rs = ps.executeQuery();
          if (rs.next())
@@ -575,14 +563,15 @@ public class MysqlStorage extends BaseChainLinkStorage
       }
    }
 
-   public void purgeBlocksUpToHeight(long height, boolean purgeTransactions) throws SQLException
+   // TODO: untested
+   public void purgeBlocksUpToHeight(long height, boolean purgeTransactions)
    {
       long startTime = System.currentTimeMillis();
       Connection dbConnection = newConnection();
       int blocksDeleted = -1, txDeleted = -1;
       try
       {
-         if (getTransactional())
+         if (useExplicitTransactions())
             dbConnection.setAutoCommit(false);
          try (PreparedStatement ps = dbConnection.prepareStatement(sqlPurgeBlocksUpToHeight))
          {
@@ -594,13 +583,13 @@ public class MysqlStorage extends BaseChainLinkStorage
             {
                txDeleted = ps.executeUpdate();
             }
-         if (getTransactional())
+         if (useExplicitTransactions())
             dbConnection.commit();
       } catch (SQLException e)
       {
          try
          {
-            if (getTransactional())
+            if (useExplicitTransactions())
                dbConnection.rollback();
          } catch (SQLException ex)
          {
@@ -632,22 +621,51 @@ public class MysqlStorage extends BaseChainLinkStorage
       this.dataSource = dataSource;
    }
 
+   @Override
+   public StorageSession newStorageSession(boolean forWriting)
+   {
+      Connection connection = newConnection();
+      try
+      {
+         if (forWriting && useExplicitTransactions())
+            connection.setAutoCommit(false);
+      } catch (SQLException ex)
+      {
+         String msg = "Can't enable transaction on database connection: " + ex.getMessage();
+         logger.error(msg, ex);
+         throw new StorageException(msg);
+      }
+      return new StorageSessionImpl(connection, forWriting && useExplicitTransactions());
+   }
+
    public class StorageSessionImpl implements StorageSession
    {
 
       Connection connection;
-      boolean forWriting;
+      boolean commitNeeded;
 
-      public StorageSessionImpl(Connection connection, boolean forWriting)
+      public StorageSessionImpl(Connection connection, boolean commitNeeded)
       {
          this.connection = connection;
-         this.forWriting = forWriting;
+         this.commitNeeded = commitNeeded;
+      }
+
+      @Override
+      public void close()
+      {
+         try
+         {
+            connection.close();
+         } catch (SQLException ex)
+         {
+            throw new StorageException("SQLException during close: " + ex.getMessage(), ex);
+         }
       }
 
       @Override
       public void commit()
       {
-         if (!forWriting)
+         if (!commitNeeded)
             return;
          try
          {
@@ -661,7 +679,7 @@ public class MysqlStorage extends BaseChainLinkStorage
       @Override
       public void rollback()
       {
-         if (!forWriting)
+         if (!commitNeeded)
             return;
          try
          {

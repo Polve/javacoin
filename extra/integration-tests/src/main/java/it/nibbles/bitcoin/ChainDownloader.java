@@ -29,9 +29,9 @@ import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
+import hu.netmind.bitcoin.block.bdb.BDBStorage;
 import it.nibbles.javacoin.block.jdbc.DatasourceUtils;
 import it.nibbles.javacoin.block.jdbc.JdbcChainLinkStorage;
-import it.nibbles.javacoin.block.jdbc.MysqlStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.net.BitcoinInputStream;
 import hu.netmind.bitcoin.net.BlockMessage;
@@ -109,7 +109,6 @@ public class ChainDownloader {
     if (options.has("connect")) {
       customAddressSource = new NodeSource((List<String>) options.valuesOf("connect"),
               isProdnet ? 8333 : 18333);
-
     }
     List<String> peers = (List<String>) options.valuesOf("connect");
     for (String peer : peers) {
@@ -170,12 +169,9 @@ public class ChainDownloader {
             ? new Testnet3BitcoinFactory(scriptFactory)
             : new ProdnetBitcoinFactory(scriptFactory);
     logger.debug("bitcoin factory initialized");
-    MysqlStorage storage = new MysqlStorage(bitcoinFactory);
-    storage.setDataSource(DatasourceUtils.getMysqlDatasource(jdbcUrl, jdbcUser, jdbcPassword));
-    /*
-     storage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
-     + (isTestnet2 ? "testnet2" : isTestnet3 ? "testnet3" : "prodnet"), "javacoin", "pw"));
-     */
+//    MysqlStorage storage = new MysqlStorage(bitcoinFactory);
+//    storage.setDataSource(DatasourceUtils.getMysqlDatasource(jdbcUrl, jdbcUser, jdbcPassword));
+    BDBStorage storage = new BDBStorage(bitcoinFactory);
     storage.init();
     logger.debug("block storage initialized");
     JdbcChainLinkStorage nodeStorage = new JdbcChainLinkStorage();
