@@ -17,7 +17,7 @@
  */
 package it.nibbles.bitcoin;
 
-import it.nibbles.javacoin.block.jdbc.JdbcChainLinkStorage;
+import it.nibbles.javacoin.storage.jdbc.JdbcChainLinkStorage;
 import hu.netmind.bitcoin.net.NodeAddress;
 import hu.netmind.bitcoin.net.p2p.AddressSource;
 import hu.netmind.bitcoin.net.p2p.source.RandomizedNodesSource;

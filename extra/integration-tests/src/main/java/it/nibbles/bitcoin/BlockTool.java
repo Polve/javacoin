@@ -33,13 +33,12 @@ import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import hu.netmind.bitcoin.block.TransactionImpl;
 import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;
-import hu.netmind.bitcoin.block.bdb.BDBChainLinkStorage;
-import hu.netmind.bitcoin.block.bdb.BDBStorage;
+import it.nibbles.javacoin.storage.bdb.BDBStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
 import it.nibbles.bitcoin.utils.BtcUtil;
-import it.nibbles.javacoin.block.jdbc.DatasourceUtils;
-import it.nibbles.javacoin.block.jdbc.MysqlStorage;
+import it.nibbles.javacoin.storage.jdbc.DatasourceUtils;
+import it.nibbles.javacoin.storage.jdbc.MysqlStorage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -95,7 +94,7 @@ public class BlockTool {
           + "  --dbpass=<password>  Specify database password to use for the connection.\n";
   private static int firstBlock, lastBlock;
   private static String blockHash;
-  private static String storageType = STORAGE_JDBC;
+  private static String storageType = STORAGE_BDB;
   private static boolean isProdnet = false;
   private static boolean isTestNet2 = false;
   private static boolean isTestNet3 = false;
@@ -152,6 +151,8 @@ public class BlockTool {
     isProdnet = options.has("prodnet");
     isTestNet2 = options.has("testnet2");
     isTestNet3 = options.has("testnet3");
+    if (!isProdnet && !isTestNet2 && !isTestNet3)
+      isTestNet3 = true;
     if (options.hasArgument("first")) {
       firstBlock = ((Integer) options.valueOf("first")).intValue();
       if (!options.hasArgument("last"))
@@ -173,8 +174,8 @@ public class BlockTool {
     //println("FirstBlock: " + firstBlock + " lastBlock: " + lastBlock + " inputfile: " + inputfile.value(options) + " outputfile: " + outputfile.value(options));
     BlockTool app = new BlockTool();
 
-    app.testBdb(options);
-    System.exit(22);
+//    app.testBdb(options);
+//    System.exit(22);
 
     app.init(options);
     if (cmdImportBlockchain) {
@@ -220,9 +221,13 @@ public class BlockTool {
             : new ProdnetBitcoinFactory(scriptFactory);
     // Initialize the correct storage engine
     if (STORAGE_BDB.equalsIgnoreCase(storageType)) {
-      BDBChainLinkStorage engine = new BDBChainLinkStorage(bitcoinFactory);
-      engine.setDbPath(optBdbPath.value(options));
+      BDBStorage engine = new BDBStorage(bitcoinFactory);
+      String bdbPath = (isProdnet ? "prodnet" : isTestNet2 ? "testnet2" : "testnet3") + "-db";
+      if (options.has(optBdbPath))
+        bdbPath = optBdbPath.value(options);
+      engine.setDbPath(bdbPath);
       engine.init();
+      println("BDB Storage initialized with path: " + bdbPath);
       storage = engine;
     } else if (STORAGE_JDBC.equalsIgnoreCase(storageType)) {
       MysqlStorage engine = new MysqlStorage(bitcoinFactory);
@@ -263,7 +268,7 @@ public class BlockTool {
     while (block != null) {
       numBlocks++;
       //System.out.println("Letto blocco con hash: " + BtcUtil.hexOut(block.getHash()));
-      BlockChainLink chainLink = new BlockChainLink(block, bitcoinFactory.newDifficulty(new BigDecimal(numBlocks*253)), numBlocks);
+      BlockChainLink chainLink = new BlockChainLink(block, bitcoinFactory.newDifficulty(new BigDecimal(numBlocks * 253)), numBlocks);
       bdb.storeBlockLink(null, chainLink);
 //      BlockChainLink storedBlock = bdb.getLink(block.getHash());
 //      System.out.println("[reread] block: " + storedBlock+" with "+storedBlock.getBlock().getTransactions().size()+" txs");
