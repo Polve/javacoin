@@ -25,6 +25,7 @@ import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
+import it.nibbles.javacoin.storage.OrphanBlockStorageException;
 import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
@@ -208,7 +209,34 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       assertHash(storage.getGenesisLink(),23);
    }
 
-   public void testLastLinkEmpty()
+  @Test(expectedExceptions = OrphanBlockStorageException.class)
+  public void testInsertOrphanBlock1()
+          throws BitcoinException {
+    addLink(23, 0, 0, 1);
+    addLink(24, 23, 1, 2);
+    addLink(25, 21, 2, 3);
+  }
+
+  @Test(expectedExceptions = OrphanBlockStorageException.class)
+  public void testInsertOrphanBlock2()
+          throws BitcoinException {
+    addLink(23, 0, 0, 1);
+    addLink(24, 23, 1, 2);
+    getProvider().closeStorage(storage);
+    storage = getProvider().newStorage();
+    addLink(25, 21, 2, 3);
+  }
+
+  public void testInsertExistingBlocks()
+          throws BitcoinException {
+    addLink(23, 0, 0, 1);
+    addLink(24, 23, 1, 2);
+    addLink(25, 24, 1, 2);
+    addLink(25, 24, 1, 2);  // Duplicate
+    addLink(24, 23, 1, 2);  // Duplicate
+  }
+
+  public void testLastLinkEmpty()
       throws BitcoinException
    {
       Assert.assertNull(storage.getLastLink());

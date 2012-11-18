@@ -15,7 +15,7 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package it.nibbles.bitcoin;
+package it.nibbles.javacoin;
 
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
@@ -43,6 +43,7 @@ import hu.netmind.bitcoin.net.p2p.source.IrcAddressSource;
 import hu.netmind.bitcoin.net.p2p.source.NodeSource;
 import hu.netmind.bitcoin.net.p2p.source.RandomizedNodesSource;
 import hu.netmind.bitcoin.script.ScriptFactoryImpl;
+import it.nibbles.bitcoin.StdNodeHandler;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

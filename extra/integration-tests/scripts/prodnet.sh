@@ -5,4 +5,4 @@ if [ ! -e $l4jconfig ] ; then
   exit 1
 fi
 OPTS="-Dlog4j.configuration=$l4jconfig"
-MAVEN_OPTS="$OPTS" mvn exec:java -Dexec.mainClass=it.nibbles.bitcoin.ChainDownloader -Dexec.args="$*"
+MAVEN_OPTS="$OPTS" mvn exec:java -Dexec.mainClass=it.nibbles.javacoin.ChainDownloader -Dexec.args="$*"

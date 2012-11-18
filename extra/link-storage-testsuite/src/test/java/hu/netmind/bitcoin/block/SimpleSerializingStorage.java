@@ -20,6 +20,7 @@ package hu.netmind.bitcoin.block;
 
 import hu.netmind.bitcoin.Transaction;
 import hu.netmind.bitcoin.TransactionInput;
+import it.nibbles.javacoin.storage.OrphanBlockStorageException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -184,10 +185,12 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
    }
 
   @Override
-   public void addLink(BlockChainLink link)
-   {
-      links.put(toByteList(link.getBlock().getHash()),link);
-   }
+  public void addLink(BlockChainLink link) {
+    if (getHeight() > 0 && !blockExists(link.getBlock().getPreviousBlockHash()))
+      throw new OrphanBlockStorageException("Trying to store an orphan block");
+    if (!blockExists(link.getBlock().getHash()))
+      links.put(toByteList(link.getBlock().getHash()), link);
+  }
 
    public void updateLink(BlockChainLink link)
    {

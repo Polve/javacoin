@@ -18,7 +18,6 @@
 package it.nibbles.javacoin.storage.bdb;
 
 import com.sleepycat.bind.tuple.IntegerBinding;
-import com.sleepycat.collections.CurrentTransaction;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.TransactionInput;
 import org.slf4j.Logger;
@@ -36,19 +35,17 @@ import com.sleepycat.je.TransactionConfig;
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.Block;
 import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.block.BaseChainLinkStorage;
+import it.nibbles.javacoin.storage.BaseChainLinkStorage;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.Difficulty;
-import hu.netmind.bitcoin.block.SimplifiedStoredBlock;
+import it.nibbles.javacoin.storage.SimplifiedStoredBlock;
 import hu.netmind.bitcoin.block.StorageSession;
 import hu.netmind.bitcoin.block.TransactionImpl;
 import it.nibbles.bitcoin.utils.BtcUtil;
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -67,11 +64,14 @@ import java.util.MissingResourceException;
 public class BDBStorage extends BaseChainLinkStorage {
 
   private static final boolean DEFAULT_AUTOCREATE = true;
+  private static final boolean DEFAULT_DEFERRED_WRITE = false;
   //private static final boolean DEFAULT_TRANSACTIONAL = true;
   private static final String DEFAULT_DB_PATH = "./test-db";
   private static final int DEFAULT_CACHE_PERCENT = 50;
   private static Logger logger = LoggerFactory.getLogger(BDBStorage.class);
   private boolean autoCreate = DEFAULT_AUTOCREATE;
+  private boolean deferredWrite = DEFAULT_DEFERRED_WRITE;
+  private boolean temporaryStorage = false;
   private int cachePercent = DEFAULT_CACHE_PERCENT;
   private String dbPath = DEFAULT_DB_PATH;
   private BitcoinFactory bitcoinFactory = null;
@@ -135,6 +135,8 @@ public class BDBStorage extends BaseChainLinkStorage {
     // Main
     DatabaseConfig nodupsDbConfig = new DatabaseConfig();
     nodupsDbConfig.setAllowCreate(autoCreate);
+    nodupsDbConfig.setDeferredWrite(deferredWrite);
+    nodupsDbConfig.setTemporary(temporaryStorage);
     nodupsDbConfig.setTransactional(useExplicitTransactions());
 
     // Primary databases
@@ -145,6 +147,8 @@ public class BDBStorage extends BaseChainLinkStorage {
     DatabaseConfig dupsAllowedDbConfig = new DatabaseConfig();
     dupsAllowedDbConfig.setAllowCreate(autoCreate);
     dupsAllowedDbConfig.setSortedDuplicates(true);
+    dupsAllowedDbConfig.setDeferredWrite(deferredWrite);
+    dupsAllowedDbConfig.setTemporary(temporaryStorage);
     dupsAllowedDbConfig.setTransactional(useExplicitTransactions());
     claimDatabase = environment.openDatabase(null, "claim-blockHash-relation", dupsAllowedDbConfig);
     txBlockDatabase = environment.openDatabase(null, "tx-blockHash-relation", dupsAllowedDbConfig);
@@ -154,6 +158,8 @@ public class BDBStorage extends BaseChainLinkStorage {
     // Height index
     SecondaryConfig secondaryConfig = new SecondaryConfig();
     secondaryConfig.setAllowCreate(autoCreate);
+    secondaryConfig.setDeferredWrite(deferredWrite);
+    secondaryConfig.setTemporary(temporaryStorage);
     secondaryConfig.setTransactional(useExplicitTransactions());
     secondaryConfig.setSortedDuplicates(true);
     secondaryConfig.setKeyCreator(new HeightIndexCreator(bitcoinFactory));
@@ -162,6 +168,8 @@ public class BDBStorage extends BaseChainLinkStorage {
     // Prev hash index
     secondaryConfig = new SecondaryConfig();
     secondaryConfig.setAllowCreate(autoCreate);
+    secondaryConfig.setDeferredWrite(deferredWrite);
+    secondaryConfig.setTemporary(temporaryStorage);
     secondaryConfig.setTransactional(useExplicitTransactions());
     secondaryConfig.setSortedDuplicates(true);
     secondaryConfig.setKeyCreator(new PrevHashIndexCreator(bitcoinFactory));
@@ -170,6 +178,8 @@ public class BDBStorage extends BaseChainLinkStorage {
     // Difficulty index
     secondaryConfig = new SecondaryConfig();
     secondaryConfig.setAllowCreate(autoCreate);
+    secondaryConfig.setDeferredWrite(deferredWrite);
+    secondaryConfig.setTemporary(temporaryStorage);
     secondaryConfig.setTransactional(useExplicitTransactions());
     secondaryConfig.setSortedDuplicates(true);
     secondaryConfig.setKeyCreator(new DifficultyIndexCreator(bitcoinFactory));
@@ -213,16 +223,6 @@ public class BDBStorage extends BaseChainLinkStorage {
       blockHeadersDatabase.close();
     if (environment != null)
       environment.close();
-  }
-
-  // TODO eliminare
-  public void storeTransaction(Transaction tx) {
-    transactions.put(tx.getHash(), tx);
-  }
-
-  // TODO eliminare
-  public Transaction getTransaction(byte[] hash) {
-    return transactions.get(hash);
   }
 
   // TODO eliminare
@@ -276,9 +276,8 @@ public class BDBStorage extends BaseChainLinkStorage {
     return null;
   }
 
-  // TODO: Convertire a protected
   @Override
-  public void storeBlockLink(StorageSession storageSession, BlockChainLink link) {
+  protected void storeBlockLink(StorageSession storageSession, BlockChainLink link) {
     blockHeaders.put(link.getBlock().getHash(), link);
     for (Transaction tx : link.getBlock().getTransactions()) {
       transactions.put(tx.getHash(), tx);
@@ -436,6 +435,31 @@ public class BDBStorage extends BaseChainLinkStorage {
 
   public int getCachePercent() {
     return cachePercent;
+  }
+
+  public void setDeferredWrite(boolean deferredWrite) {
+    this.deferredWrite = deferredWrite;
+  }
+
+  public boolean isDeferredWrite() {
+    return deferredWrite;
+  }
+
+  @Override
+  public void setAutoCreate(boolean autoCreate) {
+    super.setAutoCreate(autoCreate);
+  }
+
+  public boolean isAutoCreate() {
+    return autoCreate;
+  }
+
+  public void setTemporaryStorage(boolean temporaryStorage) {
+    this.temporaryStorage = temporaryStorage;
+  }
+
+  public boolean isTemporaryStorage() {
+    return temporaryStorage;
   }
 
   @Override

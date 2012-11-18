@@ -752,6 +752,37 @@ public class BlockChainTests
             "      out 2000000;",true);
    }
 
+   @Test(expectedExceptions=VerificationException.class)
+   public void testTwoTxInSameBlockSpendSameInput()
+      throws BitcoinException
+   {
+      testAddBlockTemplate(
+            "block 1234567 1 1b0404cb 00 010203 01;"+ // Genesis block
+            "   tx 1234567 990101 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "block 1234568 1 1b0404cb 01 010203 02;"+ // Next block
+            "   tx 123458 990102 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990103 false;"+ // A normal tx spending money from genesis
+            "      in 990101 0 999;"+
+            "      out 2000000;"+
+            "      out 3000000;",
+
+            "block 1234569 1 1b0404cb 02 010203 06;"+ // Next block (spends previous)
+            "   tx 123458 990106 true;"+ // Coinbase
+            "      in 00 -1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990107 false;"+ // A tx spending money from 1st block
+            "      in 990103 0 999;"+
+            "      in 990103 1 999;"+
+            "      out 5000000;"+
+            "   tx 1234568 990108 false;"+ // A tx spending an input already claimed from the previous tx
+            "      in 990103 0 999;"+
+            "      out 2000000;",true);
+   }
+
    public void testSpendAlreadySpentOutputOnOtherBranch()
       throws BitcoinException
    {

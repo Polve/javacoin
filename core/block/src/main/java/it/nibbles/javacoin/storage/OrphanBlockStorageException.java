@@ -14,21 +14,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package hu.netmind.bitcoin.block;
+package it.nibbles.javacoin.storage;
 
 /**
  * @author Alessandro Polverini
  */
-public class StorageException extends RuntimeException
+public class OrphanBlockStorageException extends StorageException
 {
-   public StorageException(String msg)
+   public OrphanBlockStorageException(String msg)
    {
       super(msg);
    }
 
-   public StorageException(String msg, Throwable t)
-   {
-      super(msg,t);
-   }
 }
 

@@ -13,7 +13,7 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package it.nibbles.bitcoin;
+package it.nibbles.javacoin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.netmind.bitcoin.BitcoinException;
@@ -173,10 +173,6 @@ public class BlockTool {
     //println("save: " + cmdSaveBlockchain + " load: " + cmdLoadBlockchain + " prodnet: " + isProdnet + " testnet2: " + isTestNet2 + " testnet3: " + isTestNet3);
     //println("FirstBlock: " + firstBlock + " lastBlock: " + lastBlock + " inputfile: " + inputfile.value(options) + " outputfile: " + outputfile.value(options));
     BlockTool app = new BlockTool();
-
-//    app.testBdb(options);
-//    System.exit(22);
-
     app.init(options);
     if (cmdImportBlockchain) {
       //System.out.println("Press return to start import blocks to blockchain");
@@ -190,7 +186,10 @@ public class BlockTool {
       Block block = app.readBlock(reader, false);
       while (block != null) {
         numBlocks++;
+        long startTime = System.currentTimeMillis();
         blockChain.addBlock(block);
+        long insertTime = System.currentTimeMillis() - startTime;
+        System.out.printf("%6d Block " + BtcUtil.hexOut(block.getHash()) + " #txs: %4d insertTime(ms): %d%n", block.getTransactions().size(), insertTime);
         block = app.readBlock(reader, false);
       }
       System.out.println("Numero blocchi letti: " + numBlocks);
@@ -226,6 +225,9 @@ public class BlockTool {
       if (options.has(optBdbPath))
         bdbPath = optBdbPath.value(options);
       engine.setDbPath(bdbPath);
+      engine.setUseExplicitTransactions(false);
+      engine.setCachePercent(90);
+      engine.setDeferredWrite(true);
       engine.init();
       println("BDB Storage initialized with path: " + bdbPath);
       storage = engine;
@@ -244,7 +246,10 @@ public class BlockTool {
    * Free used resources.
    */
   public void close() {
-    if (storage != null) {
+    if (storage instanceof BDBStorage) {
+      long time = System.currentTimeMillis();
+      ((BDBStorage) storage).close();
+      println("Time to flush BDB database: " + (System.currentTimeMillis() - time));
     }
   }
 
@@ -299,7 +304,6 @@ public class BlockTool {
   public Block readBlock(BufferedReader reader, boolean doHashCheck) throws IOException, BitcoinException {
     String line = reader.readLine();
     if (line == null) {
-      System.out.println("Fine blocchi in input");
       return null;
     }
     if (line.startsWith("block ")) {
@@ -312,7 +316,7 @@ public class BlockTool {
       long nonce = Long.parseLong(tokens[6]);
       long version = Long.parseLong(tokens[7]);
       int numTransactions = Integer.parseInt(tokens[8]);
-      System.out.println("Blocco " + BtcUtil.hexOut(hash) + " nonce: " + nonce + " numTransazioni: " + numTransactions);
+      //System.out.println("Input block " + BtcUtil.hexOut(hash) + " nonce: " + nonce + " numTxs: " + numTransactions);
       List<TransactionImpl> txs = new ArrayList<>(numTransactions);
       for (int i = 0; i < numTransactions; i++) {
         txs.add(readTransaction(reader, doHashCheck));
@@ -320,7 +324,7 @@ public class BlockTool {
       if (doHashCheck) {
         Block block = new BlockImpl(txs, creationTime, nonce, compressedTarget, previousHash, merkleRoot, null, version);
         if (!Arrays.equals(hash, block.getHash())) {
-          System.out.println("Block hash non corrispondente: " + BtcUtil.hexOut(hash) + " vs " + BtcUtil.hexOut(block.getHash()));
+          System.out.println("Error: invalid input block hash: " + BtcUtil.hexOut(hash) + " vs " + BtcUtil.hexOut(block.getHash()) + " (calculated)");
           return null;
         }
         return block;
@@ -372,7 +376,7 @@ public class BlockTool {
     if (doHashCheck) {
       TransactionImpl tx = new TransactionImpl(inputs, outputs, lockTime, version);
       if (!Arrays.equals(hash, tx.getHash())) {
-        System.out.println("TX hash non corrispondente: " + BtcUtil.hexOut(hash) + " vs " + BtcUtil.hexOut(tx.getHash()));
+        System.out.println("Error: invalid input TX hash: " + BtcUtil.hexOut(hash) + " vs " + BtcUtil.hexOut(tx.getHash()) + " (calculated)");
         return null;
       }
       return tx;

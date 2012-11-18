@@ -28,7 +28,7 @@ import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.block.BlockImpl;
-import hu.netmind.bitcoin.block.StorageException;
+import it.nibbles.javacoin.storage.StorageException;
 import hu.netmind.bitcoin.block.TransactionImpl;
 import hu.netmind.bitcoin.block.TransactionInputImpl;
 import hu.netmind.bitcoin.block.TransactionOutputImpl;

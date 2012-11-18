@@ -17,7 +17,6 @@
  */
 package it.nibbles.javacoin.storage.bdb;
 
-import it.nibbles.javacoin.storage.bdb.BDBStorage;
 import hu.netmind.bitcoin.BitcoinException;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
@@ -51,6 +50,8 @@ public class StorageITTests {
         }
         BDBStorage storage = new BDBStorage(bitcoinFactory);
         storage.setDbPath("target/test-db");
+        storage.setUseExplicitTransactions(false);
+        storage.setDeferredWrite(true);
         storage.init();
         return storage;
       }

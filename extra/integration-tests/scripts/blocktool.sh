@@ -1,2 +1,2 @@
 #!/bin/sh
-mvn exec:java -Dexec.mainClass=it.nibbles.bitcoin.BlockTool -Dexec.args="$*"
+MAVEN_OPTS=-Xmx4096m mvn exec:java -Dexec.mainClass=it.nibbles.javacoin.BlockTool -Dexec.args="$*"
