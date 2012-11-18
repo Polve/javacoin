@@ -20,8 +20,8 @@ package it.nibbles.javacoin.storage.bdb;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.SecondaryKeyCreator;
-import hu.netmind.bitcoin.block.BitcoinFactory;
-import hu.netmind.bitcoin.block.BlockChainLink;
+import it.nibbles.javacoin.block.BitcoinFactory;
+import it.nibbles.javacoin.block.BlockChainLink;
 
 /**
  * Creates a secondary index from a link using the previous hash. This means the

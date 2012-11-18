@@ -18,8 +18,8 @@
 package it.nibbles.javacoin.storage.bdb;
 
 import com.sleepycat.bind.tuple.TupleInput;
-import hu.netmind.bitcoin.block.BitcoinFactory;
-import hu.netmind.bitcoin.block.Difficulty;
+import it.nibbles.javacoin.block.BitcoinFactory;
+import it.nibbles.javacoin.block.Difficulty;
 import java.io.Serializable;
 import java.util.Comparator;
 

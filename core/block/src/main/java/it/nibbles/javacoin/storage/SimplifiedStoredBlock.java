@@ -15,8 +15,8 @@
  */
 package it.nibbles.javacoin.storage;
 
-import hu.netmind.bitcoin.block.BlockChainLink;
-import hu.netmind.bitcoin.net.HexUtil;
+import it.nibbles.javacoin.block.BlockChainLink;
+import it.nibbles.javacoin.net.HexUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;

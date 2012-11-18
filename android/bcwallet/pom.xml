@@ -2,36 +2,36 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
-   <groupId>hu.netmind.bitcoin.bcwallet</groupId>
+   <groupId>it.nibbles.javacoin.bcwallet</groupId>
    <artifactId>bcwallet</artifactId>
    <version>1.0.0-SNAPSHOT</version>
    <packaging>apk</packaging>
    <name>BitCoin Wallet Android App</name>
 
    <parent>
-      <groupId>hu.netmind.bitcoin</groupId>
+      <groupId>it.nibbles.javacoin</groupId>
       <artifactId>bitcoin-parent</artifactId>
       <version>1.0.0-SNAPSHOT</version>
    </parent>
 
    <dependencies>
       <dependency>
-         <groupId>hu.netmind.bitcoin</groupId>
+         <groupId>it.nibbles.javacoin</groupId>
          <artifactId>bitcoin-api</artifactId>
          <version>1.0.0-SNAPSHOT</version>
       </dependency>
       <dependency>
-         <groupId>hu.netmind.bitcoin</groupId>
+         <groupId>it.nibbles.javacoin</groupId>
          <artifactId>bitcoin-wallet</artifactId>
          <version>1.0.0-SNAPSHOT</version>
       </dependency>
       <dependency>
-         <groupId>hu.netmind.bitcoin</groupId>
+         <groupId>it.nibbles.javacoin</groupId>
          <artifactId>bitcoin-net-p2p</artifactId>
          <version>1.0.0-SNAPSHOT</version>
       </dependency>
       <dependency>
-         <groupId>hu.netmind.bitcoin</groupId>
+         <groupId>it.nibbles.javacoin</groupId>
          <artifactId>bitcoin-keyfactory-ecc</artifactId>
          <version>1.0.0-SNAPSHOT</version>
       </dependency>

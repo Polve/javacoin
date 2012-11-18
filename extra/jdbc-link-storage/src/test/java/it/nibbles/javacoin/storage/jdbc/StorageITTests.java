@@ -15,11 +15,11 @@
  */
 package it.nibbles.javacoin.storage.jdbc;
 
-import hu.netmind.bitcoin.BitcoinException;
-import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
-import hu.netmind.bitcoin.block.StorageProvider;
-import hu.netmind.bitcoin.block.TestSuiteFactory;
-import hu.netmind.bitcoin.script.ScriptFactoryImpl;
+import it.nibbles.javacoin.BitcoinException;
+import it.nibbles.javacoin.block.ProdnetBitcoinFactory;
+import it.nibbles.javacoin.storage.StorageProvider;
+import it.nibbles.javacoin.storage.TestSuiteFactory;
+import it.nibbles.javacoin.script.ScriptFactoryImpl;
 import javax.sql.DataSource;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;

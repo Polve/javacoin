@@ -17,13 +17,12 @@
  */
 package it.nibbles.javacoin.storage;
 
-import it.nibbles.javacoin.storage.StorageException;
-import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.block.BlockChainLink;
-import hu.netmind.bitcoin.block.BlockChainLinkStorage;
-import hu.netmind.bitcoin.block.StorageSession;
-import hu.netmind.bitcoin.block.TransactionImpl;
-import hu.netmind.bitcoin.net.HexUtil;
+import it.nibbles.javacoin.TransactionInput;
+import it.nibbles.javacoin.block.BlockChainLink;
+import it.nibbles.javacoin.block.BlockChainLinkStorage;
+import it.nibbles.javacoin.block.StorageSession;
+import it.nibbles.javacoin.block.TransactionImpl;
+import it.nibbles.javacoin.net.HexUtil;
 import java.sql.Connection;
 import java.util.Arrays;
 import java.util.Collections;

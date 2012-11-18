@@ -17,8 +17,8 @@
  */
 package it.nibbles.javacoin.storage.jdbc;
 
-import hu.netmind.bitcoin.net.NodeAddress;
-import hu.netmind.bitcoin.net.p2p.NodeStorage;
+import it.nibbles.javacoin.net.NodeAddress;
+import it.nibbles.javacoin.net.p2p.NodeStorage;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

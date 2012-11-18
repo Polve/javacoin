@@ -18,9 +18,9 @@
 package it.nibbles.javacoin;
 
 import it.nibbles.javacoin.storage.jdbc.JdbcNodeStorage;
-import hu.netmind.bitcoin.net.NodeAddress;
-import hu.netmind.bitcoin.net.p2p.AddressSource;
-import hu.netmind.bitcoin.net.p2p.source.RandomizedNodesSource;
+import it.nibbles.javacoin.net.NodeAddress;
+import it.nibbles.javacoin.net.p2p.AddressSource;
+import it.nibbles.javacoin.net.p2p.source.RandomizedNodesSource;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;

@@ -22,7 +22,7 @@ import com.sleepycat.bind.tuple.LongBinding;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.SecondaryKeyCreator;
-import hu.netmind.bitcoin.block.BitcoinFactory;
+import it.nibbles.javacoin.block.BitcoinFactory;
 
 /**
  * Creates the secondary index for total difficulty. Used to get the top block

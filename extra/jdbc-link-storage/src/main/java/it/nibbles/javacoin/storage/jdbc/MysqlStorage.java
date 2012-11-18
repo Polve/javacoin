@@ -17,21 +17,21 @@
  */
 package it.nibbles.javacoin.storage.jdbc;
 
-import hu.netmind.bitcoin.BitcoinException;
-import hu.netmind.bitcoin.Block;
-import hu.netmind.bitcoin.Transaction;
-import hu.netmind.bitcoin.TransactionInput;
-import hu.netmind.bitcoin.TransactionOutput;
+import it.nibbles.javacoin.BitcoinException;
+import it.nibbles.javacoin.Block;
+import it.nibbles.javacoin.Transaction;
+import it.nibbles.javacoin.TransactionInput;
+import it.nibbles.javacoin.TransactionOutput;
 import it.nibbles.javacoin.storage.BaseChainLinkStorage;
-import hu.netmind.bitcoin.block.BitcoinFactory;
-import hu.netmind.bitcoin.block.BlockChainLink;
-import hu.netmind.bitcoin.block.BlockImpl;
+import it.nibbles.javacoin.block.BitcoinFactory;
+import it.nibbles.javacoin.block.BlockChainLink;
+import it.nibbles.javacoin.block.BlockImpl;
 import it.nibbles.javacoin.storage.SimplifiedStoredBlock;
 import it.nibbles.javacoin.storage.StorageException;
-import hu.netmind.bitcoin.block.StorageSession;
-import hu.netmind.bitcoin.block.TransactionImpl;
-import hu.netmind.bitcoin.block.TransactionInputImpl;
-import hu.netmind.bitcoin.block.TransactionOutputImpl;
+import it.nibbles.javacoin.block.StorageSession;
+import it.nibbles.javacoin.block.TransactionImpl;
+import it.nibbles.javacoin.block.TransactionInputImpl;
+import it.nibbles.javacoin.block.TransactionOutputImpl;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
