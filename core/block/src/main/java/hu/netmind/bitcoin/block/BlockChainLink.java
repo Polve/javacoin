@@ -32,14 +32,14 @@ import java.io.Serializable;
  */
 public class BlockChainLink implements Serializable
 {
-   public static final long ROOT_HEIGHT = 0;
+   public static final int ROOT_HEIGHT = 0;
 
    private Block block;
    private Difficulty totalDifficulty;
-   private long height;
+   private int height;
 
    public BlockChainLink(Block block, Difficulty totalDifficulty,
-         long height)
+         int height)
    {
       this.block=block;
       this.totalDifficulty=totalDifficulty;
@@ -56,7 +56,7 @@ public class BlockChainLink implements Serializable
       return totalDifficulty;
    }
 
-   public long getHeight()
+   public int getHeight()
    {
       return height;
    }

@@ -346,7 +346,7 @@ public class MysqlStorage extends BaseChainLinkStorage
       try (PreparedStatement ps = dbConnection.prepareStatement(sqlPutBlock))
       {
          ps.setLong(1, blockId);
-         ps.setLong(2, link.getHeight());
+         ps.setInt(2, link.getHeight());
          ps.setLong(3, block.getCreationTime());
          ps.setLong(4, block.getCompressedTarget());
          ps.setLong(5, block.getNonce());
@@ -526,7 +526,7 @@ public class MysqlStorage extends BaseChainLinkStorage
                     transactions, rs.getLong("nTime"), rs.getLong("nonce"), rs.getLong("nBits"),
                     rs.getBytes("prevBlockHash"), rs.getBytes("hashMerkleRoot"), rs.getBytes("hash"), rs.getLong("version")),
                     new BigDecimal(rs.getLong("chainWork")),
-                    rs.getLong("height"));
+                    rs.getInt("height"));
          else
             return null;
       } catch (SQLException | BitcoinException e)

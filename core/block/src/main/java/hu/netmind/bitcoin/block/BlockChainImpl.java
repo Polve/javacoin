@@ -502,7 +502,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    public List<byte[]> buildBlockLocator()
    {
       List<byte[]> blocks = new LinkedList<>();
-      long topHeight = linkStorage.getLastLink().getHeight();
+      int topHeight = linkStorage.getLastLink().getHeight();
       int start = 0;
       int step = 1;
       for (long i = topHeight; i > 0; i -= step, ++start)
@@ -528,7 +528,7 @@ public class BlockChainImpl extends Observable implements BlockChain
    }
 
    @Override
-   public long getHeight()
+   public int getHeight()
    {
       return linkStorage.getHeight();
    }

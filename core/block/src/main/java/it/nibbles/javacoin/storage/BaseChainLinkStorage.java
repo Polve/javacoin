@@ -171,7 +171,7 @@ public abstract class BaseChainLinkStorage implements BlockChainLinkStorage
    }
 
    @Override
-   public long getHeight()
+   public int getHeight()
    {
       if (topLink != null)
          return topLink.getHeight();

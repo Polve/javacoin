@@ -118,7 +118,7 @@ public class BlockChainTests
    }
 
    private DummyStorage testAddBlockTemplate(String chainBlocks, String newBlock, boolean scriptSuccess,
-         long blockOffset)
+         int blockOffset)
       throws BitcoinException
    {
       // Construct a block chain and storage

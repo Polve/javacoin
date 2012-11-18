@@ -25,13 +25,14 @@ import hu.netmind.bitcoin.TransactionInput;
 import hu.netmind.bitcoin.TransactionOutput;
 import hu.netmind.bitcoin.block.BitcoinFactory;
 import hu.netmind.bitcoin.block.BlockChainImpl;
+import hu.netmind.bitcoin.block.BlockChainLinkStorage;
 import hu.netmind.bitcoin.block.BlockImpl;
 import hu.netmind.bitcoin.block.ProdnetBitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet2BitcoinFactory;
 import hu.netmind.bitcoin.block.Testnet3BitcoinFactory;
 import it.nibbles.javacoin.storage.bdb.BDBStorage;
 import it.nibbles.javacoin.storage.jdbc.DatasourceUtils;
-import it.nibbles.javacoin.storage.jdbc.JdbcChainLinkStorage;
+import it.nibbles.javacoin.storage.jdbc.JdbcNodeStorage;
 import hu.netmind.bitcoin.keyfactory.ecc.KeyFactoryImpl;
 import hu.netmind.bitcoin.net.BitcoinInputStream;
 import hu.netmind.bitcoin.net.BlockMessage;
@@ -73,6 +74,7 @@ public class ChainDownloader {
   private static String jdbcPassword;
   private Node node = null;
   private StdNodeHandler nodeHandler;
+  private BlockChainLinkStorage storage;
 
   public static void main(String[] args)
           throws Exception {
@@ -131,15 +133,11 @@ public class ChainDownloader {
     }
   }
 
-  /**
-   * Free used resources.
-   */
   public void close() {
     nodeHandler.stop();
-//      if (storage != null)
-//      {
-//         storage.close();
-//      }
+    if (storage instanceof BDBStorage) {
+      ((BDBStorage) storage).close();
+    }
   }
 
   /**
@@ -172,10 +170,11 @@ public class ChainDownloader {
     logger.debug("bitcoin factory initialized");
 //    MysqlStorage storage = new MysqlStorage(bitcoinFactory);
 //    storage.setDataSource(DatasourceUtils.getMysqlDatasource(jdbcUrl, jdbcUser, jdbcPassword));
-    BDBStorage storage = new BDBStorage(bitcoinFactory);
-    storage.init();
+    BDBStorage bdbStorage = new BDBStorage(bitcoinFactory);
+    bdbStorage.init();
+    storage = bdbStorage;
     logger.debug("block storage initialized");
-    JdbcChainLinkStorage nodeStorage = new JdbcChainLinkStorage();
+    JdbcNodeStorage nodeStorage = new JdbcNodeStorage();
     nodeStorage.setDataSource(DatasourceUtils.getMysqlDatasource(jdbcUrl, jdbcUser, jdbcPassword));
     /*
      nodeStorage.setDataSource(DatasourceUtils.getMysqlDatasource("jdbc:mysql://localhost/javacoin_"
@@ -183,10 +182,10 @@ public class ChainDownloader {
      */
     nodeStorage.init();
     logger.debug("node storage initialized");
-    BlockChain chain = new BlockChainImpl(bitcoinFactory, storage, false);
+    BlockChain chain = new BlockChainImpl(bitcoinFactory, bdbStorage, false);
     logger.debug("blockchain initialized");
     // Introduce a small check here that we can read back the genesis block correctly
-    Block genesisBlock = storage.getGenesisLink().getBlock();
+    Block genesisBlock = bdbStorage.getGenesisLink().getBlock();
     logger.debug("Genesis block hash: " + BtcUtil.hexOut(genesisBlock.getHash()) + " nonce: " + genesisBlock.getNonce());
     genesisBlock.validate();
     logger.info((isTestnet2 ? "[TESTNET2]" : isTestnet3 ? "[TESTNET3]" : "[PRODNET]") + " initialized chain, last link height: " + chain.getHeight());
@@ -219,7 +218,7 @@ public class ChainDownloader {
       node.setAddressSource(defaultAddressSource);
     //node.addHandler(new DownloaderHandler());
     logger.debug(defaultAddressSource.toString());
-    nodeHandler = new StdNodeHandler(node, bitcoinFactory, chain, storage, nodeStorage);
+    nodeHandler = new StdNodeHandler(node, bitcoinFactory, chain, bdbStorage, nodeStorage);
     logger.info("Node handler: " + nodeHandler);
   }
 

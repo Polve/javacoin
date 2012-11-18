@@ -596,7 +596,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
     * Add a link to the storage with some block data filled. The claimed txhash and output index
     * will be included in one of the many transactions randomly generated into the block.
     */
-   private void addLink(int hash, int prevHash, long height, long totalDifficulty,
+   private void addLink(int hash, int prevHash, int height, long totalDifficulty,
          int claimedTxHash, int claimedOutputIndex)
       throws BitcoinException
    {
@@ -641,7 +641,7 @@ public class CleanTests<T extends BlockChainLinkStorage> extends InitializableSt
       storage.addLink(link);
    }
 
-   private void addLink(int hash, int prevHash, long height, long totalDifficulty)
+   private void addLink(int hash, int prevHash, int height, long totalDifficulty)
       throws BitcoinException
    {
       addLink(hash,prevHash,height,totalDifficulty,0,0);

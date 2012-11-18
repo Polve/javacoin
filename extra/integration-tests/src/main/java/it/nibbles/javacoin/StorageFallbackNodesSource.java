@@ -17,7 +17,7 @@
  */
 package it.nibbles.javacoin;
 
-import it.nibbles.javacoin.storage.jdbc.JdbcChainLinkStorage;
+import it.nibbles.javacoin.storage.jdbc.JdbcNodeStorage;
 import hu.netmind.bitcoin.net.NodeAddress;
 import hu.netmind.bitcoin.net.p2p.AddressSource;
 import hu.netmind.bitcoin.net.p2p.source.RandomizedNodesSource;
@@ -38,17 +38,17 @@ import java.util.StringTokenizer;
 public class StorageFallbackNodesSource extends RandomizedNodesSource
 {
 
-  private JdbcChainLinkStorage storage;
+  private JdbcNodeStorage storage;
   private int maxSources = 100;
   private AddressSource fallbackSource;
 
-  public StorageFallbackNodesSource(JdbcChainLinkStorage storage)
+  public StorageFallbackNodesSource(JdbcNodeStorage storage)
   {
     super();
     this.storage = storage;
   }
 
-  public StorageFallbackNodesSource(JdbcChainLinkStorage storage, int defaultPort)
+  public StorageFallbackNodesSource(JdbcNodeStorage storage, int defaultPort)
   {
     super(defaultPort);
     this.storage = storage;

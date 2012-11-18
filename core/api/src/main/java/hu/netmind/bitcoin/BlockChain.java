@@ -119,6 +119,6 @@ public interface BlockChain extends Observable
     * Returns the height of the best chain
     * @return 
     */
-   long getHeight();
+   int getHeight();
    
 }

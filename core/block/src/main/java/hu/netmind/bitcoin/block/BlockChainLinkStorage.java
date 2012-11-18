@@ -44,7 +44,7 @@ public interface BlockChainLinkStorage
     * Return the height of the best chain
     * @return The height of the chain with most work
     */
-   public long getHeight();
+   public int getHeight();
 
    /**
     * Get the link to the given hash value.

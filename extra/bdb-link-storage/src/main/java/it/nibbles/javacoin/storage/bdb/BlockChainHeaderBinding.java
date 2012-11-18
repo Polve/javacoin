@@ -56,7 +56,7 @@ public class BlockChainHeaderBinding extends TupleBinding<BlockChainLink> {
     to.write(block.getHash());
     to.writeLong(block.getVersion());
     to.writeLong(e.getTotalDifficulty().getDifficulty().longValue());
-    to.writeInt((int) e.getHeight());
+    to.writeInt(e.getHeight());
   }
 
   @Override

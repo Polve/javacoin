@@ -35,7 +35,7 @@ public interface BitcoinFactory
 
    public long getMessageMagic();
 
-   public BlockChainLink newBlockChainLink(Block block, BigDecimal chainWork, long height);
+   public BlockChainLink newBlockChainLink(Block block, BigDecimal chainWork, int height);
 
    /**
     * Construct with no difficulty.

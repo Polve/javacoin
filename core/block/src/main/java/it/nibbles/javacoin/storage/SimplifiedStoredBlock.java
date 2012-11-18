@@ -16,7 +16,6 @@
 package it.nibbles.javacoin.storage;
 
 import hu.netmind.bitcoin.block.BlockChainLink;
-import hu.netmind.bitcoin.block.BlockChainLink;
 import hu.netmind.bitcoin.net.HexUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,7 +30,7 @@ public class SimplifiedStoredBlock implements Comparable<SimplifiedStoredBlock>
 
    public byte[] hash;
    public byte[] prevBlockHash;
-   public long height;
+   public int height;
    //public BigDecimal chainWork;
 
    public SimplifiedStoredBlock(BlockChainLink b)
@@ -46,7 +45,7 @@ public class SimplifiedStoredBlock implements Comparable<SimplifiedStoredBlock>
    {
       hash = rs.getBytes("hash");
       prevBlockHash = rs.getBytes("prevBlockHash");
-      height = rs.getLong("height");
+      height = rs.getInt("height");
       //chainWork = new BigInteger(rs.getString("chainWork"));
    }
 

@@ -62,13 +62,13 @@ public class DummyStorage implements BlockChainLinkStorage
 //      init(blocks,0);
 //   }
 
-   public DummyStorage(BitcoinFactory bitcoinFactory,List<Block> blocks, long blockOffset)
+   public DummyStorage(BitcoinFactory bitcoinFactory,List<Block> blocks, int blockOffset)
    {
       this.bitcoinFactory = bitcoinFactory;
       init(blocks,blockOffset);
    }
 
-   private void init(List<Block> blocks, long blockOffset)
+   private void init(List<Block> blocks, int blockOffset)
    {
       for ( Block block : blocks )
       {
@@ -112,7 +112,7 @@ public class DummyStorage implements BlockChainLinkStorage
    }
 
    @Override
-   public long getHeight()
+   public int getHeight()
    {
       logger.debug("getting height of best chain...");
       return getLastLink().getHeight();

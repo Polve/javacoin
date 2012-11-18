@@ -42,12 +42,12 @@ import org.slf4j.LoggerFactory;
  *
  * @author Alessandro Polverini
  */
-public class JdbcChainLinkStorage implements NodeStorage
+public class JdbcNodeStorage implements NodeStorage
 {
 
    private static final boolean DEFAULT_AUTOCREATE = true;
    private static final boolean DEFAULT_TRANSACTIONAL = true;
-   private static Logger logger = LoggerFactory.getLogger(JdbcChainLinkStorage.class);
+   private static Logger logger = LoggerFactory.getLogger(JdbcNodeStorage.class);
    private boolean autoCreate = DEFAULT_AUTOCREATE;
    private boolean transactional = DEFAULT_TRANSACTIONAL;
    private DataSource dataSource;
@@ -62,7 +62,7 @@ public class JdbcChainLinkStorage implements NodeStorage
    final private String sqlGetNodeAddresses =
            "SELECT * FROM Node ORDER BY discovered DESC";
 
-   public JdbcChainLinkStorage()
+   public JdbcNodeStorage()
    {
       readConfiguration();
    }

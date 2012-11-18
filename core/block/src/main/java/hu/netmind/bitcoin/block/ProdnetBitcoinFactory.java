@@ -71,7 +71,7 @@ public class ProdnetBitcoinFactory implements BitcoinFactory
    }
 
    @Override
-   public BlockChainLink newBlockChainLink(Block block, BigDecimal chainWork, long height)
+   public BlockChainLink newBlockChainLink(Block block, BigDecimal chainWork, int height)
    {
       return new BlockChainLink(block, new Difficulty(chainWork, maxDifficultyTarget()), height);
    }

@@ -274,7 +274,7 @@ public class BlockTool {
       numBlocks++;
       //System.out.println("Letto blocco con hash: " + BtcUtil.hexOut(block.getHash()));
       BlockChainLink chainLink = new BlockChainLink(block, bitcoinFactory.newDifficulty(new BigDecimal(numBlocks * 253)), numBlocks);
-      bdb.storeBlockLink(null, chainLink);
+      //bdb.storeBlockLink(null, chainLink);
 //      BlockChainLink storedBlock = bdb.getLink(block.getHash());
 //      System.out.println("[reread] block: " + storedBlock+" with "+storedBlock.getBlock().getTransactions().size()+" txs");
 

@@ -41,7 +41,7 @@ public class HeightIndexCreator implements SecondaryKeyCreator {
 
   @Override
   public boolean createSecondaryKey(SecondaryDatabase sd, DatabaseEntry key, DatabaseEntry data, DatabaseEntry result) {
-    int height = (int) dataBinding.entryToObject(data).getHeight();
+    int height = dataBinding.entryToObject(data).getHeight();
     keyBinding.objectToEntry(height, result);
     return true;
   }

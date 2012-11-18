@@ -98,7 +98,7 @@ public class SimpleSerializingStorage implements BlockChainLinkStorage
    }
 
   @Override
-   public long getHeight()
+   public int getHeight()
    {
      BlockChainLink lastLink = getLastLink();
      if (lastLink == null)
